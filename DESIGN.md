@@ -4,9 +4,9 @@ name: raseeda
 description: >-
   Design system for raseeda, a free, local-first invoice generator that runs
   entirely in the browser. The editor is a compact, document-grade tool:
-  neutral grayscale chrome, a single blue-violet brand accent, white paper on a
+  neutral grayscale chrome, a single deep-teal brand accent, white paper on a
   grey desk, and tight geometry that reads like a precise instrument. The
-  marketing homepage is a security-printed document in the same blue.
+  marketing homepage is a calm, light page on a warm canvas in the same teal.
 colors:
   background: oklch(1 0 0)
   foreground: oklch(0.145 0 0)
@@ -29,34 +29,37 @@ colors:
   warningForeground: oklch(0.205 0 0)
   border: oklch(0.922 0 0)
   input: oklch(0.922 0 0)
-  ring: oklch(0.603 0.218 257.42)
+  ring: oklch(0.6 0.095 185)
   paper: oklch(1 0 0)
   paperForeground: oklch(0.21 0.006 285.885)
   paperMuted: oklch(0.967 0.001 286.375)
   paperMutedForeground: oklch(0.5 0.016 286)
   paperBorder: oklch(0.871 0.006 286.286)
   desk: oklch(0.92 0.004 286.32)
-  brand50: oklch(0.957 0.02 277)
-  brand100: oklch(0.925 0.036 273.72)
-  brand200: oklch(0.839 0.079 271.26)
-  brand300: oklch(0.762 0.121 268.88)
-  brand400: oklch(0.677 0.17 263.89)
-  brand500: oklch(0.603 0.218 257.42)
-  brand600: oklch(0.505 0.183 257.47)
-  brand700: oklch(0.419 0.152 257.57)
-  brand800: oklch(0.322 0.117 257.5)
-  brand900: oklch(0.235 0.085 257.39)
-  brand950: oklch(0.18 0.064 257.25)
-  tint: oklch(0.972 0.01 185)
-  tintDeep: oklch(0.945 0.016 185)
-  guilloche: oklch(0.85 0.035 190)
-  perforation: oklch(0.78 0.02 210)
-  ink: oklch(0.25 0.07 257)
-  inkMuted: oklch(0.42 0.045 257)
-  numbering: oklch(0.52 0.19 27)
+  brand50: oklch(0.975 0.015 185)
+  brand100: oklch(0.945 0.03 185)
+  brand200: oklch(0.885 0.055 185)
+  brand300: oklch(0.8 0.08 185)
+  brand400: oklch(0.71 0.095 185)
+  brand500: oklch(0.6 0.095 185)
+  brand600: oklch(0.505 0.085 185)
+  brand700: oklch(0.42 0.07 185)
+  brand800: oklch(0.335 0.056 185)
+  brand900: oklch(0.255 0.043 185)
+  brand950: oklch(0.19 0.033 185)
+  canvas: oklch(0.99 0.003 85)
+  ink: "#262823"
+  lavenderTint: oklch(0.948 0.02 295)
+  lavenderInk: oklch(0.5 0.13 295)
+  sageTint: oklch(0.948 0.026 145)
+  sageInk: oklch(0.5 0.1 150)
+  butterTint: oklch(0.958 0.038 92)
+  butterInk: oklch(0.5 0.1 65)
+  blushTint: oklch(0.948 0.022 35)
+  blushInk: oklch(0.5 0.15 25)
   pdfMuted: "#6b7280"
   pdfMutedZinc: "#71717a"
-  themeColor: "#005fca"
+  themeColor: "#11746b"
 typography:
   display:
     fontFamily: '"Archivo Variable", sans-serif'
@@ -191,8 +194,8 @@ components:
     rounded: "{rounded.control}"
     padding: 2px
   tableRowSelected:
-    backgroundColor: "{colors.brand600}"
-    textColor: "{colors.primaryForeground}"
+    backgroundColor: "{colors.brand100}"
+    textColor: "{colors.foreground}"
   card:
     backgroundColor: "{colors.card}"
     textColor: "{colors.cardForeground}"
@@ -204,70 +207,6 @@ components:
   badge:
     backgroundColor: "{colors.brand50}"
     textColor: "{colors.brand700}"
-    rounded: "{rounded.surface}"
-  engravedPlateSm:
-    backgroundColor: "{colors.brand700}"
-    textColor: oklch(1 0 0)
-    typography: "{typography.plateLabel}"
-    rounded: "{rounded.control}"
-    height: 36px
-    padding: 0 16px
-  engravedPlate:
-    backgroundColor: "{colors.brand700}"
-    textColor: oklch(1 0 0)
-    typography: "{typography.plateLabel}"
-    rounded: "{rounded.control}"
-    height: 48px
-    padding: 0 24px
-  engravedPlateLg:
-    backgroundColor: "{colors.brand700}"
-    textColor: oklch(1 0 0)
-    typography: "{typography.plateLabel}"
-    rounded: "{rounded.control}"
-    height: 56px
-    padding: 0 32px
-  engravedPlateHover:
-    backgroundColor: "{colors.brand800}"
-  securityDocument:
-    backgroundColor: oklch(1 0 0 / 0.4)
-    textColor: "{colors.ink}"
-    rounded: "{rounded.none}"
-  specimenSlip:
-    backgroundColor: "{colors.paper}"
-    textColor: "{colors.ink}"
-    rounded: "{rounded.surface}"
-    padding: 20px 28px
-  billToField:
-    backgroundColor: transparent
-    textColor: "{colors.ink}"
-    height: 44px
-  typefaceSegmentActive:
-    backgroundColor: "{colors.ink}"
-    textColor: oklch(1 0 0)
-    rounded: "{rounded.surface}"
-    height: 32px
-  requestCounter:
-    backgroundColor: transparent
-    textColor: "{colors.numbering}"
-    typography: "{typography.numbering}"
-    padding: 16px 28px
-  privacyBand:
-    backgroundColor: "{colors.brand800}"
-    textColor: oklch(1 0 0)
-    rounded: "{rounded.none}"
-    padding: 96px 24px
-  serialMarker:
-    textColor: "{colors.numbering}"
-    typography: "{typography.numbering}"
-    width: 24px
-  tourNoteStrip:
-    backgroundColor: "{colors.tint}"
-    textColor: "{colors.ink}"
-    typography: "{typography.body}"
-    padding: 16px 24px 16px 44px
-  counterfoilSlip:
-    backgroundColor: "{colors.paper}"
-    textColor: "{colors.ink}"
     rounded: "{rounded.surface}"
   logoMark:
     backgroundColor: "{colors.ink}"
@@ -295,74 +234,78 @@ loudest thing on screen: a sheet of white A4 paper lying on a grey desk,
 surrounded by quiet chrome.
 
 The visual language is deliberately quiet around that sheet. Chrome is
-achromatic, the brand accent is a single blue-violet ramp, radii are small, and
+achromatic, the brand accent is a single deep-teal ramp, radii are small, and
 controls are compact. The paper itself never changes with the app theme,
 because it is a preview of the PDF that gets downloaded.
 
-The marketing homepage is the one place the system changes world. It is a
-security-printed document, presenting raseeda's privacy the way a banknote
-presents its anti-forgery features: a pale mint safety-paper tint under a fine
-guilloche underprint, intaglio ink in raseeda blue, engraved wide capitals in
-Archivo, numbering-machine red kept for serials and live counters, and
-perforations and microprint as its dividers. Invoices are white paper slips
-lying on that tint, and the privacy proof (the browser's own count of requests
-to other websites) is printed on a slip's counterfoil. Its motion is one
-authored moment on load: the headline rises, the slip lands, and the corner
-rosette engraves itself.
+The marketing homepage is light and calm: a warm off-white canvas, warm
+near-black ink, soft paintings, and teal for the second line of the headings,
+links on hover, and the wordmark. Four quiet secondary hues mark content
+there, never actions.
 
 **Key Characteristics:**
 
 - Neutral chrome; colour is reserved for the brand accent and for status.
-- One accent: the blue-violet `brand` ramp carries every emphasis.
+- One accent: the deep-teal `brand` ramp carries every emphasis.
 - White paper on a grey desk: the invoice page previews the PDF exactly.
 - Tight geometry: 3px surfaces, 4px controls, 32px default control height.
-- Security-print homepage: tinted ground, generated guilloche, engraved Archivo capitals, red serials, perforated dividers, one engraved plate CTA.
 - The editor has its own neutral chrome (plain greys, a near-black or near-white primary) and a light/dark switch; the rest of the site is light.
 
 ## Colors
 
 Colours are defined in OKLCH and split into a semantic layer (roles), a paper
-layer (the invoice sheet), a brand ramp (raw scale), and a security-print
-layer that only the homepage uses. App chrome references roles; the invoice
-page references paper tokens; emphasis references the ramp.
+layer (the invoice sheet), a brand ramp (raw scale), and a homepage layer.
+App chrome references roles; the invoice page references paper tokens;
+emphasis references the ramp.
 
 ### Primary
 
-- **Signal Blue** (`brand-600`): the solid accent. Primary buttons, selected
-  table rows, the wordmark, the coloured second line of the homepage headline
-  ("Keep everything else."), the homepage focus outline, and the focused
-  border of the specimen's Bill to line. White text on it passes WCAG AA; this
-  is why solid fills sit on 600, not 500. Hover deepens to `brand-700`.
-- **Focus Blue** (`brand-500`): the app focus ring (`--ring`), the invoice
-  field focus border, and table focus outlines. Never used as a solid fill under
-  white text (3.85:1 fails AA). At 60% it is the line colour of the privacy
-  band's medallion rosette.
-- **Intaglio Blue** (`brand-700`): the homepage's engraved Create invoice
-  plate, and inline text links on the homepage, underlined in `brand-300` that
-  deepens to `brand-700` on hover. Also badge text.
-- **Band Blue** (`brand-800`): the full-bleed privacy band's flood and the
-  plate's hover. On the band, body text is `brand-100`, headings and links are
-  white, link underlines are `brand-300`, and the check perforations are
-  `brand-400` at 50%.
+The brand is one deep teal at hue 185. In sRGB, teal holds about half the
+chroma blue can at the same lightness, so the ramp reads calm rather than
+loud; it keeps the lightness steps of the blue it replaced, so the fill and
+ring rules below did not change. Contrast, measured against white, the light
+editor (`#fcfcfc`) and the dark editor (`#161616`):
+
+| Step | Hex | White on it | On `#fcfcfc` | On `#161616` |
+| --- | --- | --- | --- | --- |
+| `brand-400` | `#51b5a9` | 2.46 | 2.40 | 7.35 |
+| `brand-500` | `#289288` | 3.78 | 3.68 | 4.79 |
+| `brand-600` | `#11746b` | 5.62 | 5.48 | 3.22 |
+| `brand-700` | `#0c5952` | 8.18 | 7.98 | 2.21 |
+
+- **Brand Teal** (`brand-600`): the solid accent. Primary buttons on the site
+  and in the editor (light and dark), a selected row's name, the wordmark, the
+  second line of homepage headings, homepage link hovers, and the brand icons
+  in homepage pictures. White text on it passes WCAG AA, which is why solid
+  fills sit on 600, not 500. Hover deepens to `brand-700`. On the dark editor
+  a 600 fill still clears 3:1 against the panel.
+- **Focus Teal** (`brand-500`): the focus ring (`--ring`) in the app and in
+  both editor themes, checked switches (`bg-ring`), the invoice field focus
+  border, table focus outlines, and the undo flash. It clears 3:1 on the light
+  and dark editor alike. Never a fill under white text (3.78:1 fails AA).
+- **Deep Teal** (`brand-700` and `brand-800`): hover and pressed fills, badge
+  text, and the info banner's text (`brand-800`).
 - **Brand Wash** (`brand-50`): the hover and focus fill for editable invoice
-  fields and badge fills. Pairs with `brand-200` borders and `brand-700`
-  text. At 60% it is the focus wash of the homepage Bill to line.
-  `brand-100` is the homepage text selection colour, with `brand-950` selected
-  text.
-- The full ramp runs `brand-50` through `brand-950`; `brand-400` is the dark
-  mode ring.
+  fields, badge fills, the info banner, the homepage step numbers and
+  raseeda's column in the comparison table. Pairs with `brand-200` borders and
+  `brand-700` text. `brand-100` is the selected list row and the homepage text
+  selection colour.
+- **Dark Teal Text** (`brand-400`): brand text and icons on dark surfaces,
+  and the ring outside the editor in dark mode.
 
-`--brand-top`, `--brand-bottom`, their `-hover` variants, and `--brand-gradient`
-are still declared in `globals.css`, but nothing in the app references them.
-They are not part of the working palette; do not treat the gradient as a
-signature.
+### Homepage
 
-### Secondary
-
-- **Numbering Red** (`numbering`): the homepage's numbering-machine ink, about
-  6:1 on white. It prints only serials (the specimen's No. 0043, the
-  counterfoil's No. 0001), the live counter of requests to other websites, and
-  the tour's serial markers. Homepage only.
+- **Canvas** (`canvas`): the warm off-white page ground.
+- **Ink** (`ink`, `#262823`): headings, links and the Create invoice button
+  (a solid `ink` pill, hover `ink` at 85%). Body copy is `zinc-600`.
+- **Secondary hues** (`lavender`, `sage`, `butter`, `blush`, each a `-tint`
+  and an `-ink`): the facts strip tiles and the feature washes. The tints share
+  one lightness and a low chroma; each ink is at least 4.5:1 on white. They
+  mark content, never actions or links. `sage` (hue 145 to 150) is the
+  brand's nearest neighbour, so keep it off anything that sits next to a teal
+  control.
+- The closing band's `blue-100` is the city painting's placeholder colour
+  while it loads, not a brand colour.
 
 ### Neutral
 
@@ -377,6 +320,10 @@ App chrome (semantic roles, from `:root`):
 | `muted-foreground` | `oklch(0.556 0 0)` | Secondary and caption text in chrome |
 | `border` / `input` | `oklch(0.922 0 0)` | Hairlines and field outlines |
 
+The editor redefines these roles with plain greys (see the Dark Mode Honesty
+Rule): light `#fcfcfc` panels, `#1c1c1c` text, `#646464` muted text; dark
+`#161616` panels, `#f5f5f5` text, `#a8a8a8` muted text.
+
 Paper (the invoice sheet; see the Paper Rule):
 
 - **Paper** (`paper`, white): the A4 page surface.
@@ -387,37 +334,16 @@ Paper (the invoice sheet; see the Paper Rule):
 - **Paper Edge** (`paper-border`): the hairline around the sheet.
 - **Desk** (`desk`): the cool grey backdrop the sheet lies on in the editor.
 
-Security print (homepage only, declared in `globals.css` as `--color-*`):
-
-- **Safety Tint** (`tint`): the page ground, the header and phone bar (at 90%
-  and 95% with backdrop blur), the corner rosettes' backing, the tour invoice's
-  table header row, and the phone tour-note strips.
-- **Deep Tint** (`tint-deep`): hover fill of the typeface switch's segments.
-- **Guilloche** (`guilloche`): every guilloche line on the tint: the border
-  bands, corner rosettes, and the hero's large rosette. The underprint tiles use
-  the same colour at 55% (page) and 35% (slips).
-- **Perforation** (`perforation`): every 2px dashed perforation on the tint
-  and on slips.
-- **Intaglio Ink** (`ink`): headlines, slip text, question summaries, the
-  active typeface segment, the logo mark. At 35% it is the microprint; at
-  10% to 20% it outlines the hero document, the header rule, and the phone bar;
-  at 15% it borders the slips and the rules inside the example invoices; at 40%
-  it is the Bill to line.
-- **Ink Muted** (`ink-muted`): leads, body copy, form labels, nav and footer
-  text, and the document foot's facts.
-- White is the slips' paper and the text colour on the plate and the band.
-
-The underprint is an SVG data URI, which cannot read CSS variables, so its
-stroke colours are literal OKLCH strings in the route: the `guilloche` value at
-55% and 35%, and `oklch(0.42 0.152 257.57 / 0.5)` (`brand-700` at 50%) on the
-privacy band. Change them together with the tokens.
-
 PDF palette: react-pdf cannot read CSS variables, so the renderer uses literal
 hex. `#6b7280` (`pdfMuted`) is the muted label grey in the details, terms, and
 text sections; `#71717a` (`pdfMutedZinc`) is the label grey in payment details.
-These are intentional PDF palette entries, not drift.
+These are intentional PDF palette entries, not drift. The brand teal never
+appears on a PDF: the invoice belongs to its sender, not to raseeda.
 
-Browser chrome: the `theme-color` meta is `#005fca`, the hex of `brand-600`.
+Browser chrome: the `theme-color` meta and the manifest's `theme_color` are
+`#11746b`, the hex of `brand-600`; while the editor is open the meta follows
+its top bar (`#fcfcfc` or `#161616`, `utils/editor-theme.ts`). The favicon and
+app icons are a `#1e877d` to `#11746b` gradient (`brand-600` at the foot).
 
 ### Status
 
@@ -425,33 +351,27 @@ Browser chrome: the `theme-color` meta is `#005fca`, the hex of `brand-600`.
   tint (10 to 20% fill with destructive text), never a loud solid.
 - **Success** (`oklch(0.627 0.155 149.21)`): positive status.
 - **Warning** (`oklch(0.745 0.153 74.2)`): cautionary status; on the homepage,
-  the alert icon on the blocked-storage note (the text itself stays
-  `ink-muted`).
+  the alert icon on the blocked-storage note.
+- **Info** is the brand: the editor banner's info tone is `brand-50` with
+  `brand-500` icons and `brand-800` text.
 
 ### Named Rules
 
-**The One Voice Rule.** The blue-violet `brand` ramp is the only accent. Never
-introduce a second hue for emphasis; status colours are for status only. The
-homepage's numbering red is a printing ink, not an accent, and lives under the
-Numbering Red Rule. In the editor chrome the primary action is neutral
-(`primary`: near-black in light, near-white in dark), and blue appears only as
-`ring`, on focus rings and switches.
+**The One Voice Rule.** The teal `brand` ramp is the only accent. Never
+introduce a second hue for emphasis; status colours are for status only, and
+the homepage's secondary hues mark content only.
 
 **The 600 Fill Rule.** Solid brand fills under white text are `brand-600` or
-darker. `brand-500` is for rings and borders.
+darker. `brand-500` is for rings, switches and borders.
 
 **The Paper Rule.** The invoice page is white paper with dark ink in every app
 theme, because it previews the printed PDF. Anything drawn on the page uses
 `paper-*` tokens (or the brand wash for edit affordances), never chrome roles
 or raw Tailwind greys or blues.
 
-**The Numbering Red Rule.** `numbering` prints serials and live counts and
-nothing else: never a link, a heading, an error, or emphasis. It is always set
-in the numbering face.
-
-**The Security Ink Rule.** The homepage takes its colour from the
-security-print tokens, white paper, and the brand ramp; it uses no raw Tailwind
-greys, and the editor never uses the security-print tokens.
+**The Token Rule.** Brand colour comes from the `brand-*` ramp, never raw
+Tailwind `blue-*`, `teal-*` or hex, so the next change of hue stays a change to
+`globals.css` and the icons.
 
 **The Dark Mode Honesty Rule.** Only the editor has a dark mode. The `/create`
 route sets `data-editor-theme` (and `.dark` when dark) on `<html>` before first
@@ -819,8 +739,9 @@ Menus, popovers, dropdowns, selects, and context menus: `popover` surface,
 
 ### Tables
 
-`components/tables/*`: dense rows; selected rows fill `brand-600` with
-`primary-foreground` text; keyboard focus draws a 2px inset `brand-500`
+`components/tables/*`: dense rows; selected rows fill `brand-100`
+(`brand-500` at 20% in dark) with the name in `brand-600` (`brand-400` in
+dark); keyboard focus draws a 2px inset `brand-500`
 outline. Row groups separate with `gap-px`, not `divide-y`.
 
 ### Badges / Callouts
@@ -992,8 +913,6 @@ zero, and the rosette is simply there.
   `FORM_LABEL`, and `HEADLINE` recipes, and keep reading text in Geist.
 - **Do** divide homepage rows and regions with 2px dashed perforations or
   microprint rules.
-- **Do** generate any new guilloche from `utils/guilloche.ts` parameters and
-  colour it with `currentColor` set from the `guilloche` token.
 - **Do** keep homepage motion in plain CSS that plays without JavaScript and
   degrades to fades under reduced motion.
 - **Do** give JavaScript-only homepage content a same-height plain stand-in
@@ -1007,14 +926,14 @@ zero, and the rosette is simply there.
 
 - **Don't** use `space-y-*`, `space-x-*`, `divide-x`, or `divide-y` (breaks
   with conditional and fragment children; owner-controlled `gap` is the rule).
-- **Don't** put white text on `brand-500`; it fails AA.
+- **Don't** put white text on `brand-500` or lighter; it fails AA.
+- **Don't** put brand teal on the PDF.
 - **Don't** let the invoice page follow the app theme or use chrome roles,
-  raw `zinc-*`/`blue-*`, or responsive classes.
+  raw `zinc-*`/`blue-*`/`teal-*`, or responsive classes.
 - **Don't** hard-code hex or raw `neutral-*` greys in app chrome or on the
   homepage; hex belongs to the PDF renderer.
-- **Don't** introduce a second accent hue; numbering red prints serials and
-  live counts only.
-- **Don't** use Archivo or the security-print tokens outside the homepage.
+- **Don't** introduce a second accent hue, or bring back the coral accent the
+  rename brief proposed; there is nothing in the product for it to mark.
 - **Don't** let microprint carry information; it is a rule, hidden from
   assistive tech.
 - **Don't** use `transition-colors` on focusable homepage elements; it animates

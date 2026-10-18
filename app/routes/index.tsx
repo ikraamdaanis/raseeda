@@ -1,4 +1,3 @@
-import interFont from "@fontsource-variable/inter/files/inter-latin-opsz-normal.woff2?url";
 import {
   IconAlertTriangle,
   IconArrowRight,
@@ -48,8 +47,6 @@ import { HOME_STRUCTURED_DATA } from "~/utils/structured-data";
 
 export const Route = createFileRoute("/")({
   component: HomePage,
-  // The homepage is set in Inter, so its latin subset preloads here rather
-  // than in the root head, where every route would download it.
   // The hero painting and the invoice in its editor window preload too, so
   // they download alongside the CSS rather than after it; each preload mirrors
   // one AVIF branch of a <picture>, and a browser without AVIF skips them.
@@ -57,13 +54,6 @@ export const Route = createFileRoute("/")({
     meta: siteMeta({ path: "/" }),
     links: [
       canonicalLink("/"),
-      {
-        rel: "preload",
-        href: interFont,
-        as: "font",
-        type: "font/woff2",
-        crossOrigin: "anonymous"
-      },
       {
         rel: "preload",
         as: "image",
@@ -130,14 +120,13 @@ const HERO_ENTRANCE_SCRIPT = `(function () {
 })();`;
 
 const TEXT_LINK = cn(
-  "inline-flex items-center gap-1 rounded-sm font-medium text-ink hover:text-ink-blue",
+  "inline-flex items-center gap-1 rounded-sm font-medium text-ink hover:text-brand-600",
   typeClass("body"),
   FOCUS_RING
 );
 
-// Headlines use Inter's Display optical size, which the browser picks up from
-// the opsz axis at large sizes. Sizes come from the type roles, which the
-// homepage sets at marketing values through `.home-type`.
+// Headlines are Geist, like the rest of the page. Sizes come from the type
+// roles, which the homepage sets at marketing values through `.home-type`.
 const HEADING = "font-medium tracking-[-0.035em] text-balance";
 
 // Single-line controls: buttons, labels, nav links.
@@ -199,7 +188,7 @@ const WASHES = {
 };
 
 // Each feature shows a fragment of a real invoice rather than an icon, on a
-// pale wash of its own colour. Blue belongs to the app and its controls, so
+// pale wash of its own colour. Teal belongs to the app and its controls, so
 // the features take the secondary hues, all at the same lightness. A specimen
 // that is a crop of a PDF page runs off the card where it was cut, so only the
 // paper's edge shows; the others sit on a slip of paper.
@@ -365,7 +354,7 @@ function useStorageBlocked() {
 
 function HomePage() {
   return (
-    <div className="home-type selection:bg-brand-100 bg-canvas text-ink isolate min-h-svh font-sans font-features-['cv02','cv03','cv04','cv11'] antialiased">
+    <div className="home-type selection:bg-brand-100 bg-canvas text-ink font-geist isolate min-h-svh antialiased">
       <a
         href="#main"
         className={cn(
@@ -504,7 +493,7 @@ function HeaderAction() {
     <Link
       to="/create"
       className={cn(
-        "hover:text-ink-blue text-ink relative inline-flex items-center gap-1 rounded-sm px-1 py-2 font-medium whitespace-nowrap max-sm:hidden",
+        "hover:text-brand-600 text-ink relative inline-flex items-center gap-1 rounded-sm px-1 py-2 font-medium whitespace-nowrap max-sm:hidden",
         CONTROL_TEXT,
         FOCUS_RING
       )}
@@ -617,7 +606,7 @@ function Hero() {
           <div className="flex flex-col items-center gap-6">
             <h1 className={cn(HEADING, typeClass("display"))}>
               <span className="hero-focus block">Send the invoice.</span>
-              <span className="hero-focus text-ink-blue block [animation-delay:80ms]">
+              <span className="hero-focus text-brand-600 block [animation-delay:80ms]">
                 Keep everything else.
               </span>
             </h1>
@@ -846,7 +835,7 @@ function HowItWorks() {
                     aria-hidden="true"
                     className={cn(
                       typeClass("caption"),
-                      "bg-brand-50 text-ink-blue flex size-7 shrink-0 items-center justify-center rounded-full font-semibold tabular-nums"
+                      "bg-brand-50 text-brand-600 flex size-7 shrink-0 items-center justify-center rounded-full font-semibold tabular-nums"
                     )}
                   >
                     {index + 1}
@@ -1163,7 +1152,7 @@ function Comparison() {
                     // then 12px) so they fit the narrowest columns.
                     "flex items-end justify-center px-0.5 pt-4 pb-3 text-center text-[11px]/4 font-medium text-balance min-[400px]:px-1 min-[400px]:text-xs/4 sm:text-sm/5 md:px-4",
                     index === 0
-                      ? "text-ink-blue rounded-t-xl bg-blue-50 font-semibold"
+                      ? "text-brand-600 bg-brand-50 rounded-t-xl font-semibold"
                       : "text-zinc-500"
                   )}
                 >
@@ -1199,7 +1188,7 @@ function Comparison() {
                       role="cell"
                       className={cn(
                         "flex items-center justify-center px-1 py-4 md:px-4",
-                        cellIndex === 0 && "bg-blue-50",
+                        cellIndex === 0 && "bg-brand-50",
                         cellIndex === 0 && isLastRow && "rounded-b-xl"
                       )}
                     >
@@ -1315,7 +1304,7 @@ function Questions() {
   );
 }
 
-// The closing band mirrors the hero: dark headline, blue second line, and a
+// The closing band mirrors the hero: dark headline, teal second line, and a
 // painting that runs the full width of the viewport. The page rising from the
 // panel's foot is a real PDF. Its box is sized from the page's own
 // width, so it always shows the same top share of the page, and the page runs
@@ -1328,7 +1317,7 @@ function Closing() {
         <div className="flex flex-col gap-8 xl:flex-row xl:justify-between xl:gap-16">
           <h2 className={cn(HEADING, typeClass("display"), "max-w-[20ch]")}>
             <span className="block">Your next invoice</span>
-            <span className="text-ink-blue block">starts here.</span>
+            <span className="text-brand-600 block">starts here.</span>
           </h2>
           <div className="flex flex-col items-start gap-6 xl:justify-end">
             <p className={cn(BODY_TEXT, "max-w-[48ch]")}>

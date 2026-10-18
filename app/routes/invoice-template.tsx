@@ -1,4 +1,3 @@
-import interFont from "@fontsource-variable/inter/files/inter-latin-opsz-normal.woff2?url";
 import { IconArrowRight, IconCheck } from "@tabler/icons-react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Picture } from "~/components/home/picture";
@@ -28,16 +27,7 @@ export const Route = createFileRoute("/invoice-template")({
       description:
         "Free invoice templates for freelancers, consultants, contractors, photographers and small businesses. Pick a style, fill it in online and download a PDF. No account."
     }),
-    links: [
-      canonicalLink("/invoice-template"),
-      {
-        rel: "preload",
-        href: interFont,
-        as: "font",
-        type: "font/woff2",
-        crossOrigin: "anonymous"
-      }
-    ]
+    links: [canonicalLink("/invoice-template")]
   })
 });
 
@@ -61,7 +51,7 @@ const INVOICE_PARTS = [
 // finished invoice in that style, not a form to fill.
 function InvoiceTemplatePage() {
   return (
-    <div className="home-type selection:bg-brand-100 bg-canvas text-ink isolate min-h-svh font-sans font-features-['cv02','cv03','cv04','cv11'] antialiased">
+    <div className="home-type selection:bg-brand-100 bg-canvas text-ink font-geist isolate min-h-svh antialiased">
       <PageHeader />
       <main>
         <div className={cn(CONTAINER, "pt-12 pb-16 sm:pt-20 sm:pb-24")}>
@@ -112,7 +102,7 @@ function InvoiceTemplatePage() {
                   )}
                 >
                   <IconCheck
-                    className="text-ink-blue mt-1 size-4 shrink-0"
+                    className="text-brand-600 mt-1 size-4 shrink-0"
                     aria-hidden="true"
                   />
                   {part}
@@ -178,7 +168,7 @@ function TemplateCard({
         to="/create"
         search={{ font: template.font, new: true }}
         className={cn(
-          "text-ink group-hover:text-ink-blue inline-flex items-center gap-1 justify-self-start rounded-sm font-medium after:absolute after:inset-0 after:rounded-xl",
+          "text-ink group-hover:text-brand-600 inline-flex items-center gap-1 justify-self-start rounded-sm font-medium after:absolute after:inset-0 after:rounded-xl",
           typeClass("body"),
           FOCUS_RING
         )}

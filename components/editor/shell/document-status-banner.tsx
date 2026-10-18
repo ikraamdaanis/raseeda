@@ -127,13 +127,13 @@ const TONES = {
   info: {
     icon: IconInfoCircleFilled,
     surface:
-      "bg-blue-50 border-blue-600/10 dark:bg-[color-mix(in_oklab,var(--color-blue-500)_14%,var(--popover))] dark:border-blue-400/20",
-    iconColour: "text-blue-500 dark:text-blue-400",
-    text: "text-blue-800 dark:text-blue-200/80",
+      "bg-brand-50 border-brand-600/10 dark:bg-[color-mix(in_oklab,var(--color-brand-500)_14%,var(--popover))] dark:border-brand-400/20",
+    iconColour: "text-brand-500 dark:text-brand-400",
+    text: "text-brand-800 dark:text-brand-200/80",
     action:
-      "focus-visible:outline-blue-600 dark:focus-visible:outline-blue-400",
+      "focus-visible:outline-brand-600 dark:focus-visible:outline-brand-400",
     dismiss:
-      "text-blue-900 hover:bg-blue-100 dark:text-blue-100 dark:hover:bg-blue-500/15"
+      "text-brand-900 hover:bg-brand-100 dark:text-brand-100 dark:hover:bg-brand-500/15"
   },
   warning: {
     icon: IconAlertTriangleFilled,

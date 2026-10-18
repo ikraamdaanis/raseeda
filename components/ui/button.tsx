@@ -8,7 +8,7 @@ export const buttonVariants = cva(
   {
     variants: {
       variant: {
-        // The main action, in brand blue on the site and in the editor alike,
+        // The main action, in brand teal on the site and in the editor alike,
         // light or dark, like macOS's default button.
         default: "bg-brand-600 text-white hover:bg-brand-700",
         primary: "bg-brand-600 text-white hover:bg-brand-700",

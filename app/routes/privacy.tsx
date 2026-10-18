@@ -1,4 +1,3 @@
-import interFont from "@fontsource-variable/inter/files/inter-latin-opsz-normal.woff2?url";
 import { createFileRoute } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import {
@@ -20,16 +19,7 @@ export const Route = createFileRoute("/privacy")({
       title: `${APP_NAME} privacy: Your invoices stay on your device`,
       description: `${APP_NAME} keeps your invoices in your browser, on your device, and never uploads them. What is stored, where, and what the site's host can see.`
     }),
-    links: [
-      canonicalLink("/privacy"),
-      {
-        rel: "preload",
-        href: interFont,
-        as: "font",
-        type: "font/woff2",
-        crossOrigin: "anonymous"
-      }
-    ]
+    links: [canonicalLink("/privacy")]
   })
 });
 
@@ -41,7 +31,7 @@ const HEADING = "font-medium tracking-[-0.035em] text-balance";
 const PROSE = cn("text-pretty text-zinc-600", typeClass("body"));
 
 const INLINE_LINK = cn(
-  "text-ink hover:text-ink-blue rounded-sm font-medium underline decoration-zinc-950/20 underline-offset-4",
+  "text-ink hover:text-brand-600 rounded-sm font-medium underline decoration-zinc-950/20 underline-offset-4",
   FOCUS_RING
 );
 
@@ -49,7 +39,7 @@ const INLINE_LINK = cn(
 // data lives, what leaves, what the app never does, and what the host sees.
 function PrivacyPage() {
   return (
-    <div className="home-type selection:bg-brand-100 bg-canvas text-ink isolate min-h-svh font-sans font-features-['cv02','cv03','cv04','cv11'] antialiased">
+    <div className="home-type selection:bg-brand-100 bg-canvas text-ink font-geist isolate min-h-svh antialiased">
       <PageHeader />
       <main className={cn(CONTAINER, "pt-12 pb-16 sm:pt-20 sm:pb-24")}>
         <article className="flex max-w-[64ch] flex-col gap-12">

@@ -32,16 +32,6 @@
   --font-libre-baskerville: "Libre Baskerville Variable", serif;
   --font-display: "Playfair Display Variable", serif;
 
-  --brand-top: oklch(0.677 0.17 263.89);
-  --brand-bottom: oklch(0.419 0.152 257.57);
-  --brand-top-hover: oklch(0.603 0.218 257.42);
-  --brand-bottom-hover: oklch(0.322 0.117 257.5);
-  --brand-gradient: linear-gradient(
-    180deg,
-    var(--brand-top) 0%,
-    var(--brand-bottom) 100%
-  );
-
   --radius-surface: 3px;
   --radius-control: 4px;
 
@@ -64,27 +54,29 @@
   --color-warning: var(--warning);
   --color-warning-foreground: var(--warning-foreground);
 
-  --color-brand-50: oklch(0.957 0.02 277);
-  --color-brand-100: oklch(0.925 0.036 273.72);
-  --color-brand-200: oklch(0.839 0.079 271.26);
-  --color-brand-300: oklch(0.762 0.121 268.88);
-  --color-brand-400: oklch(0.677 0.17 263.89);
-  --color-brand-500: oklch(0.603 0.218 257.42);
-  --color-brand-600: oklch(0.505 0.183 257.47);
-  --color-brand-700: oklch(0.419 0.152 257.57);
-  --color-brand-800: oklch(0.322 0.117 257.5);
-  --color-brand-900: oklch(0.235 0.085 257.39);
-  --color-brand-950: oklch(0.18 0.064 257.25);
+  /* The brand: one deep teal. Teal holds about half the chroma blue can at the
+     same lightness in sRGB, so the ramp reads calm; it keeps the lightness steps
+     the blue had, so 600 still carries white text (5.6:1) and 500 still makes a
+     ring that clears 3:1 on the light and the dark editor. */
+  --color-brand-50: oklch(0.975 0.015 185);
+  --color-brand-100: oklch(0.945 0.03 185);
+  --color-brand-200: oklch(0.885 0.055 185);
+  --color-brand-300: oklch(0.8 0.08 185);
+  --color-brand-400: oklch(0.71 0.095 185);
+  --color-brand-500: oklch(0.6 0.095 185);
+  --color-brand-600: oklch(0.505 0.085 185);
+  --color-brand-700: oklch(0.42 0.07 185);
+  --color-brand-800: oklch(0.335 0.056 185);
+  --color-brand-900: oklch(0.255 0.043 185);
+  --color-brand-950: oklch(0.19 0.033 185);
 
-  /* The homepage's warm canvas and its four secondary hues. Blue stays the
+  /* The homepage's warm canvas and its four secondary hues. Teal stays the
      brand's; these mark content. Each hue has a tint for card washes and an
      ink for marks and short text on white (at least 4.5:1). The tints share
      one lightness and a low chroma, leaning warm to sit on the canvas. */
   --color-canvas: oklch(0.99 0.003 85);
-  /* The homepage's text: a warm near-black for copy and a deep, muted blue for
-     the second line of headings and for blue text. */
+  /* The homepage's text: a warm near-black. Brand text there is brand-600. */
   --color-ink: #262823;
-  --color-ink-blue: #2460a8;
   --color-lavender-tint: oklch(0.948 0.02 295);
   --color-lavender-ink: oklch(0.5 0.13 295);
   --color-sage-tint: oklch(0.948 0.026 145);
@@ -283,7 +275,7 @@ code {
 }
 
 /* The editor's chrome: plain neutral greys with a near-black (light) or
-   near-white (dark) primary, and blue kept for focus rings and switches. The
+   near-white (dark) primary, and the brand teal kept for focus rings and switches. The
    /create route sets data-editor-theme on <html> (its head script before first
    paint, then useEditorTheme), and removes it on the way out, so the homepage
    keeps its own palette. It sits on <html> rather than an editor wrapper
@@ -311,7 +303,7 @@ html[data-editor-theme] [data-paper],
   --accent-foreground: #1c1c1c;
   --border: #eaeaea;
   --input: #e1e1e1;
-  --ring: #3c7eeb;
+  --ring: var(--color-brand-500);
   --desk: #f6f6f6;
   color-scheme: light;
 }
@@ -333,7 +325,7 @@ html[data-editor-theme="dark"] {
   --accent-foreground: #f5f5f5;
   --border: #232323;
   --input: #303030;
-  --ring: #326ccb;
+  --ring: var(--color-brand-500);
   --desk: #121212;
   color-scheme: dark;
 }

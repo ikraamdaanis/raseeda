@@ -15,7 +15,7 @@ export const CONTAINER = "mx-auto max-w-6xl px-6 lg:px-8";
 export const FOCUS_RING =
   "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600";
 
-// The wordmark: the name in Geist, in the homepage's heading blue. The 44px
+// The wordmark: the name in Geist, in the brand teal. The 44px
 // box keeps it a comfortable tap target without changing the type.
 export function Wordmark() {
   return (
@@ -27,7 +27,7 @@ export function Wordmark() {
         FOCUS_RING
       )}
     >
-      <span className="text-ink-blue">{APP_NAME}</span>
+      <span className="text-brand-600">{APP_NAME}</span>
     </Link>
   );
 }
@@ -66,7 +66,7 @@ export function PageHeader() {
         <Link
           to="/create"
           className={cn(
-            "hover:text-ink-blue text-ink relative inline-flex min-h-11 items-center gap-1 rounded-sm px-1 font-medium whitespace-nowrap",
+            "hover:text-brand-600 text-ink relative inline-flex min-h-11 items-center gap-1 rounded-sm px-1 font-medium whitespace-nowrap",
             typeClass("body", "compact"),
             FOCUS_RING
           )}

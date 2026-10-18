@@ -35,15 +35,13 @@ export const Route = createRootRoute({
       },
       {
         name: "theme-color",
-        content: "#005fca"
+        content: "#11746b"
       },
       ...siteMeta()
     ],
     links: [
-      // Geist is the base font on every route, so its latin subset preloads
-      // globally. Route-specific fonts (the homepage's Inter)
-      // preload from their own route's head instead, so other pages don't
-      // download files they never render.
+      // Geist is the font on every route, homepage included, so its latin
+      // subset preloads globally.
       {
         rel: "preload",
         href: geistFont,
