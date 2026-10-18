@@ -15,7 +15,7 @@ export const PDF_RENDERS = {
   // it ships at about twice that rather than the full render scale.
   hero: {
     src: "/home/invoice-hero.webp",
-    alt: `A ${APP_NAME} invoice from Emma Collins Illustration in Brooklyn to Harbor & Pine Co. in Portland, listing editorial illustrations and cover artwork`,
+    alt: `A ${APP_NAME} invoice from Marlow Studio in Brooklyn to Fernhill Press in Portland, listing editorial illustrations and cover artwork`,
     crop: { x: 0, y: 0, width: 793.7, height: 1122.5 },
     width: 1600
   },

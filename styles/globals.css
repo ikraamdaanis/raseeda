@@ -2,10 +2,12 @@
 
 @import "tw-animate-css";
 @import "./fonts.css";
+@import "./home-demos.css";
 @import "@fontsource-variable/bricolage-grotesque";
 @import "@fontsource-variable/playfair-display";
 @import "shadcn/tailwind.css";
 @import "@fontsource-variable/geist-mono";
+@import "@fontsource-variable/schibsted-grotesk";
 @import "@fontsource-variable/jetbrains-mono";
 @import "@fontsource-variable/dm-sans";
 @import "@fontsource-variable/ibm-plex-sans";
@@ -22,6 +24,9 @@
 
 @theme inline {
   --font-geist: "Geist Variable", "Geist Fallback", sans-serif;
+  /* The homepage's face, on trial: slightly condensed, with an editorial
+     edge. The editor pictures on it keep the editor's Geist. */
+  --font-home: "Schibsted Grotesk Variable", sans-serif;
   --font-geist-mono: "Geist Mono Variable", monospace;
   --font-jetbrains-mono: "JetBrains Mono Variable", monospace;
   --font-ibm-plex-mono: "IBM Plex Mono", monospace;
@@ -388,12 +393,188 @@ html[data-editor-theme="dark"] {
   }
 }
 
-/* The hero painting at 64px, inlined so the hero shows its colours on the
-   first paint while the full painting downloads. Generated from the 8K master
-   (blur 0.6px, WebP quality 55). */
-@utility bg-hero-placeholder {
-  background: url("data:image/webp;base64,UklGRugAAABXRUJQVlA4INwAAACQBwCdASpAACQAPsFOoEqnpCMhsBVdUPAYCUAWdnaYqqsm2pDuVaWm1akICGI+YRQR7YE09GhJqBPcsIvwwsKus98GB4AA/usqN6h4zLzdqfcigp3M482rOEXLvA9/imqwm9WEgPQMo8yZG/c1u+fmVNEMgR5GbO5WWx4mGXnvDvBSO9ilV9dMzY5wgxijrxnverHRhxuI8Gv1iXiE9fJ6ZzmNDVE/BcePhpMDpJMNK5kM9onm7355oVZRypqBL5xCg4GBx82VSG2zTuWqWr8xbSTWhMMRarSzgAAA")
-    center / cover no-repeat;
+/* The hero's sky: a teal-leaning blue, picked to sit beside the brand teal,
+   that pales towards the horizon, with a haze
+   low down. The clouds drift across it in their own layer (HeroClouds). Its
+   colour is a hue, chroma and lightness for the top, with the horizon paler
+   and a touch greener. */
+@utility bg-sky {
+  background:
+    radial-gradient(
+      60% 18% at 50% 100%,
+      rgb(255 255 255 / 0.7),
+      transparent 70%
+    ),
+    linear-gradient(
+      to bottom,
+      oklch(
+        var(--sky-lightness, 0.82) var(--sky-chroma, 0.075) var(--sky-hue, 205)
+      ),
+      oklch(
+          calc(var(--sky-lightness, 0.82) + 0.08)
+            calc(var(--sky-chroma, 0.075) * 0.67) calc(var(--sky-hue, 205) - 6)
+        )
+        45%,
+      oklch(
+        min(calc(var(--sky-lightness, 0.82) + 0.15), 0.98)
+          calc(var(--sky-chroma, 0.075) * 0.33) calc(var(--sky-hue, 205) - 13)
+      )
+    );
+}
+
+/* The closing panel: the hero's sky gone pale (bg-glow), with a glow of it
+   rising from the foot and paling to white at the lower corners
+   (bg-glow-dome, on a layer of its own so it can breathe). */
+@utility bg-glow {
+  background: linear-gradient(
+    to bottom,
+    oklch(0.97 0.03 var(--sky-hue, 205)),
+    oklch(0.99 0.01 var(--sky-hue, 205))
+  );
+}
+
+@utility bg-glow-dome {
+  background: radial-gradient(
+    70% 95% at 50% 100%,
+    oklch(0.66 0.13 var(--sky-hue, 205)),
+    oklch(0.8 0.09 var(--sky-hue, 205)) 35%,
+    oklch(0.93 0.04 var(--sky-hue, 205)) 60%,
+    transparent 80%
+  );
+}
+
+/* The glow breathes: in, it sinks towards the foot and pales a little (never
+   to white, the teal stays); out, it rises
+   and deepens again, past its resting height. Scale and opacity only, from
+   the bottom edge, so the compositor does it without repainting.
+   easeInOutSine (easings.net) gives the slow turn at each end that reads as a
+   breath; 4s each way. With reduced motion it holds still at rest. */
+@keyframes glow-breathe {
+  from {
+    transform: scaleY(1.12);
+  }
+
+  to {
+    transform: scaleY(0.62);
+    opacity: 0.8;
+  }
+}
+
+@utility animate-glow-breathe {
+  transform-origin: bottom;
+  animation: glow-breathe 4s cubic-bezier(0.37, 0, 0.63, 1) infinite alternate;
+  will-change: transform, opacity;
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+}
+
+/* A card's demo tile on the homepage: its first hue gone very pale. Two soft
+   blobs of its hues drift over it (DemoTile, demo-drift in home-demos.css). */
+@utility bg-tile {
+  background: oklch(0.975 0.014 var(--tile-hue-a, 205));
+}
+
+/* A fine grid of white dots, shown only where its layer's mask lets it. */
+@utility bg-dot-grid {
+  background: radial-gradient(
+      circle at center,
+      rgb(255 255 255 / 0.7) 1px,
+      transparent 1.5px
+    )
+    0 0 / 22px 22px;
+}
+
+/* Three cloud shapes, each a few overlapping soft puffs. Gradients rather than
+   a blur filter, so a drifting cloud is a plain bitmap the compositor slides
+   along without redrawing. */
+@utility bg-cloud-heap {
+  background:
+    radial-gradient(
+      28% 42% at 30% 58%,
+      rgb(255 255 255 / 0.95),
+      rgb(255 255 255 / 0.55) 45%,
+      transparent 72%
+    ),
+    radial-gradient(
+      26% 50% at 50% 42%,
+      rgb(255 255 255 / 0.95),
+      rgb(255 255 255 / 0.55) 45%,
+      transparent 72%
+    ),
+    radial-gradient(
+      22% 40% at 69% 56%,
+      rgb(255 255 255 / 0.9),
+      rgb(255 255 255 / 0.5) 45%,
+      transparent 72%
+    ),
+    radial-gradient(
+      48% 28% at 50% 74%,
+      rgb(255 255 255 / 0.85),
+      rgb(255 255 255 / 0.4) 50%,
+      transparent 75%
+    );
+}
+
+@utility bg-cloud-bank {
+  background:
+    radial-gradient(
+      50% 32% at 50% 58%,
+      rgb(255 255 255 / 0.85),
+      rgb(255 255 255 / 0.4) 50%,
+      transparent 75%
+    ),
+    radial-gradient(
+      28% 30% at 30% 48%,
+      rgb(255 255 255 / 0.8),
+      rgb(255 255 255 / 0.4) 45%,
+      transparent 72%
+    ),
+    radial-gradient(
+      24% 26% at 74% 50%,
+      rgb(255 255 255 / 0.75),
+      rgb(255 255 255 / 0.35) 45%,
+      transparent 72%
+    );
+}
+
+@utility bg-cloud-puff {
+  background:
+    radial-gradient(
+      34% 46% at 38% 58%,
+      rgb(255 255 255 / 0.95),
+      rgb(255 255 255 / 0.5) 45%,
+      transparent 72%
+    ),
+    radial-gradient(
+      30% 50% at 62% 46%,
+      rgb(255 255 255 / 0.9),
+      rgb(255 255 255 / 0.5) 45%,
+      transparent 72%
+    );
+}
+
+/* A cloud enters past the sky's left edge, crosses it and leaves past the
+   right one, then starts over. Its layer is the size container, so 100cqw is
+   the sky's width at any viewport. */
+@keyframes cloud-drift {
+  from {
+    translate: -100% 0;
+  }
+
+  to {
+    translate: 100cqw 0;
+  }
+}
+
+@utility animate-cloud-drift {
+  animation: cloud-drift var(--duration) linear var(--delay) infinite;
+  will-change: translate;
+
+  @media (prefers-reduced-motion: reduce) {
+    animation-play-state: paused;
+  }
 }
 
 /* A strong ease-out for entrances: fast off the mark, long soft landing. */
@@ -405,22 +586,13 @@ html[data-editor-theme="dark"] {
    script after the painting (HERO_ENTRANCE_SCRIPT) marks the hero with
    data-entrance, so coming back to it through a link doesn't replay it. The
    copy comes into focus line by line, fading in from a blur; the editor window
-   fades in after it; the painting fades in over its placeholder while settling
-   from a slight zoom. CSS animations run off the main thread, so they stay
-   smooth while the page is still loading. A painting that isn't loaded yet
-   (data-loading) waits hidden and plays its entrance when it arrives. With
-   reduced motion everything only fades. */
+   fades in after it. CSS animations run off the main thread, so they stay
+   smooth while the page is still loading. With reduced motion everything only
+   fades. */
 @keyframes hero-focus {
   from {
     opacity: 0;
     filter: blur(8px);
-  }
-}
-
-@keyframes hero-settle {
-  from {
-    opacity: 0;
-    transform: scale(1.04);
   }
 }
 
@@ -440,18 +612,8 @@ html[data-editor-theme="dark"] {
     animation: hero-fade 1000ms var(--ease-out-strong) both;
   }
 
-  [data-entrance] .hero-settle {
-    animation: hero-settle 1400ms var(--ease-out-strong) both;
-  }
-
-  [data-entrance] .hero-settle[data-loading] {
-    animation: none;
-    opacity: 0;
-  }
-
   @media (prefers-reduced-motion: reduce) {
-    [data-entrance] .hero-focus,
-    [data-entrance] .hero-settle {
+    [data-entrance] .hero-focus {
       animation-name: hero-fade;
     }
   }

@@ -3,13 +3,9 @@ import {
   IconArrowRight,
   IconArrowUpRight,
   IconCheck,
-  IconCloudOff,
-  IconCode,
-  IconEyeOff,
-  IconFileTypePdf,
+  IconCircleCheckFilled,
   IconMenu2,
   IconPlus,
-  IconUserOff,
   IconX
 } from "@tabler/icons-react";
 import { createFileRoute, Link, ScriptOnce } from "@tanstack/react-router";
@@ -17,15 +13,26 @@ import type { ComponentType, CSSProperties, ReactNode } from "react";
 import { useEffect, useRef, useState } from "react";
 import {
   EditorWindow,
-  getTitleStyle,
   PAGE_HEIGHT,
   PAGE_WIDTH,
   ScaledFrame
 } from "~/components/home/editor-preview";
 import {
-  CLOSING_RENDER,
+  CurrencyDemo,
+  DemoTile,
+  DetailsDemo,
+  DownloadDemo,
+  FEATURE_PHONE_SCENE,
+  FEATURE_SCENE,
+  FontDemo,
+  PaymentDemo,
+  SavedDemo,
+  STEP_SCENE,
+  TILE_HUES,
+  TotalsDemo
+} from "~/components/home/feature-demos";
+import {
   HERO_INVOICE_NUMBER,
-  PDF_RENDER_SCALE,
   PDF_RENDERS
 } from "~/components/home/pdf-renders";
 import { Picture, toAvif } from "~/components/home/picture";
@@ -37,19 +44,16 @@ import {
   Wordmark
 } from "~/components/home/site-chrome";
 import { APP_NAME } from "~/consts/app";
-import { formatCurrencyWithCode } from "~/consts/currencies";
-import { getInvoiceFontDefinition } from "~/consts/invoice-fonts";
 import { typeClass } from "~/lib/type-scale";
 import { cn } from "~/lib/utils";
-import type { InvoiceFont } from "~/types";
 import { canonicalLink, siteMeta, SOURCE_URL } from "~/utils/site-meta";
 import { HOME_STRUCTURED_DATA } from "~/utils/structured-data";
 
 export const Route = createFileRoute("/")({
   component: HomePage,
-  // The hero painting and the invoice in its editor window preload too, so
-  // they download alongside the CSS rather than after it; each preload mirrors
-  // one AVIF branch of a <picture>, and a browser without AVIF skips them.
+  // The invoice in the hero's editor window preloads too, so it downloads
+  // alongside the CSS rather than after it; the preload mirrors the AVIF branch
+  // of its <picture>, and a browser without AVIF skips it.
   head: () => ({
     meta: siteMeta({ path: "/" }),
     links: [
@@ -59,24 +63,6 @@ export const Route = createFileRoute("/")({
         as: "image",
         type: "image/avif",
         href: toAvif(PDF_RENDERS.hero.src)
-      },
-      {
-        rel: "preload",
-        as: "image",
-        type: "image/avif",
-        media: "(max-width: 639px)",
-        imageSrcSet: toAvif(HERO_PORTRAIT_SRCSET),
-        imageSizes: "100vw",
-        fetchPriority: "high"
-      },
-      {
-        rel: "preload",
-        as: "image",
-        type: "image/avif",
-        media: "(min-width: 640px)",
-        imageSrcSet: toAvif(HERO_LANDSCAPE_SRCSET),
-        imageSizes: HERO_LANDSCAPE_SIZES,
-        fetchPriority: "high"
       }
     ],
     // JSON-LD is data, never run. Escaping "<" keeps any text in it from
@@ -90,34 +76,32 @@ export const Route = createFileRoute("/")({
   })
 });
 
-// The hero painting's sizes, shared by its <picture> and the head's preloads.
-const HERO_PORTRAIT_SRCSET =
-  "/home/hero-harbour-portrait-900.webp 900w, /home/hero-harbour-portrait-1350.webp 1350w";
-
-const HERO_LANDSCAPE_SRCSET =
-  "/home/hero-harbour-1600.webp 1600w, /home/hero-harbour-2400.webp 2400w, /home/hero-harbour-3200.webp 3200w";
-
-const HERO_LANDSCAPE_SIZES = "(max-width: 1023px) 1960px, max(100vw, 2250px)";
-
-// Runs as the HTML is parsed, straight after the hero painting and before the
-// copy. It marks the hero to play its entrance (globals.css), which only
-// happens when the homepage loads as a page: ScriptOnce writes the script into
-// the server's HTML alone, so coming back through a link shows the hero at
-// rest. The painting usually lands before React hydrates, so the check is made
-// here too: if it isn't loaded yet it holds back its entrance, so the blurred
-// placeholder shows, and plays it once the painting loads.
+// Runs as the HTML is parsed, at the top of the hero. It marks the hero to
+// play its entrance (globals.css), which only happens when the homepage loads
+// as a page: ScriptOnce writes the script into the server's HTML alone, so
+// coming back through a link shows the hero at rest.
 const HERO_ENTRANCE_SCRIPT = `(function () {
   var hero = document.getElementById("hero");
   if (hero) hero.dataset.entrance = "";
-  var painting = document.getElementById("hero-painting");
-  if (!painting || painting.complete) return;
-  painting.dataset.loading = "";
-  function show() {
-    delete painting.dataset.loading;
-  }
-  painting.addEventListener("load", show, { once: true });
-  painting.addEventListener("error", show, { once: true });
 })();`;
+
+// Runs as the HTML is parsed, straight after the clouds, and starts each one
+// at a random point in its crossing, so no two visits open on the same sky.
+// Without it they start where HERO_CLOUDS puts them.
+const CLOUD_PHASE_SCRIPT = `(function () {
+  document.querySelectorAll("[data-cloud]").forEach(function (cloud) {
+    var duration = parseFloat(cloud.style.getPropertyValue("--duration"));
+    cloud.style.setProperty("--delay", -(Math.random() * duration) + "s");
+  });
+})();`;
+
+// The secondary action beside CreateInvoiceLink: the same pill, frosted white
+// over a coloured panel, so it never outweighs the ink one. Like the ink pill,
+// its hover colour eases in and out over 200ms rather than snapping.
+const SOFT_PILL = cn(
+  "text-ink relative inline-flex shrink-0 items-center gap-1.5 rounded-full bg-white/60 px-4 py-2.5 text-base font-medium whitespace-nowrap ring-1 ring-white/80 backdrop-blur-sm transition-colors duration-200 ease-in-out hover:bg-white/85 sm:py-2 sm:text-sm",
+  FOCUS_RING
+);
 
 const TEXT_LINK = cn(
   "inline-flex items-center gap-1 rounded-sm font-medium text-ink hover:text-brand-600",
@@ -143,90 +127,105 @@ const SECTIONS = [
   { href: "#questions", label: "Questions" }
 ];
 
-// The privacy promise in four words, each on a tile of one of the secondary
-// hues. Features get their own section, so they stay out of this strip.
-const FACTS: {
-  label: string;
-  icon: ComponentType<{ className?: string }>;
-  tile: string;
+// The clouds drifting across the hero's sky, left to right. Each crosses at
+// its own pace, the larger (nearer) ones faster, and the paces share no
+// common rhythm, so the sky never visibly repeats. `top` is a percentage of
+// the sky's height and `size` a percentage of its width (half that in rem at
+// least, so phones still get clouds, not specks); `phase` is how far through
+// its crossing a cloud starts.
+const HERO_CLOUDS: {
+  shape: "heap" | "bank" | "puff";
+  top: number;
+  size: number;
+  seconds: number;
+  phase: number;
+  opacity: number;
+  isFlipped?: boolean;
 }[] = [
+  { shape: "bank", top: 4, size: 30, seconds: 151, phase: 0.1, opacity: 0.55 },
   {
-    label: "No account",
-    icon: IconUserOff,
-    tile: "bg-blush-tint text-blush-ink"
+    shape: "puff",
+    top: 13,
+    size: 20,
+    seconds: 193,
+    phase: 0.55,
+    opacity: 0.6,
+    isFlipped: true
+  },
+  { shape: "heap", top: 21, size: 38, seconds: 109, phase: 0.3, opacity: 0.75 },
+  {
+    shape: "puff",
+    top: 31,
+    size: 16,
+    seconds: 211,
+    phase: 0.85,
+    opacity: 0.5,
+    isFlipped: true
   },
   {
-    label: "No uploads",
-    icon: IconCloudOff,
-    tile: "bg-sage-tint text-sage-ink"
+    shape: "puff",
+    top: 34,
+    size: 24,
+    seconds: 167,
+    phase: 0.62,
+    opacity: 0.65
   },
   {
-    label: "No trackers",
-    icon: IconEyeOff,
-    tile: "bg-butter-tint text-butter-ink"
+    shape: "heap",
+    top: 40,
+    size: 44,
+    seconds: 97,
+    phase: 0.72,
+    opacity: 0.85,
+    isFlipped: true
   },
-  {
-    label: "Open source",
-    icon: IconCode,
-    tile: "bg-lavender-tint text-lavender-ink"
-  }
+  { shape: "bank", top: 49, size: 34, seconds: 131, phase: 0.05, opacity: 0.7 },
+  { shape: "heap", top: 55, size: 40, seconds: 89, phase: 0.42, opacity: 0.9 }
 ];
 
-// Paper lifted off a feature card's wash.
-const PAPER_SHADOW =
-  "shadow-[0_4px_16px_-6px_rgb(0_0_0/0.12)] outline-1 -outline-offset-1 outline-zinc-950/5";
-
-// The secondary hues' washes: a pale painting in each hue, over its flat tint
-// so the panel already has its colour while the painting loads.
-// Each painting comes at 600px and 1200px wide; phones and the step cards
-// take the small one.
-const WASHES = {
-  lavender: { tint: "bg-lavender-tint", name: "wash-lavender" },
-  sage: { tint: "bg-sage-tint", name: "wash-sage" },
-  butter: { tint: "bg-butter-tint", name: "wash-butter" },
-  blush: { tint: "bg-blush-tint", name: "wash-blush" }
+const CLOUD_SHAPES = {
+  heap: "bg-cloud-heap aspect-5/2",
+  bank: "bg-cloud-bank aspect-4/1",
+  puff: "bg-cloud-puff aspect-2/1"
 };
 
-// Each feature shows a fragment of a real invoice rather than an icon, on a
-// pale wash of its own colour. Teal belongs to the app and its controls, so
-// the features take the secondary hues, all at the same lightness. A specimen
-// that is a crop of a PDF page runs off the card where it was cut, so only the
-// paper's edge shows; the others sit on a slip of paper.
+// Each feature shows the editor doing it, a short loop on a pale tile, rather
+// than an icon. The demos are built from the editor's own pieces
+// (components/home/feature-demos.tsx).
 const FEATURES: {
   title: string;
   description: string;
-  specimen: ReactNode;
-  hue: keyof typeof WASHES;
-  isPageCrop?: boolean;
+  demo: ComponentType<{ width: number; height: number }>;
+  hues: [number, number];
+  isBleeding?: boolean;
 }[] = [
   {
     title: "Your logo, your type",
     description:
       "Upload your logo and set the whole invoice in any of ten fonts, at three sizes.",
-    specimen: <TypeSpecimen />,
-    hue: "lavender"
+    demo: FontDemo,
+    hues: [TILE_HUES.lavender, TILE_HUES.blush],
+    isBleeding: true
   },
   {
     title: "Any currency",
     description:
       "Choose the currency for each invoice, with custom symbols when you need them.",
-    specimen: <CurrencySpecimen />,
-    hue: "sage"
+    demo: CurrencyDemo,
+    hues: [TILE_HUES.sage, TILE_HUES.butter]
   },
   {
     title: "Tax, fees and discounts",
     description: `Add VAT or sales tax, fees, and a fixed or percentage discount. ${APP_NAME} does the sums, taxing the amount after any discount.`,
-    specimen: <TotalsSpecimen />,
-    hue: "butter",
-    isPageCrop: true
+    demo: TotalsDemo,
+    hues: [TILE_HUES.butter, TILE_HUES.blush]
   },
   {
     title: "Payment details clients can use",
     description:
       "Bank name, account and routing numbers, IBAN, BIC / SWIFT and sort code, laid out so your client can pay without asking.",
-    specimen: <PaymentSpecimen />,
-    hue: "blush",
-    isPageCrop: true
+    demo: PaymentDemo,
+    hues: [TILE_HUES.sky, TILE_HUES.sage]
   }
 ];
 
@@ -354,7 +353,7 @@ function useStorageBlocked() {
 
 function HomePage() {
   return (
-    <div className="home-type selection:bg-brand-100 bg-canvas text-ink font-geist isolate min-h-svh antialiased">
+    <div className="home-type selection:bg-brand-100 bg-canvas text-ink font-home isolate min-h-svh antialiased">
       <a
         href="#main"
         className={cn(
@@ -381,7 +380,7 @@ function HomePage() {
 
 function SiteHeader() {
   return (
-    <header className="relative z-10">
+    <header className="relative z-10 lg:pt-5">
       <div className={cn(CONTAINER, "flex h-16 items-center gap-4")}>
         <div className="flex flex-1 items-center">
           <Wordmark />
@@ -472,7 +471,7 @@ function PhoneMenu() {
             href={section.href}
             onClick={() => setIsOpen(false)}
             className={cn(
-              "hover:text-ink rounded-lg px-3 py-3 text-zinc-700 hover:bg-zinc-100",
+              "hover:text-ink rounded-lg px-3 py-3 text-zinc-700 transition-colors duration-200 ease-in-out hover:bg-zinc-100",
               CONTROL_TEXT,
               FOCUS_RING
             )}
@@ -540,88 +539,60 @@ function SectionHeading({
   );
 }
 
-// The hero is one painting, the full width of the viewport, from behind the
-// header (the section pulls up under it) to the editor window's cut. The copy
-// sits centred on its sky, over a fade to the canvas colour that keeps the
-// nav and headline legible, and the window rises from the painting's foot.
-// The painting is cut from an 8K master in three widths, up to 3200px: on a
-// 2x screen a 4096px cut looked no different and weighed twice as much.
-// Covering a hero taller than 16:9 draws it wider than the viewport (about
-// 1960px by `lg`, 2250px from there), hence the sizes. Phones get a 9:16
-// centre crop, since they only ever show its middle. It decodes in step with
-// the page (no decoding="async"), so a reload with the file cached paints it
-// in the first frame instead of flashing the placeholder for a frame or two.
-// Its entrance waits for it: HERO_ENTRANCE_SCRIPT holds it back until it loads.
-// The copy comes into focus line by line, 80ms apart, then the editor window
-// fades in.
+// The hero is a sky from behind the header (the section pulls up under it) to
+// the editor window's cut: inset from the viewport with rounded corners from
+// `lg`, and running to the screen's edges below it. The copy sits centred on
+// it and the window rises from its foot. The copy comes into focus line by
+// line, 80ms apart, then the editor window fades in. On phones the copy and
+// buttons sit on the left, in line with the editor window's crop below them;
+// from `sm` they are centred over the whole window.
 function Hero() {
   return (
-    <section id="hero" suppressHydrationWarning className="-mt-16">
-      <div className="bg-hero-placeholder relative isolate overflow-hidden pt-16">
-        <picture>
-          <source
-            type="image/avif"
-            media="(max-width: 639px)"
-            srcSet={toAvif(HERO_PORTRAIT_SRCSET)}
-            sizes="100vw"
-            width={1350}
-            height={2400}
-          />
-          <source
-            media="(max-width: 639px)"
-            srcSet={HERO_PORTRAIT_SRCSET}
-            sizes="100vw"
-            width={1350}
-            height={2400}
-          />
-          <source
-            type="image/avif"
-            srcSet={toAvif(HERO_LANDSCAPE_SRCSET)}
-            sizes={HERO_LANDSCAPE_SIZES}
-          />
-          <img
-            id="hero-painting"
-            src="/home/hero-harbour-2400.webp"
-            srcSet={HERO_LANDSCAPE_SRCSET}
-            sizes={HERO_LANDSCAPE_SIZES}
-            alt=""
-            width={3200}
-            height={1800}
-            fetchPriority="high"
-            suppressHydrationWarning
-            className="hero-settle absolute inset-0 -z-10 size-full object-cover"
-          />
-        </picture>
-        <ScriptOnce>{HERO_ENTRANCE_SCRIPT}</ScriptOnce>
-        <div
-          aria-hidden="true"
-          className="from-canvas/60 via-canvas/25 absolute inset-x-0 top-0 -z-10 h-1/2 bg-linear-to-b to-transparent"
-        />
+    <section
+      id="hero"
+      suppressHydrationWarning
+      className="-mt-16 lg:-mt-21 lg:p-3"
+    >
+      <ScriptOnce>{HERO_ENTRANCE_SCRIPT}</ScriptOnce>
+      <div className="bg-sky relative isolate overflow-hidden pt-16 lg:rounded-[2rem] lg:pt-21">
+        <HeroClouds />
         <div
           className={cn(
             CONTAINER,
-            "flex flex-col items-center gap-10 pt-16 text-center sm:pt-24"
+            "flex flex-col items-start gap-8 pt-14 sm:items-center sm:pt-20 sm:text-center"
           )}
         >
-          <div className="flex flex-col items-center gap-6">
+          <div className="flex flex-col items-start gap-5 sm:items-center">
             <h1 className={cn(HEADING, typeClass("display"))}>
               <span className="hero-focus block">Send the invoice.</span>
-              <span className="hero-focus text-brand-600 block [animation-delay:80ms]">
+              <span className="hero-focus block [animation-delay:80ms]">
                 Keep everything else.
               </span>
             </h1>
             <p className="hero-focus text-ink/75 max-w-[48ch] text-lg/7 text-pretty [animation-delay:160ms]">
-              A free invoice generator in your browser.{" "}
-              <br className="max-sm:hidden" />
-              No account, and your details never leave your device.
+              Free and private.{" "}
+              <a
+                href={SOURCE_URL}
+                aria-label="Open source on GitHub"
+                className={cn(
+                  "group text-ink inline-flex items-center gap-0.5 rounded-sm whitespace-nowrap",
+                  FOCUS_RING
+                )}
+              >
+                <span className="border-ink/40 group-hover:border-ink flex items-center border-b border-dotted">
+                  <GithubMark />
+                  pen source
+                </span>
+                <IconArrowUpRight
+                  className="size-4 shrink-0"
+                  aria-hidden="true"
+                />
+              </a>
             </p>
           </div>
-          <div className="hero-focus flex flex-wrap items-center justify-center gap-x-6 gap-y-3 [animation-delay:240ms]">
+          <div className="hero-focus flex flex-wrap items-center gap-3 [animation-delay:240ms] sm:justify-center">
             <CreateInvoiceLink />
-            <a
-              href="#how-it-works"
-              className={cn(TEXT_LINK, "py-2.5 text-base sm:py-2 sm:text-sm")}
-            >
+            <a href="#how-it-works" className={SOFT_PILL}>
               See how it works
             </a>
           </div>
@@ -630,45 +601,73 @@ function Hero() {
       </div>
       <div className={CONTAINER}>
         <StorageBlockedNote />
-        <ul className="grid grid-cols-2 gap-x-6 gap-y-4 border-b border-zinc-950/10 py-8 lg:grid-cols-4">
-          {FACTS.map(fact => (
-            <li
-              key={fact.label}
-              className={cn(
-                "flex items-center gap-3 font-medium text-zinc-700",
-                CONTROL_TEXT
-              )}
-            >
-              <span
-                aria-hidden="true"
-                className={cn(
-                  "flex size-8 shrink-0 items-center justify-center rounded-lg",
-                  fact.tile
-                )}
-              >
-                <fact.icon className="size-4" />
-              </span>
-              {fact.label}
-            </li>
-          ))}
-        </ul>
       </div>
     </section>
   );
 }
 
+// GitHub's mark, standing in for the O of "Open source": round, a little
+// under the cap height so it sits on the line like the letter would.
+function GithubMark() {
+  return (
+    <svg
+      viewBox="0 0 98 96"
+      aria-hidden="true"
+      className="mr-px size-[0.78em] shrink-0 fill-current"
+    >
+      <path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M48.854 0C21.839 0 0 22 0 49.217c0 21.756 13.993 40.172 33.405 46.69 2.427.49 3.316-1.059 3.316-2.362 0-1.141-.08-5.052-.08-9.127-13.59 2.934-16.42-5.867-16.42-5.867-2.184-5.704-5.42-7.17-5.42-7.17-4.448-3.015.324-3.015.324-3.015 4.934.326 7.523 5.052 7.523 5.052 4.367 7.496 11.404 5.378 14.235 4.074.404-3.178 1.699-5.378 3.074-6.6-10.839-1.141-22.243-5.378-22.243-24.283 0-5.378 1.94-9.778 5.014-13.2-.485-1.222-2.184-6.275.486-13.038 0 0 4.125-1.304 13.426 5.052a46.97 46.97 0 0 1 12.214-1.63c4.125 0 8.33.571 12.213 1.63 9.302-6.356 13.427-5.052 13.427-5.052 2.67 6.763.97 11.816.485 13.038 3.155 3.422 5.015 7.822 5.015 13.2 0 18.905-11.404 23.06-22.324 24.283 1.78 1.548 3.316 4.481 3.316 9.126 0 6.6-.08 11.897-.08 13.526 0 1.304.89 2.853 3.316 2.364 19.412-6.52 33.405-24.935 33.405-46.691C97.707 22 75.788 0 48.854 0z"
+      />
+    </svg>
+  );
+}
+
+// The sky's drifting clouds, behind everything else in the hero. A cloud
+// waits off the left edge (left-0, pulled back its own width by the drift)
+// and the layer clips it until it crosses in.
+function HeroClouds() {
+  return (
+    <div
+      aria-hidden="true"
+      className="@container absolute inset-0 -z-10 overflow-hidden"
+    >
+      {HERO_CLOUDS.map((cloud, index) => (
+        <div
+          key={index}
+          data-cloud
+          suppressHydrationWarning
+          className={cn(
+            "animate-cloud-drift absolute top-(--top) left-0 w-[max(calc(var(--size)*1cqw),calc(var(--size)*0.5rem))]",
+            CLOUD_SHAPES[cloud.shape],
+            cloud.isFlipped && "-scale-x-100"
+          )}
+          style={
+            {
+              "--top": `${cloud.top}%`,
+              "--size": cloud.size,
+              "--duration": `${cloud.seconds}s`,
+              "--delay": `${-cloud.phase * cloud.seconds}s`,
+              opacity: cloud.opacity
+            } as CSSProperties
+          }
+        />
+      ))}
+      <ScriptOnce>{CLOUD_PHASE_SCRIPT}</ScriptOnce>
+    </div>
+  );
+}
+
 /**
- * The editor, shown rather than described: the real editor layout with a real
- * PDF of the invoice on its desk, rising from the foot of the hero's
- * painting. The window keeps to the page's column inside a 17:10 frame; on
- * phones the frame is a fixed 638px of window tall (at the 0.6 zoom), which
- * ends it just under the fourth line item. The frame's min-h-0 holds its
- * height while the window overflows it, and the painting's overflow-hidden
- * makes the cut. The window starts at the frame's top. From `lg` the whole
- * window sits centred in the frame. Below it the window is drawn at a fixed
- * zoom, inset --pad from the frame's left edge, and runs off the viewport's
- * right edge and the frame's foot, so phones and tablets see a readable crop
- * of its top-left corner.
+ * The editor, shown rather than described: the real editor layout, both side
+ * panels open, with a real PDF of the invoice on its desk, in a frosted bezel
+ * that rises from the foot of the sky. From `lg` the whole window's width
+ * sits in the page's column. Below it the window is drawn at a fixed zoom from
+ * its top-left corner and runs off the sky's right edge, so phones and
+ * tablets see a readable crop of the invoices panel and the page. The bezel
+ * and window run off the sky's foot, where they are cut, so only their top
+ * corners are rounded.
  */
 function HeroVisual() {
   return (
@@ -676,40 +675,30 @@ function HeroVisual() {
       aria-label={`The ${APP_NAME} editor with a sample invoice`}
       className={cn(
         CONTAINER,
-        "hero-fade relative mt-14 h-[calc(638px*0.6)] min-h-0 [animation-delay:320ms] sm:mt-16 sm:aspect-17/10 sm:h-auto"
+        "hero-fade mt-12 [animation-delay:320ms] sm:mt-16"
       )}
     >
-      <div className="pl-(--pad) [--pad:--spacing(5)] sm:[--pad:--spacing(10)] lg:px-(--pad) lg:[--pad:--spacing(16)]">
-        <div className="w-[calc(1024px*var(--zoom))] [--zoom:0.6] sm:[--zoom:0.7] md:[--zoom:0.92] lg:hidden">
-          <ScaledFrame
-            {...HERO_WINDOW}
-            fill
-            className="rounded-tl-xl shadow-2xl"
-          >
+      <div className="w-max rounded-t-(--bezel-radius) bg-white/45 p-(--pad) pb-0 shadow-[0_24px_64px_-16px_rgb(16_60_90/0.25)] ring-1 ring-white/70 [--bezel-radius:--spacing(4)] [--pad:--spacing(1.5)] max-lg:rounded-tr-none max-lg:pr-0 sm:[--bezel-radius:--spacing(5)] sm:[--pad:--spacing(2)] lg:w-full">
+        <div className="w-[calc(1440px*var(--zoom))] overflow-hidden rounded-t-[calc(var(--bezel-radius)-var(--pad))] [--zoom:0.55] max-lg:rounded-tr-none sm:[--zoom:0.65] md:[--zoom:0.75] lg:w-auto">
+          <ScaledFrame {...HERO_FRAME} fill>
             <EditorWindow documentName={HERO_INVOICE_NUMBER} {...HERO_WINDOW}>
               <PdfPaper render={PDF_RENDERS.hero} />
             </EditorWindow>
           </ScaledFrame>
         </div>
-        <ScaledFrame
-          {...HERO_WINDOW}
-          className="rounded-t-xl shadow-2xl max-lg:hidden"
-        >
-          <EditorWindow documentName={HERO_INVOICE_NUMBER} {...HERO_WINDOW}>
-            <PdfPaper render={PDF_RENDERS.hero} />
-          </EditorWindow>
-        </ScaledFrame>
       </div>
     </figure>
   );
 }
 
-// The hero's editor window, drawn taller than any frame shows so the frame's
-// foot always cuts it: the tallest need is a phone's 638px of window. Each
-// crop zoom is the smallest that still reaches the frame's right edge at the
-// top of its range (571px of window at 639px, 679px at 767px, 935px at
-// 1023px).
-const HERO_WINDOW = { width: 1024, height: 1240 };
+// The hero's editor window, at a laptop's width so the page fits between the
+// two panels (256px + 288px + the 858px desk), drawn taller than the frame
+// shows so the sky's foot always cuts it.
+const HERO_WINDOW = { width: 1440, height: 1100 };
+
+// The part of the window the hero shows: its full width, down to the
+// invoice's totals.
+const HERO_FRAME = { width: 1440, height: 860 };
 
 /**
  * A real PDF in the editor canvas's place: a screenshot of the top of
@@ -739,7 +728,6 @@ function PdfPaper({ render }: { render: typeof PDF_RENDERS.hero }) {
   );
 }
 
-const EDITOR_FONTS: InvoiceFont[] = ["geist", "lora", "jetbrains-mono"];
 
 // A browser that refuses storage gets told what that means and how to fix it.
 function StorageBlockedNote() {
@@ -761,41 +749,35 @@ function StorageBlockedNote() {
 }
 
 // From a blank page to a sent invoice, in the order a visitor does it. Each
-// step shows a slip of the app doing it, on a wash of one of the secondary
-// hues, like the feature cards further down.
+// step plays a short loop of the editor doing it, like the feature cards
+// further down.
 const STEPS: {
   title: string;
   description: string;
-  specimen: ReactNode;
-  hue: keyof typeof WASHES;
+  demo: ComponentType<{ width: number; height: number }>;
+  hues: [number, number];
 }[] = [
   {
     title: "Add the details",
     description: `Your details, your client and the line items. ${APP_NAME} does the sums as you type.`,
-    specimen: <DetailsSpecimen />,
-    hue: "butter"
+    demo: DetailsDemo,
+    hues: [TILE_HUES.butter, TILE_HUES.sky]
   },
   {
     title: "Send the PDF",
     description:
       "Download an A4 PDF or print it, then send it to your client however you like.",
-    specimen: <PdfSpecimen />,
-    hue: "blush"
+    demo: DownloadDemo,
+    hues: [TILE_HUES.blush, TILE_HUES.lavender]
   },
   {
     title: "Keep a copy",
     description:
       "Invoices save in this browser, so a repeat client’s next invoice starts from the last one.",
-    specimen: <SavedSpecimen />,
-    hue: "sage"
+    demo: SavedDemo,
+    hues: [TILE_HUES.sage, TILE_HUES.sky]
   }
 ];
-
-// The slip each step's specimen sits on: the app's own surface, in Geist.
-const SLIP = cn(
-  PAPER_SHADOW,
-  "font-geist flex w-full max-w-64 flex-col rounded-lg bg-white p-3 text-xs text-zinc-950"
-);
 
 function HowItWorks() {
   return (
@@ -805,26 +787,16 @@ function HowItWorks() {
           title="How it works."
           description={`${APP_NAME} is a private invoice generator: no sign-up and nothing to install. Open the editor and start typing.`}
         />
-        <ol className="mt-12 grid gap-6 sm:mt-16 md:grid-cols-3">
+        <ol className="mt-12 grid gap-x-6 gap-y-12 sm:mt-16 md:grid-cols-3">
           {STEPS.map((step, index) => (
-            <li
-              key={step.title}
-              className="flex flex-col overflow-hidden rounded-xl bg-white ring-1 ring-zinc-950/10"
-            >
-              <div
-                aria-hidden="true"
-                className={cn(
-                  "relative isolate flex h-48 items-center justify-center p-6",
-                  WASHES[step.hue].tint
-                )}
-              >
-                <Wash
-                  hue={step.hue}
-                  sizes="(min-width: 1152px) 370px, (min-width: 768px) 33vw, 100vw"
-                />
-                {step.specimen}
-              </div>
-              <div className="flex flex-col gap-2 p-6">
+            <li key={step.title} className="flex flex-col gap-6">
+              <DemoTile
+                scene={step.demo}
+                hues={step.hues}
+                size={STEP_SCENE}
+                className="aspect-4/3"
+              />
+              <div className="flex flex-col gap-2">
                 <h3
                   className={cn(
                     typeClass("subtitle"),
@@ -852,98 +824,6 @@ function HowItWorks() {
   );
 }
 
-// The page's pictures below the hero load straight away at low priority, not
-// lazily: lazy loading fetches an image only as it nears the viewport (late
-// in Safari), so it popped in while scrolling. They total about 450 KB, and
-// low priority keeps them behind the hero.
-// `sizes` is the card's width: a third of the column for the steps, half for
-// the features, and the full width below `md`.
-function Wash({ hue, sizes }: { hue: keyof typeof WASHES; sizes: string }) {
-  const { name } = WASHES[hue];
-
-  return (
-    <Picture
-      src={`/home/${name}.webp`}
-      srcSet={`/home/${name}-600.webp 600w, /home/${name}.webp 1200w`}
-      sizes={sizes}
-      alt=""
-      width={1200}
-      height={900}
-      fetchPriority="low"
-      className="absolute inset-0 -z-10 size-full object-cover"
-    />
-  );
-}
-
-// A client typed in, and the lines summing as they go.
-function DetailsSpecimen() {
-  return (
-    <div className={cn(SLIP, "gap-2")}>
-      <span className="text-zinc-500">Bill to</span>
-      <span className="ring-brand-600 rounded-md px-2 py-1.5 font-medium ring-2">
-        Harbor & Pine Co.
-        <span className="bg-brand-600 ml-px inline-block h-3.5 w-px translate-y-0.5" />
-      </span>
-      <div className="mt-1 flex flex-col gap-1.5 border-t border-zinc-950/10 pt-2.5 tabular-nums">
-        <span className="flex justify-between gap-4">
-          Editorial illustrations
-          <span>$1,800.00</span>
-        </span>
-        <span className="flex justify-between gap-4">
-          Cover artwork
-          <span>$950.00</span>
-        </span>
-        <span className="flex justify-between gap-4 font-semibold">
-          Total
-          <span>$2,750.00 USD</span>
-        </span>
-      </div>
-    </div>
-  );
-}
-
-// The finished file, ready to download.
-function PdfSpecimen() {
-  return (
-    <div className={cn(SLIP, "gap-3")}>
-      <div className="flex items-center gap-3">
-        <span className="bg-blush-tint text-blush-ink flex size-9 shrink-0 items-center justify-center rounded-md">
-          <IconFileTypePdf className="size-5" />
-        </span>
-        <span className="flex min-w-0 flex-col">
-          <span className="truncate font-medium">INV-0043.pdf</span>
-          <span className="text-zinc-500">A4, 1 page</span>
-        </span>
-      </div>
-      <span className="bg-brand-600 rounded-md py-1.5 text-center font-medium text-white">
-        Download
-      </span>
-    </div>
-  );
-}
-
-// Past invoices waiting in the browser, a repeat client among them.
-function SavedSpecimen() {
-  return (
-    <div className={cn(SLIP, "gap-1")}>
-      <span className="pb-1 text-zinc-500">Saved in this browser</span>
-      {[
-        { number: "INV-0043", client: "Harbor & Pine Co." },
-        { number: "INV-0042", client: "Fieldnote Press" },
-        { number: "INV-0041", client: "Harbor & Pine Co." }
-      ].map(saved => (
-        <span
-          key={saved.number}
-          className="flex items-center justify-between gap-3 rounded-md px-2 py-1.5 odd:bg-zinc-50"
-        >
-          <span className="font-medium tabular-nums">{saved.number}</span>
-          <span className="truncate text-zinc-500">{saved.client}</span>
-        </span>
-      ))}
-    </div>
-  );
-}
-
 function Features() {
   return (
     <section id="features" className="py-16 sm:py-20">
@@ -954,35 +834,15 @@ function Features() {
         />
         <ul className="mt-12 grid gap-x-6 gap-y-12 sm:mt-16 md:grid-cols-2">
           {FEATURES.map(feature => (
-            <li
-              key={feature.title}
-              className="row-span-2 grid grid-rows-subgrid gap-6"
-            >
-              <div
-                aria-hidden="true"
-                className={cn(
-                  "relative isolate flex items-center overflow-hidden rounded-xl p-(--pad) ring-1 ring-zinc-950/5 [--pad:--spacing(6)] sm:[--pad:--spacing(8)]",
-                  WASHES[feature.hue].tint,
-                  !feature.isPageCrop && "min-h-48 max-sm:[--pad:--spacing(4)]"
-                )}
-              >
-                <Wash
-                  hue={feature.hue}
-                  sizes="(min-width: 1152px) 560px, (min-width: 768px) 50vw, 100vw"
-                />
-                {feature.isPageCrop ? (
-                  feature.specimen
-                ) : (
-                  <div
-                    className={cn(
-                      PAPER_SHADOW,
-                      "w-full rounded-lg bg-white p-4 sm:p-6"
-                    )}
-                  >
-                    {feature.specimen}
-                  </div>
-                )}
-              </div>
+            <li key={feature.title} className="flex flex-col gap-6">
+              <DemoTile
+                scene={feature.demo}
+                hues={feature.hues}
+                size={FEATURE_SCENE}
+                phoneSize={FEATURE_PHONE_SCENE}
+                isBleeding={feature.isBleeding}
+                className="sm:aspect-16/10"
+              />
               <div className="flex flex-col gap-2">
                 <h3 className={cn(typeClass("subtitle"), "font-medium")}>
                   {feature.title}
@@ -1018,91 +878,6 @@ function Features() {
         </div>
       </div>
     </section>
-  );
-}
-
-// The invoice title in three of the editor's faces, set as the editor sets it.
-// The size follows the card's width so three titles fit a phone's paper slip:
-// the monospace "Invoice" is 4.2em wide, so three plus two gaps need 12.6em.
-function TypeSpecimen() {
-  return (
-    <div className="@container grid w-full grid-cols-3 gap-4">
-      {EDITOR_FONTS.map(specimenFont => (
-        <div key={specimenFont} className="flex flex-col gap-2">
-          <p
-            className="text-[length:min(1.875rem,calc((100cqi-2rem)/12.6))] leading-tight"
-            style={{ ...getTitleStyle(specimenFont), fontSize: undefined }}
-          >
-            Invoice
-          </p>
-          <p className={cn(typeClass("caption"), "text-zinc-500")}>
-            {getInvoiceFontDefinition(specimenFont).name}
-          </p>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-// One total in four currencies, formatted by the editor's own formatter.
-function CurrencySpecimen() {
-  return (
-    <ul className="font-geist flex w-full flex-col gap-2 text-lg font-semibold text-zinc-950 tabular-nums sm:text-xl">
-      {[
-        { symbol: "$", code: "USD" },
-        { symbol: "€", code: "EUR" },
-        { symbol: "£", code: "GBP" },
-        { symbol: "¥", code: "JPY" }
-      ].map(currency => (
-        <li key={currency.code} className="whitespace-nowrap">
-          {formatCurrencyWithCode(2475, currency.symbol, currency.code)}
-        </li>
-      ))}
-    </ul>
-  );
-}
-
-/**
- * A crop of a real PDF, filling its container's width. The two
- * feature crops share an aspect ratio so their cards match.
- */
-function PdfCrop({
-  render,
-  className
-}: {
-  render: (typeof PDF_RENDERS)[keyof typeof PDF_RENDERS];
-  className?: string;
-}) {
-  return (
-    <Picture
-      src={render.src}
-      alt={render.alt}
-      width={Math.round(render.crop.width * PDF_RENDER_SCALE)}
-      height={Math.round(render.crop.height * PDF_RENDER_SCALE)}
-      fetchPriority="low"
-      className={cn("block h-auto w-full max-w-none min-w-0 grow", className)}
-    />
-  );
-}
-
-// A print studio's totals with a 10% discount, New York City's 8.875% sales
-// tax and a delivery fee. Cut from the middle of the page, it runs off the card
-// on every side but the page's right edge.
-function TotalsSpecimen() {
-  return (
-    <PdfCrop
-      render={PDF_RENDERS.totals}
-      className={cn(PAPER_SHADOW, "-my-(--pad) -ml-(--pad) sm:mr-[16%]")}
-    />
-  );
-}
-
-function PaymentSpecimen() {
-  return (
-    <PdfCrop
-      render={PDF_RENDERS.payment}
-      className={cn(PAPER_SHADOW, "-my-(--pad) -mr-(--pad) sm:ml-[16%]")}
-    />
   );
 }
 
@@ -1152,8 +927,8 @@ function Comparison() {
                     // then 12px) so they fit the narrowest columns.
                     "flex items-end justify-center px-0.5 pt-4 pb-3 text-center text-[11px]/4 font-medium text-balance min-[400px]:px-1 min-[400px]:text-xs/4 sm:text-sm/5 md:px-4",
                     index === 0
-                      ? "text-brand-600 bg-brand-50 rounded-t-xl font-semibold"
-                      : "text-zinc-500"
+                      ? "text-brand-700 bg-brand-50 rounded-t-xl"
+                      : "text-zinc-600"
                   )}
                 >
                   <span className="md:hidden">{column.shortLabel}</span>
@@ -1170,7 +945,11 @@ function Comparison() {
                 <tr
                   key={row.label}
                   role="row"
-                  className={cn(COMPARISON_GRID, "border-t border-zinc-950/10")}
+                  className={cn(
+                    COMPARISON_GRID,
+                    "border-t",
+                    rowIndex === 0 ? "border-zinc-950/10" : "border-zinc-950/5"
+                  )}
                 >
                   <th
                     role="rowheader"
@@ -1192,7 +971,10 @@ function Comparison() {
                         cellIndex === 0 && isLastRow && "rounded-b-xl"
                       )}
                     >
-                      <ComparisonCell value={row.cells[cellIndex]} />
+                      <ComparisonCell
+                        value={row.cells[cellIndex]}
+                        isOwnColumn={cellIndex === 0}
+                      />
                     </td>
                   ))}
                 </tr>
@@ -1207,24 +989,37 @@ function Comparison() {
 
 /* eslint-enable jsx-a11y/no-redundant-roles, jsx-a11y/no-interactive-element-to-noninteractive-role */
 
-// Colour carries the answer: sage yes, blush no, butter where tools vary. The
-// shapes differ too, so the table reads without colour.
-function ComparisonCell({ value }: { value: ComparisonValue }) {
+// Only raseeda's column carries colour: a filled brand tick. The other
+// columns answer in greys (an ink tick, a faint cross, "Some" where tools
+// vary), so the eye reads raseeda's column first and nothing reads as a
+// warning. The shapes differ too, so the table reads without colour.
+function ComparisonCell({
+  value,
+  isOwnColumn
+}: {
+  value: ComparisonValue;
+  isOwnColumn: boolean;
+}) {
   if (typeof value === "string") {
     return (
-      <span className={cn(typeClass("caption"), "text-butter-ink font-medium")}>
-        {value}
-      </span>
+      <span className={cn(typeClass("caption"), "text-zinc-600")}>{value}</span>
     );
   }
 
   if (value) {
     return (
       <>
-        <IconCheck
-          className="text-sage-ink mx-auto size-5 shrink-0"
-          aria-hidden="true"
-        />
+        {isOwnColumn ? (
+          <IconCircleCheckFilled
+            className="text-brand-600 mx-auto size-6 shrink-0"
+            aria-hidden="true"
+          />
+        ) : (
+          <IconCheck
+            className="text-ink mx-auto size-5 shrink-0"
+            aria-hidden="true"
+          />
+        )}
         <span className="sr-only">Yes</span>
       </>
     );
@@ -1233,7 +1028,7 @@ function ComparisonCell({ value }: { value: ComparisonValue }) {
   return (
     <>
       <IconX
-        className="text-blush-ink mx-auto size-5 shrink-0"
+        className="mx-auto size-5 shrink-0 text-zinc-400"
         aria-hidden="true"
       />
       <span className="sr-only">No</span>
@@ -1310,48 +1105,53 @@ function Questions() {
 // width, so it always shows the same top share of the page, and the page runs
 // past the box to be cut by the panel's foot: 4:3 shows about half on phones,
 // 16:9 about 40% from `sm`. Like the hero, the copy sits above the panel.
+// The last word before the footer: a panel in the hero's sky colour, inset
+// and rounded like the hero from `lg` and edge to edge below it, with a glow
+// rising from its foot under a grid of dots. The glow breathes slowly in and
+// out (animate-glow-breathe); the dots hold still.
 function Closing() {
   return (
-    <section className="bg-white pt-16 sm:pt-20">
-      <div className={CONTAINER}>
-        <div className="flex flex-col gap-8 xl:flex-row xl:justify-between xl:gap-16">
-          <h2 className={cn(HEADING, typeClass("display"), "max-w-[20ch]")}>
-            <span className="block">Your next invoice</span>
-            <span className="text-brand-600 block">starts here.</span>
-          </h2>
-          <div className="flex flex-col items-start gap-6 xl:justify-end">
-            <p className={cn(BODY_TEXT, "max-w-[48ch]")}>
-              Free, with no account. Opens straight into the editor.
-            </p>
-            <CreateInvoiceLink />
-          </div>
-        </div>
-      </div>
-      <div className="relative isolate mt-12 flex justify-center overflow-hidden bg-blue-100 px-6 pt-12 pb-16 sm:mt-16 sm:pt-16 sm:pb-20">
-        <Picture
-          src="/home/closing-city.webp"
-          srcSet="/home/closing-city-900.webp 900w, /home/closing-city-1200.webp 1200w, /home/closing-city.webp 1792w"
-          sizes="100vw"
-          alt=""
-          width={1792}
-          height={1008}
-          fetchPriority="low"
-          className="absolute inset-0 -z-10 size-full object-cover"
+    <section className="pt-16 sm:pt-24 lg:px-3">
+      <div className="bg-glow relative isolate overflow-hidden lg:rounded-[2rem]">
+        <div
+          aria-hidden="true"
+          className="bg-glow-dome animate-glow-breathe absolute inset-0 -z-10"
         />
         <div
           aria-hidden="true"
-          className="relative aspect-4/3 w-full max-w-md sm:aspect-video sm:max-w-xl lg:max-w-2xl"
+          className="bg-dot-grid absolute inset-0 -z-10 mask-[radial-gradient(70%_90%_at_50%_100%,black,transparent_75%)]"
+        />
+        <div
+          className={cn(
+            CONTAINER,
+            "flex flex-col items-center gap-8 py-24 text-center sm:py-32"
+          )}
         >
-          <Picture
-            src={CLOSING_RENDER.src}
-            alt={CLOSING_RENDER.alt}
-            width={CLOSING_RENDER.width}
-            height={Math.round(
-              (CLOSING_RENDER.width * PAGE_HEIGHT) / PAGE_WIDTH
-            )}
-            fetchPriority="low"
-            className="absolute inset-x-0 top-0 h-auto w-full shadow-[0_12px_32px_-12px_rgb(0_0_0/0.25)] outline-1 -outline-offset-1 outline-zinc-950/5"
-          />
+          <div className="flex flex-col items-center gap-4">
+            <p className={cn("text-brand-700 font-medium", CONTROL_TEXT)}>
+              Nothing to sign up for
+            </p>
+            <h2 className={cn(HEADING, typeClass("display"))}>
+              <span className="block">Your next invoice</span>
+              <span className="block">starts here.</span>
+            </h2>
+          </div>
+          <div className="flex flex-wrap items-center justify-center gap-3">
+            <CreateInvoiceLink />
+            <a
+              href={SOURCE_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={SOFT_PILL}
+            >
+              View the source
+              <IconArrowUpRight
+                className="size-4 shrink-0"
+                aria-hidden="true"
+              />
+              <span className="sr-only"> (opens in a new tab)</span>
+            </a>
+          </div>
         </div>
       </div>
     </section>

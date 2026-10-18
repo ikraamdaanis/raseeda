@@ -25,11 +25,13 @@ import { PDF_FONT_FAMILIES } from "~/utils/register-invoice-pdf-fonts";
 
 const OUTPUT_DIR = join(import.meta.dir, "..", "public");
 
-// The sample businesses' logos: app-icon marks from Untitled UI's free logo
-// set (untitledui.com/logos), free for commercial use without attribution; the
-// companies are fictional. These are 384px PNG masters rasterised from their
-// SVGs, flattened first: the bevel, rim, sheen and shadow effects are stripped
-// and the mark made solid white, as a printed logo would be.
+// The sample businesses' logos, 384px PNG masters; the companies are
+// fictional. Marlow Studio's is a wordmark set in Bricolage Grotesque.
+// Constellation is an app-icon mark from Untitled UI's free logo set
+// (untitledui.com/logos), free for commercial use without attribution,
+// rasterised from its SVG and flattened: the bevel, rim, sheen and shadow
+// effects are stripped and the mark made solid white, as a printed logo
+// would be.
 const LOGO_DIR = join(import.meta.dir, "assets", "logos");
 
 // The page in CSS pixels; pdftoppm renders 72pt to 96px at 96 DPI.
@@ -78,34 +80,28 @@ function sampleInvoice(
   };
 }
 
-// A Brooklyn illustrator's commission for a Portland design shop, with a
-// returning-client discount. The hero shows it inside the editor's window.
+// A Brooklyn illustration studio's commission for a Portland publisher, with
+// a returning-client discount. The hero shows it inside the editor's window.
 const HERO_INVOICE = sampleInvoice({
   number: HERO_INVOICE_NUMBER,
   invoiceDate: "2026-10-05",
   dueDate: "2026-11-04",
   seller: {
     label: "From",
-    content: "Emma Collins Illustration\n214 Bergen Street\nBrooklyn, NY 11217",
+    content: "Marlow Studio LLC\n68 Jay Street, Suite 902\nBrooklyn, NY 11201",
     placeholder: ""
   },
   client: {
     label: "Bill to",
     content:
-      "Harbor & Pine Co.\n1120 NW Couch Street, Suite 400\nPortland, OR 97209",
+      "Fernhill Press\n1306 NW Hoyt Street, Suite 210\nPortland, OR 97209",
     placeholder: ""
   },
-  // Enough rows that the table runs past the hero panel's foot at every
-  // width, which shows down to about 670 page pixels on a phone.
   items: items([
     ["Editorial illustrations", 3, "pcs", 600],
     ["Cover artwork", 1, "pcs", 950],
     ["Spot illustrations", 6, "pcs", 175],
-    ["Concept sketches", 4, "pcs", 120],
-    ["Revisions", 3, "hrs", 85],
-    ["Print and web license", 1, "ea", 400],
-    ["Print-ready files", 1, "ea", 150],
-    ["Social media versions", 1, "ea", 180]
+    ["Print and web license", 1, "ea", 400]
   ]),
   discounts: 10,
   discountType: "percentage",
@@ -549,7 +545,7 @@ try {
   await writeWebp({
     pngPath: await renderPage(directory, "hero", {
       ...HERO_INVOICE,
-      image: join(LOGO_DIR, "magnolia.png")
+      image: join(LOGO_DIR, "marlow.png")
     }),
     ...PDF_RENDERS.hero
   });
