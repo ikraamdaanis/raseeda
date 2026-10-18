@@ -36,10 +36,12 @@ import {
   PDF_RENDERS
 } from "~/components/home/pdf-renders";
 import { Picture, toAvif } from "~/components/home/picture";
+import { RunYourOwnCopy } from "~/components/home/run-your-own-copy";
 import {
   CONTAINER,
   CreateInvoiceLink,
   FOCUS_RING,
+  GithubMark,
   SiteFooter,
   Wordmark
 } from "~/components/home/site-chrome";
@@ -370,6 +372,7 @@ function HomePage() {
         <HowItWorks />
         <Comparison />
         <Features />
+        <OpenSource />
         <Questions />
         <Closing />
       </main>
@@ -603,24 +606,6 @@ function Hero() {
         <StorageBlockedNote />
       </div>
     </section>
-  );
-}
-
-// GitHub's mark, standing in for the O of "Open source": round, a little
-// under the cap height so it sits on the line like the letter would.
-function GithubMark() {
-  return (
-    <svg
-      viewBox="0 0 98 96"
-      aria-hidden="true"
-      className="mr-px size-[0.78em] shrink-0 fill-current"
-    >
-      <path
-        fillRule="evenodd"
-        clipRule="evenodd"
-        d="M48.854 0C21.839 0 0 22 0 49.217c0 21.756 13.993 40.172 33.405 46.69 2.427.49 3.316-1.059 3.316-2.362 0-1.141-.08-5.052-.08-9.127-13.59 2.934-16.42-5.867-16.42-5.867-2.184-5.704-5.42-7.17-5.42-7.17-4.448-3.015.324-3.015.324-3.015 4.934.326 7.523 5.052 7.523 5.052 4.367 7.496 11.404 5.378 14.235 4.074.404-3.178 1.699-5.378 3.074-6.6-10.839-1.141-22.243-5.378-22.243-24.283 0-5.378 1.94-9.778 5.014-13.2-.485-1.222-2.184-6.275.486-13.038 0 0 4.125-1.304 13.426 5.052a46.97 46.97 0 0 1 12.214-1.63c4.125 0 8.33.571 12.213 1.63 9.302-6.356 13.427-5.052 13.427-5.052 2.67 6.763.97 11.816.485 13.038 3.155 3.422 5.015 7.822 5.015 13.2 0 18.905-11.404 23.06-22.324 24.283 1.78 1.548 3.316 4.481 3.316 9.126 0 6.6-.08 11.897-.08 13.526 0 1.304.89 2.853 3.316 2.364 19.412-6.52 33.405-24.935 33.405-46.691C97.707 22 75.788 0 48.854 0z"
-      />
-    </svg>
   );
 }
 
@@ -1033,6 +1018,189 @@ function ComparisonCell({
       />
       <span className="sr-only">No</span>
     </>
+  );
+}
+
+// Each promise on the page beside the code that keeps it: the real lines, with
+// their real line numbers, from the file on GitHub. `highlight` is the line
+// that does the work.
+const PROOFS: {
+  title: string;
+  description: string;
+  path: string;
+  firstLine: number;
+  lines: string[];
+  highlight: number;
+  hues: [number, number];
+}[] = [
+  {
+    title: "The page only talks to its own server",
+    description:
+      "Every page carries this policy, so the browser itself blocks requests to anywhere else, trackers included.",
+    path: "consts/content-security-policy.ts",
+    firstLine: 11,
+    lines: [
+      `  "img-src 'self' data: blob:",`,
+      `  "font-src 'self' data:",`,
+      `  "connect-src 'self' data: blob:",`,
+      `  "worker-src 'self' blob:",`,
+      `  "frame-src 'none'",`
+    ],
+    highlight: 13,
+    hues: [TILE_HUES.sky, TILE_HUES.sage]
+  },
+  {
+    title: "Invoices stay in this browser",
+    description:
+      "They're saved in your browser's own database, on your device. There's no account and no copy on a server.",
+    path: "db/index.ts",
+    firstLine: 177,
+    lines: [
+      "class InvoiceDatabase extends Dexie {",
+      "  templates!: Table<InvoiceTemplate, string>;",
+      "  invoices!: Table<InvoiceDocument, string>;",
+      "  images!: Table<StoredImage, string>;",
+      "  drafts!: Table<InvoiceDraft, string>;"
+    ],
+    highlight: 177,
+    hues: [TILE_HUES.lavender, TILE_HUES.sky]
+  },
+  {
+    title: "Tested on every change",
+    description:
+      "Every change runs a browser test that loads this page and fails if it asks another website for anything.",
+    path: "e2e/home.spec.ts",
+    firstLine: 178,
+    lines: [
+      `    return url.protocol.startsWith("http") && url.origin !== homeOrigin;`,
+      "  });",
+      "",
+      "  expect(requested.length).toBeGreaterThan(0);",
+      "  expect(elsewhere).toEqual([]);"
+    ],
+    highlight: 182,
+    hues: [TILE_HUES.butter, TILE_HUES.blush]
+  }
+];
+
+// The privacy claims beside the lines of code that keep them, on tiles like the
+// feature cards, then how to run a copy.
+function OpenSource() {
+  return (
+    <section id="open-source" className="py-16 sm:py-20">
+      <div className={CONTAINER}>
+        <SectionHeading
+          title="Open source, all of it."
+          description="MIT licensed and public on GitHub. These are the lines that keep your invoices on your device."
+        />
+        <ul className="mt-12 grid gap-x-6 gap-y-12 sm:mt-16 md:grid-cols-3">
+          {PROOFS.map(proof => (
+            <li key={proof.path} className="flex min-w-0 flex-col gap-6">
+              <CodeTile proof={proof} />
+              <div className="flex flex-col gap-2">
+                <h3 className={cn(typeClass("subtitle"), "font-medium")}>
+                  {proof.title}
+                </h3>
+                <p className={BODY_TEXT}>{proof.description}</p>
+              </div>
+            </li>
+          ))}
+        </ul>
+        <RunYourOwnCopy />
+      </div>
+    </section>
+  );
+}
+
+// Words the snippets colour as keywords, and their strings.
+const CODE_TOKEN =
+  /("[^"]*"|`[^`]*`|\b(?:export|const|class|extends|return|new)\b)/;
+
+function CodeLine({ text }: { text: string }) {
+  return text.split(CODE_TOKEN).map((part, index) => {
+    if (!part) return null;
+
+    const isString = /^["`]/.test(part);
+    const isKeyword = !isString && CODE_TOKEN.test(part);
+
+    return (
+      <span
+        key={index}
+        className={cn(
+          isString && "text-brand-700",
+          isKeyword && "text-violet-600"
+        )}
+      >
+        {part}
+      </span>
+    );
+  });
+}
+
+// A file open at the lines that matter, on a tile like the feature cards'. The
+// file runs off the tile's right and bottom edges, where it was cut, and its
+// path links to those lines on GitHub. Phones get a tile only as tall as the
+// lines; from `md` the tiles share the feature cards' 4:3.
+function CodeTile({ proof }: { proof: (typeof PROOFS)[number] }) {
+  const lastLine = proof.firstLine + proof.lines.length - 1;
+
+  return (
+    <div
+      className="bg-tile relative isolate flex min-w-0 flex-col overflow-hidden rounded-2xl pt-6 pl-6 ring-1 ring-zinc-950/5 md:aspect-4/3"
+      style={
+        {
+          "--tile-hue-a": proof.hues[0],
+          "--tile-hue-b": proof.hues[1]
+        } as CSSProperties
+      }
+    >
+      <span
+        aria-hidden="true"
+        className="absolute -top-1/3 -left-1/4 -z-10 aspect-square w-[85%] rounded-full bg-[radial-gradient(closest-side,oklch(0.94_0.035_var(--tile-hue-a)),transparent)]"
+      />
+      <span
+        aria-hidden="true"
+        className="absolute -right-1/4 -bottom-1/3 -z-10 aspect-square w-[80%] rounded-full bg-[radial-gradient(closest-side,oklch(0.95_0.03_var(--tile-hue-b)),transparent)]"
+      />
+      <div className="flex min-h-0 flex-1 flex-col rounded-tl-xl bg-white shadow-[0_8px_24px_-8px_rgb(16_40_60/0.18)] ring-1 ring-zinc-950/5">
+        <a
+          href={`${SOURCE_URL}/blob/main/${proof.path}#L${proof.firstLine}-L${lastLine}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={cn(
+            "font-geist-mono flex items-center gap-1.5 rounded-tl-xl border-b border-zinc-950/5 px-4 py-3 text-xs text-zinc-500 hover:text-zinc-900",
+            FOCUS_RING
+          )}
+        >
+          <span className="truncate">{proof.path}</span>
+          <IconArrowUpRight className="size-3.5 shrink-0" aria-hidden="true" />
+          <span className="sr-only"> (opens in a new tab)</span>
+        </a>
+        <div className="font-geist-mono flex flex-col py-3 text-[0.75rem] leading-6 text-zinc-800">
+          {proof.lines.map((line, index) => {
+            const lineNumber = proof.firstLine + index;
+            const isHighlighted = lineNumber === proof.highlight;
+
+            return (
+              <p
+                key={lineNumber}
+                className={cn(
+                  "flex gap-4 border-l-2 border-transparent pr-4 pl-3 whitespace-pre",
+                  isHighlighted && "border-brand-500 bg-brand-50"
+                )}
+              >
+                <span className="w-7 shrink-0 text-right text-zinc-400 tabular-nums select-none">
+                  {lineNumber}
+                </span>
+                <span>
+                  <CodeLine text={line} />
+                </span>
+              </p>
+            );
+          })}
+        </div>
+      </div>
+    </div>
   );
 }
 
