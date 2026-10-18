@@ -10,9 +10,9 @@ type EditorMode = "edit" | "preview";
 
 type PanelState = { left: boolean; right: boolean };
 
-const PANELS_STORAGE_KEY = "billsend-editor-panels";
+const PANELS_STORAGE_KEY = "editor-panels";
 
-const MODE_STORAGE_KEY = "billsend-editor-mode";
+const MODE_STORAGE_KEY = "editor-mode";
 
 const ALL_CLOSED: PanelState = { left: false, right: false };
 

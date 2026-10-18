@@ -1,8 +1,8 @@
 ---
 version: alpha
-name: billsend
+name: raseeda
 description: >-
-  Design system for billsend, a free, local-first invoice generator that runs
+  Design system for raseeda, a free, local-first invoice generator that runs
   entirely in the browser. The editor is a compact, document-grade tool:
   neutral grayscale chrome, a single blue-violet brand accent, white paper on a
   grey desk, and tight geometry that reads like a precise instrument. The
@@ -281,13 +281,13 @@ components:
     padding: 8px 16px
 ---
 
-# Design System: billsend
+# Design System: raseeda
 
 ## Overview
 
 **Creative North Star: "The Precise Paper Desk"**
 
-billsend is a local-first invoice generator: no accounts, no tracking of
+raseeda is a local-first invoice generator: no accounts, no tracking of
 individuals, all invoice data in the browser's IndexedDB. The interface should
 feel like a precise, trustworthy document tool, closer to a spreadsheet or a
 design canvas than to a consumer landing page. The invoice being edited is the
@@ -300,9 +300,9 @@ controls are compact. The paper itself never changes with the app theme,
 because it is a preview of the PDF that gets downloaded.
 
 The marketing homepage is the one place the system changes world. It is a
-security-printed document, presenting billsend's privacy the way a banknote
+security-printed document, presenting raseeda's privacy the way a banknote
 presents its anti-forgery features: a pale mint safety-paper tint under a fine
-guilloche underprint, intaglio ink in billsend blue, engraved wide capitals in
+guilloche underprint, intaglio ink in raseeda blue, engraved wide capitals in
 Archivo, numbering-machine red kept for serials and live counters, and
 perforations and microprint as its dividers. Invoices are white paper slips
 lying on that tint, and the privacy proof (the browser's own count of requests
@@ -524,7 +524,7 @@ arbitrary `text-[Nrem]` values in feature code (the homepage's display size,
 form label, and microprint sizes are the recorded exceptions). Numbers use
 tabular figures. Homepage copy uses typographic (curly) apostrophes.
 
-Separately, billsend ships an invoice font library (`consts/invoice-fonts.ts`)
+Separately, raseeda ships an invoice font library (`consts/invoice-fonts.ts`)
 that is a user-facing product feature, not app chrome. Users pick from ten
 sans-serif, serif, and monospace faces at three sizes for the rendered invoice;
 the canvas applies the chosen family and tracking to the paper. The homepage

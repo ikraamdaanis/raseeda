@@ -1,7 +1,8 @@
-export const SITE_URL = "https://billsend.io";
-export const SITE_NAME = "billsend";
+import { APP_NAME } from "~/consts/app";
 
-export const SITE_TITLE = "billsend: Free, Private Invoice Generator";
+export const SITE_URL = "https://billsend.io";
+
+export const SITE_TITLE = `${APP_NAME}: Free, Private Invoice Generator`;
 
 export const SITE_DESCRIPTION =
   "Free invoice generator that runs in your browser. Add your details, download a PDF, send it. No account, and your invoices never leave your device.";
@@ -14,8 +15,7 @@ export const MAKER_NAME = "Ikraam";
 
 export const MAKER_URL = "https://github.com/ikraamdaanis";
 
-const SITE_OG_IMAGE_ALT =
-  "billsend: Send the invoice. Keep everything else. Sailing ships on a calm harbour at sunrise.";
+const SITE_OG_IMAGE_ALT = `${APP_NAME}: Send the invoice. Keep everything else. Sailing ships on a calm harbour at sunrise.`;
 
 // The absolute address of a page, the form canonicals and og:url need.
 export function absoluteUrl(path: string) {
@@ -48,7 +48,7 @@ export function siteMeta({
     },
     {
       property: "og:site_name",
-      content: SITE_NAME
+      content: APP_NAME
     },
     {
       property: "og:url",

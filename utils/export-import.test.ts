@@ -1,5 +1,6 @@
 import Dexie from "dexie";
 import { beforeEach, describe, expect, it } from "vitest";
+import { APP_NAME } from "~/consts/app";
 import { CURRENT_EXPORT_VERSION } from "~/consts/export";
 import {
   getAllImages,
@@ -9,7 +10,7 @@ import {
   saveInvoice
 } from "~/db";
 import { invoiceDefault } from "~/stores/invoice-store";
-import type { BillsendExportFile } from "~/types";
+import type { ExportFile } from "~/types";
 import { buildExportData } from "~/utils/export-data";
 import {
   analyzeImport,
@@ -36,7 +37,7 @@ async function resetDb() {
 }
 
 function toFile(value: unknown): File {
-  return new File([JSON.stringify(value)], "billsend-export.json", {
+  return new File([JSON.stringify(value)], "export.json", {
     type: "application/json"
   });
 }
@@ -211,11 +212,11 @@ describe("data backup/restore", () => {
 
   it("coerces an unparseable date on import instead of storing Invalid Date", async () => {
     const nowIso = new Date().toISOString();
-    const parsed: BillsendExportFile = {
+    const parsed: ExportFile = {
       meta: {
         version: CURRENT_EXPORT_VERSION,
         exportedAt: nowIso,
-        appName: "billsend"
+        appName: APP_NAME
       },
       templates: [],
       invoices: [
@@ -239,12 +240,21 @@ describe("data backup/restore", () => {
     expect(Number.isNaN(invoices[0].updatedAt.getTime())).toBe(false);
   });
 
+  it("still imports an export made under the app's former name", async () => {
+    const legacy = buildImageExport("data:image/png;base64,AAAA");
+    legacy.meta = { ...legacy.meta, appName: "billsend" };
+
+    const parsed = await parseExportFile(toFile(legacy));
+
+    expect(parsed.invoices).toHaveLength(1);
+  });
+
   it("reports a newer-version file before failing on its body shape", async () => {
     const future = {
       meta: {
         version: CURRENT_EXPORT_VERSION + 1,
         exportedAt: new Date().toISOString(),
-        appName: "billsend"
+        appName: APP_NAME
       },
       invoices: "not-an-array"
     };
@@ -259,15 +269,15 @@ describe("data backup/restore", () => {
 // the failure and dedupe paths without round-tripping through buildExportData.
 function buildImageExport(
   imageData: string,
-  images?: BillsendExportFile["images"]
-): BillsendExportFile {
+  images?: ExportFile["images"]
+): ExportFile {
   const nowIso = new Date().toISOString();
 
   return {
     meta: {
       version: CURRENT_EXPORT_VERSION,
       exportedAt: nowIso,
-      appName: "billsend"
+      appName: APP_NAME
     },
     templates: [],
     invoices: [

@@ -1,8 +1,9 @@
 import { format } from "date-fns";
+import { APP_NAME } from "~/consts/app";
 import { CURRENT_EXPORT_VERSION } from "~/consts/export";
 import { getAllImages, getAllInvoices, getAllTemplates } from "~/db";
 import { CURRENT_INVOICE_SCHEMA_VERSION } from "~/schema/migrations";
-import type { BillsendExportFile, Invoice, InvoiceNameSource } from "~/types";
+import type { ExportFile, Invoice, InvoiceNameSource } from "~/types";
 
 function arrayBufferToBase64(buffer: ArrayBuffer): string {
   const bytes = new Uint8Array(buffer);
@@ -16,7 +17,7 @@ function arrayBufferToBase64(buffer: ArrayBuffer): string {
 // Snapshots the whole local setup (templates, invoices, and images) into the
 // serializable export shape. Kept separate from the download so it can be
 // exercised in tests, which have no DOM to drive the file save.
-export async function buildExportData(): Promise<BillsendExportFile> {
+export async function buildExportData(): Promise<ExportFile> {
   const [templates, invoices, images] = await Promise.all([
     getAllTemplates(),
     getAllInvoices(),
@@ -27,7 +28,7 @@ export async function buildExportData(): Promise<BillsendExportFile> {
     meta: {
       version: CURRENT_EXPORT_VERSION,
       exportedAt: new Date().toISOString(),
-      appName: "billsend"
+      appName: APP_NAME
     },
     templates: templates.map(template => ({
       ...template,
@@ -48,7 +49,7 @@ export async function buildExportData(): Promise<BillsendExportFile> {
   };
 }
 
-function saveJsonFile(data: BillsendExportFile, fileName: string) {
+function saveJsonFile(data: ExportFile, fileName: string) {
   const json = JSON.stringify(data, null, 2);
   const blob = new Blob([json], { type: "application/json" });
   const url = URL.createObjectURL(blob);
@@ -67,7 +68,7 @@ function saveJsonFile(data: BillsendExportFile, fileName: string) {
 export async function exportAllData(): Promise<void> {
   saveJsonFile(
     await buildExportData(),
-    `billsend-export-${format(new Date(), "yyyy-MM-dd")}.json`
+    `${APP_NAME}-export-${format(new Date(), "yyyy-MM-dd")}.json`
   );
 }
 
@@ -85,7 +86,7 @@ export async function downloadBackupFile(
   } | null
 ): Promise<void> {
   const now = new Date().toISOString();
-  let data: BillsendExportFile;
+  let data: ExportFile;
 
   try {
     data = await buildExportData();
@@ -94,7 +95,7 @@ export async function downloadBackupFile(
       meta: {
         version: CURRENT_EXPORT_VERSION,
         exportedAt: now,
-        appName: "billsend"
+        appName: APP_NAME
       },
       templates: [],
       invoices: [],
@@ -122,6 +123,6 @@ export async function downloadBackupFile(
 
   saveJsonFile(
     data,
-    `billsend-backup-${format(new Date(), "yyyy-MM-dd-HHmm")}.json`
+    `${APP_NAME}-backup-${format(new Date(), "yyyy-MM-dd-HHmm")}.json`
   );
 }

@@ -1,6 +1,7 @@
 import { IconArrowRight } from "@tabler/icons-react";
 import { Link } from "@tanstack/react-router";
 import type { ReactNode } from "react";
+import { APP_NAME } from "~/consts/app";
 import { typeClass } from "~/lib/type-scale";
 import { cn } from "~/lib/utils";
 import { MAKER_NAME, MAKER_URL, SOURCE_URL } from "~/utils/site-meta";
@@ -26,7 +27,7 @@ export function Wordmark() {
         FOCUS_RING
       )}
     >
-      <span className="text-ink-blue">billsend</span>
+      <span className="text-ink-blue">{APP_NAME}</span>
     </Link>
   );
 }

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { APP_NAME } from "~/consts/app";
 import { CURRENT_EXPORT_VERSION } from "~/consts/export";
 import type { StoredImage } from "~/db";
 import {
@@ -13,7 +14,7 @@ import {
   migrateInvoiceData
 } from "~/schema/migrations";
 import type {
-  BillsendExportFile,
+  ExportFile,
   ImportAnalysis,
   ImportResult,
   InvoiceDocument,
@@ -24,10 +25,11 @@ import { deriveInvoiceName } from "~/utils/invoice-name";
 const metaSchema = z.object({
   version: z.number().int().positive(),
   exportedAt: z.string(),
-  appName: z.literal("billsend")
+  // The app's name when the file was made, which has changed before.
+  appName: z.string()
 });
 
-const billsendExportSchema = z.object({
+const exportFileSchema = z.object({
   meta: metaSchema,
   templates: z.array(
     z.object({
@@ -64,7 +66,7 @@ const billsendExportSchema = z.object({
   )
 });
 
-export async function parseExportFile(file: File): Promise<BillsendExportFile> {
+export async function parseExportFile(file: File): Promise<ExportFile> {
   let text: string;
   try {
     text = await file.text();
@@ -91,22 +93,24 @@ export async function parseExportFile(file: File): Promise<BillsendExportFile> {
 
   if (meta.success && meta.data.version > CURRENT_EXPORT_VERSION) {
     throw new Error(
-      "This file was created by a newer version of billsend and can't be imported. Please update billsend and try again."
+      `This file was created by a newer version of ${APP_NAME} and can't be imported. Please update ${APP_NAME} and try again.`
     );
   }
 
-  const result = billsendExportSchema.safeParse(json);
+  const result = exportFileSchema.safeParse(json);
   if (!result.success) {
     const firstError = result.error.issues[0]?.message ?? "Unknown error";
 
-    throw new Error(`The file is not a valid billsend export: ${firstError}`);
+    throw new Error(
+      `The file is not a valid ${APP_NAME} export: ${firstError}`
+    );
   }
 
-  return result.data as unknown as BillsendExportFile;
+  return result.data as unknown as ExportFile;
 }
 
 export async function analyzeImport(
-  parsed: BillsendExportFile
+  parsed: ExportFile
 ): Promise<ImportAnalysis> {
   const [existingTemplates, existingInvoices, existingImages] =
     await Promise.all([getAllTemplates(), getAllInvoices(), getAllImages()]);
@@ -182,9 +186,7 @@ function resolveConflictName(name: string, existingNames: Set<string>): string {
   return candidate;
 }
 
-export async function executeImport(
-  parsed: BillsendExportFile
-): Promise<ImportResult> {
+export async function executeImport(parsed: ExportFile): Promise<ImportResult> {
   const [existingTemplates, existingInvoices, existingImages] =
     await Promise.all([getAllTemplates(), getAllInvoices(), getAllImages()]);
 

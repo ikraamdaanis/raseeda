@@ -793,7 +793,7 @@ export async function setLastOpenedInvoiceId(id: string): Promise<void> {
   }
 }
 
-// Runs when a newer billsend in another tab needs to upgrade the database.
+// Runs when a newer version of the app in another tab needs to upgrade the database.
 // Dexie closes this tab's connection so the upgrade can go ahead, after which
 // nothing here can be written until the page reloads. Returns the unsubscribe.
 export function onDatabaseUpgradeElsewhere(listener: () => void): () => void {

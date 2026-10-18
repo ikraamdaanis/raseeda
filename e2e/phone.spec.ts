@@ -78,7 +78,7 @@ test("a phone opens to editing even when Preview was left on", async ({
   page
 }) => {
   await page.addInitScript(() =>
-    localStorage.setItem("billsend-editor-mode", JSON.stringify("preview"))
+    localStorage.setItem("editor-mode", JSON.stringify("preview"))
   );
   await page.goto("/create");
 

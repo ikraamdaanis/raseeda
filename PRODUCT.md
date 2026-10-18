@@ -8,11 +8,11 @@ web
 
 ## Users
 
-Freelancers and solo operators who need to bill a client now. They open billsend in a browser, fill in their details and line items, and leave with a PDF. They do not want to sign up for an accounting suite or hand client and bank details to a third-party server. Many invoice repeat clients, so reusable templates matter.
+Freelancers and solo operators who need to bill a client now. They open raseeda in a browser, fill in their details and line items, and leave with a PDF. They do not want to sign up for an accounting suite or hand client and bank details to a third-party server. Many invoice repeat clients, so reusable templates matter.
 
 ## Product Purpose
 
-billsend is a free invoice generator that runs entirely in the browser. It lets someone create a professional, customisable invoice and export it to PDF in one click, with no account, no server holding their data and no tracking. Success is a user going from opening the app to a correct, good-looking PDF quickly, and trusting that their data never left their device.
+raseeda is a free invoice generator that runs entirely in the browser. It lets someone create a professional, customisable invoice and export it to PDF in one click, with no account, no server holding their data and no tracking. Success is a user going from opening the app to a correct, good-looking PDF quickly, and trusting that their data never left their device.
 
 ## Positioning
 
@@ -41,7 +41,7 @@ Truly local-first. There are no accounts and no server-side data; all invoice da
 
 ## Brand Commitments
 
-- Name: billsend (lowercase), served at billsend.io.
+- Name: raseeda (lowercase), served at billsend.io.
 - Voice: plain and direct, with no sign-up or marketing pressure ("There is nothing to sign up for", "Files are written to your machine, not someone else's").
 - Privacy claims on the site (no third-party analytics, no third-party requests, no cookies, anonymous usage counts only) are binding and must stay true.
 

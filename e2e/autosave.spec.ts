@@ -1,3 +1,4 @@
+import { APP_NAME } from "../consts/app";
 import { expect, test } from "./fixtures";
 import {
   DB_NAME,
@@ -299,7 +300,7 @@ test("whitespace-only names are rejected on Save As Template", async ({
   await expect(dialog).toBeVisible();
 });
 
-test("a newer billsend upgrading storage in another tab asks to reload", async ({
+test("a newer version upgrading storage in another tab asks to reload", async ({
   page
 }) => {
   await gotoEditorReady(page, "Before the upgrade");
@@ -328,9 +329,7 @@ test("a newer billsend upgrading storage in another tab asks to reload", async (
     });
   }, DB_NAME);
 
-  await expect(
-    page.getByText(/billsend was updated in another tab/)
-  ).toBeVisible();
+  await expect(page.getByText(/was updated in another tab/)).toBeVisible();
   await expect(page.getByRole("button", { name: "Reload" })).toBeVisible();
 });
 
@@ -395,7 +394,9 @@ test("a failed save is announced once, kept, backed up and retried", async ({
     chunks.push(chunk as Buffer);
   }
 
-  expect(download.suggestedFilename()).toMatch(/^billsend-backup-/);
+  expect(download.suggestedFilename()).toMatch(
+    new RegExp(`^${APP_NAME}-backup-`)
+  );
   expect(Buffer.concat(chunks).toString("utf8")).toContain(
     "Written while full"
   );
@@ -465,7 +466,7 @@ test.describe("in Safari, when the browser won't keep storage", () => {
     await reminder.getByRole("button", { name: "download a backup" }).click();
 
     expect((await downloadPromise).suggestedFilename()).toMatch(
-      /^billsend-backup-/
+      new RegExp(`^${APP_NAME}-backup-`)
     );
     await expect(reminder).toHaveCount(0);
   });

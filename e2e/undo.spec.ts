@@ -266,7 +266,7 @@ test("an undo is saved like any edit", async ({ page }) => {
   expect(await savedContains(page, "Saved title")).toBe(true);
 });
 
-test("the browser's Edit menu undo goes through billsend's history", async ({
+test("the browser's Edit menu undo goes through the app's history", async ({
   page
 }) => {
   await gotoEditorSettled(page);

@@ -19,7 +19,7 @@ import type { Invoice, InvoiceItem } from "~/types";
 import { PDF_FONT_FAMILIES } from "~/utils/register-invoice-pdf-fonts";
 
 // Renders the homepage's invoice pictures with the app's own PDF component, so
-// every one is a real billsend PDF rather than a drawing of one. Each picture
+// every one is a real PDF rather than a drawing of one. Each picture
 // shows a different invoice. Run `bun run render:home` after changing the PDF
 // layout or the samples; it needs poppler (pdftoppm) and cwebp on the PATH.
 
@@ -541,7 +541,7 @@ async function writeWebp({
   ]);
 }
 
-const directory = await mkdtemp(join(tmpdir(), "billsend-renders-"));
+const directory = await mkdtemp(join(tmpdir(), "homepage-renders-"));
 
 try {
   await mkdir(join(OUTPUT_DIR, "home"), { recursive: true });

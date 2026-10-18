@@ -37,6 +37,7 @@ import {
   SiteFooter,
   Wordmark
 } from "~/components/home/site-chrome";
+import { APP_NAME } from "~/consts/app";
 import { formatCurrencyWithCode } from "~/consts/currencies";
 import { getInvoiceFontDefinition } from "~/consts/invoice-fonts";
 import { typeClass } from "~/lib/type-scale";
@@ -198,7 +199,7 @@ const WASHES = {
 };
 
 // Each feature shows a fragment of a real invoice rather than an icon, on a
-// pale wash of its own colour. Blue belongs to billsend and its controls, so
+// pale wash of its own colour. Blue belongs to the app and its controls, so
 // the features take the secondary hues, all at the same lightness. A specimen
 // that is a crop of a PDF page runs off the card where it was cut, so only the
 // paper's edge shows; the others sit on a slip of paper.
@@ -225,8 +226,7 @@ const FEATURES: {
   },
   {
     title: "Tax, fees and discounts",
-    description:
-      "Add VAT or sales tax, fees, and a fixed or percentage discount. billsend does the sums, taxing the amount after any discount.",
+    description: `Add VAT or sales tax, fees, and a fixed or percentage discount. ${APP_NAME} does the sums, taxing the amount after any discount.`,
     specimen: <TotalsSpecimen />,
     hue: "butter",
     isPageCrop: true
@@ -258,7 +258,7 @@ const MORE_FEATURES = [
 // so rather than claim a tick or a cross.
 // Short labels fit the narrow value columns on phones.
 const COMPARISON_COLUMNS = [
-  { label: "billsend", shortLabel: "billsend" },
+  { label: APP_NAME, shortLabel: APP_NAME },
   { label: "Online invoice generators", shortLabel: "Generators" },
   { label: "Accounting software", shortLabel: "Accounting" }
 ];
@@ -298,14 +298,12 @@ const QUESTION_GROUPS: {
     title: "Making invoices",
     questions: [
       {
-        question: "Does billsend send the invoice to my client?",
-        answer:
-          "No. billsend makes the PDF and you send it however you like, usually as an email attachment. It never contacts your client, and there’s nothing on our side that could."
+        question: `Does ${APP_NAME} send the invoice to my client?`,
+        answer: `No. ${APP_NAME} makes the PDF and you send it however you like, usually as an email attachment. It never contacts your client, and there’s nothing on our side that could.`
       },
       {
         question: "Can I add VAT or sales tax?",
-        answer:
-          "Yes. Enter a tax rate and billsend charges it on the amount after any discount, then adds it to the total. For reverse charge or zero-rated work, mark the invoice tax-exempt and add a note such as “Reverse charge”."
+        answer: `Yes. Enter a tax rate and ${APP_NAME} charges it on the amount after any discount, then adds it to the total. For reverse charge or zero-rated work, mark the invoice tax-exempt and add a note such as “Reverse charge”.`
       },
       {
         question: "Can I reuse an invoice for the same client?",
@@ -334,8 +332,7 @@ const QUESTION_GROUPS: {
       },
       {
         question: "Why is it free, and what’s the catch?",
-        answer:
-          "There’s very little to pay for. billsend keeps no accounts and stores nothing about you on a server; once a page has loaded, your browser does all the work. There’s no paid plan, no ads and nothing about you to sell: beyond anonymous counts, like how many PDFs are made, the site collects nothing. The code is public on GitHub under the MIT licence, so you can check."
+        answer: `There’s very little to pay for. ${APP_NAME} keeps no accounts and stores nothing about you on a server; once a page has loaded, your browser does all the work. There’s no paid plan, no ads and nothing about you to sell: beyond anonymous counts, like how many PDFs are made, the site collects nothing. The code is public on GitHub under the MIT licence, so you can check.`
       }
     ]
   }
@@ -673,7 +670,7 @@ function Hero() {
 
 /**
  * The editor, shown rather than described: the real editor layout with a real
- * billsend PDF of the invoice on its desk, rising from the foot of the hero's
+ * PDF of the invoice on its desk, rising from the foot of the hero's
  * painting. The window keeps to the page's column inside a 17:10 frame; on
  * phones the frame is a fixed 638px of window tall (at the 0.6 zoom), which
  * ends it just under the fourth line item. The frame's min-h-0 holds its
@@ -687,7 +684,7 @@ function Hero() {
 function HeroVisual() {
   return (
     <figure
-      aria-label="The billsend editor with a sample invoice"
+      aria-label={`The ${APP_NAME} editor with a sample invoice`}
       className={cn(
         CONTAINER,
         "hero-fade relative mt-14 h-[calc(638px*0.6)] min-h-0 [animation-delay:320ms] sm:mt-16 sm:aspect-17/10 sm:h-auto"
@@ -726,7 +723,7 @@ function HeroVisual() {
 const HERO_WINDOW = { width: 1024, height: 1240 };
 
 /**
- * A real billsend PDF in the editor canvas's place: a screenshot of the top of
+ * A real PDF in the editor canvas's place: a screenshot of the top of
  * the page on the same paper, shown first thing, so it preloads with the page.
  * It decodes synchronously: left to itself, WebKit decodes a picture this
  * large off the main thread, so a reload painted the paper blank for a frame
@@ -785,8 +782,7 @@ const STEPS: {
 }[] = [
   {
     title: "Add the details",
-    description:
-      "Your details, your client and the line items. billsend does the sums as you type.",
+    description: `Your details, your client and the line items. ${APP_NAME} does the sums as you type.`,
     specimen: <DetailsSpecimen />,
     hue: "butter"
   },
@@ -818,7 +814,7 @@ function HowItWorks() {
       <div className={CONTAINER}>
         <SectionHeading
           title="How it works."
-          description="billsend is a private invoice generator: no sign-up and nothing to install. Open the editor and start typing."
+          description={`${APP_NAME} is a private invoice generator: no sign-up and nothing to install. Open the editor and start typing.`}
         />
         <ol className="mt-12 grid gap-6 sm:mt-16 md:grid-cols-3">
           {STEPS.map((step, index) => (
@@ -1078,7 +1074,7 @@ function CurrencySpecimen() {
 }
 
 /**
- * A crop of a real billsend PDF, filling its container's width. The two
+ * A crop of a real PDF, filling its container's width. The two
  * feature crops share an aspect ratio so their cards match.
  */
 function PdfCrop({
@@ -1138,8 +1134,8 @@ function Comparison() {
     <section id="compare" className="py-16 sm:py-20">
       <div className={CONTAINER}>
         <SectionHeading
-          title="How billsend compares with other invoice generators."
-          description="billsend makes the invoice and stops there. To email invoices and track payments, you want accounting software."
+          title={`How ${APP_NAME} compares with other invoice generators.`}
+          description={`${APP_NAME} makes the invoice and stops there. To email invoices and track payments, you want accounting software.`}
           isCentered
         />
         <table
@@ -1321,7 +1317,7 @@ function Questions() {
 
 // The closing band mirrors the hero: dark headline, blue second line, and a
 // painting that runs the full width of the viewport. The page rising from the
-// panel's foot is a real billsend PDF. Its box is sized from the page's own
+// panel's foot is a real PDF. Its box is sized from the page's own
 // width, so it always shows the same top share of the page, and the page runs
 // past the box to be cut by the panel's foot: 4:3 shows about half on phones,
 // 16:9 about 40% from `sm`. Like the hero, the copy sits above the panel.

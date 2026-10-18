@@ -63,7 +63,7 @@ export function OpenInvoiceDialog({
   // Sort and filters are remembered across opens and reloads, like the
   // invoices panel's (but separately, since this list has no grouping).
   const [view, setView] = usePersistentState<InvoiceLibraryView>(
-    "billsend-editor-open-invoice-view",
+    "editor-open-invoice-view",
     DEFAULT_LIBRARY_VIEW,
     parseLibraryView
   );

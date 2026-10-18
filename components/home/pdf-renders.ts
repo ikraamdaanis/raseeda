@@ -1,4 +1,6 @@
-// The homepage's pictures of finished invoices: real billsend PDFs, rendered
+import { APP_NAME } from "~/consts/app";
+
+// The homepage's pictures of finished invoices: real PDFs, rendered
 // by scripts/render-homepage-invoices.tsx at PDF_RENDER_SCALE times the page's
 // CSS pixel size. Crops are in the page's CSS pixels (793.7 x 1122.5).
 
@@ -13,7 +15,7 @@ export const PDF_RENDERS = {
   // it ships at about twice that rather than the full render scale.
   hero: {
     src: "/home/invoice-hero.webp",
-    alt: "A billsend invoice from Emma Collins Illustration in Brooklyn to Harbor & Pine Co. in Portland, listing editorial illustrations and cover artwork",
+    alt: `A ${APP_NAME} invoice from Emma Collins Illustration in Brooklyn to Harbor & Pine Co. in Portland, listing editorial illustrations and cover artwork`,
     crop: { x: 0, y: 0, width: 793.7, height: 1122.5 },
     width: 1600
   },
@@ -36,6 +38,6 @@ export const PDF_RENDERS = {
 // about twice that.
 export const CLOSING_RENDER = {
   src: "/home/invoice-closing.webp",
-  alt: "A complete billsend invoice from a Seattle app studio, filled out top to bottom",
+  alt: `A complete ${APP_NAME} invoice from a Seattle app studio, filled out top to bottom`,
   width: 1400
 };

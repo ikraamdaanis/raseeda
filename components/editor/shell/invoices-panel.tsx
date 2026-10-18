@@ -77,13 +77,13 @@ function useWatchedList<TRow>(
 // remembered across reloads; the search is not.
 export function InvoicesPanel() {
   const [tab, setTab] = usePersistentState<LibraryTab>(
-    "billsend-editor-library-tab",
+    "editor-library-tab",
     "invoices",
     stored =>
       stored === "invoices" || stored === "templates" ? stored : undefined
   );
   const [view, setView] = usePersistentState<InvoiceLibraryView>(
-    "billsend-editor-library-view",
+    "editor-library-view",
     DEFAULT_LIBRARY_VIEW,
     parseLibraryView
   );

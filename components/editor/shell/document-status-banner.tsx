@@ -7,6 +7,7 @@ import {
 import type { ReactNode } from "react";
 import { createContext, useContext, useState } from "react";
 import { toast } from "sonner";
+import { APP_NAME } from "~/consts/app";
 import { useFileActions } from "~/context/file-actions-context";
 import { useInvoiceDocument } from "~/context/invoice-document-context";
 import { cn } from "~/lib/utils";
@@ -45,7 +46,7 @@ export function DocumentStatusBanner() {
   if (status === "reloadRequired") {
     return (
       <Banner tone="warning">
-        billsend was updated in another tab.{" "}
+        {APP_NAME} was updated in another tab.{" "}
         <Action onClick={() => window.location.reload()}>Reload</Action> to keep
         editing; your latest changes come back with you.
       </Banner>
@@ -55,7 +56,7 @@ export function DocumentStatusBanner() {
   if (status === "unavailable") {
     return (
       <Banner tone="warning" busy={busy}>
-        This browser isn’t letting billsend store anything, so this invoice
+        This browser isn’t letting {APP_NAME} store anything, so this invoice
         can’t be saved here.{" "}
         <Action onClick={() => void act(downloadBackup)}>
           Download a backup

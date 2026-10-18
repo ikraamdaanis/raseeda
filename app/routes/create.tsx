@@ -7,6 +7,7 @@ import {
 import { useEffect } from "react";
 import { toast } from "sonner";
 import { InvoiceEditor } from "~/components/editor/invoice-editor";
+import { APP_NAME } from "~/consts/app";
 import { INVOICE_FONTS } from "~/consts/invoice-fonts";
 import {
   InvoiceDocumentProvider,
@@ -38,7 +39,7 @@ export const Route = createFileRoute("/create")({
       },
       ...siteMeta({
         path: "/create",
-        title: "billsend editor: Create a Free Invoice PDF",
+        title: `${APP_NAME} editor: Create a Free Invoice PDF`,
         description:
           "Fill in your details, your client and the line items, then download the invoice as a PDF. Free, with no account, and it all stays in this browser."
       })
@@ -129,7 +130,7 @@ function StartingFont() {
 function EditorLoading() {
   return (
     <div className="bg-desk flex h-dvh w-full flex-col items-center justify-center gap-4 px-6 text-center">
-      <h1 className="sr-only">billsend invoice editor</h1>
+      <h1 className="sr-only">{APP_NAME} invoice editor</h1>
       <p className="sr-only">
         Create a free invoice in your browser: add your details, your client and
         the line items, then download it as a PDF. Nothing is uploaded; your
@@ -141,7 +142,7 @@ function EditorLoading() {
       />
       <noscript>
         <p className="text-muted-foreground max-w-sm text-sm text-pretty">
-          The billsend editor runs entirely in your browser, so it needs
+          The {APP_NAME} editor runs entirely in your browser, so it needs
           JavaScript. Turn JavaScript on for this site, then reload.
         </p>
       </noscript>

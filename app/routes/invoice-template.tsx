@@ -13,6 +13,7 @@ import {
   INVOICE_TEMPLATES,
   TEMPLATE_RENDER_SIZE
 } from "~/components/templates/invoice-templates";
+import { APP_NAME } from "~/consts/app";
 import { getInvoiceFontDefinition } from "~/consts/invoice-fonts";
 import { typeClass } from "~/lib/type-scale";
 import { cn } from "~/lib/utils";
@@ -23,7 +24,7 @@ export const Route = createFileRoute("/invoice-template")({
   head: () => ({
     meta: siteMeta({
       path: "/invoice-template",
-      title: "billsend invoice templates: Fill In Free, Download a PDF",
+      title: `${APP_NAME} invoice templates: Fill In Free, Download a PDF`,
       description:
         "Free invoice templates for freelancers, consultants, contractors, photographers and small businesses. Pick a style, fill it in online and download a PDF. No account."
     }),
@@ -54,7 +55,7 @@ const INVOICE_PARTS = [
   "Notes, terms and conditions, and late payment terms"
 ];
 
-// A gallery of real billsend PDFs, one per line of work. Each opens the
+// A gallery of real PDFs from the app, one per line of work. Each opens the
 // editor on a new invoice in its template's font (`?font=` with `new`), and
 // an invoice already under way stays in the library. The pictures show a
 // finished invoice in that style, not a form to fill.
@@ -69,7 +70,7 @@ function InvoiceTemplatePage() {
               Free invoice templates
             </h1>
             <p className={cn(BODY_TEXT, "text-lg/7")}>
-              Six invoices made in billsend, each for a different line of work
+              Six invoices made in {APP_NAME}, each for a different line of work
               and set in a different font. Pick a style to start your invoice
               in, fill in your details and download it as a PDF. Free, with no
               account.

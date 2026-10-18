@@ -1,6 +1,6 @@
 import type { InvoiceFont } from "~/types";
 
-// The template gallery's invoices: real billsend PDFs of six sample invoices,
+// The template gallery's invoices: real PDFs of six sample invoices,
 // each for a different line of work and set in a different invoice font.
 // scripts/render-homepage-invoices.tsx renders them (the samples live there)
 // into public/templates at TEMPLATE_RENDER_SIZE. Each links to the editor's

@@ -7,6 +7,7 @@ import {
   PageHeader,
   SiteFooter
 } from "~/components/home/site-chrome";
+import { APP_NAME } from "~/consts/app";
 import { typeClass } from "~/lib/type-scale";
 import { cn } from "~/lib/utils";
 import { canonicalLink, siteMeta, SOURCE_URL } from "~/utils/site-meta";
@@ -16,9 +17,8 @@ export const Route = createFileRoute("/privacy")({
   head: () => ({
     meta: siteMeta({
       path: "/privacy",
-      title: "billsend privacy: Your invoices stay on your device",
-      description:
-        "billsend keeps your invoices in your browser, on your device, and never uploads them. What is stored, where, and what the site's host can see."
+      title: `${APP_NAME} privacy: Your invoices stay on your device`,
+      description: `${APP_NAME} keeps your invoices in your browser, on your device, and never uploads them. What is stored, where, and what the site's host can see.`
     }),
     links: [
       canonicalLink("/privacy"),
@@ -46,7 +46,7 @@ const INLINE_LINK = cn(
 );
 
 // The same words as the homepage's promise, said once in full: where the
-// data lives, what leaves, what billsend never does, and what the host sees.
+// data lives, what leaves, what the app never does, and what the host sees.
 function PrivacyPage() {
   return (
     <div className="home-type selection:bg-brand-100 bg-canvas text-ink isolate min-h-svh font-sans font-features-['cv02','cv03','cv04','cv11'] antialiased">
@@ -56,9 +56,9 @@ function PrivacyPage() {
           <div className="flex flex-col gap-6">
             <h1 className={cn(HEADING, typeClass("title"))}>Privacy</h1>
             <p className={cn(PROSE, "text-lg/7")}>
-              billsend is built so that your invoices never reach us. This page
-              says what is stored, where it is stored, and what the site’s host
-              can see.
+              {APP_NAME} is built so that your invoices never reach us. This
+              page says what is stored, where it is stored, and what the site’s
+              host can see.
             </p>
             <p className={cn(typeClass("caption"), "text-zinc-500")}>
               Last updated {LAST_UPDATED}
@@ -73,7 +73,7 @@ function PrivacyPage() {
             <p className={PROSE}>
               The PDF is made in your browser too. Nothing you type is uploaded;
               besides loading the site, the only thing your browser sends
-              billsend is the anonymous usage count described below.
+              {APP_NAME} is the anonymous usage count described below.
             </p>
             <p className={PROSE}>
               Other browsers and devices can’t see your invoices. Clearing this
@@ -93,17 +93,17 @@ function PrivacyPage() {
           </PolicySection>
           <PolicySection title="Anonymous usage counts">
             <p className={PROSE}>
-              To see roughly how billsend is used, your browser tells
+              To see roughly how {APP_NAME} is used, your browser tells
               billsend.io when one of these happens: a page is viewed, the
               editor opens, a PDF is made, an invoice or template is first
-              saved, or data is exported or imported. With the event, billsend
+              saved, or data is exported or imported. With the event, {APP_NAME}
               keeps the country the request came from and the browser family,
               operating system and type of device (such as Safari, iOS, mobile).
               A page view also says which page.
             </p>
             <p className={PROSE}>
               That is all. The counts never include your invoices, names,
-              amounts, currencies or anything else you type. billsend doesn’t
+              amounts, currencies or anything else you type. {APP_NAME} doesn’t
               keep your IP address, your city, your full browser details or any
               identifier, and saves nothing on your device for the counts, so
               visits can’t be linked together.
@@ -113,17 +113,17 @@ function PrivacyPage() {
               The counts are kept for 3 months.
             </p>
           </PolicySection>
-          <PolicySection title="What billsend doesn’t do">
+          <PolicySection title={`What ${APP_NAME} doesn’t do`}>
             <p className={PROSE}>
-              billsend has no accounts, no ads, no third-party analytics and no
-              tracking of individuals, and sets no cookies.
+              {APP_NAME} has no accounts, no ads, no third-party analytics and
+              no tracking of individuals, and sets no cookies.
             </p>
             <p className={PROSE}>
               Every page is sent with a Content Security Policy that only lets
               it connect to billsend.io itself, so your browser blocks any
-              attempt to send data anywhere else, including from billsend’s own
-              code. You can read the policy in your browser’s developer tools,
-              or in the{" "}
+              attempt to send data anywhere else, including from {APP_NAME}’s
+              own code. You can read the policy in your browser’s developer
+              tools, or in the{" "}
               <a
                 href={`${SOURCE_URL}/blob/main/consts/content-security-policy.ts`}
                 target="_blank"
@@ -166,7 +166,7 @@ function PrivacyPage() {
           <PolicySection title="Checking for yourself">
             <p className={PROSE}>
               The code is public on GitHub under the MIT licence, so anyone can
-              check what billsend does with your data. Questions, or found
+              check what {APP_NAME} does with your data. Questions, or found
               something that doesn’t match this page?{" "}
               <a
                 href={`${SOURCE_URL}/issues`}
