@@ -600,6 +600,9 @@ Medium and meta drops to 12px. The homepage's pictures of the editor mirror
 - **Works before hydration.** Menus and questions are native `<details>`, and
   the hero entrance and cloud phases are inline scripts that run while the
   HTML parses, so nothing waits for JavaScript or shifts when it arrives.
+- **Storage refused.** When the browser blocks storage, a note with an
+  `amber-600` warning icon sits right under the hero's buttons, in `ink` at
+  80%, saying what still works and how to fix it, before anyone starts.
 - **Print is a first-class target.** `@page` is A4 with 16mm margins;
   `.invoice-page` forces page breaks, `.avoid-break` prevents mid-block splits,
   `.no-print` hides chrome, and print colour-adjust is forced `exact`.
@@ -774,15 +777,17 @@ are 13px, labels `muted-foreground`, fields `muted` fills (`rounded-md`).
   `lg`). The `ink` wordmark on the left (named "raseeda home" to assistive
   tech); from `md`, centred section links (How it works, Privacy, Features,
   Compare, Questions) as `zinc-600` pills, hover `ink`; on the right, from
-  `sm`, an "Open the editor" `ink` text link with an arrow, hover `brand-800`.
-  When the hero's buttons pass under it, it takes `canvas` at 90% with a
-  `backdrop-blur-md` and a 1px `zinc-950/8` bottom shadow, rises by its `lg`
-  padding so the bar sits flush, and swaps the link for the Create invoice ink
-  pill (fade and 95% zoom in over 200ms). Anchored sections stop 72px down so
-  the header never covers their heading. Below `md` the links fold into a native `<details>` menu:
-  a 44px menu-icon summary opening a 224px white `rounded-xl` panel
+  `sm`, a 36px pause icon button (`zinc-600`, hover `ink/5` fill) and an "Open
+  the editor" `ink` text link with an arrow, hover `brand-800`. As soon as the hero's headline reaches the bar it takes `canvas`
+  at 90% with a 12px backdrop blur and a 1px `zinc-950/8` bottom shadow, and
+  rises by its `lg` padding so the bar sits flush, all easing together over
+  300ms; no text ever passes under a clear bar. When the hero's buttons pass
+  under it, the link becomes the Create invoice ink pill (fade and 95% zoom in
+  over 200ms). Anchored sections stop 72px down so the header never covers
+  their heading. Below `md` the links fold into a native `<details>` menu: a
+  44px menu-icon summary opening a 224px white `rounded-xl` panel
   (`zinc-950/10` ring, `shadow-lg`) of `rounded-lg` rows that fill `zinc-100`
-  on hover; it closes on navigation, Escape or a tap outside.
+  on hover, ending with the pause row; it closes on navigation, Escape or a tap outside.
 - **Homepage footer:** a `<footer>` landmark outside `<main>`, shared with the
   privacy page: three link columns (Make invoices, Learn more, Open source)
   under `zinc-500` labels (plain text naming each list, not headings), `ink` links that hover to `brand-700` (44px tall,
@@ -839,7 +844,10 @@ icon, hovering to `brand-600`.
 The hero shows the real editor layout (`EditorWindow`, both panels open, the
 canvas pill on the desk) with a real PDF render of an invoice on its page,
 drawn at 1440px and scaled into a frosted frame (`white/45`, `white/70` ring,
-6px padding, 8px from `sm`, Bezel shadow). Homepage pictures of the editor are
+8px padding, Bezel shadow). Phones, too narrow for both panels and the page,
+see only the desk: the window framed on the page and its margins and scaled
+to fit (6px padding), so the whole invoice, logo to payment details, is what
+they see. Homepage pictures of the editor are
 built from the editor's own pieces under `data-editor-chrome`, never drawn
 from memory; non-editor pictures are real PDF renders.
 
@@ -857,9 +865,13 @@ sit a Title and Body; step titles lead with a 28px `brand-50` disc holding a
 
 ### Code Tile (signature)
 
-Each privacy promise sits under the lines of code that keep it: a still tile
-like the demo tiles, holding a white file (Lifted, `rounded-tl-xl`) that runs
-off the tile's right and bottom edges. Its header is the file path in 12px
+Each privacy promise is a still tile like the demo tiles holding two Lifted
+white cards. First, what it means for your data: a `rounded-xl` card of three
+rows (label left, status right in Medium `ink` after a `brand-600` filled
+check, or a ban icon for what is refused), split by `zinc-950/5` hairlines.
+Below it, the lines of code that keep it: a white file (`rounded-tl-xl`) that
+runs off the tile's right and bottom edges, its lines fading out over the
+last 48px so a long one reads as continuing. Its header is the file path in 12px
 Geist Mono `zinc-500` linking to those lines on GitHub; the lines are 12/24
 `zinc-800` with `zinc-500` tabular line numbers, strings in `brand-700`,
 keywords in `violet-600`, and the line that does the work on `brand-50` with a
@@ -926,8 +938,10 @@ inside the demos. Only transforms, opacity and filter animate.
 - **Night panel**: the lights wander on 13s, 17s and 11s loops, the edge band
   turns every 8s, and the session types; all only while the panel is on
   screen. Under reduced motion the terminal rests on the running dev server.
-- **Pause control**: "Pause animations" in the footer's bottom bar stops every
-  loop above (`data-home-motion="paused"` on `<html>`, remembered in
+- **Pause control**: one choice, offered as the header's icon button from
+  `sm`, a row in the phones' menu, and "Pause animations" in the footer's
+  bottom bar; each appears once the page has hydrated. It stops every loop
+  above (`data-home-motion="paused"` on `<html>`, remembered in
   localStorage): demos, lights, edge band and glow rest on their finished
   state, the clouds hold, the terminal keeps its place. It is hidden under
   reduced motion, which already stills the page. New looping motion must stop

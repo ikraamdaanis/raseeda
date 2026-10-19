@@ -2,6 +2,7 @@ import {
   IconAlertTriangle,
   IconArrowRight,
   IconArrowUpRight,
+  IconBan,
   IconCheck,
   IconCircleCheckFilled,
   IconMenu2,
@@ -12,7 +13,7 @@ import {
 } from "@tabler/icons-react";
 import { createFileRoute, Link, ScriptOnce } from "@tanstack/react-router";
 import type { ComponentType, CSSProperties, ReactNode } from "react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import {
   EditorWindow,
   PAGE_HEIGHT,
@@ -332,21 +333,22 @@ const QUESTION_GROUPS: {
   }
 ];
 
-// Whether this browser refuses storage: null until known. The database module
-// loads on demand so first-time visitors never download it.
-function useStorageBlocked() {
-  const [blocked, setBlocked] = useState<boolean | null>(null);
+// What this browser holds: how many invoices it has saved, "blocked" when it
+// refuses storage, null until known (StorageBlockedNote reads it). The database module loads on demand, off
+// the page's first paint.
+function useSavedInvoices() {
+  const [saved, setSaved] = useState<number | "blocked" | null>(null);
 
   useEffect(() => {
     let cancelled = false;
 
     import("~/db")
       .then(database => database.countInvoices())
-      .then(() => {
-        if (!cancelled) setBlocked(false);
+      .then(count => {
+        if (!cancelled) setSaved(count);
       })
       .catch(() => {
-        if (!cancelled) setBlocked(true);
+        if (!cancelled) setSaved("blocked");
       });
 
     return () => {
@@ -354,7 +356,7 @@ function useStorageBlocked() {
     };
   }, []);
 
-  return blocked;
+  return saved;
 }
 
 function HomePage() {
@@ -384,46 +386,90 @@ function HomePage() {
         <Questions />
         <Closing />
       </main>
-      <SiteFooter action={<MotionToggle />} />
+      <SiteFooter action={<MotionToggle variant="footer" />} />
     </div>
   );
 }
 
+// For a value that never changes after hydration.
+function subscribeToNothing() {
+  return () => {};
+}
+
 // Pauses the page's looping motion, for anyone it distracts (WCAG 2.2.2). The
 // demo tiles then rest on their finished frame, as with reduced motion, so
-// the control is hidden when the system already asks for less motion.
-function MotionToggle() {
+// the control is hidden when the system already asks for less motion. It sits
+// in three places that share one choice: an icon button in the header from
+// `sm`, a row in the phones' menu, and a labelled button in the footer. It
+// only appears once the page has hydrated, since until then it can't work.
+function MotionToggle({ variant }: { variant: "header" | "menu" | "footer" }) {
   const { isPaused, togglePaused } = useHomeMotion();
+  const isHydrated = useSyncExternalStore(
+    subscribeToNothing,
+    () => true,
+    () => false
+  );
   const Icon = isPaused ? IconPlayerPlay : IconPlayerPause;
+  const label = isPaused ? "Play animations" : "Pause animations";
+
+  if (!isHydrated) return null;
+
+  if (variant === "header") {
+    return (
+      <button
+        type="button"
+        onClick={togglePaused}
+        title={label}
+        className={cn(
+          "hover:text-ink hover:bg-ink/5 inline-flex size-9 shrink-0 items-center justify-center rounded-full text-zinc-600 transition-colors duration-200 ease-in-out motion-reduce:hidden max-sm:hidden",
+          FOCUS_RING
+        )}
+      >
+        <Icon className="size-4 shrink-0" aria-hidden="true" />
+        <span className="sr-only">{label}</span>
+      </button>
+    );
+  }
 
   return (
     <button
       type="button"
       onClick={togglePaused}
       className={cn(
-        typeClass("body"),
-        "text-ink hover:text-brand-700 inline-flex min-h-11 items-center gap-1.5 rounded-sm motion-reduce:hidden sm:min-h-9",
+        "text-ink inline-flex items-center gap-1.5 motion-reduce:hidden",
+        variant === "menu"
+          ? "rounded-lg px-3 py-3 text-left text-zinc-700 transition-colors duration-200 ease-in-out hover:bg-zinc-100"
+          : "hover:text-brand-700 min-h-11 rounded-sm sm:min-h-9",
+        variant === "menu" ? CONTROL_TEXT : typeClass("body"),
         FOCUS_RING
       )}
     >
       <Icon className="size-4 shrink-0 text-zinc-500" aria-hidden="true" />
-      {isPaused ? "Play animations" : "Pause animations"}
+      {label}
     </button>
   );
 }
 
-// The hero's buttons, which the header watches to know when they're gone.
+// The hero's headline and buttons, which the header watches.
+const HERO_TITLE_ID = "hero-title";
 const HERO_ACTIONS_ID = "hero-actions";
 
-// Whether the hero's buttons have scrolled up under the header: false until
-// the page hydrates, and on any page without them.
-function useIsPastHeroActions() {
-  const [isPast, setIsPast] = useState(false);
+// The header bar's foot: 64px (h-16), and 84px from `lg`, where the clear
+// header sits 20px down. Anything above it is under the header.
+const HEADER_LINE = 64;
+const HEADER_LINE_LG = 84;
+
+// Whether the element with this id has scrolled up to `line` (px from the
+// window's top): as soon as its top reaches it, or with `isWholly` only once
+// all of it has gone above. False until the page hydrates, and on any page
+// without it.
+function useHasScrolledPast(id: string, line: number, isWholly = false) {
+  const [hasPassed, setHasPassed] = useState(false);
 
   useEffect(() => {
-    const actions = document.getElementById(HERO_ACTIONS_ID);
+    const element = document.getElementById(id);
 
-    if (!actions) return;
+    if (!element) return;
 
     const observer = new IntersectionObserver(
       entries => {
@@ -431,33 +477,42 @@ function useIsPastHeroActions() {
 
         if (!entry) return;
 
-        setIsPast(!entry.isIntersecting && entry.boundingClientRect.top < 0);
+        // Above the line, not below the fold. The line, not the window's
+        // top, decides: an element crosses it while still on screen.
+        const lineTop = entry.rootBounds?.top ?? line;
+        const isCrossing = isWholly
+          ? !entry.isIntersecting
+          : entry.intersectionRatio < 1;
+
+        setHasPassed(isCrossing && entry.boundingClientRect.top < lineTop);
       },
-      { rootMargin: "-64px 0px 0px 0px" }
+      { rootMargin: `-${line}px 0px 0px 0px`, threshold: [0, 1] }
     );
 
-    observer.observe(actions);
+    observer.observe(element);
 
     return () => observer.disconnect();
-  }, []);
+  }, [id, line, isWholly]);
 
-  return isPast;
+  return hasPassed;
 }
 
 // The header sticks to the top. Over the hero it is clear, part of the sky,
-// with the quiet "Open the editor" link. Once the hero's buttons scroll up
-// under it, it takes the canvas behind it and swaps the link for the Create
-// invoice pill, so the editor is one tap away anywhere on the page, phones
-// included. From `lg` it rises by its top padding then, so the bar sits flush
-// with the top of the window.
+// with the quiet "Open the editor" link. As soon as the headline reaches it,
+// it takes the canvas behind it, so text never runs under a clear bar; from
+// `lg` it also rises by its top padding, so the bar sits flush with the top
+// of the window. Once the hero's buttons pass under it, it swaps the link for
+// the Create invoice pill, so the editor is one tap away anywhere on the
+// page, phones included.
 function SiteHeader() {
-  const isPastHero = useIsPastHeroActions();
+  const isOverContent = useHasScrolledPast(HERO_TITLE_ID, HEADER_LINE_LG);
+  const isPastHero = useHasScrolledPast(HERO_ACTIONS_ID, HEADER_LINE, true);
 
   return (
     <header
       className={cn(
-        "sticky top-0 z-40 transition-[translate,background-color,box-shadow] duration-200 ease-out lg:pt-5",
-        isPastHero &&
+        "sticky top-0 z-40 backdrop-blur-[0px] transition-[translate,background-color,box-shadow,backdrop-filter] duration-300 ease-out lg:pt-5",
+        (isOverContent || isPastHero) &&
           "bg-canvas/90 shadow-[0_1px_0_rgb(9_9_11/0.08)] backdrop-blur-md lg:-translate-y-5"
       )}
     >
@@ -484,6 +539,7 @@ function SiteHeader() {
           ))}
         </nav>
         <div className="flex flex-1 items-center justify-end gap-2">
+          <MotionToggle variant="header" />
           {isPastHero ? (
             <span className="animate-in fade-in zoom-in-95 duration-200 motion-reduce:animate-none">
               <CreateInvoiceLink />
@@ -565,15 +621,16 @@ function PhoneMenu() {
             {section.label}
           </a>
         ))}
+        <MotionToggle variant="menu" />
       </nav>
     </details>
   );
 }
 
 // The header's way into the editor while the hero shows: a quiet text link,
-// so it never repeats the hero's button right below it. Phones skip it: the
-// hero's button is the first thing under the header, and the link would crowd
-// the menu button.
+// so it never repeats the hero's button right below it. A returning visitor
+// lands back on their latest invoice. Phones skip it: the hero's button is
+// the first thing under the header, and the link would crowd the menu button.
 function HeaderAction() {
   return (
     <Link
@@ -650,7 +707,10 @@ function Hero() {
           )}
         >
           <div className="flex flex-col items-start gap-5 sm:items-center">
-            <h1 className={cn(HEADING, typeClass("display"))}>
+            <h1
+              id={HERO_TITLE_ID}
+              className={cn(HEADING, typeClass("display"))}
+            >
               <span className="hero-focus block">Make the invoice.</span>
               <span className="hero-focus block [animation-delay:80ms]">
                 Keep your data.
@@ -689,11 +749,9 @@ function Hero() {
               See how it works
             </a>
           </div>
+          <StorageBlockedNote />
         </div>
         <HeroVisual />
-      </div>
-      <div className={CONTAINER}>
-        <StorageBlockedNote />
       </div>
     </section>
   );
@@ -738,13 +796,21 @@ function HeroClouds() {
  * The editor, shown rather than described: the real editor layout, both side
  * panels open, with a real PDF of the invoice on its desk, in a frosted bezel
  * that rises from the foot of the sky. From `lg` the whole window's width
- * sits in the page's column. Below it the window is drawn at a fixed zoom from
- * its top-left corner and runs off the sky's right edge, so phones and
- * tablets see a readable crop of the invoices panel and the page. The bezel
- * and window run off the sky's foot, where they are cut, so only their top
+ * sits in the page's column. On tablets the window is drawn at a fixed zoom
+ * from its top-left corner and runs off the sky's right edge, a readable crop
+ * of the invoices panel and the page. Phones, too narrow for both, get the
+ * desk alone: the window framed on the page and its margins, scaled to fit,
+ * so the invoice itself, logo to totals, is what they see. The bezel and
+ * window run off the sky's foot, where they are cut, so only their top
  * corners are rounded.
  */
 function HeroVisual() {
+  const editor = (
+    <EditorWindow documentName={HERO_INVOICE_NUMBER} {...HERO_WINDOW}>
+      <PdfPaper render={PDF_RENDERS.hero} />
+    </EditorWindow>
+  );
+
   return (
     <figure
       aria-label={`The ${APP_NAME} editor with a sample invoice`}
@@ -753,12 +819,17 @@ function HeroVisual() {
         "hero-fade mt-12 [animation-delay:320ms] sm:mt-16"
       )}
     >
-      <div className="w-max rounded-t-(--bezel-radius) bg-white/45 p-(--pad) pb-0 shadow-[0_24px_64px_-16px_rgb(16_60_90/0.25)] ring-1 ring-white/70 [--bezel-radius:--spacing(4)] [--pad:--spacing(1.5)] max-lg:rounded-tr-none max-lg:pr-0 sm:[--bezel-radius:--spacing(5)] sm:[--pad:--spacing(2)] lg:w-full">
-        <div className="w-[calc(1440px*var(--zoom))] overflow-hidden rounded-t-[calc(var(--bezel-radius)-var(--pad))] [--zoom:0.55] max-lg:rounded-tr-none sm:[--zoom:0.65] md:[--zoom:0.75] lg:w-auto">
+      <div className="rounded-t-2xl bg-white/45 p-1.5 pb-0 shadow-[0_24px_64px_-16px_rgb(16_60_90/0.25)] ring-1 ring-white/70 sm:hidden">
+        <div className="overflow-hidden rounded-t-[0.625rem]">
+          <ScaledFrame {...HERO_PHONE_FRAME} fill>
+            {editor}
+          </ScaledFrame>
+        </div>
+      </div>
+      <div className="w-max rounded-t-(--bezel-radius) bg-white/45 p-(--pad) pb-0 shadow-[0_24px_64px_-16px_rgb(16_60_90/0.25)] ring-1 ring-white/70 [--bezel-radius:--spacing(5)] [--pad:--spacing(2)] max-lg:rounded-tr-none max-lg:pr-0 max-sm:hidden lg:w-full">
+        <div className="w-[calc(1440px*var(--zoom))] overflow-hidden rounded-t-[calc(var(--bezel-radius)-var(--pad))] [--zoom:0.65] max-lg:rounded-tr-none md:[--zoom:0.75] lg:w-auto">
           <ScaledFrame {...HERO_FRAME} fill>
-            <EditorWindow documentName={HERO_INVOICE_NUMBER} {...HERO_WINDOW}>
-              <PdfPaper render={PDF_RENDERS.hero} />
-            </EditorWindow>
+            {editor}
           </ScaledFrame>
         </div>
       </div>
@@ -774,6 +845,11 @@ const HERO_WINDOW = { width: 1440, height: 1100 };
 // The part of the window the hero shows: its full width, down to the
 // invoice's totals.
 const HERO_FRAME = { width: 1440, height: 860 };
+
+// The phones' part of the window: the desk from just left of the page (which
+// starts 307px in, past the invoices panel and the desk's margin) to just
+// right of it, down to the payment details.
+const HERO_PHONE_FRAME = { width: 834, height: 1060, x: 287 };
 
 /**
  * A real PDF in the editor canvas's place: a screenshot of the top of
@@ -803,15 +879,20 @@ function PdfPaper({ render }: { render: typeof PDF_RENDERS.hero }) {
   );
 }
 
-
-// A browser that refuses storage gets told what that means and how to fix it.
+// A browser that refuses storage gets told what that means and how to fix it,
+// right under the hero's buttons, before anyone starts an invoice.
 function StorageBlockedNote() {
-  const blocked = useStorageBlocked();
+  const saved = useSavedInvoices();
 
-  if (!blocked) return null;
+  if (saved !== "blocked") return null;
 
   return (
-    <p className={cn(BODY_TEXT, "mt-6 flex items-start gap-2")}>
+    <p
+      className={cn(
+        typeClass("body"),
+        "text-ink/80 flex max-w-[52ch] items-start gap-2 text-left text-pretty"
+      )}
+    >
       <IconAlertTriangle
         className="size-5 h-lh shrink-0 text-amber-600 sm:size-4"
         aria-hidden="true"
@@ -1111,12 +1192,14 @@ function ComparisonCell({
   );
 }
 
-// Each promise on the page beside the code that keeps it: the real lines, with
-// their real line numbers, from the file on GitHub. `highlight` is the line
-// that does the work.
+// Each promise on the page, first as what it means for your invoices
+// (`outcome`, in plain words), then as the code that keeps it: the real
+// lines, with their real line numbers, from the file on GitHub. `highlight`
+// is the line that does the work.
 const PROOFS: {
   title: string;
   description: string;
+  outcome: { label: string; status: string; isRefused?: boolean }[];
   path: string;
   firstLine: number;
   lines: string[];
@@ -1127,6 +1210,11 @@ const PROOFS: {
     title: "Other websites are blocked",
     description:
       "Every page carries this policy. Your browser enforces it, so trackers, analytics and every other site are refused.",
+    outcome: [
+      { label: "This page", status: "Allowed" },
+      { label: "Analytics and trackers", status: "Blocked", isRefused: true },
+      { label: "Any other website", status: "Blocked", isRefused: true }
+    ],
     path: "consts/content-security-policy.ts",
     firstLine: 11,
     lines: [
@@ -1143,6 +1231,11 @@ const PROOFS: {
     title: "Invoices stay in this browser",
     description:
       "They're saved in your browser's own database, on your device. There's no account and no copy on a server.",
+    outcome: [
+      { label: "Invoices and templates", status: "This device" },
+      { label: "Logos and images", status: "This device" },
+      { label: "Copy on a server", status: "None", isRefused: true }
+    ],
     path: "db/index.ts",
     firstLine: 177,
     lines: [
@@ -1159,6 +1252,11 @@ const PROOFS: {
     title: "Tested on every change",
     description:
       "Every change runs a browser test that loads this page and fails if it asks another website for anything.",
+    outcome: [
+      { label: "This page", status: "Loaded" },
+      { label: "Requests to other sites", status: "None", isRefused: true },
+      { label: "Checked", status: "Every change" }
+    ],
     path: "e2e/home.spec.ts",
     firstLine: 178,
     lines: [
@@ -1173,9 +1271,9 @@ const PROOFS: {
   }
 ];
 
-// The privacy promise in plain words, then the lines of code that keep it, on
-// tiles like the feature cards, so a reader who can't read code still gets the
-// promise and one who can gets the proof.
+// The privacy promise in plain words, then on each tile what it means for your
+// invoices above the lines of code that keep it, so a reader who can't read
+// code still gets the promise and one who can gets the proof.
 function Privacy() {
   return (
     <section id="privacy" className="py-16 sm:py-20">
@@ -1242,16 +1340,17 @@ function CodeLine({ text }: { text: string }) {
   });
 }
 
-// A file open at the lines that matter, on a tile like the feature cards'. The
-// file runs off the tile's right and bottom edges, where it was cut, and its
-// path links to those lines on GitHub. Every tile is only as tall as its
-// lines, so none sits half empty.
+// A promise's outcome card over the file it comes from, on a tile like the
+// feature cards'. The card says what happens to your data; the file below,
+// open at the lines that matter, runs off the tile's right and bottom edges,
+// where it was cut, fading out at the right so a long line reads as
+// continuing, and its path links to those lines on GitHub.
 function CodeTile({ proof }: { proof: (typeof PROOFS)[number] }) {
   const lastLine = proof.firstLine + proof.lines.length - 1;
 
   return (
     <div
-      className="bg-tile relative isolate flex min-w-0 flex-col overflow-hidden rounded-2xl pt-6 pl-6 ring-1 ring-zinc-950/5"
+      className="bg-tile relative isolate flex min-w-0 flex-col gap-4 overflow-hidden rounded-2xl pt-6 pl-6 ring-1 ring-zinc-950/5"
       style={
         {
           "--tile-hue-a": proof.hues[0],
@@ -1267,6 +1366,30 @@ function CodeTile({ proof }: { proof: (typeof PROOFS)[number] }) {
         aria-hidden="true"
         className="absolute -right-1/4 -bottom-1/3 -z-10 aspect-square w-[80%] rounded-full bg-[radial-gradient(closest-side,oklch(0.95_0.03_var(--tile-hue-b)),transparent)]"
       />
+      <ul className="mr-6 flex flex-col rounded-xl bg-white px-4 py-1 shadow-[0_8px_24px_-8px_rgb(16_40_60/0.18)] ring-1 ring-zinc-950/5">
+        {proof.outcome.map(row => {
+          const Icon = row.isRefused ? IconBan : IconCircleCheckFilled;
+
+          return (
+            <li
+              key={row.label}
+              className={cn(
+                "text-ink flex items-center justify-between gap-3 border-t border-zinc-950/5 py-2.5 first:border-t-0",
+                CONTROL_TEXT
+              )}
+            >
+              <span className="min-w-0">{row.label}</span>
+              <span className="flex shrink-0 items-center gap-1.5 font-medium">
+                <Icon
+                  className="text-brand-600 size-4 shrink-0"
+                  aria-hidden="true"
+                />
+                {row.status}
+              </span>
+            </li>
+          );
+        })}
+      </ul>
       <div className="flex min-h-0 flex-1 flex-col rounded-tl-xl bg-white shadow-[0_8px_24px_-8px_rgb(16_40_60/0.18)] ring-1 ring-zinc-950/5">
         <a
           href={`${SOURCE_URL}/blob/main/${proof.path}#L${proof.firstLine}-L${lastLine}`}
@@ -1281,7 +1404,7 @@ function CodeTile({ proof }: { proof: (typeof PROOFS)[number] }) {
           <IconArrowUpRight className="size-3.5 shrink-0" aria-hidden="true" />
           <span className="sr-only"> (opens in a new tab)</span>
         </a>
-        <div className="font-geist-mono flex flex-col py-3 text-[0.75rem] leading-6 text-zinc-800">
+        <div className="font-geist-mono flex flex-col mask-[linear-gradient(to_right,black_calc(100%-3rem),transparent)] py-3 text-[0.75rem] leading-6 text-zinc-800">
           {proof.lines.map((line, index) => {
             const lineNumber = proof.firstLine + index;
             const isHighlighted = lineNumber === proof.highlight;
