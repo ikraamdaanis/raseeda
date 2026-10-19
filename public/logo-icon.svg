@@ -11,7 +11,7 @@
   <linearGradient id="edgeDepth" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#89b8b1" stop-opacity="0"/><stop offset=".45" stop-color="#89b8b1" stop-opacity=".18"/><stop offset="1" stop-color="#4b948b" stop-opacity=".55"/></linearGradient>
   <linearGradient id="outerRim" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".9"/><stop offset=".5" stop-color="#fff" stop-opacity=".25"/><stop offset="1" stop-color="#fff" stop-opacity=".5"/></linearGradient>
   <filter id="soft" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation="7"/></filter>
-  <clipPath id="clip"><path transform="scale(2) translate(1 7)" d="M154 384 V156 A42 42 0 0 1 196 114 H314 A42 42 0 0 1 314 198 C268 198 238 224 238 262 V384 L217 358 L196 384 L175 358 Z" /></clipPath>
+  <clipPath id="clip"><path transform="scale(2) translate(1 7)" d="M154 372 V156 A42 42 0 0 1 196 114 H314 A42 42 0 0 1 314 198 C268 198 238 224 238 262 V372 A12 12 0 0 1 226 384 H166 A12 12 0 0 1 154 372 Z" /></clipPath>
   <clipPath id="tile"><rect width="1024" height="1024" rx="230"/></clipPath>
   <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="22"/></filter>
 </defs>
@@ -19,12 +19,12 @@
   <rect width="1024" height="1024" fill="url(#bg)"/>
   <rect width="1024" height="1024" fill="url(#tileSheen)"/>
   <rect x="0" y="512" width="1024" height="512" fill="url(#tileBase)"/>
-  <g filter="url(#shadow)" opacity=".34" transform="translate(0 20)"><path transform="scale(2) translate(1 7)" d="M154 384 V156 A42 42 0 0 1 196 114 H314 A42 42 0 0 1 314 198 C268 198 238 224 238 262 V384 L217 358 L196 384 L175 358 Z" fill="#003c37"/></g>
-  <path transform="scale(2) translate(1 7)" d="M154 384 V156 A42 42 0 0 1 196 114 H314 A42 42 0 0 1 314 198 C268 198 238 224 238 262 V384 L217 358 L196 384 L175 358 Z" fill="url(#glassW)"/>
+  <g filter="url(#shadow)" opacity=".34" transform="translate(0 20)"><path transform="scale(2) translate(1 7)" d="M154 372 V156 A42 42 0 0 1 196 114 H314 A42 42 0 0 1 314 198 C268 198 238 224 238 262 V372 A12 12 0 0 1 226 384 H166 A12 12 0 0 1 154 372 Z" fill="#003c37"/></g>
+  <path transform="scale(2) translate(1 7)" d="M154 372 V156 A42 42 0 0 1 196 114 H314 A42 42 0 0 1 314 198 C268 198 238 224 238 262 V372 A12 12 0 0 1 226 384 H166 A12 12 0 0 1 154 372 Z" fill="url(#glassW)"/>
   <g clip-path="url(#clip)">
-    <g filter="url(#soft)"><path transform="scale(2) translate(1 7)" d="M154 384 V156 A42 42 0 0 1 196 114 H314 A42 42 0 0 1 314 198 C268 198 238 224 238 262 V384 L217 358 L196 384 L175 358 Z" fill="none" stroke="url(#edgeDepth)" stroke-width="12.6"/></g>
+    <g filter="url(#soft)"><path transform="scale(2) translate(1 7)" d="M154 372 V156 A42 42 0 0 1 196 114 H314 A42 42 0 0 1 314 198 C268 198 238 224 238 262 V372 A12 12 0 0 1 226 384 H166 A12 12 0 0 1 154 372 Z" fill="none" stroke="url(#edgeDepth)" stroke-width="12.6"/></g>
     <rect x="310" y="242" width="404" height="540" fill="url(#sheen)"/>
   </g>
-  <path transform="scale(2) translate(1 7)" d="M154 384 V156 A42 42 0 0 1 196 114 H314 A42 42 0 0 1 314 198 C268 198 238 224 238 262 V384 L217 358 L196 384 L175 358 Z" fill="none" stroke="url(#outerRim)" stroke-width="1.45"/>
+  <path transform="scale(2) translate(1 7)" d="M154 372 V156 A42 42 0 0 1 196 114 H314 A42 42 0 0 1 314 198 C268 198 238 224 238 262 V372 A12 12 0 0 1 226 384 H166 A12 12 0 0 1 154 372 Z" fill="none" stroke="url(#outerRim)" stroke-width="1.45"/>
   <rect x="2" y="2" width="1020" height="1020" rx="228" fill="none" stroke="url(#tileRim)" stroke-width="4"/>
 </g></svg>
