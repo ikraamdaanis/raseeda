@@ -6,7 +6,9 @@ description: >-
   entirely in the browser. The editor is a compact, document-grade tool:
   neutral grayscale chrome, a single deep-teal brand accent, white paper on a
   grey desk, and tight geometry that reads like a precise instrument. The
-  marketing homepage is a calm, light page on a warm canvas in the same teal.
+  marketing homepage is a light, airy page on a warm canvas: a pale sky over
+  the real editor, pastel washes behind short loops of it at work, and ink
+  pills for actions.
 colors:
   background: oklch(1 0 0)
   foreground: oklch(0.145 0 0)
@@ -49,83 +51,86 @@ colors:
   brand950: oklch(0.19 0.033 185)
   canvas: oklch(0.99 0.003 85)
   ink: "#262823"
-  lavenderTint: oklch(0.948 0.02 295)
-  lavenderInk: oklch(0.5 0.13 295)
-  sageTint: oklch(0.948 0.026 145)
-  sageInk: oklch(0.5 0.1 150)
-  butterTint: oklch(0.958 0.038 92)
-  butterInk: oklch(0.5 0.1 65)
-  blushTint: oklch(0.948 0.022 35)
-  blushInk: oklch(0.5 0.15 25)
+  copyGrey: oklch(0.442 0.017 285.786)
+  sky: oklch(0.82 0.075 205)
+  glow: oklch(0.97 0.03 205)
+  tileWash: oklch(0.975 0.014 205)
+  nightPanel: oklch(0.141 0.005 285.823)
+  terminalScreen: "#0c0e10"
+  auroraViolet: oklch(0.52 0.17 295)
+  auroraIndigo: oklch(0.5 0.16 270)
+  auroraMagenta: oklch(0.55 0.17 330)
   pdfMuted: "#6b7280"
   pdfMutedZinc: "#71717a"
   themeColor: "#11746b"
 typography:
-  display:
-    fontFamily: '"Archivo Variable", sans-serif'
-    fontSize: 4.25rem
-    fontWeight: 600
-    lineHeight: 0.98
-    letterSpacing: -0.025em
-    fontVariation: '"wdth" 125'
-  headline:
-    fontFamily: '"Archivo Variable", sans-serif'
-    fontSize: 3rem
-    fontWeight: 600
-    lineHeight: 1.02
-    letterSpacing: -0.025em
-    fontVariation: '"wdth" 125'
-  formLabel:
-    fontFamily: '"Archivo Variable", sans-serif'
-    fontSize: 0.6875rem
-    fontWeight: 600
-    lineHeight: 1
-    letterSpacing: 0.14em
-    fontVariation: '"wdth" 125'
-  plateLabel:
-    fontFamily: '"Archivo Variable", sans-serif'
-    fontSize: 14px
-    fontWeight: 600
-    lineHeight: 1
-    letterSpacing: 0.1em
-    fontVariation: '"wdth" 125'
-  numbering:
-    fontFamily: '"Archivo Variable", sans-serif'
-    fontSize: 3rem
-    fontWeight: 700
-    lineHeight: 1
-    fontFeature: '"tnum"'
-    fontVariation: '"wdth" 62'
-  wordmark:
-    fontFamily: '"Bricolage Grotesque Variable", sans-serif'
-    fontSize: 20px
-    fontWeight: 600
-    letterSpacing: -0.025em
-  body:
-    fontFamily: '"Geist Variable", sans-serif'
-    fontSize: 14px
-    fontWeight: 400
-    lineHeight: 1.5
-  lead:
-    fontFamily: '"Geist Variable", sans-serif'
-    fontSize: 18px
-    fontWeight: 400
-    lineHeight: 1.55
   title:
     fontFamily: '"Geist Variable", sans-serif'
     fontSize: 16px
     fontWeight: 500
+    lineHeight: 1.5
+  body:
+    fontFamily: '"Geist Variable", sans-serif'
+    fontSize: 14px
+    fontWeight: 400
     lineHeight: 1.5
   label:
     fontFamily: '"Geist Variable", sans-serif'
     fontSize: 14px
     fontWeight: 500
     lineHeight: 1.4
+  control:
+    fontFamily: '"Geist Variable", sans-serif'
+    fontSize: 13px
+    fontWeight: 400
+    lineHeight: 1.5
   caption:
     fontFamily: '"Geist Variable", sans-serif'
     fontSize: 12px
     fontWeight: 400
     lineHeight: 1.4
+  homeDisplay:
+    fontFamily: '"Schibsted Grotesk Variable", sans-serif'
+    fontSize: clamp(2rem, 0.75rem + 6vw, 3.75rem)
+    fontWeight: 500
+    lineHeight: clamp(2.25rem, 1.25rem + 5vw, 3.75rem)
+    letterSpacing: -0.035em
+  homeHeadline:
+    fontFamily: '"Schibsted Grotesk Variable", sans-serif'
+    fontSize: 2.25rem
+    fontWeight: 500
+    lineHeight: 2.5rem
+    letterSpacing: -0.035em
+  homeTitle:
+    fontFamily: '"Schibsted Grotesk Variable", sans-serif'
+    fontSize: 1.125rem
+    fontWeight: 500
+    lineHeight: 1.75rem
+  homeLead:
+    fontFamily: '"Schibsted Grotesk Variable", sans-serif'
+    fontSize: 1.125rem
+    fontWeight: 400
+    lineHeight: 1.75rem
+  homeBody:
+    fontFamily: '"Schibsted Grotesk Variable", sans-serif'
+    fontSize: 1rem
+    fontWeight: 400
+    lineHeight: 1.625rem
+  homeCaption:
+    fontFamily: '"Schibsted Grotesk Variable", sans-serif'
+    fontSize: 0.875rem
+    fontWeight: 400
+    lineHeight: 1.25rem
+  wordmark:
+    fontFamily: '"Schibsted Grotesk Variable", sans-serif'
+    fontSize: 18px
+    fontWeight: 600
+    letterSpacing: -0.0175em
+  code:
+    fontFamily: '"Geist Mono Variable", monospace'
+    fontSize: 12px
+    fontWeight: 400
+    lineHeight: 24px
 rounded:
   none: 0px
   surface: 3px
@@ -134,6 +139,9 @@ rounded:
   md: 6px
   lg: 0.5rem
   xl: 12px
+  2xl: 0.9rem
+  hero: 2rem
+  full: 9999px
 spacing:
   px: 1px
   0.5: 2px
@@ -145,6 +153,9 @@ spacing:
   4: 16px
   6: 24px
   8: 32px
+  12: 48px
+  16: 64px
+  20: 80px
   coarseTarget: 44px
 components:
   button:
@@ -188,6 +199,11 @@ components:
     padding: 40pt
     width: 210mm
     height: 297mm
+  menuItem:
+    backgroundColor: "{colors.popover}"
+    textColor: "{colors.popoverForeground}"
+    typography: "{typography.control}"
+    rounded: "{rounded.surface}"
   zoomControl:
     backgroundColor: "{colors.background}"
     textColor: "{colors.foreground}"
@@ -203,20 +219,36 @@ components:
   dialog:
     backgroundColor: "{colors.popover}"
     textColor: "{colors.popoverForeground}"
-    rounded: "{rounded.sm}"
-  badge:
+    rounded: "{rounded.md}"
+    width: 500px
+  brandTile:
     backgroundColor: "{colors.brand50}"
-    textColor: "{colors.brand700}"
-    rounded: "{rounded.surface}"
-  logoMark:
-    backgroundColor: "{colors.ink}"
-    textColor: oklch(1 0 0)
+    textColor: "{colors.brand600}"
     rounded: "{rounded.surface}"
     size: 48px
-  skipLink:
-    backgroundColor: "{colors.paper}"
+  inkPill:
+    backgroundColor: "{colors.ink}"
+    textColor: oklch(1 0 0)
+    rounded: "{rounded.full}"
+    padding: 10px 16px
+  softPill:
+    backgroundColor: oklch(1 0 0 / 0.6)
     textColor: "{colors.ink}"
-    rounded: "{rounded.control}"
+    rounded: "{rounded.full}"
+    padding: 10px 16px
+  demoTile:
+    backgroundColor: "{colors.tileWash}"
+    rounded: "{rounded.2xl}"
+    padding: 24px
+  nightPanel:
+    backgroundColor: "{colors.nightPanel}"
+    textColor: oklch(1 0 0)
+    rounded: "{rounded.2xl}"
+    padding: 56px
+  skipLink:
+    backgroundColor: oklch(1 0 0)
+    textColor: "{colors.ink}"
+    rounded: "{rounded.full}"
     padding: 8px 16px
 ---
 
@@ -238,18 +270,21 @@ achromatic, the brand accent is a single deep-teal ramp, radii are small, and
 controls are compact. The paper itself never changes with the app theme,
 because it is a preview of the PDF that gets downloaded.
 
-The marketing homepage is light and calm: a warm off-white canvas, warm
-near-black ink, soft paintings, and teal for the second line of the headings,
-links on hover, and the wordmark. Four quiet secondary hues mark content
-there, never actions.
+The marketing homepage is light and airy: a warm off-white canvas, warm
+near-black ink, a pale teal-blue sky with drifting clouds over the real editor,
+and pale pastel washes behind short loops of the editor at work. It shows the
+product rather than describing it. Ink carries the actions, teal marks the
+brand's own column and ticks, and one dark violet panel, the open source
+terminal, is the named exception.
 
 **Key Characteristics:**
 
 - Neutral chrome; colour is reserved for the brand accent and for status.
-- One accent: the deep-teal `brand` ramp carries every emphasis.
+- One accent: the deep-teal `brand` ramp carries every emphasis (one named exception on the homepage).
 - White paper on a grey desk: the invoice page previews the PDF exactly.
-- Tight geometry: 3px surfaces, 4px controls, 32px default control height.
+- Tight geometry in the editor: 3px surfaces, 4px controls, 32px default control height, 13px control text.
 - The editor has its own neutral chrome (plain greys, a near-black or near-white primary) and a light/dark switch; the rest of the site is light.
+- The homepage is rounder and softer: pills, 12 to 32px corners, rings instead of borders, the real editor in every picture.
 
 ## Colors
 
@@ -273,39 +308,56 @@ editor (`#fcfcfc`) and the dark editor (`#161616`):
 | `brand-600` | `#11746b` | 5.62 | 5.48 | 3.22 |
 | `brand-700` | `#0c5952` | 8.18 | 7.98 | 2.21 |
 
-- **Brand Teal** (`brand-600`): the solid accent. Primary buttons on the site
-  and in the editor (light and dark), a selected row's name, the wordmark, the
-  second line of homepage headings, homepage link hovers, and the brand icons
-  in homepage pictures. White text on it passes WCAG AA, which is why solid
-  fills sit on 600, not 500. Hover deepens to `brand-700`. On the dark editor
-  a 600 fill still clears 3:1 against the panel.
+- **Brand Teal** (`brand-600`): the solid accent. Primary buttons in the
+  editor (light and dark), a selected row's name, the homepage focus outline,
+  text-link and header-link hovers, the ticks in the feature list and
+  comparison table, and the step numbers. White text on it passes WCAG AA,
+  which is why solid fills sit on 600, not 500. Hover deepens to `brand-700`.
+  On the dark editor a 600 fill still clears 3:1 against the panel.
 - **Focus Teal** (`brand-500`): the focus ring (`--ring`) in the app and in
   both editor themes, checked switches (`bg-ring`), the invoice field focus
-  border, table focus outlines, and the undo flash. It clears 3:1 on the light
-  and dark editor alike. Never a fill under white text (3.78:1 fails AA).
-- **Deep Teal** (`brand-700` and `brand-800`): hover and pressed fills, badge
-  text, and the info banner's text (`brand-800`).
+  border, table focus outlines, the undo flash, and the highlighted line's
+  edge in the homepage code tiles. It clears 3:1 on the light and dark editor
+  alike. Never a fill under white text (3.78:1 fails AA).
+- **Deep Teal** (`brand-700` and `brand-800`): hover and pressed fills, the
+  info banner's text (`brand-800`); on the homepage, footer link hovers,
+  raseeda's comparison header and strings in the code tiles (`brand-700`).
 - **Brand Wash** (`brand-50`): the hover and focus fill for editable invoice
-  fields, badge fills, the info banner, the homepage step numbers and
-  raseeda's column in the comparison table. Pairs with `brand-200` borders and
-  `brand-700` text. `brand-100` is the selected list row and the homepage text
-  selection colour.
+  fields, the info banner, the 404 and error icon tile, the homepage step
+  numbers, raseeda's column in the comparison table and the highlighted code
+  line. Pairs with `brand-200` borders and `brand-600` to `brand-700` text.
+  `brand-100` is the selected list row and the homepage text selection colour.
 - **Dark Teal Text** (`brand-400`): brand text and icons on dark surfaces,
   and the ring outside the editor in dark mode.
 
 ### Homepage
 
-- **Canvas** (`canvas`): the warm off-white page ground.
-- **Ink** (`ink`, `#262823`): headings, links and the Create invoice button
-  (a solid `ink` pill, hover `ink` at 85%). Body copy is `zinc-600`.
-- **Secondary hues** (`lavender`, `sage`, `butter`, `blush`, each a `-tint`
-  and an `-ink`): the facts strip tiles and the feature washes. The tints share
-  one lightness and a low chroma; each ink is at least 4.5:1 on white. They
-  mark content, never actions or links. `sage` (hue 145 to 150) is the
-  brand's nearest neighbour, so keep it off anything that sits next to a teal
-  control.
-- The closing band's `blue-100` is the city painting's placeholder colour
-  while it loads, not a brand colour.
+- **Canvas** (`canvas`): the warm off-white ground of the homepage and the
+  privacy page.
+- **Ink** (`ink`, `#262823`): headings, links, the wordmark and the Create
+  invoice pill (hover `ink` at 85%). The hero lead is `ink` at 75%.
+- **Copy Grey** (`copyGrey`, Tailwind `zinc-600`): body copy. The homepage's
+  neutrals are the zinc scale: `zinc-500` for footer and question-group
+  headings and code-tile paths, `zinc-400` for crosses and external-link
+  arrows, and `zinc-950` at 5% (tiles) or 10% (white cards, the table, menus)
+  for rings and row hairlines.
+- **Sky** (`sky`, hue 205): the hero ground, paling and turning a touch
+  greener towards a white haze at the horizon (`bg-sky`, tunable through
+  `--sky-hue`, `--sky-chroma`, `--sky-lightness`). **Glow** (`glow`) is the
+  same hue gone pale for the closing panel, with a deeper dome of it rising
+  from the foot.
+- **Tile hues** (`TILE_HUES` in `components/home/feature-demos.tsx`, OKLCH hue
+  angles): sky 205, lavender 295, sage 145, butter 92, blush 35. A tile is a
+  `tileWash` of its first hue (`oklch(0.975 0.014 h)`) with two soft blobs
+  (`oklch(0.94 0.035 h1)` and `oklch(0.95 0.03 h2)`). Each card takes its own
+  pair, so neighbours never match. They mark content, never actions or links.
+- **Night Panel** (`nightPanel`, `zinc-950`) with **Aurora Violet**,
+  **Aurora Indigo** and **Aurora Magenta** lights and the **Terminal Screen**
+  (`terminalScreen` at 95%): the Run your own copy panel only (see the
+  Terminal Exception Rule). Inside the terminal, output keeps Bun's and Vite's
+  own colours (`emerald`, `cyan`, `pink` prompt, `zinc` dims).
+- The `lavender`, `sage`, `butter` and `blush` `-tint` / `-ink` tokens still
+  defined in `globals.css` are no longer referenced; tiles use the hue angles.
 
 ### Neutral
 
@@ -322,7 +374,8 @@ App chrome (semantic roles, from `:root`):
 
 The editor redefines these roles with plain greys (see the Dark Mode Honesty
 Rule): light `#fcfcfc` panels, `#1c1c1c` text, `#646464` muted text; dark
-`#161616` panels, `#f5f5f5` text, `#a8a8a8` muted text.
+`#161616` panels, `#f5f5f5` text, `#a8a8a8` muted text. The homepage's
+pictures of the editor (`[data-editor-chrome]`) take the light set.
 
 Paper (the invoice sheet; see the Paper Rule):
 
@@ -350,16 +403,26 @@ app icons are a `#1e877d` to `#11746b` gradient (`brand-600` at the foot).
 - **Destructive** (`oklch(0.577 0.245 27.325)`): delete and danger, always as a
   tint (10 to 20% fill with destructive text), never a loud solid.
 - **Success** (`oklch(0.627 0.155 149.21)`): positive status.
-- **Warning** (`oklch(0.745 0.153 74.2)`): cautionary status; on the homepage,
-  the alert icon on the blocked-storage note.
+- **Warning** (`oklch(0.745 0.153 74.2)`): cautionary status in the editor.
 - **Info** is the brand: the editor banner's info tone is `brand-50` with
   `brand-500` icons and `brand-800` text.
 
 ### Named Rules
 
 **The One Voice Rule.** The teal `brand` ramp is the only accent. Never
-introduce a second hue for emphasis; status colours are for status only, and
-the homepage's secondary hues mark content only.
+introduce a second hue for emphasis; status colours are for status only, the
+homepage's tile hues mark content only, and the night panel is the one
+recorded exception.
+
+**The Terminal Exception Rule.** The Run your own copy panel is a dark
+`zinc-950` surface lit by violet, indigo and magenta lights, with a violet band
+running round its terminal. It is deliberate and approved, and it stays inside
+that one panel: violet appears nowhere else on the site except as the keyword
+colour in the code tiles.
+
+**The Ink Action Rule.** Homepage actions are ink, not teal: the primary
+action is a solid `ink` pill and secondary actions are frosted white pills.
+Teal on the homepage marks and hovers; it never fills a button there.
 
 **The 600 Fill Rule.** Solid brand fills under white text are `brand-600` or
 darker. `brand-500` is for rings, switches and borders.
@@ -383,92 +446,86 @@ homepage and privacy page stay light; do not claim dark mode for them.
 
 ## Typography
 
-**Display Font:** Archivo Variable at 125% width (with sans-serif), homepage only
-**Numbering Font:** Archivo Variable at 62% width, tabular, homepage only
-**Body Font:** Geist Variable (with the system UI stack)
-**Wordmark Font:** Bricolage Grotesque Variable
+**Editor Font:** Geist Variable (with the system UI stack)
+**Homepage Font:** Schibsted Grotesk Variable (with sans-serif), `--font-home`, marked as on trial in `globals.css`
+**Mono Font:** Geist Mono Variable, for the homepage code tiles and terminal
 
 **Character:** the editor speaks in one even, neutral sans so the invoice's own
-font can lead; the homepage engraves its headings, labels, and plates in
-wide grotesque capitals, prints its figures in a condensed numbering-machine
-cut of the same face, and keeps every sentence meant to be read in Geist.
+font can lead. The marketing pages set headlines in Medium with tight negative
+tracking (-0.035em), balanced, and keep everything else Regular in grey.
 
 Geist is set on `<body>` and is what every piece of app chrome renders in.
-Inter Variable is wired as `--font-sans` / `--font-heading` on `<html>`, but
-no element opts into it, so it does not render in the UI; it remains available
-in the invoice font library. Homepage text that sits inside a styled example
-slip (the request counterfoil, the tour note strips, the logo mark, the
-typeface fallback line) sets `font-geist` and normal tracking explicitly to
-escape the slip's invoice font.
-
-Archivo is imported by the homepage route alone (`@fontsource-variable/archivo/wdth.css`,
-with the latin `wdth` file preloaded in the route head) and exposed as
-`--font-engraved`. Width is set with `font-stretch` (125% engraved, 62%
-numbering), which the variable `wdth` axis serves.
+Inter Variable is wired as `--font-sans` on `<html>`, but no element opts into
+it, so it does not render in the UI; it remains available in the invoice font
+library. The homepage wrapper sets `font-home`; the privacy page sets
+`font-geist`; every picture of the editor on the homepage (`EditorWindow` and
+the demo scenes) sets `font-geist` so it matches the product.
 
 ### Hierarchy
 
-- **Display** (Archivo 125%, Semibold, 40px, 60px from `sm`, 68px from `xl`;
-  0.98 line height, -0.025em tracking, balanced, `ink`): the homepage h1 only,
-  set as two masked lines, the second in `brand-600`.
-- **Headline** (Archivo 125%, Semibold, -0.025em, balanced): homepage section
-  and closing h2s (36px, 48px from `sm`, 1.02 leading); tour note titles
-  (20px, 24px from `sm`, tight leading); privacy check titles (18px, 20px from
-  `sm`, white on the band).
-- **Plate Label** (Archivo 125%, Semibold, uppercase): the Create invoice
-  plate; 12px at 0.1em (`sm`), 14px at 0.1em (`md`), 16px at 0.08em (`lg`).
-- **Form Label** (Archivo 125%, Semibold, 11px, leading 1, 0.14em, uppercase,
-  `ink-muted`): printed field labels on slips (No., Bill to, For, Amount,
-  Typeface, To, Kept by), the counter's term in `ink`, and the two question
-  group headings.
-- **Numbering** (Archivo 62%, Bold, tabular, `numbering`): serials at 24px,
-  the request counter at 48px, tour markers at 24px. The document foot's facts
-  line uses the same face at 14px Semibold, 0.06em, uppercase, in `ink-muted`,
-  the one place it is not red.
-- **Microprint** (Archivo 125%, Semibold, 5px, 0.2em, uppercase, `ink` at 35%):
-  a repeated sentence printed as a rule. Decorative and hidden from assistive
-  tech; it never carries information.
-- **Lead** (Geist 400, 18px, capped at 42ch to 56ch, `ink-muted`; `brand-100`
-  on the band): the paragraph under a homepage headline.
-- **Title** (Geist 500, 16px): the document name in the editor toolbar and
-  question summaries on the homepage.
-- **Body** (Geist 400, 14px in chrome; 16px for homepage check descriptions,
-  tour notes, and answers, capped at 52ch to 68ch): chrome text and homepage
-  copy.
-- **Label** (Geist 500, 14px; 12px in `xs` controls): buttons, menu triggers,
-  table headers; homepage nav links.
+Editor (app values):
+
+- **Title** (`title`, Medium 16px): the document name in the top bar, dialog
+  titles.
+- **Label** (`label`, Medium 14px; 12px in `xs` controls): buttons, menu
+  triggers, table headers.
+- **Body** (`body`, Regular 14px): chrome text.
+- **Control** (`control`, 13px, Regular, Medium for row names, Semibold for
+  inspector section headers): menu and context-menu items, the command
+  palette, inspector rows and fields, the invoices panel, invoice and template
+  list rows, the open dialogs' lists, the download popover, and the status
+  banner from `sm`. It is the app value of the `body` role in
+  `lib/type-scale.ts` (13/20), written `text-[13px]`.
+- **Caption** (`caption`, Regular 12px): `xs` buttons and meta.
+
+Homepage (roles from `lib/type-scale.ts`, set at marketing values by
+`.home-type`):
+
+- **Display** (`homeDisplay`, the `display` role): the hero h1 and the closing
+  h2, two lines, both `ink`, growing fluidly from 32px to 60px.
+- **Headline** (`homeHeadline`, the `title` role): section h2s, capped at 35ch.
+- **Title** (`homeTitle`, the `subtitle` role, 16px from `sm`): step, card and
+  proof h3s. Its compact step (16/24) sets the question summaries.
+- **Lead** (`homeLead`, `ink` at 75%, 48ch): the hero paragraph only.
+- **Body** (`homeBody`, the `body` role; 14/24 from `sm`): all reading copy,
+  `copyGrey`, balanced, capped at 40ch to 64ch. Its compact step (16/24, 14
+  from `sm`, Medium) sets single-line controls: nav links, pill labels, the
+  feature list.
+- **Caption** (`homeCaption`, the `caption` role): the step numbers (Semibold,
+  tabular) and comparison row labels.
+- **Code** (`code`): file lines in the code tiles at 12/24; the terminal at
+  13/24.
+- **Wordmark** (`wordmark`): the name in the page's own face and `ink`, a touch
+  looser than tight tracking, in a 44px tap box.
 
 Weights map to a fixed scale: Regular 400, Medium 500, Semibold 600, Bold 700.
-UI labels and buttons are Medium. Text sizes come from the Tailwind scale; avoid
-arbitrary `text-[Nrem]` values in feature code (the homepage's display size,
-form label, and microprint sizes are the recorded exceptions). Numbers use
-tabular figures. Homepage copy uses typographic (curly) apostrophes.
+UI labels and buttons are Medium. Text sizes come from the Tailwind scale or a
+type role; avoid other arbitrary `text-[N]` values in feature code (13px is a
+recorded step). Numbers use tabular figures. Homepage copy uses typographic
+(curly) apostrophes.
 
 Separately, raseeda ships an invoice font library (`consts/invoice-fonts.ts`)
 that is a user-facing product feature, not app chrome. Users pick from ten
 sans-serif, serif, and monospace faces at three sizes for the rendered invoice;
-the canvas applies the chosen family and tracking to the paper. The homepage
-specimen slip borrows three of these faces through `getInvoiceFontDefinition`,
-so it shows real output, and the tour invoice is set in Lora. Keep this library
-independent from the app's own type tokens.
+the canvas applies the chosen family and tracking to the paper. The homepage's
+font demo scrolls the library's real faces. Keep this library independent from
+the app's own type tokens.
 
 ### Named Rules
 
-**The Engraved Recipe Rule.** Every homepage Archivo element is built from the
-route's shared recipes (`ENGRAVED`, `NUMBERING`, `FORM_LABEL`, `HEADLINE`) and
-adds only size, leading, and colour.
+**The Role Rule.** Homepage and privacy-page text takes its size and leading
+from a `lib/type-scale.ts` role through `typeClass()`; `.home-type` re-sets the
+role variables at marketing values. Pick a role, never a hand-written size.
 
-**The Reading Is Geist Rule.** Archivo sets headings, labels, plates, numerals,
-and microprint. Every sentence a visitor reads (leads, check descriptions,
-notes, answers, captions) stays in Geist.
-
-**The Archivo Stays Home Rule.** Archivo is imported and preloaded only by the
-homepage route and appears only there. The editor and dialogs never use it.
+**The 13px Control Rule.** Dense editor controls are 13px; buttons stay 14px
+Medium and meta drops to 12px. The homepage's pictures of the editor mirror
+13px so they read as the product.
 
 ## Layout
 
 - **Spacing** follows the Tailwind 4px scale (`1` = 4px). Dense chrome favours
-  `1` to `3` (4 to 12px); section rhythm uses `4` to `8` (16 to 32px).
+  `1` to `3` (4 to 12px); section rhythm uses `4` to `8` (16 to 32px) in the
+  editor and `12` to `20` (48 to 80px) on the homepage.
 - **Dividers use gaps, never borders-between.** Hairline separations are built
   with `gap-px` on a `bg-border` parent, with each child carrying its own
   background, or with a `border-t` owned by each item. This is a hard project
@@ -480,9 +537,10 @@ homepage route and appears only there. The editor and dialogs never use it.
   variants at matching sizes.
 - **Touch gets 44px.** Coarse pointers enlarge the targets that matter through
   `pointer-coarse:` variants: the editor's top bar buttons, download button,
-  canvas pill controls, inspector rows, the homepage header plate, typeface
-  segments, and homepage nav, footer, and check links (40px at rest) reach 44px.
-  Fine pointers keep the compact sizes.
+  canvas pill controls and inspector rows reach 44px. On the homepage, footer
+  links and the phone menu button are 44px, and the pills and header link
+  carry an invisible 48px hit area on coarse pointers. Fine pointers keep the
+  compact sizes.
 - **Editor frame.** A 48px top bar sits above three columns: the invoices panel
   (256px), the desk, and the inspector (288px). Both panels slide shut to
   nothing. The desk centres the page with 12px padding on phones and 32px from
@@ -493,8 +551,9 @@ homepage route and appears only there. The editor and dialogs never use it.
   along the bottom (`background`, top `border`) holds Invoices, Style,
   Preview/Edit and a zoom tab (Zoom in at Fit, Fit page when zoomed, Done
   after a tapped field zoomed in). The panels open as bottom sheets (70dvh,
-  `rounded-t-2xl`) above the tab bar with a tap-to-close backdrop, and the
-  canvas pill is hidden. The light/dark switch is also in the project menu.
+  `rounded-t-2xl`, `shadow-floating`) above the tab bar with a tap-to-close
+  backdrop, and the canvas pill is hidden. The light/dark switch is also in
+  the project menu.
 - **The page is viewport-independent.** The A4 sheet is fixed at 210mm by at
   least 297mm with 40pt padding, and nothing inside it uses responsive
   breakpoints, so what you see on screen matches the PDF. Small screens scale
@@ -514,101 +573,106 @@ homepage route and appears only there. The editor and dialogs never use it.
   keyboard. The viewport sets `maximum-scale=1` so iOS never zooms into a
   focused field, and `interactive-widget=resizes-content` so Android's
   keyboard shrinks the editor instead of covering it.
-- **Homepage.** Content sits in a `max-w-6xl` (72rem) column. Order: header,
-  hero document, privacy band, tour (`#features`), questions, closing
-  counterfoil, footer. Sections breathe at 80px vertical padding (96px from
-  `sm`) and are divided by the world's own devices rather than hairlines: the
-  privacy band's flood, a microprint rule above the questions, and microprint
-  under the header and over the footer.
-- **Hero document.** A bordered document fills the column (16px outer gutter
-  on phones, 24px from `sm`), framed by 24px guilloche bands top and bottom,
-  side bands and corner rosettes from `sm`, and a 34rem rosette bleeding off
-  its lower-right corner from `lg`. The headline spans the full width; under
-  it, from `lg`, the copy and the specimen slip split 6fr / 5fr. A dashed
-  perforation separates the body from the document foot's facts line.
-- **Two-column sections.** From `lg`, privacy splits 5fr / 7fr (heading, lead,
-  and medallion, then the checks, with the backup note spanning both below);
-  the tour sets its invoice beside its notes at 1.05fr / 0.95fr; questions
-  split 0.85fr / 1.15fr with the help link under the heading; the closing
-  counterfoil splits a 14rem stub from the body from `md`. Everything stacks
-  below `lg`.
-- **Phones.** Below `md` the section links fold into a native disclosure menu,
-  the header plate is hidden, and a fixed bottom bar carries a full-width plate
-  in the thumb zone (safe-area padded); the footer pads 96px at the bottom to
-  clear it.
-- **No layout shift on hydration.** JavaScript-only content renders a
-  same-height plain-text stand-in before hydration (the typeface row reserves
-  44px with a plain sentence; the counter shows blank wheels until the browser
-  has counted), and late-resolving content gets a reserved slot (the 40px line
-  under the hero actions from `lg`), so nothing moves when it arrives.
+- **Homepage column.** Content sits in a `max-w-6xl` (72rem) column with 24px
+  gutters (32px from `lg`), shared with the privacy page
+  (`components/home/site-chrome.tsx`). Order: header, hero, How it works,
+  privacy, comparison, features, open source, questions, closing panel,
+  footer. Sections pad 64px vertically (80px from `sm`) and are separated by
+  that air alone, never by rules.
+- **Section headings.** A heading (35ch) over its description (48ch), 24px
+  apart; from `lg` they split into a row, the description at the right, both
+  aligned at the foot. The comparison centres them.
+- **Hero.** The sky pulls up under the 64px header, runs edge to edge below
+  `lg` and is inset 12px with 32px corners from `lg`. Copy sits left on phones,
+  in line with the editor crop below it, and centred from `sm`. The editor
+  window rises from the sky's foot and is cut by it: from `lg` the whole
+  1440px window scales into the column; below it a fixed-zoom crop (0.55,
+  0.65 from `sm`, 0.75 from `md`) runs off the right edge.
+- **Grids.** Steps and privacy proofs run three across from `md`, features two
+  across; all use 24px column and 48px row gaps, with each card's text 24px
+  under its tile. Questions split one third (heading) to two thirds (groups)
+  from `lg`. The footer runs two link columns, three from `sm`. Everything
+  stacks below its breakpoint.
+- **Phones.** Below `md` the section links fold into a native disclosure menu;
+  below `sm` the header's Open the editor link is hidden, since the hero's
+  button sits right under it.
+- **Works before hydration.** Menus and questions are native `<details>`, and
+  the hero entrance and cloud phases are inline scripts that run while the
+  HTML parses, so nothing waits for JavaScript or shifts when it arrives.
 - **Print is a first-class target.** `@page` is A4 with 16mm margins;
   `.invoice-page` forces page breaks, `.avoid-break` prevents mid-block splits,
   `.no-print` hides chrome, and print colour-adjust is forced `exact`.
 
-### Named Rules
-
-**The Perforation Rule.** On the homepage, rows and regions divide with a 2px
-dashed perforation (`perforation` on the tint and slips, `brand-400` at 50% on
-the band) or a microprint rule. Solid hairlines are reserved for outlining an
-object (the document, a slip, a bar) and for the rows inside an example
-invoice.
-
 ## Elevation & Depth
 
-Depth is minimal and cool-neutral, never heavy. Flat in-flow surfaces separate
-with a hairline border; shadows are reserved for things that genuinely float.
+Depth is minimal and cool-neutral, never heavy. In the editor, flat in-flow
+surfaces separate with a hairline border and shadows are reserved for things
+that genuinely float. On the homepage, white cards and tiles are outlined with
+a faint ring, and shadows lift only what sits on a tile or on the sky.
 
 ### Shadow Vocabulary
 
 - **Menu** (`--shadow-menu`: `0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px
-  rgb(0 0 0 / 0.1)`): menus, popovers, dropdowns, selects, context menus, the
-  logo popover, the floating zoom control, the homepage phone section menu,
-  and the homepage skip link. The standard floating chrome shadow.
+  rgb(0 0 0 / 0.1)`): menus, popovers, dropdowns, selects, context menus,
+  dialogs, the canvas pill and the floating zoom control. The standard
+  floating chrome shadow.
 - **Floating** (`--shadow-floating`: `0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px
-  10px -6px rgb(0 0 0 / 0.1)`): the three homepage paper slips (the specimen
-  invoice, the tour invoice, the closing counterfoil). None is tilted.
-- **Paper lift** (Tailwind `shadow-md`): the A4 sheet resting on the desk.
-  Removed in print.
-- **Dialog ring**: dialogs float on a 1px `foreground/10` ring over a 50% black
-  scrim rather than a drop shadow.
-- Pressed feedback on buttons is a 1px downward nudge (`active:translate-y-px`),
-  not a shadow change.
+  10px -6px rgb(0 0 0 / 0.1)`): the editor's side panels when they open as
+  bottom sheets on phones.
+- **Paper lift** (Tailwind `shadow-md`): the A4 sheet resting on the desk, and
+  the PDF page in the homepage's editor window. Removed in print.
+- **Ring**: dialogs, menus and the canvas pill also carry a 1px
+  `foreground/10` ring; dialogs sit over a 50% black scrim.
+- **Bezel** (`0 24px 64px -16px rgb(16 60 90 / 0.25)`): the frosted frame of
+  the hero's editor window, a blue-tinted shadow cast on the sky.
+- **Lifted** (`0 8px 24px -8px rgb(16 40 60 / 0.18)`, with a `zinc-950/5`
+  ring): white panels and paper inside demo tiles and the code tiles' file.
+- **Pill** (`inset 0 1px 0 rgb(255 255 255 / 0.12), 0 1px 2px rgb(0 0 0 /
+  0.16)`): the ink pill's top highlight and contact shadow.
+- Pressed feedback on buttons is a scale to 97% (`active:scale-[0.97]`, skipped
+  for menu triggers), not a shadow change.
 
 ### Named Rules
 
 **The Float-Only Shadow Rule.** A shadow means "this is above the page". In-flow
 cards, rows, and panels get a hairline, not a shadow.
 
-**The Slip Rule.** On the homepage, lifted surfaces are white paper slips lying
-on the tint: white, `ink` at 15% hairline, `rounded-surface`,
-`shadow-floating`, upright. The hero document, the tour notes, and the privacy
-band are printed on the ground and sit flat.
+**The Ring Rule.** On the homepage, containers are outlined with a 1px ring,
+never a border plus shadow: `zinc-950` at 5% around tiles, at 10% around white
+cards, the comparison table, question groups and menus; `white` at 5% around
+the night panel.
 
 ## Shapes
 
-Geometry is intentionally tight, which is what gives the tool its exacting feel.
-The two everyday radii are named tokens, not arbitrary values:
+Editor geometry is intentionally tight, which is what gives the tool its
+exacting feel. The two everyday radii are named tokens, not arbitrary values:
 
 - **Surface** (`rounded-surface`, 3px): the dominant radius for cards, panels,
-  inputs, invoice fields, chips, icon tiles, menus, menu items, previews, the
-  homepage slips, the specimen's amount box, the tour notes list, and the logo
-  mark.
-- **Control** (`rounded-control`, 4px): buttons, the zoom control, the homepage
-  Create invoice plate, the typeface switch's frame, the skip link, and the
-  focus area of homepage text links.
-- **Dialog** (`rounded-sm`, 4px).
-- **Square** (`rounded-none`): the homepage's printed objects, the hero
-  document and the full-bleed privacy band.
-- The derived scale (`rounded-md` and up, from `--radius: 0.5rem`) exists for
-  larger surfaces that need softer corners but is rarely needed.
+  inputs, invoice fields, chips, icon tiles, menus, menu items, previews, and
+  the 404 and error icon tile.
+- **Control** (`rounded-control`, 4px): buttons and the zoom control.
+- **Dialog** (`rounded-md`, 6px), also the inspector's filled fields.
+- The derived scale (`rounded-lg` and up, from `--radius: 0.5rem`) is for the
+  few softer surfaces: the canvas pill (`rounded-xl`, 12px) and the phone
+  sheets (`rounded-t-2xl`).
 
-Keep new components on the `surface` / `control` tokens unless there is a reason
-to reach for the softer derived scale. Nothing in the app is a pill or a circle.
+Keep new editor components on the `surface` / `control` tokens unless there is
+a reason to reach for the softer derived scale. Nothing in the editor is a
+pill.
 
-The homepage's recurring silhouettes are printed ones: the interlaced
-guilloche ribbon, hypotrochoid rosettes, the 2px dashed perforation, the
-plate's inset hairline frame, and the cheque's transit mark (a drawn SVG
-bracket-and-bar) leading each fact on the document foot.
+The homepage is rounder by design:
+
+- **Pill** (`rounded-full`): the ink and soft pills, nav links, the skip link,
+  the step-number discs and the menu button.
+- **12px** (`rounded-xl`): white cards (Also in the editor), question groups,
+  the phone menu panel, the terminal and the code tiles' file corner.
+- **About 14px** (`rounded-2xl`, 0.9rem): demo tiles, code tiles, the
+  comparison table and the night panel.
+- **32px** (`rounded-[2rem]`): the hero sky and the closing panel from `lg`.
+- **Bezel**: 16px (20px from `sm`) outer corners on the editor window's frame,
+  the inner window inset by the frame's padding; only the top corners round,
+  since the sky cuts the foot. Pictures that run off a tile's edge round only
+  the corner that shows.
 
 ## Components
 
@@ -621,10 +685,11 @@ lists.
 
 ### Buttons
 
-- **Shape:** gently squared (`rounded-control`, 4px), Medium 14px label,
-  `transition-all`, 1px active nudge.
-- **Primary (`default`):** `brand-600` fill, `primary-foreground` text, hover
-  `brand-700`. The primary CTA in the app.
+- **Shape:** gently squared (`rounded-control`, 4px), Medium 14px label;
+  colour, border, shadow, opacity and scale transition over 150ms ease-out,
+  with the 97% press.
+- **Primary (`default`):** `brand-600` fill, white text, hover `brand-700`. The
+  primary CTA in the app.
 - **Hover / Focus:** `focus-visible:ring-1 ring-ring` (brand-500); disabled is
   50% opacity.
 - **Outline:** `border` hairline on `background`, hover `muted`.
@@ -675,7 +740,8 @@ The right panel holds every whole-invoice setting, in collapsible sections:
 Style (font tiles, weight and size segmented controls), Details (currency,
 issue date, payment terms, date format), and Sections (switches for each
 optional part of the invoice). Dates are always picked from a calendar, on
-the page and in the inspector, and written in the invoice's date format. Rows are 13px, labels `muted-foreground`, fields `muted` fills.
+the page and in the inspector, and written in the invoice's date format. Rows
+are 13px, labels `muted-foreground`, fields `muted` fills (`rounded-md`).
 
 ### Navigation
 
@@ -696,195 +762,172 @@ the page and in the inspector, and written in the invoice's date format. Rows ar
   (`muted`, Download backup, a close button). 16px text on phones, 13px from
   `sm`, `xs` buttons; on a phone the actions drop below the words, and the
   icon lines up with the first line.
-- **Homepage skip link:** the first focusable element, "Skip to content", a
-  white `rounded-control` tab with `shadow-menu` fixed 12px from the top-left,
-  held 64px above the viewport and slid into place on focus (transform
-  transition), so it keeps its padding. Targets `<main id="main">`.
-- **Homepage header:** sticky, 64px, `tint` at 90% with backdrop blur, closed
-  by a microprint rule over an `ink` 10% hairline. A `brand-600` Bricolage
-  wordmark on the left; from `md`, centred 14px Medium links (Privacy,
-  Features, Questions) in `ink-muted`, hover `ink`, with 12px by 10px hit
-  areas, and the small plate on the right, shown only while neither the hero
-  nor the closing plate is on screen (fades and lifts 4px in over 200ms, out
-  over 100ms, inert while hidden). Below `md` the links fold into a native
-  `<details>` menu: a 44px menu-icon summary opening a white
-  `rounded-surface` panel (`ink` 15% border, `shadow-menu`) of the same three
-  links, closed on navigation.
-- **Phone plate bar:** below `md`, a fixed bottom bar on `tint` at 95% with
-  backdrop blur and an `ink` 15% top hairline holds a full-width `md` plate.
-  It follows the same visibility rule as the header plate, rising 16px in
-  over 200ms.
-- **Homepage footer:** a `<footer>` landmark outside `<main>`, opened by a
-  microprint rule under an `ink` 10% hairline: the `brand-600` wordmark, then
-  "Report an issue", "Source on GitHub", and the copyright in 14px
-  `ink-muted`, hover `ink`. Links are at least 40px tall (44px on coarse
-  pointers), open in a new tab, and say so with an sr-only "(opens in a new
-  tab)".
-- **Homepage focus:** links, plates, segments, and summaries draw a 2px
-  `brand-600` outline offset 2px (4px on the plate), white on the privacy
-  band, not the app's 1px ring. Homepage colour transitions name only
-  `color`, `background-color`, and `text-decoration-color`, never
-  `transition-colors`, so the focus outline never fades in.
 - **Editor entry points:** `/create` accepts two optional search params.
   `font` (any invoice font id) styles a fresh, untouched blank invoice and is
   then cleared; `open=invoices` opens the Open Invoice dialog.
+- **Homepage skip link:** the first focusable element, "Skip to content", a
+  white pill with a `zinc-950/10` ring and `shadow-lg`, fixed 12px from the
+  top-left, held 64px above the viewport and slid into place on focus.
+  Targets `<main id="main">`.
+- **Homepage header:** 64px, in flow over the hero's sky (20px top padding from
+  `lg`). The `ink` wordmark on the left; from `md`, centred section links (How
+  it works, Compare, Features, Questions) as `zinc-600` pills, hover `ink`; on
+  the right, from `sm`, an "Open the editor" `ink` text link with an arrow,
+  hover `brand-600`. Below `md` the links fold into a native `<details>` menu:
+  a 44px menu-icon summary opening a 224px white `rounded-xl` panel
+  (`zinc-950/10` ring, `shadow-lg`) of `rounded-lg` rows that fill `zinc-100`
+  on hover; it closes on navigation, Escape or a tap outside.
+- **Homepage footer:** a `<footer>` landmark outside `<main>`, shared with the
+  privacy page: three link columns (Make invoices, Learn more, Open source)
+  under `zinc-500` headings, `ink` links that hover to `brand-700` (44px tall,
+  36px from `sm`); external links open in a new tab, show a `zinc-400`
+  up-right arrow and say "(opens in a new tab)" to screen readers. A
+  `zinc-950/10` top hairline closes it with the wordmark, "by" its maker, and
+  a `zinc-500` licence line.
+- **Homepage focus:** every link, pill and summary draws a 2px `brand-600`
+  outline offset 2px (`FOCUS_RING`), not the app's 1px ring.
 
 ### Menus, Popovers, Dialogs
 
 Menus, popovers, dropdowns, selects, and context menus: `popover` surface,
-`rounded-surface`, 1px `foreground/10` ring, `shadow-menu`, items
+`rounded-surface`, 1px `foreground/10` ring, `shadow-menu`, 13px items
 `rounded-surface` with `accent` focus fill. Dialogs: `popover` surface,
-`rounded-sm`, `foreground/10` ring over a black/50 scrim, max width 384px from
-`sm`, and a footer row on `muted/50` with a top hairline, buttons right-aligned.
+`rounded-md`, `foreground/10` ring and `shadow-menu` over a black/50 scrim,
+500px wide (16px margins on phones), easing in on `--ease-out-strong` over
+200ms. An optional 40px round icon disc leads the header in a tinted tone.
+The footer either stacks full-width 40px buttons on phones and right-aligns
+32px ones from `sm`, or is a bar under a top hairline with the buttons
+right-aligned.
 
 ### Tables
 
-`components/tables/*`: dense rows; selected rows fill `brand-100`
+`components/tables/*`: dense 13px rows; selected rows fill `brand-100`
 (`brand-500` at 20% in dark) with the name in `brand-600` (`brand-400` in
-dark); keyboard focus draws a 2px inset `brand-500`
-outline. Row groups separate with `gap-px`, not `divide-y`.
+dark); keyboard focus draws a 2px inset `brand-500` outline. Row groups
+separate with `gap-px`, not `divide-y`.
 
-### Badges / Callouts
+### Brand Icon Tile
 
-`brand-50` fill, `brand-200` border, `brand-700` text, `rounded-surface`; the
-standard highlight chip in the app.
+`brand-50` fill, `brand-200` border, `brand-600` icon, `rounded-surface`,
+48px: the mark at the head of the 404 and error pages.
 
-### Engraved Plate (signature)
+### Ink Pill (signature)
 
 The homepage's one primary action, a single component (`CreateInvoiceLink`),
-always labelled "Create invoice". A rectangular `brand-700` plate
-(`rounded-control`) with white wide-caps Archivo label and a right arrow, and
-a 1px white-at-30% hairline frame inset 3px (2px corners) like the border of an
-engraved panel. Hover floods to `brand-800` and nudges the arrow 2px right
-(300ms ease-out). Three sizes: `sm` (36px, 44px on coarse pointers; header),
-`md` (48px; hero and the phone bar), `lg` (56px; closing, dropping to the `md`
-metrics full-width below `sm`, with a 14px `ink-muted` line beneath that names
-the picked typeface when it isn't the default). Focus is a 2px `brand-600`
-outline offset 4px. Every instance carries the typeface picked on the specimen
-to the editor as `?font=<id>` (omitted for the default, Geist). It is the only
-filled CTA, and only one is visible at a time: the hero and closing instances
-carry ids that the header and phone bar watch. Beside the hero plate, "Check
-the privacy yourself" is a `brand-700` underlined text link. Under the row a
-40px line (reserved from `lg`) holds the saved-invoice state: empty for
-first-time visitors, a 14px `ink-muted` link ("You have N invoices saved in
-this browser. Open your invoices", to `/create?open=invoices`) for returning
-ones, or, if the browser blocks storage, an `ink-muted` note with a `warning`
-alert icon that says how to fix it.
+always labelled "Create invoice": a solid `ink` pill with white Medium text
+(16px, 14px from `sm`), 10px by 16px of padding (8px vertical from `sm`), the
+Pill shadow, and a hover to `ink` at 85% over 200ms ease-in-out. It appears in
+the hero and the closing panel. It preloads the editor on hover or touch, not
+on sight.
 
-### Guilloche (signature)
+### Soft Pill
 
-All line work is computed on the device from a few parameters
-(`utils/guilloche.ts`, rendered by `components/home/guilloche.tsx`), never a
-downloaded image, so server and browser render identical paths.
+The secondary action beside the ink pill on a coloured panel ("See how it
+works", "View the source"): the same pill in frosted white (`white/60`,
+`white/80` ring, small backdrop blur) with `ink` text, hover `white/85`, so it
+never outweighs the ink one. Text links elsewhere are Medium `ink` with an
+icon, hovering to `brand-600`.
 
-- **Band:** a seamless 160 by 24 tile of six phase-shifted sine strands whose
-  amplitude swells and narrows, tiled as an SVG pattern; vertical bands rotate
-  the same tile so all four edges read as one ribbon.
-- **Rosette:** three hypotrochoids (outer 132/120, inner 48/45) rotated 7.5
-  degrees apart, 0.6 non-scaling stroke in `currentColor`. A 24px rosette on a
-  `tint` backing covers each corner crossing.
-- **Underprint:** a 120 by 36 tile of three strands at 0.5 stroke, laid as a CSS
-  background on the page, the slips, and the band.
-- **Microprint:** see Typography; used as a rule, 24 repeats of one sentence.
+### Editor in a Bezel (signature)
 
-### Specimen Invoice (signature)
+The hero shows the real editor layout (`EditorWindow`, both panels open, the
+canvas pill on the desk) with a real PDF render of an invoice on its page,
+drawn at 1440px and scaled into a frosted frame (`white/45`, `white/70` ring,
+6px padding, 8px from `sm`, Bezel shadow). Homepage pictures of the editor are
+built from the editor's own pieces under `data-editor-chrome`, never drawn
+from memory; non-editor pictures are real PDF renders.
 
-The hero's right side: a white slip (`figure`, Slip Rule) on the slip
-underprint, set in whichever library typeface the visitor picks. A Bold
-engraved "INVOICE" and a red No. 0043 serial; a Bill to field the visitor can
-type on (44px, transparent, a dashed `ink` 40% bottom rule, `ink-muted`
-placeholder "Type a client's name", focus turns the rule `brand-600` over a
-`brand-50` 60% wash); For and Amount fields, the amount boxed in an `ink` 30%
-`rounded-surface` frame; and the typeface switch: a Form Label, then a white
-`rounded-control` frame (`ink` 20% border, 2px padding) of three `aria-pressed`
-segments (Geist, Lora, JetBrains Mono, each in its own face), the active one
-`ink` with white text, the others `ink-muted` with `tint-deep` hover. Before
-hydration the switch is replaced by a plain sentence in the same 44px.
+### Demo Tile (signature)
 
-The slip ends in a perforated counterfoil: a `dl` behind a 2px dashed
-`perforation` rule, "Requests to other websites" as a Form Label in `ink`
-against the live count in 48px Numbering, padded to three wheels ("000"), with
-a 12px `ink-muted` Geist caption giving the background-request count. Until the
-browser has counted, the wheels are blank dashes in `ink` at 25%. The counts
-stream from the browser's own performance timeline.
+Each step and feature card leads with a tile (`DemoTile`) that plays a short
+loop of the editor doing that job: a `tileWash` of its first hue with two soft
+blobs of its pair drifting across it, `rounded-2xl`, a `zinc-950/5` ring, and
+16px padding (24px from `sm`) unless the scene bleeds to the edges. Scenes use
+the editor's own fields, switches, inspector rows and popovers on Lifted
+white panels, in Geist at the editor's sizes, and narrower phone layouts keep
+their text readable. Steps are 4:3, features 16:10 from `sm`. Under each tile
+sit a Title and Body; step titles lead with a 28px `brand-50` disc holding a
+`brand-600` Semibold number.
 
-### Document Foot
+### Code Tile (signature)
 
-The hero document's last line, under a dashed perforation: four true facts ("0
-accounts", "0 analytics scripts", "0 requests to other websites", "Free") in
-the numbering face, each led by a transit mark, like the code line along a
-cheque's foot.
+Each privacy promise sits under the lines of code that keep it: a still tile
+like the demo tiles, holding a white file (Lifted, `rounded-tl-xl`) that runs
+off the tile's right and bottom edges. Its header is the file path in 12px
+Geist Mono `zinc-500` linking to those lines on GitHub; the lines are 12/24
+`zinc-800` with `zinc-400` tabular line numbers, strings in `brand-700`,
+keywords in `violet-600`, and the line that does the work on `brand-50` with a
+2px `brand-500` left edge. Phones get a tile as tall as the lines; from `md`
+it is 4:3.
 
-### Privacy Band (signature)
+### Comparison Table
 
-A full-bleed `brand-800` flood on its own underprint, white text. Left: the
-engraved h2, a `brand-100` lead, and, from `lg`, a 288px medallion rosette in
-`brand-500` at 60%. Right: an ordered list of four checks ("Look at the red
-counter", "Search for a sign-up", "Ask your browser", "Read the code"), each
-row opened by a 2px dashed `brand-400` 50% perforation (the last row closed by
-one too), an engraved title, `brand-100` 16px text, and, where there is one, a
-white underlined disclosure or link (`brand-300` underline, white focus
-outline). A "Keep a copy." note in `brand-100` with a white Semibold lead-in
-spans both columns below.
+A real `<table>` laid out as one grid per row: a white `rounded-2xl` card with
+a `zinc-950/10` ring, at most 896px wide. raseeda's column alone carries
+colour: a `brand-50` band with a `brand-700` header and filled `brand-600`
+check discs. Other columns answer in greys (an `ink` tick, a `zinc-400` cross,
+or "Some" in `zinc-600`), so the shapes read without colour. Rows split with
+their own `border-t` (`zinc-950` at 10% under the header, 5% after); phones
+use short headers.
 
-### Tour Invoice (signature)
+### Questions
 
-The features section shows the product instead of listing it. Left: a white
-slip set in Lora (a London freelancer billing a Berlin GmbH in euros, with the
-client's VAT ID, VAT shown as "Reverse charge", a percentage discount listed
-before tax as the editor orders them, IBAN and BIC, the 48px `ink` logo mark),
-with a wide left margin where red Numbering serial markers (24px, hidden from
-assistive tech) sit beside the regions they explain: 1 logo and type, 2
-currency (the line items), 3 tax, fees and discounts (the totals), 4 payment
-details. Inside the invoice, rows use solid `ink` 15% hairlines and the table
-header is `tint`.
+Native `<details>` in two groups ("Making invoices", "Your data"), each under
+a `zinc-500` Body label and drawn as a white `rounded-xl` list with
+`zinc-950/10` gap-px hairlines and ring. Each summary is a Medium question at
+the compact Title step with a `zinc-500` plus that turns 45 degrees when open;
+answers are Body text capped at 64ch. Beside them, the heading, a line
+pointing to GitHub issues and an "Ask on GitHub" text link.
 
-From `lg`, the notes sit to the right as a flat counterfoil: a white-at-60%
-`rounded-surface` list with an `ink` 15% border, rows split by dashed
-perforations, each a matching red marker, an engraved title, and `ink-muted`
-16px text. Below `lg` that list is hidden and each note follows its region as a
-strip torn across the sheet: `tint` ground bleeding to the slip's edges between
-two dashed perforations, Geist 14px with a Semibold `ink` title over
-`ink-muted` text, so the numbers stay beside their notes and the invoice text
-stays the invoice's.
+### Night Panel (signature)
 
-### Questions Accordion
+Run your own copy (`components/home/run-your-own-copy.tsx`), the close of the
+open source section: a `zinc-950` `rounded-2xl` panel (24px padding, 40px from
+`sm`, 56px from `lg`) that splits 5fr / 7fr from `lg`. Three soft lights
+(violet 295, indigo 270, magenta 330) wander behind a dot grid masked to the
+lower right. Left: a white 24px Medium heading, `zinc-400` copy and a "Read
+the code" pill in `white/10` with a `white/15` ring and GitHub's mark. Right:
+a terminal framed by a 1px band of violet-to-pink light that runs round its
+edge over `white/8`; a 40px title bar with three `white/10` dots and
+`~/raseeda`, and a 400px screen in 13/24 Geist Mono `zinc-200` that replays a
+real clone, `bun install` and `bun run dev`, typed at a human rhythm, then
+clears and starts over. This is the Terminal Exception; nothing else on the
+site is dark.
 
-Native `<details>` beside an engraved heading, so they work without
-JavaScript. Seven questions sit in two groups, "Making invoices" (four) and
-"Your data" (three), each under a Form Label heading. Rows are opened by 2px
-dashed perforations and each group is closed by one. Each summary is a Medium
-16px `ink` question at least 56px tall with an `ink` plus icon that rotates 45
-degrees (200ms) when open; the answer is `ink-muted` 16px text capped at 60ch.
-Under the heading, an `ink-muted` line says help is a GitHub issue that needs a
-free account, then a `brand-700` underlined "Ask a question on GitHub" link
-with an up-right arrow.
+### Closing Panel
 
-### Closing Counterfoil (signature)
-
-The close is a cheque book's stub: a white slip on the slip underprint, split by
-a dashed perforation (vertical from `md`, horizontal below) into a 14rem stub
-(red No. 0001; To "Your next client"; Kept by "You, on this device", each a
-Form Label over 14px `ink` text) and a body holding the engraved h2 and the
-`lg` plate where the cheque would be signed.
+The last word before the footer mirrors the hero: a `bg-glow` panel (edge to
+edge, inset 12px with 32px corners from `lg`) with a dome of the sky's hue
+rising from its foot under a masked white dot grid, a Display h2 in two lines,
+and the ink pill beside a "View the source" soft pill.
 
 ### Homepage Motion
 
-One authored moment, on load, in plain CSS (`globals.css`, easing
-`cubic-bezier(0.16, 1, 0.3, 1)`), so it plays on first paint without waiting
-for JavaScript:
+Easing is `--ease-out-strong` (`cubic-bezier(0.23, 1, 0.32, 1)`) for arrivals
+and `--ease-in-out-strong` (`cubic-bezier(0.77, 0, 0.175, 1)`) for movement
+inside the demos. Only transforms, opacity and filter animate.
 
-- the two headline lines rise from behind a mask (`.hero-rise`, 1s, at 0.1s
-  and 0.2s);
-- the specimen slip rises in (`.hero-card`, 60px, at 0.3s);
-- the lead and the plate row fade up (`.hero-fade-up`, 24px, at 0.4s and 0.5s);
-- from `lg`, the large rosette engraves itself, each strand drawn along its own
-  length (`.guilloche-draw`, 2.4s, strands 0.25s apart from 0.2s), then stays.
-
-Nothing animates on scroll except the header and phone-bar plates appearing and
-stepping aside. Hovers are colour and small transforms only. Under reduced
-motion every travelling entrance becomes a 0.4s fade, inline delays drop to
-zero, and the rosette is simply there.
+- **Hero entrance**, only when the homepage loads as a page: the two headline
+  lines, the lead and the pill row come into focus from an 8px blur over
+  900ms, 80ms apart; the editor window fades in over 1000ms at 320ms. Under
+  reduced motion they only fade.
+- **Clouds**: eight gradient clouds cross the sky left to right, linear, each
+  at its own pace (89s to 211s, nearer ones faster), from a random point per
+  visit. Reduced motion pauses them.
+- **Demo tiles** loop per scene (`--loop`) and play only while a third of the
+  tile is on screen; reduced motion shows each scene's finished state.
+- **Closing glow** breathes 4s each way (easeInOutSine), scale and opacity
+  only; still under reduced motion.
+- **Night panel**: the lights wander on 13s, 17s and 11s loops, the edge band
+  turns every 8s, and the session types; all only while the panel is on
+  screen. Under reduced motion the terminal rests on the running dev server.
+- **Pause control**: "Pause animations" in the footer's bottom bar stops every
+  loop above (`data-home-motion="paused"` on `<html>`, remembered in
+  localStorage): demos, lights, edge band and glow rest on their finished
+  state, the clouds hold, the terminal keeps its place. It is hidden under
+  reduced motion, which already stills the page. New looping motion must stop
+  under it too.
+- Hovers change colour over 200ms ease-in-out. Nothing is scroll-linked.
 
 ## Do's and Don'ts
 
@@ -900,27 +943,26 @@ zero, and the rosette is simply there.
 - **Do** give coarse pointers 44px targets with `pointer-coarse:` variants.
 - **Do** separate stacked and adjacent surfaces with `flex` or `grid` plus
   `gap-*` (use `gap-px` on a coloured parent for hairlines).
-- **Do** stay on `rounded-surface` / `rounded-control` and the 32px control
-  height for chrome.
+- **Do** stay on `rounded-surface` / `rounded-control`, the 32px control
+  height and 13px control text for editor chrome.
 - **Do** reach for `shadow-menu` for floating chrome rather than picking raw
   shadow utilities per component.
 - **Do** tint destructive actions; reserve solid saturated fills for the brand.
 - **Do** mirror any new PDF colour as a literal hex in the renderer and record
   it in the PDF palette here.
-- **Do** use the one `CreateInvoiceLink` engraved plate for every homepage
-  primary action, with the same label everywhere and one on screen at a time.
-- **Do** build homepage Archivo text from the shared `ENGRAVED`, `NUMBERING`,
-  `FORM_LABEL`, and `HEADLINE` recipes, and keep reading text in Geist.
-- **Do** divide homepage rows and regions with 2px dashed perforations or
-  microprint rules.
-- **Do** keep homepage motion in plain CSS that plays without JavaScript and
-  degrades to fades under reduced motion.
-- **Do** give JavaScript-only homepage content a same-height plain stand-in
-  until hydration, and prefer native elements (`<details>`) that need none.
-- **Do** prove privacy claims with something the visitor can see or check
-  (the live counter, plain checks) rather than decorative ticks.
-- **Do** list homepage colour transitions by property (`color`,
-  `background-color`, `text-decoration-color`) so focus outlines never fade.
+- **Do** use the one `CreateInvoiceLink` ink pill for the homepage's primary
+  action, with a soft pill beside it for the secondary one.
+- **Do** size homepage text with a type role through `typeClass()`.
+- **Do** show the product on the homepage with the editor's own pieces under
+  `data-editor-chrome`, in Geist at the editor's sizes, or with real PDF
+  renders.
+- **Do** give each homepage tile its own pair of `TILE_HUES` so neighbours
+  never match.
+- **Do** run looping homepage motion only while it is on screen, in CSS on
+  transforms and opacity, and hold it still or at its end state under reduced
+  motion.
+- **Do** prove privacy claims with something the visitor can check (the real
+  lines of code, links to them) rather than decorative ticks.
 
 ### Don't:
 
@@ -930,13 +972,12 @@ zero, and the rosette is simply there.
 - **Don't** put brand teal on the PDF.
 - **Don't** let the invoice page follow the app theme or use chrome roles,
   raw `zinc-*`/`blue-*`/`teal-*`, or responsive classes.
-- **Don't** hard-code hex or raw `neutral-*` greys in app chrome or on the
-  homepage; hex belongs to the PDF renderer.
+- **Don't** hard-code hex or raw greys in editor chrome; hex belongs to the PDF
+  renderer and the editor theme blocks in `globals.css`.
 - **Don't** introduce a second accent hue, or bring back the coral accent the
-  rename brief proposed; there is nothing in the product for it to mark.
-- **Don't** let microprint carry information; it is a rule, hidden from
-  assistive tech.
-- **Don't** use `transition-colors` on focusable homepage elements; it animates
-  `outline-color`.
-- **Don't** reach for heavy or black shadows; prefer a hairline border, and
-  keep any shadow soft and neutral.
+  rename brief proposed; the night panel's violet is the one recorded
+  exception and stays inside that panel.
+- **Don't** fill a homepage button with teal, or use a tile hue for an action
+  or a link.
+- **Don't** reach for heavy or black shadows; prefer a hairline border or ring,
+  and keep any shadow soft and neutral.
