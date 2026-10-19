@@ -109,7 +109,7 @@ const SOFT_PILL = cn(
 );
 
 const TEXT_LINK = cn(
-  "inline-flex items-center gap-1 rounded-sm font-medium text-ink hover:text-brand-600",
+  "inline-flex items-center gap-1 rounded-sm font-medium text-ink hover:text-brand-700",
   typeClass("body"),
   FOCUS_RING
 );
@@ -127,8 +127,9 @@ const BODY_TEXT = cn("text-balance text-zinc-600", typeClass("body"));
 
 const SECTIONS = [
   { href: "#how-it-works", label: "How it works" },
-  { href: "#compare", label: "Compare" },
+  { href: "#privacy", label: "Privacy" },
   { href: "#features", label: "Features" },
+  { href: "#compare", label: "Compare" },
   { href: "#questions", label: "Questions" }
 ];
 
@@ -377,8 +378,8 @@ function HomePage() {
         <Hero />
         <HowItWorks />
         <Privacy />
-        <Comparison />
         <Features />
+        <Comparison />
         <OpenSource />
         <Questions />
         <Closing />
@@ -411,9 +412,55 @@ function MotionToggle() {
   );
 }
 
+// The hero's buttons, which the header watches to know when they're gone.
+const HERO_ACTIONS_ID = "hero-actions";
+
+// Whether the hero's buttons have scrolled up under the header: false until
+// the page hydrates, and on any page without them.
+function useIsPastHeroActions() {
+  const [isPast, setIsPast] = useState(false);
+
+  useEffect(() => {
+    const actions = document.getElementById(HERO_ACTIONS_ID);
+
+    if (!actions) return;
+
+    const observer = new IntersectionObserver(
+      entries => {
+        const entry = entries.at(-1);
+
+        if (!entry) return;
+
+        setIsPast(!entry.isIntersecting && entry.boundingClientRect.top < 0);
+      },
+      { rootMargin: "-64px 0px 0px 0px" }
+    );
+
+    observer.observe(actions);
+
+    return () => observer.disconnect();
+  }, []);
+
+  return isPast;
+}
+
+// The header sticks to the top. Over the hero it is clear, part of the sky,
+// with the quiet "Open the editor" link. Once the hero's buttons scroll up
+// under it, it takes the canvas behind it and swaps the link for the Create
+// invoice pill, so the editor is one tap away anywhere on the page, phones
+// included. From `lg` it rises by its top padding then, so the bar sits flush
+// with the top of the window.
 function SiteHeader() {
+  const isPastHero = useIsPastHeroActions();
+
   return (
-    <header className="relative z-10 lg:pt-5">
+    <header
+      className={cn(
+        "sticky top-0 z-40 transition-[translate,background-color,box-shadow] duration-200 ease-out lg:pt-5",
+        isPastHero &&
+          "bg-canvas/90 shadow-[0_1px_0_rgb(9_9_11/0.08)] backdrop-blur-md lg:-translate-y-5"
+      )}
+    >
       <div className={cn(CONTAINER, "flex h-16 items-center gap-4")}>
         <div className="flex flex-1 items-center">
           <Wordmark />
@@ -436,8 +483,14 @@ function SiteHeader() {
             </a>
           ))}
         </nav>
-        <div className="flex flex-1 items-center justify-end gap-1">
-          <HeaderAction />
+        <div className="flex flex-1 items-center justify-end gap-2">
+          {isPastHero ? (
+            <span className="animate-in fade-in zoom-in-95 duration-200 motion-reduce:animate-none">
+              <CreateInvoiceLink />
+            </span>
+          ) : (
+            <HeaderAction />
+          )}
           <PhoneMenu />
         </div>
       </div>
@@ -517,15 +570,16 @@ function PhoneMenu() {
   );
 }
 
-// The header's way into the editor: a quiet text link, so it never repeats
-// the hero's button right below it. Phones skip it: the hero's button is the
-// first thing under the header, and the link would crowd the menu button.
+// The header's way into the editor while the hero shows: a quiet text link,
+// so it never repeats the hero's button right below it. Phones skip it: the
+// hero's button is the first thing under the header, and the link would crowd
+// the menu button.
 function HeaderAction() {
   return (
     <Link
       to="/create"
       className={cn(
-        "hover:text-brand-600 text-ink relative inline-flex items-center gap-1 rounded-sm px-1 py-2 font-medium whitespace-nowrap max-sm:hidden",
+        "hover:text-brand-800 text-ink relative inline-flex items-center gap-1 rounded-sm px-1 py-2 font-medium whitespace-nowrap max-sm:hidden",
         CONTROL_TEXT,
         FOCUS_RING
       )}
@@ -606,7 +660,9 @@ function Hero() {
               A free,{" "}
               <a
                 href={SOURCE_URL}
-                aria-label="open source on GitHub"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="open source on GitHub (opens in a new tab)"
                 className={cn(
                   "group text-ink inline-flex items-center gap-0.5 rounded-sm whitespace-nowrap",
                   FOCUS_RING
@@ -624,7 +680,10 @@ function Hero() {
               you type is uploaded.
             </p>
           </div>
-          <div className="hero-focus flex flex-wrap items-center gap-3 [animation-delay:240ms] sm:justify-center">
+          <div
+            id={HERO_ACTIONS_ID}
+            className="hero-focus flex flex-wrap items-center gap-3 [animation-delay:240ms] sm:justify-center"
+          >
             <CreateInvoiceLink />
             <a href="#how-it-works" className={SOFT_PILL}>
               See how it works
@@ -780,7 +839,7 @@ const STEPS: {
     hues: [TILE_HUES.butter, TILE_HUES.sky]
   },
   {
-    title: "Send the PDF",
+    title: "Download the PDF",
     description:
       "Download an A4 PDF or print it, then send it to your client however you like.",
     demo: DownloadDemo,
@@ -789,7 +848,7 @@ const STEPS: {
   {
     title: "Keep a copy",
     description:
-      "Invoices save in this browser, so a repeat client’s next invoice starts from the last one.",
+      "Invoices save in this browser, so a repeat client’s next invoice starts from the last one. Clearing the browser’s site data deletes them, so back them up with Export Data in the File menu.",
     demo: SavedDemo,
     hues: [TILE_HUES.sage, TILE_HUES.sky]
   }
@@ -846,7 +905,7 @@ function Features() {
       <div className={CONTAINER}>
         <SectionHeading
           title="What goes on the invoice."
-          description="For freelancers and anyone with a side project who needs to bill a client, not set up accounting software."
+          description="Your logo, your client’s currency, the right tax, and the bank details they need to pay you."
         />
         <ul className="mt-12 grid gap-x-6 gap-y-12 sm:mt-16 md:grid-cols-2">
           {FEATURES.map(feature => (
@@ -914,8 +973,8 @@ function Comparison() {
     <section id="compare" className="py-16 sm:py-20">
       <div className={CONTAINER}>
         <SectionHeading
-          title={`How ${APP_NAME} compares with other invoice generators.`}
-          description={`${APP_NAME} makes the invoice and stops there. To email invoices and track payments, you want accounting software.`}
+          title={`How ${APP_NAME} compares with other ways to invoice.`}
+          description={`Each column is the typical tool of its kind. ${APP_NAME} makes the invoice and stops there; to email invoices and track payments, you want accounting software.`}
           isCentered
         />
         <table
@@ -939,9 +998,9 @@ function Comparison() {
                   role="columnheader"
                   scope="col"
                   className={cn(
-                    // Phones set the short headers small (11px under 400px,
-                    // then 12px) so they fit the narrowest columns.
-                    "flex items-end justify-center px-0.5 pt-4 pb-3 text-center text-[11px]/4 font-medium text-balance min-[400px]:px-1 min-[400px]:text-xs/4 sm:text-sm/5 md:px-4",
+                    // Phones set the short headers at 12px, hyphenated if a
+                    // word is still wider than the narrowest columns.
+                    "flex items-end justify-center px-0.5 pt-4 pb-3 text-center text-xs/4 font-medium text-balance hyphens-auto min-[400px]:px-1 sm:text-sm/5 md:px-4",
                     index === 0
                       ? "text-brand-700 bg-brand-50 rounded-t-xl"
                       : "text-zinc-600"
@@ -1044,7 +1103,7 @@ function ComparisonCell({
   return (
     <>
       <IconX
-        className="mx-auto size-5 shrink-0 text-zinc-400"
+        className="mx-auto size-5 shrink-0 text-zinc-500"
         aria-hidden="true"
       />
       <span className="sr-only">No</span>
@@ -1185,14 +1244,14 @@ function CodeLine({ text }: { text: string }) {
 
 // A file open at the lines that matter, on a tile like the feature cards'. The
 // file runs off the tile's right and bottom edges, where it was cut, and its
-// path links to those lines on GitHub. Phones get a tile only as tall as the
-// lines; from `md` the tiles share the feature cards' 4:3.
+// path links to those lines on GitHub. Every tile is only as tall as its
+// lines, so none sits half empty.
 function CodeTile({ proof }: { proof: (typeof PROOFS)[number] }) {
   const lastLine = proof.firstLine + proof.lines.length - 1;
 
   return (
     <div
-      className="bg-tile relative isolate flex min-w-0 flex-col overflow-hidden rounded-2xl pt-6 pl-6 ring-1 ring-zinc-950/5 md:aspect-4/3"
+      className="bg-tile relative isolate flex min-w-0 flex-col overflow-hidden rounded-2xl pt-6 pl-6 ring-1 ring-zinc-950/5"
       style={
         {
           "--tile-hue-a": proof.hues[0],
@@ -1235,7 +1294,7 @@ function CodeTile({ proof }: { proof: (typeof PROOFS)[number] }) {
                   isHighlighted && "border-brand-500 bg-brand-50"
                 )}
               >
-                <span className="w-7 shrink-0 text-right text-zinc-400 tabular-nums select-none">
+                <span className="w-7 shrink-0 text-right text-zinc-500 tabular-nums select-none">
                   {lineNumber}
                 </span>
                 <span>
@@ -1313,12 +1372,6 @@ function Questions() {
   );
 }
 
-// The closing band mirrors the hero: dark headline, teal second line, and a
-// painting that runs the full width of the viewport. The page rising from the
-// panel's foot is a real PDF. Its box is sized from the page's own
-// width, so it always shows the same top share of the page, and the page runs
-// past the box to be cut by the panel's foot: 4:3 shows about half on phones,
-// 16:9 about 40% from `sm`. Like the hero, the copy sits above the panel.
 // The last word before the footer: a panel in the hero's sky colour, inset
 // and rounded like the hero from `lg` and edge to edge below it, with a glow
 // rising from its foot under a grid of dots. The glow breathes slowly in and

@@ -24,8 +24,8 @@
 
 @theme inline {
   --font-geist: "Geist Variable", "Geist Fallback", sans-serif;
-  /* The homepage's face, on trial: slightly condensed, with an editorial
-     edge. The editor pictures on it keep the editor's Geist. */
+  /* The homepage's face: slightly condensed, with an editorial edge. The
+     editor pictures on it keep the editor's Geist. */
   --font-home: "Schibsted Grotesk Variable", sans-serif;
   --font-geist-mono: "Geist Mono Variable", monospace;
   --font-jetbrains-mono: "JetBrains Mono Variable", monospace;
@@ -624,8 +624,8 @@ html[data-editor-theme="dark"] {
    for single-line controls and secondary headings: display drops a notch and
    body tightens its leading to fit a button or label. The hero's display size
    grows with the viewport, from 36/40 at 400px to 60/60 at 800px, rather than
-   jumping at a breakpoint; below 400px it keeps shrinking so "Keep everything
-   else." stays on one line down to a 360px phone. */
+   jumping at a breakpoint; below 400px it keeps shrinking so "Make the
+   invoice." stays on one line down to a 360px phone. */
 .home-type {
   --fs-display: clamp(2rem, 0.75rem + 6vw, 3.75rem);
   --lh-display: clamp(2.25rem, 1.25rem + 5vw, 3.75rem);
@@ -643,6 +643,11 @@ html[data-editor-theme="dark"] {
   --lh-body-compact: 1.5rem;
   --fs-caption: 0.875rem;
   --lh-caption: 1.25rem;
+}
+
+/* Anchored sections stop clear of the homepage's sticky header. */
+.home-type section[id] {
+  scroll-margin-top: 4.5rem;
 }
 
 @media (width >= 40rem) {

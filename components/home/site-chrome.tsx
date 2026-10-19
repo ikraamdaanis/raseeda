@@ -22,7 +22,7 @@ export function Wordmark() {
   return (
     <Link
       to="/"
-      aria-label="Homepage"
+      aria-label={`${APP_NAME} home`}
       className={cn(
         "flex min-h-11 items-center rounded-md text-lg font-semibold tracking-[-0.0175em]",
         FOCUS_RING
@@ -101,7 +101,7 @@ const FOOTER_COLUMNS: {
     links: [
       { label: "Compare", href: "/#compare" },
       { label: "Questions", href: "/#questions" },
-      { label: "Privacy", href: "/privacy" }
+      { label: "Privacy policy", href: "/privacy" }
     ]
   },
   {
@@ -122,6 +122,12 @@ const FOOTER_COLUMNS: {
   }
 ];
 
+// A column's title labels its list rather than standing as a heading, so the
+// page's outline ends at its last section.
+function footerColumnId(title: string) {
+  return `footer-${title.toLowerCase().replaceAll(" ", "-")}`;
+}
+
 // `action` is a page's own control for the bottom bar, such as the homepage's
 // motion toggle.
 export function SiteFooter({ action }: { action?: ReactNode }) {
@@ -131,10 +137,14 @@ export function SiteFooter({ action }: { action?: ReactNode }) {
         <div className="grid grid-cols-2 gap-x-8 gap-y-12 sm:grid-cols-3">
           {FOOTER_COLUMNS.map(column => (
             <div key={column.title} className="flex flex-col gap-4">
-              <h2 className={cn(typeClass("body"), "text-zinc-500")}>
+              <p
+                id={footerColumnId(column.title)}
+                className={cn(typeClass("body"), "text-zinc-500")}
+              >
                 {column.title}
-              </h2>
+              </p>
               <ul
+                aria-labelledby={footerColumnId(column.title)}
                 className={cn(
                   typeClass("body"),
                   "text-ink flex flex-col gap-1"

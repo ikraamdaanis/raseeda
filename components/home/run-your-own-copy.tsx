@@ -315,7 +315,8 @@ function Transcript({ done, typed }: { done: number; typed: number }) {
   );
 }
 
-// The terminal's screen holds 15 lines; past that it scrolls to keep the
+// The terminal's screen holds 15 lines (8 on phones, so it never stands as a
+// tall empty slab while the session starts); past that it scrolls to keep the
 // newest line in view, as a real one does.
 function Terminal({ isPlaying }: { isPlaying: boolean }) {
   const { done, typed } = useSession(isPlaying);
@@ -350,7 +351,7 @@ function Terminal({ isPlaying }: { isPlaying: boolean }) {
           </div>
           <div
             ref={screenRef}
-            className="font-geist-mono h-100 overflow-hidden p-5 text-[0.8125rem] leading-6 text-zinc-200"
+            className="font-geist-mono h-60 overflow-hidden p-5 text-[0.8125rem] leading-6 text-zinc-200 sm:h-100"
           >
             <Transcript done={done} typed={typed} />
           </div>

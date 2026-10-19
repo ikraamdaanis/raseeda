@@ -338,8 +338,8 @@ editor (`#fcfcfc`) and the dark editor (`#161616`):
   invoice pill (hover `ink` at 85%). The hero lead is `ink` at 75%.
 - **Copy Grey** (`copyGrey`, Tailwind `zinc-600`): body copy. The homepage's
   neutrals are the zinc scale: `zinc-500` for footer and question-group
-  headings and code-tile paths, `zinc-400` for crosses and external-link
-  arrows, and `zinc-950` at 5% (tiles) or 10% (white cards, the table, menus)
+  labels, code-tile paths, line numbers and crosses, `zinc-400` for
+  external-link arrows, and `zinc-950` at 5% (tiles) or 10% (white cards, the table, menus)
   for rings and row hairlines.
 - **Sky** (`sky`, hue 205): the hero ground, paling and turning a touch
   greener towards a white haze at the horizon (`bg-sky`, tunable through
@@ -447,7 +447,7 @@ homepage and privacy page stay light; do not claim dark mode for them.
 ## Typography
 
 **Editor Font:** Geist Variable (with the system UI stack)
-**Homepage Font:** Schibsted Grotesk Variable (with sans-serif), `--font-home`, marked as on trial in `globals.css`
+**Homepage Font:** Schibsted Grotesk Variable (with sans-serif), `--font-home`
 **Mono Font:** Geist Mono Variable, for the homepage code tiles and terminal
 
 **Character:** the editor speaks in one even, neutral sans so the invoice's own
@@ -576,7 +576,7 @@ Medium and meta drops to 12px. The homepage's pictures of the editor mirror
 - **Homepage column.** Content sits in a `max-w-6xl` (72rem) column with 24px
   gutters (32px from `lg`), shared with the privacy page
   (`components/home/site-chrome.tsx`). Order: header, hero, How it works,
-  privacy, comparison, features, open source, questions, closing panel,
+  privacy, features, comparison, open source, questions, closing panel,
   footer. Sections pad 64px vertically (80px from `sm`) and are separated by
   that air alone, never by rules.
 - **Section headings.** A heading (35ch) over its description (48ch), 24px
@@ -595,7 +595,8 @@ Medium and meta drops to 12px. The homepage's pictures of the editor mirror
   stacks below its breakpoint.
 - **Phones.** Below `md` the section links fold into a native disclosure menu;
   below `sm` the header's Open the editor link is hidden, since the hero's
-  button sits right under it.
+  button sits right under it. Once the hero's buttons scroll away, the sticky
+  header's Create invoice pill shows at every width.
 - **Works before hydration.** Menus and questions are native `<details>`, and
   the hero entrance and cloud phases are inline scripts that run while the
   HTML parses, so nothing waits for JavaScript or shifts when it arrives.
@@ -769,17 +770,22 @@ are 13px, labels `muted-foreground`, fields `muted` fills (`rounded-md`).
   white pill with a `zinc-950/10` ring and `shadow-lg`, fixed 12px from the
   top-left, held 64px above the viewport and slid into place on focus.
   Targets `<main id="main">`.
-- **Homepage header:** 64px, in flow over the hero's sky (20px top padding from
-  `lg`). The `ink` wordmark on the left; from `md`, centred section links (How
-  it works, Compare, Features, Questions) as `zinc-600` pills, hover `ink`; on
-  the right, from `sm`, an "Open the editor" `ink` text link with an arrow,
-  hover `brand-600`. Below `md` the links fold into a native `<details>` menu:
+- **Homepage header:** 64px, sticky, over the hero's sky (20px top padding from
+  `lg`). The `ink` wordmark on the left (named "raseeda home" to assistive
+  tech); from `md`, centred section links (How it works, Privacy, Features,
+  Compare, Questions) as `zinc-600` pills, hover `ink`; on the right, from
+  `sm`, an "Open the editor" `ink` text link with an arrow, hover `brand-800`.
+  When the hero's buttons pass under it, it takes `canvas` at 90% with a
+  `backdrop-blur-md` and a 1px `zinc-950/8` bottom shadow, rises by its `lg`
+  padding so the bar sits flush, and swaps the link for the Create invoice ink
+  pill (fade and 95% zoom in over 200ms). Anchored sections stop 72px down so
+  the header never covers their heading. Below `md` the links fold into a native `<details>` menu:
   a 44px menu-icon summary opening a 224px white `rounded-xl` panel
   (`zinc-950/10` ring, `shadow-lg`) of `rounded-lg` rows that fill `zinc-100`
   on hover; it closes on navigation, Escape or a tap outside.
 - **Homepage footer:** a `<footer>` landmark outside `<main>`, shared with the
   privacy page: three link columns (Make invoices, Learn more, Open source)
-  under `zinc-500` headings, `ink` links that hover to `brand-700` (44px tall,
+  under `zinc-500` labels (plain text naming each list, not headings), `ink` links that hover to `brand-700` (44px tall,
   36px from `sm`); external links open in a new tab, show a `zinc-400`
   up-right arrow and say "(opens in a new tab)" to screen readers. A
   `zinc-950/10` top hairline closes it with the wordmark, "by" its maker, and
@@ -855,20 +861,19 @@ Each privacy promise sits under the lines of code that keep it: a still tile
 like the demo tiles, holding a white file (Lifted, `rounded-tl-xl`) that runs
 off the tile's right and bottom edges. Its header is the file path in 12px
 Geist Mono `zinc-500` linking to those lines on GitHub; the lines are 12/24
-`zinc-800` with `zinc-400` tabular line numbers, strings in `brand-700`,
+`zinc-800` with `zinc-500` tabular line numbers, strings in `brand-700`,
 keywords in `violet-600`, and the line that does the work on `brand-50` with a
-2px `brand-500` left edge. Phones get a tile as tall as the lines; from `md`
-it is 4:3.
+2px `brand-500` left edge. Every tile is as tall as its lines.
 
 ### Comparison Table
 
 A real `<table>` laid out as one grid per row: a white `rounded-2xl` card with
 a `zinc-950/10` ring, at most 896px wide. raseeda's column alone carries
 colour: a `brand-50` band with a `brand-700` header and filled `brand-600`
-check discs. Other columns answer in greys (an `ink` tick, a `zinc-400` cross,
+check discs. Other columns answer in greys (an `ink` tick, a `zinc-500` cross,
 or "Some" in `zinc-600`), so the shapes read without colour. Rows split with
 their own `border-t` (`zinc-950` at 10% under the header, 5% after); phones
-use short headers.
+use short 12px headers, hyphenated if a column is still too narrow.
 
 ### Questions
 
@@ -889,7 +894,7 @@ lower right. Left: a white 24px Medium heading, `zinc-400` copy and a "Read
 the code" pill in `white/10` with a `white/15` ring and GitHub's mark. Right:
 a terminal framed by a 1px band of violet-to-pink light that runs round its
 edge over `white/8`; a 40px title bar with three `white/10` dots and
-`~/raseeda`, and a 400px screen in 13/24 Geist Mono `zinc-200` that replays a
+`~/raseeda`, and a 400px screen (240px on phones) in 13/24 Geist Mono `zinc-200` that replays a
 real clone, `bun install` and `bun run dev`, typed at a human rhythm, then
 clears and starts over. This is the Terminal Exception; nothing else on the
 site is dark.
