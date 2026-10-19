@@ -625,14 +625,16 @@ html[data-editor-theme="dark"] {
    body tightens its leading to fit a button or label. The hero's display size
    grows with the viewport, from 36/40 at 400px to 60/60 at 800px, rather than
    jumping at a breakpoint; below 400px it keeps shrinking so "Make the
-   invoice." stays on one line down to a 360px phone. */
+   invoice." stays on one line down to a 360px phone. Section titles grow
+   the same way, from 28px on phones to 36px by 672px, so they never match
+   the hero's headline. */
 .home-type {
   --fs-display: clamp(2rem, 0.75rem + 6vw, 3.75rem);
   --lh-display: clamp(2.25rem, 1.25rem + 5vw, 3.75rem);
   --fs-display-compact: 2.25rem;
   --lh-display-compact: 2.5rem;
-  --fs-title: 2.25rem;
-  --lh-title: 2.5rem;
+  --fs-title: clamp(1.75rem, 1.2rem + 2.5vw, 2.25rem);
+  --lh-title: clamp(2.125rem, 1.6rem + 2.5vw, 2.5rem);
   --fs-subtitle: 1.125rem;
   --lh-subtitle: 1.75rem;
   --fs-subtitle-compact: 1rem;

@@ -97,9 +97,9 @@ typography:
     letterSpacing: -0.035em
   homeHeadline:
     fontFamily: '"Schibsted Grotesk Variable", sans-serif'
-    fontSize: 2.25rem
+    fontSize: clamp(1.75rem, 1.2rem + 2.5vw, 2.25rem)
     fontWeight: 500
-    lineHeight: 2.5rem
+    lineHeight: clamp(2.125rem, 1.6rem + 2.5vw, 2.5rem)
     letterSpacing: -0.035em
   homeTitle:
     fontFamily: '"Schibsted Grotesk Variable", sans-serif'
@@ -483,7 +483,9 @@ Homepage (roles from `lib/type-scale.ts`, set at marketing values by
 
 - **Display** (`homeDisplay`, the `display` role): the hero h1 and the closing
   h2, two lines, both `ink`, growing fluidly from 32px to 60px.
-- **Headline** (`homeHeadline`, the `title` role): section h2s, capped at 35ch.
+- **Headline** (`homeHeadline`, the `title` role): section h2s, capped at 35ch,
+  growing from 28px on phones to 36px by 672px so they stay a clear step below
+  the hero's headline.
 - **Title** (`homeTitle`, the `subtitle` role, 16px from `sm`): step, card and
   proof h3s. Its compact step (16/24) sets the question summaries.
 - **Lead** (`homeLead`, `ink` at 75%, 48ch): the hero paragraph only.
@@ -593,7 +595,8 @@ Medium and meta drops to 12px. The homepage's pictures of the editor mirror
   under its tile. Questions split one third (heading) to two thirds (groups)
   from `lg`. The footer runs two link columns, three from `sm`. Everything
   stacks below its breakpoint.
-- **Phones.** Below `md` the section links fold into a native disclosure menu;
+- **Phones and tablets.** Below `lg` the section links fold into a native
+  disclosure menu;
   below `sm` the header's Open the editor link is hidden, since the hero's
   button sits right under it. Once the hero's buttons scroll away, the sticky
   header's Create invoice pill shows at every width.
@@ -771,11 +774,12 @@ are 13px, labels `muted-foreground`, fields `muted` fills (`rounded-md`).
   then cleared; `open=invoices` opens the Open Invoice dialog.
 - **Homepage skip link:** the first focusable element, "Skip to content", a
   white pill with a `zinc-950/10` ring and `shadow-lg`, fixed 12px from the
-  top-left, held 64px above the viewport and slid into place on focus.
+  top-left, held its own height plus 40px above the viewport (clear of its
+  shadow) and slid into place on focus.
   Targets `<main id="main">`.
 - **Homepage header:** 64px, sticky, over the hero's sky (20px top padding from
   `lg`). The `ink` wordmark on the left (named "raseeda home" to assistive
-  tech); from `md`, centred section links (How it works, Privacy, Features,
+  tech); from `lg`, centred section links (How it works, Privacy, Features,
   Compare, Questions) as `zinc-600` pills, hover `ink`; on the right, from
   `sm`, a 36px pause icon button (`zinc-600`, hover `ink/5` fill) and an "Open
   the editor" `ink` text link with an arrow, hover `brand-800`. As soon as the hero's headline reaches the bar it takes `canvas`
@@ -784,7 +788,7 @@ are 13px, labels `muted-foreground`, fields `muted` fills (`rounded-md`).
   300ms; no text ever passes under a clear bar. When the hero's buttons pass
   under it, the link becomes the Create invoice ink pill (fade and 95% zoom in
   over 200ms). Anchored sections stop 72px down so the header never covers
-  their heading. Below `md` the links fold into a native `<details>` menu: a
+  their heading. Below `lg` the links fold into a native `<details>` menu: a
   44px menu-icon summary opening a 224px white `rounded-xl` panel
   (`zinc-950/10` ring, `shadow-lg`) of `rounded-lg` rows that fill `zinc-100`
   on hover, ending with the pause row; it closes on navigation, Escape or a tap outside.
@@ -875,7 +879,8 @@ last 48px so a long one reads as continuing. Its header is the file path in 12px
 Geist Mono `zinc-500` linking to those lines on GitHub; the lines are 12/24
 `zinc-800` with `zinc-500` tabular line numbers, strings in `brand-700`,
 keywords in `violet-600`, and the line that does the work on `brand-50` with a
-2px `brand-500` left edge. Every tile is as tall as its lines.
+2px `brand-500` left edge. Every tile is as tall as its contents; the three
+sit in a row from `lg` and stack below it, so the outcome rows never squeeze.
 
 ### Comparison Table
 

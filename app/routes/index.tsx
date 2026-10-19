@@ -368,7 +368,7 @@ function HomePage() {
       <a
         href="#main"
         className={cn(
-          "fixed top-3 left-3 z-60 -translate-y-16 rounded-full bg-white px-4 py-2 font-medium shadow-lg ring-1 ring-zinc-950/10 focus:translate-y-0",
+          "fixed top-3 left-3 z-60 -translate-y-[calc(100%+2.5rem)] rounded-full bg-white px-4 py-2 font-medium shadow-lg ring-1 ring-zinc-950/10 focus:translate-y-0",
           CONTROL_TEXT,
           FOCUS_RING
         )}
@@ -522,14 +522,14 @@ function SiteHeader() {
         </div>
         <nav
           aria-label="Sections"
-          className="flex items-center gap-1 max-md:hidden"
+          className="flex items-center gap-1 max-lg:hidden"
         >
           {SECTIONS.map(section => (
             <a
               key={section.href}
               href={section.href}
               className={cn(
-                "hover:text-ink rounded-full px-3 py-2 text-zinc-600",
+                "hover:text-ink rounded-full px-3 py-2 whitespace-nowrap text-zinc-600",
                 CONTROL_TEXT,
                 FOCUS_RING
               )}
@@ -554,7 +554,7 @@ function SiteHeader() {
   );
 }
 
-// Below `md` the section links fold into a native disclosure, so they work
+// Below `lg` the section links fold into a native disclosure, so they work
 // before hydration. Once hydrated it also closes on Escape or a tap outside,
 // like any menu.
 function PhoneMenu() {
@@ -592,7 +592,7 @@ function PhoneMenu() {
       ref={menuRef}
       open={isOpen}
       onToggle={event => setIsOpen(event.currentTarget.open)}
-      className="relative md:hidden"
+      className="relative lg:hidden"
     >
       <summary
         className={cn(
@@ -1282,7 +1282,7 @@ function Privacy() {
           title="Your invoices never leave your device."
           description="Not to us and not to anyone else. The page is blocked from sending data to any other site, and the code is public, so you don’t have to take our word for it."
         />
-        <ul className="mt-12 grid gap-x-6 gap-y-12 sm:mt-16 md:grid-cols-3">
+        <ul className="mt-12 grid gap-x-6 gap-y-12 sm:mt-16 lg:grid-cols-3">
           {PROOFS.map(proof => (
             <li key={proof.path} className="flex min-w-0 flex-col gap-6">
               <CodeTile proof={proof} />
