@@ -89,9 +89,9 @@ const FOOTER_COLUMNS: {
   {
     title: "Make invoices",
     links: [
-      { label: "Create an invoice", href: "/create" },
+      { label: "Create invoice", href: "/create" },
       { label: "Invoice templates", href: "/invoice-template" },
-      { label: "Your saved invoices", href: "/create?open=invoices" },
+      { label: "Your invoices", href: "/create?open=invoices" },
       { label: "How it works", href: "/#how-it-works" },
       { label: "Features", href: "/#features" }
     ]
