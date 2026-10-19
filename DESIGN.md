@@ -888,7 +888,8 @@ A real `<table>` laid out as one grid per row: a white `rounded-2xl` card with
 a `zinc-950/10` ring, at most 896px wide. raseeda's column alone carries
 colour: a `brand-50` band with a `brand-700` header and filled `brand-600`
 check discs. Other columns answer in greys (an `ink` tick, a `zinc-500` cross,
-or "Some" in `zinc-600`), so the shapes read without colour. Rows split with
+or "Some" / "Rarely" in `zinc-600` wherever exceptions exist, so no cross
+overclaims), so the shapes read without colour. Rows split with
 their own `border-t` (`zinc-950` at 10% under the header, 5% after); phones
 use short 12px headers, hyphenated if a column is still too narrow.
 

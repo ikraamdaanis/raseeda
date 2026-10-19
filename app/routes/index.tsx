@@ -267,8 +267,11 @@ const COMPARISON_GRID =
   "grid grid-cols-[minmax(0,1.3fr)_repeat(var(--comparison-columns),minmax(0,1fr))] min-[400px]:grid-cols-[minmax(0,1.5fr)_repeat(var(--comparison-columns),minmax(0,1fr))] md:grid-cols-[minmax(0,2fr)_repeat(var(--comparison-columns),minmax(0,1fr))]";
 
 // A cell is a tick, a cross, or one short word where tools vary; longer
-// phrases wrap into tall rows in the narrow phone columns.
-type ComparisonValue = boolean | "Some" | "Paid" | "Varies";
+// phrases wrap into tall rows in the narrow phone columns. A cross is only for
+// what a kind of tool never does: where exceptions exist (free or desktop
+// accounting software, an open source generator), the cell says "Some" or
+// "Rarely" instead.
+type ComparisonValue = boolean | "Some" | "Rarely";
 
 // One value per column, in column order. Keep labels to about 35 characters so
 // a phone shows them in two or three lines.
@@ -276,11 +279,14 @@ const COMPARISON_ROWS: {
   label: string;
   cells: [ComparisonValue, ComparisonValue, ComparisonValue];
 }[] = [
-  { label: "Free, with no paid plan", cells: [true, "Some", false] },
-  { label: "No account needed", cells: [true, "Some", false] },
-  { label: "Invoice data stays on your device", cells: [true, false, false] },
+  { label: "Free, with no paid plan", cells: [true, "Some", "Rarely"] },
+  { label: "No account needed", cells: [true, "Some", "Rarely"] },
+  {
+    label: "Invoice data stays on your device",
+    cells: [true, "Rarely", "Rarely"]
+  },
   { label: "No watermark on the PDF", cells: [true, "Some", true] },
-  { label: "Open source", cells: [true, false, false] },
+  { label: "Open source", cells: [true, "Rarely", "Some"] },
   { label: "Sends invoices and tracks payment", cells: [false, "Some", true] }
 ];
 
@@ -1146,8 +1152,8 @@ function Comparison() {
 /* eslint-enable jsx-a11y/no-redundant-roles, jsx-a11y/no-interactive-element-to-noninteractive-role */
 
 // Only raseeda's column carries colour: a filled brand tick. The other
-// columns answer in greys (an ink tick, a faint cross, "Some" where tools
-// vary), so the eye reads raseeda's column first and nothing reads as a
+// columns answer in greys (an ink tick, a faint cross, "Some" or "Rarely"
+// where tools vary), so the eye reads raseeda's column first and nothing reads as a
 // warning. The shapes differ too, so the table reads without colour.
 function ComparisonCell({
   value,
