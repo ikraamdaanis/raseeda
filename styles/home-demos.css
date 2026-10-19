@@ -33,6 +33,17 @@
   }
 }
 
+/* Paused from the footer (data-home-motion on <html>, hooks/use-home-motion):
+   the demos, the panel's lights and the closing glow rest on their finished
+   state, as with reduced motion; the clouds hold where they are. */
+[data-home-motion="paused"] :is(.demo-anim, .animate-glow-breathe) {
+  animation: none;
+}
+
+[data-home-motion="paused"] .animate-cloud-drift {
+  animation-play-state: paused;
+}
+
 /* Every scene fades in at the top of its loop and out at the bottom, so the
    jump back to the first frame happens out of sight. */
 .demo-scene {

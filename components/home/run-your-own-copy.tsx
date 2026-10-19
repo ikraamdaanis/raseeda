@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { FOCUS_RING, GithubMark } from "~/components/home/site-chrome";
 import { APP_NAME } from "~/consts/app";
+import { useHomeMotion } from "~/hooks/use-home-motion";
 import { cn } from "~/lib/utils";
 import { SOURCE_URL } from "~/utils/site-meta";
 
@@ -369,6 +370,7 @@ const LIGHTS = [
 
 export function RunYourOwnCopy() {
   const { ref, isOnScreen } = useOnScreen<HTMLDivElement>();
+  const { isPaused } = useHomeMotion();
 
   return (
     <div
@@ -413,7 +415,7 @@ export function RunYourOwnCopy() {
           <span className="sr-only"> (opens in a new tab)</span>
         </a>
       </div>
-      <Terminal isPlaying={isOnScreen} />
+      <Terminal isPlaying={isOnScreen && !isPaused} />
     </div>
   );
 }

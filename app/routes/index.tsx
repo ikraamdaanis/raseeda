@@ -5,6 +5,8 @@ import {
   IconCheck,
   IconCircleCheckFilled,
   IconMenu2,
+  IconPlayerPause,
+  IconPlayerPlay,
   IconPlus,
   IconX
 } from "@tabler/icons-react";
@@ -41,13 +43,14 @@ import {
   CONTAINER,
   CreateInvoiceLink,
   FOCUS_RING,
-  GithubMark,
   SiteFooter,
   Wordmark
 } from "~/components/home/site-chrome";
 import { APP_NAME } from "~/consts/app";
+import { useApplyHomeMotion, useHomeMotion } from "~/hooks/use-home-motion";
 import { typeClass } from "~/lib/type-scale";
 import { cn } from "~/lib/utils";
+import { HOME_MOTION_SCRIPT } from "~/utils/home-motion";
 import { canonicalLink, siteMeta, SOURCE_URL } from "~/utils/site-meta";
 import { HOME_STRUCTURED_DATA } from "~/utils/structured-data";
 
@@ -111,7 +114,7 @@ const TEXT_LINK = cn(
   FOCUS_RING
 );
 
-// Headlines are Geist, like the rest of the page. Sizes come from the type
+// Headlines are in the page's own face (font-home). Sizes come from the type
 // roles, which the homepage sets at marketing values through `.home-type`.
 const HEADING = "font-medium tracking-[-0.035em] text-balance";
 
@@ -354,8 +357,11 @@ function useStorageBlocked() {
 }
 
 function HomePage() {
+  useApplyHomeMotion();
+
   return (
     <div className="home-type selection:bg-brand-100 bg-canvas text-ink font-home isolate min-h-svh antialiased">
+      <ScriptOnce>{HOME_MOTION_SCRIPT}</ScriptOnce>
       <a
         href="#main"
         className={cn(
@@ -370,14 +376,38 @@ function HomePage() {
       <main id="main" className="overflow-x-clip">
         <Hero />
         <HowItWorks />
+        <Privacy />
         <Comparison />
         <Features />
         <OpenSource />
         <Questions />
         <Closing />
       </main>
-      <SiteFooter />
+      <SiteFooter action={<MotionToggle />} />
     </div>
+  );
+}
+
+// Pauses the page's looping motion, for anyone it distracts (WCAG 2.2.2). The
+// demo tiles then rest on their finished frame, as with reduced motion, so
+// the control is hidden when the system already asks for less motion.
+function MotionToggle() {
+  const { isPaused, togglePaused } = useHomeMotion();
+  const Icon = isPaused ? IconPlayerPlay : IconPlayerPause;
+
+  return (
+    <button
+      type="button"
+      onClick={togglePaused}
+      className={cn(
+        typeClass("body"),
+        "text-ink hover:text-brand-700 inline-flex min-h-11 items-center gap-1.5 rounded-sm motion-reduce:hidden sm:min-h-9",
+        FOCUS_RING
+      )}
+    >
+      <Icon className="size-4 shrink-0 text-zinc-500" aria-hidden="true" />
+      {isPaused ? "Play animations" : "Pause animations"}
+    </button>
   );
 }
 
@@ -567,30 +597,31 @@ function Hero() {
         >
           <div className="flex flex-col items-start gap-5 sm:items-center">
             <h1 className={cn(HEADING, typeClass("display"))}>
-              <span className="hero-focus block">Send the invoice.</span>
+              <span className="hero-focus block">Make the invoice.</span>
               <span className="hero-focus block [animation-delay:80ms]">
-                Keep everything else.
+                Keep your data.
               </span>
             </h1>
             <p className="hero-focus text-ink/75 max-w-[48ch] text-lg/7 text-pretty [animation-delay:160ms]">
-              Free and private.{" "}
+              A free,{" "}
               <a
                 href={SOURCE_URL}
-                aria-label="Open source on GitHub"
+                aria-label="open source on GitHub"
                 className={cn(
                   "group text-ink inline-flex items-center gap-0.5 rounded-sm whitespace-nowrap",
                   FOCUS_RING
                 )}
               >
-                <span className="border-ink/40 group-hover:border-ink flex items-center border-b border-dotted">
-                  <GithubMark />
-                  pen source
+                <span className="border-ink/40 group-hover:border-ink border-b border-dotted">
+                  open source
                 </span>
                 <IconArrowUpRight
                   className="size-4 shrink-0"
                   aria-hidden="true"
                 />
-              </a>
+              </a>{" "}
+              invoice maker that runs in your browser. No account, and nothing
+              you type is uploaded.
             </p>
           </div>
           <div className="hero-focus flex flex-wrap items-center gap-3 [animation-delay:240ms] sm:justify-center">
@@ -1034,9 +1065,9 @@ const PROOFS: {
   hues: [number, number];
 }[] = [
   {
-    title: "The page only talks to its own server",
+    title: "Other websites are blocked",
     description:
-      "Every page carries this policy, so the browser itself blocks requests to anywhere else, trackers included.",
+      "Every page carries this policy. Your browser enforces it, so trackers, analytics and every other site are refused.",
     path: "consts/content-security-policy.ts",
     firstLine: 11,
     lines: [
@@ -1083,15 +1114,16 @@ const PROOFS: {
   }
 ];
 
-// The privacy claims beside the lines of code that keep them, on tiles like the
-// feature cards, then how to run a copy.
-function OpenSource() {
+// The privacy promise in plain words, then the lines of code that keep it, on
+// tiles like the feature cards, so a reader who can't read code still gets the
+// promise and one who can gets the proof.
+function Privacy() {
   return (
-    <section id="open-source" className="py-16 sm:py-20">
+    <section id="privacy" className="py-16 sm:py-20">
       <div className={CONTAINER}>
         <SectionHeading
-          title="Open source, all of it."
-          description="MIT licensed and public on GitHub. These are the lines that keep your invoices on your device."
+          title="Your invoices never leave your device."
+          description="Not to us and not to anyone else. The page is blocked from sending data to any other site, and the code is public, so you don’t have to take our word for it."
         />
         <ul className="mt-12 grid gap-x-6 gap-y-12 sm:mt-16 md:grid-cols-3">
           {PROOFS.map(proof => (
@@ -1106,6 +1138,20 @@ function OpenSource() {
             </li>
           ))}
         </ul>
+      </div>
+    </section>
+  );
+}
+
+// The licence and how to run a copy, for readers who want the code itself.
+function OpenSource() {
+  return (
+    <section id="open-source" className="py-16 sm:py-20">
+      <div className={CONTAINER}>
+        <SectionHeading
+          title="Open source, all of it."
+          description="MIT licensed and public on GitHub. Read every line, or run your own copy."
+        />
         <RunYourOwnCopy />
       </div>
     </section>
