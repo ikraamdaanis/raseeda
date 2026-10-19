@@ -420,21 +420,33 @@ function updateHeaderState() {
   root.toggleAttribute("data-header-pill", isPastHero);
 }
 
-const HEADER_STATE_SCRIPT = `(function(){function update(){var title=document.getElementById(${JSON.stringify(HERO_TITLE_ID)}),actions=document.getElementById(${JSON.stringify(HERO_ACTIONS_ID)});if(!title||!actions)return;var past=actions.getBoundingClientRect().bottom<64,root=document.documentElement;root.toggleAttribute("data-header-solid",past||title.getBoundingClientRect().top<84);root.toggleAttribute("data-header-pill",past)}update();addEventListener("scroll",update,{passive:true});addEventListener("resize",update)})()`;
+// The header only animates between states once `data-header-ready` is set,
+// two frames after the page has finished parsing: by then a reload's scroll
+// is restored, so the header paints in its final state with no transition or
+// pill entrance playing.
+const HEADER_STATE_SCRIPT = `(function(){var root=document.documentElement;function update(){var title=document.getElementById(${JSON.stringify(HERO_TITLE_ID)}),actions=document.getElementById(${JSON.stringify(HERO_ACTIONS_ID)});if(!title||!actions)return;var past=actions.getBoundingClientRect().bottom<64;root.toggleAttribute("data-header-solid",past||title.getBoundingClientRect().top<84);root.toggleAttribute("data-header-pill",past)}function ready(){update();requestAnimationFrame(function(){requestAnimationFrame(function(){update();root.setAttribute("data-header-ready","")})})}update();addEventListener("scroll",update,{passive:true});addEventListener("resize",update);if(document.readyState==="loading")addEventListener("DOMContentLoaded",ready);else ready()})()`;
 
 // The same tracking for a client-side visit, where the inline script doesn't
 // run, and the states cleared on the way out so no other page inherits them.
 function useHeaderState() {
   useEffect(() => {
+    const root = document.documentElement;
+
     updateHeaderState();
     addEventListener("scroll", updateHeaderState, { passive: true });
     addEventListener("resize", updateHeaderState);
 
+    const frame = requestAnimationFrame(() =>
+      requestAnimationFrame(() => root.setAttribute("data-header-ready", ""))
+    );
+
     return () => {
+      cancelAnimationFrame(frame);
       removeEventListener("scroll", updateHeaderState);
       removeEventListener("resize", updateHeaderState);
-      document.documentElement.removeAttribute("data-header-solid");
-      document.documentElement.removeAttribute("data-header-pill");
+      root.removeAttribute("data-header-solid");
+      root.removeAttribute("data-header-pill");
+      root.removeAttribute("data-header-ready");
     };
   }, []);
 }
@@ -449,7 +461,7 @@ function useHeaderState() {
 // updateHeaderState), so they paint before the page hydrates.
 function SiteHeader() {
   return (
-    <header className="home-header sticky top-0 z-40 backdrop-blur-[0px] transition-[translate,background-color,box-shadow,backdrop-filter] duration-300 ease-out lg:pt-5">
+    <header className="home-header sticky top-0 z-40 backdrop-blur-[0px] lg:pt-5">
       <div className={cn(CONTAINER, "flex h-16 items-center gap-4")}>
         <div className="flex flex-1 items-center">
           <Wordmark />
@@ -473,7 +485,7 @@ function SiteHeader() {
           ))}
         </nav>
         <div className="flex flex-1 items-center justify-end gap-2">
-          <span className="home-header-pill animate-in fade-in zoom-in-95 duration-200 motion-reduce:animate-none">
+          <span className="home-header-pill">
             <CreateInvoiceLink />
           </span>
           <span className="home-header-link">

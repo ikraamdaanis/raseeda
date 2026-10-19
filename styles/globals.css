@@ -668,6 +668,37 @@ html:not([data-header-pill]) .home-header-pill {
   display: none;
 }
 
+/* Changes animate only once the page has settled (data-header-ready), so a
+   reload restored mid-page paints the final header with nothing playing. The
+   pill fades and grows in as it appears. */
+html[data-header-ready] .home-header {
+  transition:
+    translate 300ms ease-out,
+    background-color 300ms ease-out,
+    box-shadow 300ms ease-out,
+    backdrop-filter 300ms ease-out;
+}
+
+html[data-header-ready] .home-header-pill {
+  transition:
+    opacity 200ms ease-out,
+    scale 200ms ease-out,
+    display 200ms allow-discrete;
+}
+
+@starting-style {
+  html[data-header-ready] .home-header-pill {
+    opacity: 0;
+    scale: 0.95;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html[data-header-ready] .home-header-pill {
+    transition: none;
+  }
+}
+
 /* Anchored sections stop clear of the homepage's sticky header. */
 .home-type section[id] {
   scroll-margin-top: 4.5rem;

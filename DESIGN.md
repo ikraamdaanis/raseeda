@@ -789,7 +789,9 @@ are 13px, labels `muted-foreground`, fields `muted` fills (`rounded-md`).
   under it, the link becomes the Create invoice ink pill (fade and 95% zoom in
   over 200ms). Both states are attributes on `<html>` (`data-header-solid`,
   `data-header-pill`) set by an inline script as the page parses and on every
-  scroll, so a reload mid-page paints the right header at once. Anchored
+  scroll, so a reload mid-page paints the right header at once; changes only
+  animate once the page has settled (`data-header-ready`), so nothing plays
+  on a reload. Anchored
   sections stop 72px down so the header never covers
   their heading. Below `lg` the links fold into a native `<details>` menu: a
   44px menu-icon summary opening a 224px white `rounded-xl` panel
