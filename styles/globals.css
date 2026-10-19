@@ -647,6 +647,27 @@ html[data-editor-theme="dark"] {
   --lh-caption: 1.25rem;
 }
 
+/* The homepage header's states, set on <html> by HEADER_STATE_SCRIPT
+   (app/routes/index.tsx) before first paint and on every scroll: solid once
+   the hero's headline reaches it (lifted flush from `lg`), and the Create
+   invoice pill in place of the editor link once the hero's buttons are gone. */
+html[data-header-solid] .home-header {
+  background-color: color-mix(in oklab, var(--color-canvas) 90%, transparent);
+  box-shadow: 0 1px 0 rgb(9 9 11 / 0.08);
+  backdrop-filter: blur(12px);
+}
+
+@media (width >= 64rem) {
+  html[data-header-solid] .home-header {
+    translate: 0 -1.25rem;
+  }
+}
+
+html[data-header-pill] .home-header-link,
+html:not([data-header-pill]) .home-header-pill {
+  display: none;
+}
+
 /* Anchored sections stop clear of the homepage's sticky header. */
 .home-type section[id] {
   scroll-margin-top: 4.5rem;

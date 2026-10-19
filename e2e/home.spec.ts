@@ -202,27 +202,3 @@ test("the header offers Create invoice once the hero scrolls away", async ({
   await headerPill.click();
   await expect(page).toHaveURL("/create");
 });
-
-test("the pause control stops the page's motion and is remembered", async ({
-  page
-}) => {
-  await page.goto("/");
-
-  await page
-    .getByRole("banner")
-    .getByRole("button", { name: "Pause animations" })
-    .click();
-  await expect(page.locator("html")).toHaveAttribute(
-    "data-home-motion",
-    "paused"
-  );
-
-  await page.reload();
-  await expect(page.locator("html")).toHaveAttribute(
-    "data-home-motion",
-    "paused"
-  );
-  await expect(
-    page.getByRole("banner").getByRole("button", { name: "Play animations" })
-  ).toBeVisible();
-});

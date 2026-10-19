@@ -128,9 +128,7 @@ function footerColumnId(title: string) {
   return `footer-${title.toLowerCase().replaceAll(" ", "-")}`;
 }
 
-// `action` is a page's own control for the bottom bar, such as the homepage's
-// motion toggle.
-export function SiteFooter({ action }: { action?: ReactNode }) {
+export function SiteFooter() {
   return (
     <footer className="pt-16 sm:pt-20">
       <div className={cn(CONTAINER, "pb-16 sm:pb-20")}>
@@ -183,12 +181,9 @@ export function SiteFooter({ action }: { action?: ReactNode }) {
               </FooterLink>
             </p>
           </div>
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-6">
-            <p className={cn(typeClass("body"), "text-zinc-500")}>
-              MIT licensed. Your invoices stay on your device.
-            </p>
-            {action}
-          </div>
+          <p className={cn(typeClass("body"), "text-zinc-500")}>
+            MIT licensed. Your invoices stay on your device.
+          </p>
         </div>
       </div>
     </footer>

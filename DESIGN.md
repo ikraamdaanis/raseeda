@@ -781,17 +781,20 @@ are 13px, labels `muted-foreground`, fields `muted` fills (`rounded-md`).
   `lg`). The `ink` wordmark on the left (named "raseeda home" to assistive
   tech); from `lg`, centred section links (How it works, Privacy, Features,
   Compare, Questions) as `zinc-600` pills, hover `ink`; on the right, from
-  `sm`, a 36px pause icon button (`zinc-600`, hover `ink/5` fill) and an "Open
-  the editor" `ink` text link with an arrow, hover `brand-800`. As soon as the hero's headline reaches the bar it takes `canvas`
+  `sm`, an "Open the editor" `ink` text link with an arrow, hover
+  `brand-800`. As soon as the hero's headline reaches the bar it takes `canvas`
   at 90% with a 12px backdrop blur and a 1px `zinc-950/8` bottom shadow, and
   rises by its `lg` padding so the bar sits flush, all easing together over
   300ms; no text ever passes under a clear bar. When the hero's buttons pass
   under it, the link becomes the Create invoice ink pill (fade and 95% zoom in
-  over 200ms). Anchored sections stop 72px down so the header never covers
+  over 200ms). Both states are attributes on `<html>` (`data-header-solid`,
+  `data-header-pill`) set by an inline script as the page parses and on every
+  scroll, so a reload mid-page paints the right header at once. Anchored
+  sections stop 72px down so the header never covers
   their heading. Below `lg` the links fold into a native `<details>` menu: a
   44px menu-icon summary opening a 224px white `rounded-xl` panel
   (`zinc-950/10` ring, `shadow-lg`) of `rounded-lg` rows that fill `zinc-100`
-  on hover, ending with the pause row; it closes on navigation, Escape or a tap outside.
+  on hover; it closes on navigation, Escape or a tap outside.
 - **Homepage footer:** a `<footer>` landmark outside `<main>`, shared with the
   privacy page: three link columns (Make invoices, Learn more, Open source)
   under `zinc-500` labels (plain text naming each list, not headings), `ink` links that hover to `brand-700` (44px tall,
@@ -944,14 +947,6 @@ inside the demos. Only transforms, opacity and filter animate.
 - **Night panel**: the lights wander on 13s, 17s and 11s loops, the edge band
   turns every 8s, and the session types; all only while the panel is on
   screen. Under reduced motion the terminal rests on the running dev server.
-- **Pause control**: one choice, offered as the header's icon button from
-  `sm`, a row in the phones' menu, and "Pause animations" in the footer's
-  bottom bar; each appears once the page has hydrated. It stops every loop
-  above (`data-home-motion="paused"` on `<html>`, remembered in
-  localStorage): demos, lights, edge band and glow rest on their finished
-  state, the clouds hold, the terminal keeps its place. It is hidden under
-  reduced motion, which already stills the page. New looping motion must stop
-  under it too.
 - Hovers change colour over 200ms ease-in-out. Nothing is scroll-linked.
 
 ## Do's and Don'ts

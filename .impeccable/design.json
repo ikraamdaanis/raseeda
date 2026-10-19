@@ -990,11 +990,6 @@
         "name": "history-flash",
         "value": "900ms ease-out",
         "purpose": "Undo and redo flash the changed part of the page in brand-500."
-      },
-      {
-        "name": "home-motion-paused",
-        "value": "[data-home-motion=\"paused\"]",
-        "purpose": "Footer pause control: demos, lights and glow rest on their finished state, clouds hold, terminal keeps its place; hidden under reduced motion."
       }
     ],
     "breakpoints": [

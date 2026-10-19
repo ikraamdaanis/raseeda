@@ -6,14 +6,12 @@ import {
   IconCheck,
   IconCircleCheckFilled,
   IconMenu2,
-  IconPlayerPause,
-  IconPlayerPlay,
   IconPlus,
   IconX
 } from "@tabler/icons-react";
 import { createFileRoute, Link, ScriptOnce } from "@tanstack/react-router";
 import type { ComponentType, CSSProperties, ReactNode } from "react";
-import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   EditorWindow,
   PAGE_HEIGHT,
@@ -48,10 +46,8 @@ import {
   Wordmark
 } from "~/components/home/site-chrome";
 import { APP_NAME } from "~/consts/app";
-import { useApplyHomeMotion, useHomeMotion } from "~/hooks/use-home-motion";
 import { typeClass } from "~/lib/type-scale";
 import { cn } from "~/lib/utils";
-import { HOME_MOTION_SCRIPT } from "~/utils/home-motion";
 import { canonicalLink, siteMeta, SOURCE_URL } from "~/utils/site-meta";
 import { HOME_STRUCTURED_DATA } from "~/utils/structured-data";
 
@@ -366,11 +362,10 @@ function useSavedInvoices() {
 }
 
 function HomePage() {
-  useApplyHomeMotion();
+  useHeaderState();
 
   return (
     <div className="home-type selection:bg-brand-100 bg-canvas text-ink font-home isolate min-h-svh antialiased">
-      <ScriptOnce>{HOME_MOTION_SCRIPT}</ScriptOnce>
       <a
         href="#main"
         className={cn(
@@ -384,6 +379,7 @@ function HomePage() {
       <SiteHeader />
       <main id="main" className="overflow-x-clip">
         <Hero />
+        <ScriptOnce>{HEADER_STATE_SCRIPT}</ScriptOnce>
         <HowItWorks />
         <Privacy />
         <Features />
@@ -392,67 +388,8 @@ function HomePage() {
         <Questions />
         <Closing />
       </main>
-      <SiteFooter action={<MotionToggle variant="footer" />} />
+      <SiteFooter />
     </div>
-  );
-}
-
-// For a value that never changes after hydration.
-function subscribeToNothing() {
-  return () => {};
-}
-
-// Pauses the page's looping motion, for anyone it distracts (WCAG 2.2.2). The
-// demo tiles then rest on their finished frame, as with reduced motion, so
-// the control is hidden when the system already asks for less motion. It sits
-// in three places that share one choice: an icon button in the header from
-// `sm`, a row in the phones' menu, and a labelled button in the footer. It
-// only appears once the page has hydrated, since until then it can't work.
-function MotionToggle({ variant }: { variant: "header" | "menu" | "footer" }) {
-  const { isPaused, togglePaused } = useHomeMotion();
-  const isHydrated = useSyncExternalStore(
-    subscribeToNothing,
-    () => true,
-    () => false
-  );
-  const Icon = isPaused ? IconPlayerPlay : IconPlayerPause;
-  const label = isPaused ? "Play animations" : "Pause animations";
-
-  if (!isHydrated) return null;
-
-  if (variant === "header") {
-    return (
-      <button
-        type="button"
-        onClick={togglePaused}
-        title={label}
-        className={cn(
-          "hover:text-ink hover:bg-ink/5 inline-flex size-9 shrink-0 items-center justify-center rounded-full text-zinc-600 transition-colors duration-200 ease-in-out motion-reduce:hidden max-sm:hidden",
-          FOCUS_RING
-        )}
-      >
-        <Icon className="size-4 shrink-0" aria-hidden="true" />
-        <span className="sr-only">{label}</span>
-      </button>
-    );
-  }
-
-  return (
-    <button
-      type="button"
-      onClick={togglePaused}
-      className={cn(
-        "text-ink inline-flex items-center gap-1.5 motion-reduce:hidden",
-        variant === "menu"
-          ? "rounded-lg px-3 py-3 text-left text-zinc-700 transition-colors duration-200 ease-in-out hover:bg-zinc-100"
-          : "hover:text-brand-700 min-h-11 rounded-sm sm:min-h-9",
-        variant === "menu" ? CONTROL_TEXT : typeClass("body"),
-        FOCUS_RING
-      )}
-    >
-      <Icon className="size-4 shrink-0 text-zinc-500" aria-hidden="true" />
-      {label}
-    </button>
   );
 }
 
@@ -460,68 +397,59 @@ function MotionToggle({ variant }: { variant: "header" | "menu" | "footer" }) {
 const HERO_TITLE_ID = "hero-title";
 const HERO_ACTIONS_ID = "hero-actions";
 
-// The header bar's foot: 64px (h-16), and 84px from `lg`, where the clear
-// header sits 20px down. Anything above it is under the header.
-const HEADER_LINE = 64;
-const HEADER_LINE_LG = 84;
+// The header's two states live on <html>, so CSS draws them
+// (`.home-header` in globals.css) without waiting for React:
+// `data-header-solid` once the hero's headline reaches the bar (84px down,
+// the clear header's foot from `lg`), and `data-header-pill` once the hero's
+// buttons have gone under it (64px). HEADER_STATE_SCRIPT sets them as the
+// page parses, right after the hero, and on every scroll, including the
+// reload's restore, so a reload mid-page paints the solid header at once.
+function updateHeaderState() {
+  const title = document.getElementById(HERO_TITLE_ID);
+  const actions = document.getElementById(HERO_ACTIONS_ID);
 
-// Whether the element with this id has scrolled up to `line` (px from the
-// window's top): as soon as its top reaches it, or with `isWholly` only once
-// all of it has gone above. False until the page hydrates, and on any page
-// without it.
-function useHasScrolledPast(id: string, line: number, isWholly = false) {
-  const [hasPassed, setHasPassed] = useState(false);
+  if (!title || !actions) return;
 
+  const isPastHero = actions.getBoundingClientRect().bottom < 64;
+  const root = document.documentElement;
+
+  root.toggleAttribute(
+    "data-header-solid",
+    isPastHero || title.getBoundingClientRect().top < 84
+  );
+  root.toggleAttribute("data-header-pill", isPastHero);
+}
+
+const HEADER_STATE_SCRIPT = `(function(){function update(){var title=document.getElementById(${JSON.stringify(HERO_TITLE_ID)}),actions=document.getElementById(${JSON.stringify(HERO_ACTIONS_ID)});if(!title||!actions)return;var past=actions.getBoundingClientRect().bottom<64,root=document.documentElement;root.toggleAttribute("data-header-solid",past||title.getBoundingClientRect().top<84);root.toggleAttribute("data-header-pill",past)}update();addEventListener("scroll",update,{passive:true});addEventListener("resize",update)})()`;
+
+// The same tracking for a client-side visit, where the inline script doesn't
+// run, and the states cleared on the way out so no other page inherits them.
+function useHeaderState() {
   useEffect(() => {
-    const element = document.getElementById(id);
+    updateHeaderState();
+    addEventListener("scroll", updateHeaderState, { passive: true });
+    addEventListener("resize", updateHeaderState);
 
-    if (!element) return;
-
-    const observer = new IntersectionObserver(
-      entries => {
-        const entry = entries.at(-1);
-
-        if (!entry) return;
-
-        // Above the line, not below the fold. The line, not the window's
-        // top, decides: an element crosses it while still on screen.
-        const lineTop = entry.rootBounds?.top ?? line;
-        const isCrossing = isWholly
-          ? !entry.isIntersecting
-          : entry.intersectionRatio < 1;
-
-        setHasPassed(isCrossing && entry.boundingClientRect.top < lineTop);
-      },
-      { rootMargin: `-${line}px 0px 0px 0px`, threshold: [0, 1] }
-    );
-
-    observer.observe(element);
-
-    return () => observer.disconnect();
-  }, [id, line, isWholly]);
-
-  return hasPassed;
+    return () => {
+      removeEventListener("scroll", updateHeaderState);
+      removeEventListener("resize", updateHeaderState);
+      document.documentElement.removeAttribute("data-header-solid");
+      document.documentElement.removeAttribute("data-header-pill");
+    };
+  }, []);
 }
 
 // The header sticks to the top. Over the hero it is clear, part of the sky,
 // with the quiet "Open the editor" link. As soon as the headline reaches it,
 // it takes the canvas behind it, so text never runs under a clear bar; from
 // `lg` it also rises by its top padding, so the bar sits flush with the top
-// of the window. Once the hero's buttons pass under it, it swaps the link for
-// the Create invoice pill, so the editor is one tap away anywhere on the
-// page, phones included.
+// of the window. Once the hero's buttons pass under it, the link gives way
+// to the Create invoice pill, so the editor is one tap away anywhere on the
+// page, phones included. Both states are CSS on <html> attributes (see
+// updateHeaderState), so they paint before the page hydrates.
 function SiteHeader() {
-  const isOverContent = useHasScrolledPast(HERO_TITLE_ID, HEADER_LINE_LG);
-  const isPastHero = useHasScrolledPast(HERO_ACTIONS_ID, HEADER_LINE, true);
-
   return (
-    <header
-      className={cn(
-        "sticky top-0 z-40 backdrop-blur-[0px] transition-[translate,background-color,box-shadow,backdrop-filter] duration-300 ease-out lg:pt-5",
-        (isOverContent || isPastHero) &&
-          "bg-canvas/90 shadow-[0_1px_0_rgb(9_9_11/0.08)] backdrop-blur-md lg:-translate-y-5"
-      )}
-    >
+    <header className="home-header sticky top-0 z-40 backdrop-blur-[0px] transition-[translate,background-color,box-shadow,backdrop-filter] duration-300 ease-out lg:pt-5">
       <div className={cn(CONTAINER, "flex h-16 items-center gap-4")}>
         <div className="flex flex-1 items-center">
           <Wordmark />
@@ -545,14 +473,12 @@ function SiteHeader() {
           ))}
         </nav>
         <div className="flex flex-1 items-center justify-end gap-2">
-          <MotionToggle variant="header" />
-          {isPastHero ? (
-            <span className="animate-in fade-in zoom-in-95 duration-200 motion-reduce:animate-none">
-              <CreateInvoiceLink />
-            </span>
-          ) : (
+          <span className="home-header-pill animate-in fade-in zoom-in-95 duration-200 motion-reduce:animate-none">
+            <CreateInvoiceLink />
+          </span>
+          <span className="home-header-link">
             <HeaderAction />
-          )}
+          </span>
           <PhoneMenu />
         </div>
       </div>
@@ -627,7 +553,6 @@ function PhoneMenu() {
             {section.label}
           </a>
         ))}
-        <MotionToggle variant="menu" />
       </nav>
     </details>
   );
@@ -854,8 +779,8 @@ const HERO_FRAME = { width: 1440, height: 860 };
 
 // The phones' part of the window: the desk from just left of the page (which
 // starts 307px in, past the invoices panel and the desk's margin) to just
-// right of it, down to the payment details.
-const HERO_PHONE_FRAME = { width: 834, height: 1060, x: 287 };
+// right of it, cut a little below the payment terms.
+const HERO_PHONE_FRAME = { width: 834, height: 990, x: 287 };
 
 /**
  * A real PDF in the editor canvas's place: a screenshot of the top of
