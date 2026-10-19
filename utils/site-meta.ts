@@ -15,7 +15,7 @@ export const MAKER_NAME = "Ikraam";
 
 export const MAKER_URL = "https://github.com/ikraamdaanis";
 
-const SITE_OG_IMAGE_ALT = `${APP_NAME}: Send the invoice. Keep everything else. Sailing ships on a calm harbour at sunrise.`;
+const SITE_OG_IMAGE_ALT = `${APP_NAME}: Make the invoice. Keep your data. A finished invoice on a pale blue sky.`;
 
 // The absolute address of a page, the form canonicals and og:url need.
 export function absoluteUrl(path: string) {
