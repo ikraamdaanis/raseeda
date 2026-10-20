@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import {
   CONTAINER,
   PageHeader,
@@ -6,6 +6,15 @@ import {
 } from "~/components/home/site-chrome";
 import { typeClass } from "~/lib/type-scale";
 import { cn } from "~/lib/utils";
+
+// Each page's colour: the panel's glow turned to an oklch hue (the sky
+// utilities read --sky-hue), and the small label above the heading in a
+// matching shade. Amber warns that a page is missing; red says something
+// broke.
+const TONES = {
+  warning: { hue: 70, eyebrow: "text-amber-800" },
+  error: { hue: 25, eyebrow: "text-red-700" }
+};
 
 /**
  * The frame the not-found and error pages share, in the site's own dress:
@@ -17,6 +26,7 @@ import { cn } from "~/lib/utils";
  * show in place of a real page's content, under that page's address.
  */
 export function StatusPage({
+  tone,
   isNoIndex = false,
   eyebrow,
   title,
@@ -24,6 +34,7 @@ export function StatusPage({
   actions,
   children
 }: {
+  tone: keyof typeof TONES;
   isNoIndex?: boolean;
   eyebrow: string;
   title: string;
@@ -36,7 +47,10 @@ export function StatusPage({
       {isNoIndex && <meta name="robots" content="noindex" />}
       <PageHeader />
       <main className="flex flex-1 flex-col lg:px-3">
-        <section className="bg-glow relative isolate flex flex-1 items-center overflow-hidden lg:rounded-[2rem]">
+        <section
+          className="bg-glow relative isolate flex flex-1 items-center overflow-hidden lg:rounded-[2rem]"
+          style={{ "--sky-hue": TONES[tone].hue } as CSSProperties}
+        >
           <div
             aria-hidden="true"
             className="bg-glow-dome absolute inset-0 -z-10"
@@ -54,7 +68,8 @@ export function StatusPage({
             <div className="flex flex-col items-center gap-4">
               <p
                 className={cn(
-                  "text-brand-700 font-medium",
+                  "font-medium",
+                  TONES[tone].eyebrow,
                   typeClass("body", "compact")
                 )}
               >
