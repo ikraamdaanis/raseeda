@@ -786,8 +786,10 @@ are 13px, labels `muted-foreground`, fields `muted` fills (`rounded-md`).
   at 90% with a 12px backdrop blur and a 1px `zinc-950/8` bottom shadow, and
   rises by its `lg` padding so the bar sits flush, all easing together over
   300ms; no text ever passes under a clear bar. When the hero's buttons pass
-  under it, the link becomes the Create invoice ink pill (fade and 95% zoom in
-  over 200ms). Both states are attributes on `<html>` (`data-header-solid`,
+  under it, the link and the Create invoice ink pill crossfade in one shared
+  slot, in both directions: the leaving one fades, shrinks to 95% and blurs
+  2px over 150ms while the arriving one comes in over 200ms
+  (`--ease-out-strong`), so they never show side by side. Both states are attributes on `<html>` (`data-header-solid`,
   `data-header-pill`) set by an inline script as the page parses and on every
   scroll, so a reload mid-page paints the right header at once; changes only
   animate once the page has settled (`data-header-ready`), so nothing plays
@@ -936,9 +938,11 @@ and `--ease-in-out-strong` (`cubic-bezier(0.77, 0, 0.175, 1)`) for movement
 inside the demos. Only transforms, opacity and filter animate.
 
 - **Hero entrance**, only when the homepage loads as a page: the two headline
-  lines, the lead and the pill row come into focus from an 8px blur over
-  900ms, 80ms apart; the editor window fades in over 1000ms at 320ms. Under
-  reduced motion they only fade.
+  lines, the lead and the pill row rise 8px into place as they fade in, over
+  600ms, 60ms apart; the editor window fades in over 700ms at 240ms, so the
+  whole entrance is done inside a second. Opacity and translate only, never
+  a blur, which repaints the big headline every frame and stutters while the
+  page hydrates. Under reduced motion they only fade.
 - **Clouds**: eight gradient clouds cross the sky left to right, linear, each
   at its own pace (89s to 211s, nearer ones faster), from a random point per
   visit. Reduced motion pauses them.

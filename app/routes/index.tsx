@@ -485,11 +485,13 @@ function SiteHeader() {
           ))}
         </nav>
         <div className="flex flex-1 items-center justify-end gap-2">
-          <span className="home-header-pill">
-            <CreateInvoiceLink />
-          </span>
-          <span className="home-header-link">
-            <HeaderAction />
+          <span className="home-header-swap">
+            <span className="home-header-pill">
+              <CreateInvoiceLink />
+            </span>
+            <span className="home-header-link">
+              <HeaderAction />
+            </span>
           </span>
           <PhoneMenu />
         </div>
@@ -629,8 +631,8 @@ function SectionHeading({
 // The hero is a sky from behind the header (the section pulls up under it) to
 // the editor window's cut: inset from the viewport with rounded corners from
 // `lg`, and running to the screen's edges below it. The copy sits centred on
-// it and the window rises from its foot. The copy comes into focus line by
-// line, 80ms apart, then the editor window fades in. On phones the copy and
+// it and the window rises from its foot. The copy rises into place line by
+// line, 60ms apart, then the editor window fades in. On phones the copy and
 // buttons sit on the left, in line with the editor window's crop below them;
 // from `sm` they are centred over the whole window.
 function Hero() {
@@ -655,11 +657,11 @@ function Hero() {
               className={cn(HEADING, typeClass("display"))}
             >
               <span className="hero-focus block">Make the invoice.</span>
-              <span className="hero-focus block [animation-delay:80ms]">
+              <span className="hero-focus block [animation-delay:60ms]">
                 Keep your data.
               </span>
             </h1>
-            <p className="hero-focus text-ink/75 max-w-[48ch] text-lg/7 text-pretty [animation-delay:160ms]">
+            <p className="hero-focus text-ink/75 max-w-[48ch] text-lg/7 text-pretty [animation-delay:120ms]">
               A free,{" "}
               <a
                 href={SOURCE_URL}
@@ -685,7 +687,7 @@ function Hero() {
           </div>
           <div
             id={HERO_ACTIONS_ID}
-            className="hero-focus flex flex-wrap items-center gap-3 [animation-delay:240ms] sm:justify-center"
+            className="hero-focus flex flex-wrap items-center gap-3 [animation-delay:180ms] sm:justify-center"
           >
             <CreateInvoiceLink />
             <a href="#how-it-works" className={SOFT_PILL}>
@@ -759,7 +761,7 @@ function HeroVisual() {
       aria-label={`The ${APP_NAME} editor with a sample invoice`}
       className={cn(
         CONTAINER,
-        "hero-fade mt-12 [animation-delay:320ms] sm:mt-16"
+        "hero-fade mt-12 [animation-delay:240ms] sm:mt-16"
       )}
     >
       <div className="rounded-t-2xl bg-white/45 p-1.5 pb-0 shadow-[0_24px_64px_-16px_rgb(16_60_90/0.25)] ring-1 ring-white/70 sm:hidden">

@@ -585,14 +585,16 @@ html[data-editor-theme="dark"] {
 /* The hero's entrance, played when the homepage loads as a page: the inline
    script after the painting (HERO_ENTRANCE_SCRIPT) marks the hero with
    data-entrance, so coming back to it through a link doesn't replay it. The
-   copy comes into focus line by line, fading in from a blur; the editor window
-   fades in after it. CSS animations run off the main thread, so they stay
-   smooth while the page is still loading. With reduced motion everything only
-   fades. */
+   copy rises 8px into place line by line, 60ms apart, fading in; the editor
+   window fades in after it, and it is all done inside a second. Only opacity
+   and translate move, which the compositor runs off the main thread without
+   repainting, so it stays smooth while the page is still loading and
+   hydrating (a blur repaints the big headline every frame and stuttered).
+   With reduced motion everything only fades. */
 @keyframes hero-focus {
   from {
     opacity: 0;
-    filter: blur(8px);
+    translate: 0 8px;
   }
 }
 
@@ -605,11 +607,11 @@ html[data-editor-theme="dark"] {
 /* In the components layer, so the stagger's animation-delay utilities win. */
 @layer components {
   [data-entrance] .hero-focus {
-    animation: hero-focus 900ms var(--ease-out-strong) both;
+    animation: hero-focus 600ms var(--ease-out-strong) both;
   }
 
   [data-entrance] .hero-fade {
-    animation: hero-fade 1000ms var(--ease-out-strong) both;
+    animation: hero-fade 700ms var(--ease-out-strong) both;
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -663,14 +665,32 @@ html[data-header-solid] .home-header {
   }
 }
 
-html[data-header-pill] .home-header-link,
-html:not([data-header-pill]) .home-header-pill {
-  display: none;
+/* The editor link and the Create invoice pill share one slot, stacked on the
+   same grid cell and right-aligned, and crossfade there: the one leaving
+   fades, shrinks to 95% and blurs a touch over 150ms, the one arriving
+   comes in over 200ms, so the two never sit side by side. The hidden one
+   is out of the tab order and the accessibility tree. Changes animate only
+   once the page has settled (data-header-ready), so a reload restored
+   mid-page paints the final header with nothing playing. */
+.home-header-swap {
+  display: grid;
+  align-items: center;
+  justify-items: end;
 }
 
-/* Changes animate only once the page has settled (data-header-ready), so a
-   reload restored mid-page paints the final header with nothing playing. The
-   pill fades and grows in as it appears. */
+.home-header-swap > * {
+  grid-area: 1 / 1;
+  transform-origin: right center;
+}
+
+html[data-header-pill] .home-header-link,
+html:not([data-header-pill]) .home-header-pill {
+  visibility: hidden;
+  opacity: 0;
+  scale: 0.95;
+  filter: blur(2px);
+}
+
 html[data-header-ready] .home-header {
   transition:
     translate 300ms ease-out,
@@ -679,23 +699,28 @@ html[data-header-ready] .home-header {
     backdrop-filter 300ms ease-out;
 }
 
-html[data-header-ready] .home-header-pill {
+html[data-header-ready] :is(.home-header-pill, .home-header-link) {
   transition:
-    opacity 200ms ease-out,
-    scale 200ms ease-out,
-    display 200ms allow-discrete;
+    opacity 200ms var(--ease-out-strong),
+    scale 200ms var(--ease-out-strong),
+    filter 200ms var(--ease-out-strong),
+    visibility 0s;
 }
 
-@starting-style {
-  html[data-header-ready] .home-header-pill {
-    opacity: 0;
-    scale: 0.95;
-  }
+html[data-header-ready][data-header-pill] .home-header-link,
+html[data-header-ready]:not([data-header-pill]) .home-header-pill {
+  transition:
+    opacity 150ms var(--ease-out-strong),
+    scale 150ms var(--ease-out-strong),
+    filter 150ms var(--ease-out-strong),
+    visibility 0s 150ms;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  html[data-header-ready] .home-header-pill {
-    transition: none;
+  html[data-header-pill] .home-header-link,
+  html:not([data-header-pill]) .home-header-pill {
+    scale: 1;
+    filter: none;
   }
 }
 
