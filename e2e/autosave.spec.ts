@@ -406,15 +406,26 @@ test("a failed save is announced once, kept, backed up and retried", async ({
   await expect(alert).toContainText("storage is full");
   await expect(page.getByRole("alert")).toHaveCount(1);
 
-  await page.evaluate(() => {
+  // Retry now is disabled while a retry runs. Wait for the one above to
+  // finish, so the click after storage frees up isn't dropped and left to the
+  // background retry, which by now is 10 to 30 seconds away.
+  const retryNow = alert.getByRole("button", { name: "Retry now" });
+
+  await expect(retryNow).toBeEnabled();
+  await page.evaluate(() =>
     Object.assign((window as unknown as { storage: object }).storage, {
       full: false
-    });
-    // The background retry may get there first and take the message away.
-    document.querySelector<HTMLButtonElement>("[role='alert'] button")?.click();
-  });
+    })
+  );
+  // A background retry may get there first and take the message away, so
+  // retry until it's gone rather than clicking once.
+  await expect(async () => {
+    if (await retryNow.isEnabled({ timeout: 500 }).catch(() => false)) {
+      await retryNow.click({ timeout: 500 }).catch(() => {});
+    }
 
-  await expect(page.getByRole("alert")).toHaveCount(0);
+    await expect(page.getByRole("alert")).toHaveCount(0, { timeout: 1000 });
+  }).toPass({ timeout: 15_000 });
   await expect.poll(() => savedContains(page, "Written while full")).toBe(true);
 });
 
