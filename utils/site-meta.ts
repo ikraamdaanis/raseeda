@@ -11,7 +11,7 @@ export const SITE_OG_IMAGE = `${SITE_URL}/og-image.jpg`;
 
 export const SOURCE_URL = "https://github.com/ikraamdaanis/billsend";
 
-export const MAKER_NAME = "Ikraam";
+export const MAKER_NAME = "ikraam | freelio";
 
 export const MAKER_URL = "https://github.com/ikraamdaanis";
 
