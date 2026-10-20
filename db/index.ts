@@ -1,6 +1,7 @@
 import type { Table } from "dexie";
 import Dexie, { liveQuery } from "dexie";
 import { isEqual } from "lodash-es";
+import { DATABASE_NAME } from "~/consts/database";
 import {
   LAST_OPENED_INVOICE_KEY,
   migrateToAutosave
@@ -183,7 +184,7 @@ class InvoiceDatabase extends Dexie {
   meta!: Table<{ key: string; value: unknown }, string>;
 
   constructor() {
-    super("InvoiceDatabase");
+    super(DATABASE_NAME);
     // Version 1: Initial schema with templates and images
     this.version(1).stores({
       templates: "id, name, createdAt, updatedAt",

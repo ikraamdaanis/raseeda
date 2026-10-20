@@ -5,8 +5,9 @@
 
    A demo plays only while its tile is on screen (DemoTile sets data-playing),
    and from its first frame, so a visitor sees each loop from the start. With
-   reduced motion nothing moves: every element's own styles are its finished
-   state, so the tile shows the end of the story at rest.
+   reduced motion nothing moves (the rule is at the end of the file): every
+   element's own styles are its finished state, so the tile shows the end of
+   the story at rest.
 
    Movement on screen takes the strong ease-in-out; things arriving take the
    strong ease-out the hero already uses; steps() types text in. */
@@ -25,12 +26,6 @@
 
 [data-playing] .demo-anim {
   animation-play-state: running;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .demo-anim {
-    animation: none;
-  }
 }
 
 /* Every scene fades in at the top of its loop and out at the bottom, so the
@@ -889,27 +884,22 @@
   }
 }
 
-/* A band of light running round the terminal's edge: a conic gradient whose
-   start angle turns. The angle is a registered property, so the browser can
-   animate it, and only this 1px border repaints. Constant motion, so linear;
-   with reduced motion the band rests where it starts. */
-@property --terminal-angle {
-  syntax: "<angle>";
-  inherits: false;
-  initial-value: 200deg;
-}
-
+/* A band of light running round the terminal's edge: a conic gradient on a
+   square well past the terminal's corners, turning behind it, so the 1px
+   gap round the terminal shows the band sweep by. A conic gradient's colours
+   depend only on the angle from its centre, so turning the square is the
+   same as turning the gradient's start, and turning is a transform the
+   compositor runs without repainting. Constant motion, so linear; with
+   reduced motion the band rests where it starts. */
 .terminal-edge {
-  background:
-    conic-gradient(
-      from var(--terminal-angle),
-      transparent 0deg,
-      transparent 200deg,
-      oklch(0.72 0.17 295) 260deg,
-      oklch(0.8 0.12 330) 300deg,
-      transparent 360deg
-    ),
-    rgb(255 255 255 / 0.08);
+  background: conic-gradient(
+    transparent 0deg,
+    transparent 200deg,
+    oklch(0.72 0.17 295) 260deg,
+    oklch(0.8 0.12 330) 300deg,
+    transparent 360deg
+  );
+  rotate: 200deg;
   animation-name: terminal-edge;
   animation-duration: 8s;
   animation-timing-function: linear;
@@ -917,10 +907,90 @@
 
 @keyframes terminal-edge {
   from {
-    --terminal-angle: 200deg;
+    rotate: 200deg;
   }
 
   to {
-    --terminal-angle: 560deg;
+    rotate: 560deg;
   }
+}
+
+/* With reduced motion nothing moves. This stays the last animation rule in
+   the file: a part's own rule above names its animation and duration, and
+   any that came after this would set it playing again. */
+@media (prefers-reduced-motion: reduce) {
+  .demo-anim {
+    animation: none;
+  }
+}
+
+/* The invoice fonts as the homepage shows them: cut down to the letters of
+   its previews at the regular weight (scripts/subset-preview-fonts.ts), a
+   few KB each instead of the full files. They block rather than swap: they
+   arrive within the hero's fade-in, so the swatches never flash another
+   face. */
+
+@font-face {
+  font-family: "Inter Preview";
+  font-style: normal;
+  font-display: block;
+  font-weight: 400;
+  src: url("./preview-fonts/inter.woff2?no-inline") format("woff2");
+}
+
+@font-face {
+  font-family: "DM Sans Preview";
+  font-style: normal;
+  font-display: block;
+  font-weight: 400;
+  src: url("./preview-fonts/dm-sans.woff2?no-inline") format("woff2");
+}
+
+@font-face {
+  font-family: "IBM Plex Sans Preview";
+  font-style: normal;
+  font-display: block;
+  font-weight: 400;
+  src: url("./preview-fonts/ibm-plex-sans.woff2?no-inline") format("woff2");
+}
+
+@font-face {
+  font-family: "Bricolage Grotesque Preview";
+  font-style: normal;
+  font-display: block;
+  font-weight: 400;
+  src: url("./preview-fonts/bricolage-grotesque.woff2?no-inline")
+    format("woff2");
+}
+
+@font-face {
+  font-family: "Lora Preview";
+  font-style: normal;
+  font-display: block;
+  font-weight: 400;
+  src: url("./preview-fonts/lora.woff2?no-inline") format("woff2");
+}
+
+@font-face {
+  font-family: "Libre Baskerville Preview";
+  font-style: normal;
+  font-display: block;
+  font-weight: 400;
+  src: url("./preview-fonts/libre-baskerville.woff2?no-inline") format("woff2");
+}
+
+@font-face {
+  font-family: "JetBrains Mono Preview";
+  font-style: normal;
+  font-display: block;
+  font-weight: 400;
+  src: url("./preview-fonts/jetbrains-mono.woff2?no-inline") format("woff2");
+}
+
+@font-face {
+  font-family: "IBM Plex Mono Preview";
+  font-style: normal;
+  font-display: block;
+  font-weight: 400;
+  src: url("./preview-fonts/ibm-plex-mono.woff2?no-inline") format("woff2");
 }

@@ -7,7 +7,6 @@
 @import "@fontsource-variable/playfair-display";
 @import "shadcn/tailwind.css";
 @import "@fontsource-variable/geist-mono";
-@import "@fontsource-variable/schibsted-grotesk";
 @import "@fontsource-variable/jetbrains-mono";
 @import "@fontsource-variable/dm-sans";
 @import "@fontsource-variable/ibm-plex-sans";
@@ -25,8 +24,11 @@
 @theme inline {
   --font-geist: "Geist Variable", "Geist Fallback", sans-serif;
   /* The homepage's face: slightly condensed, with an editorial edge. The
-     editor pictures on it keep the editor's Geist. */
-  --font-home: "Schibsted Grotesk Variable", sans-serif;
+     editor's chrome uses it too. */
+  --font-home:
+    "Schibsted Grotesk Variable", "Schibsted Grotesk Fallback", sans-serif;
+  --font-schibsted-grotesk:
+    "Schibsted Grotesk Variable", "Schibsted Grotesk Fallback", sans-serif;
   --font-geist-mono: "Geist Mono Variable", monospace;
   --font-jetbrains-mono: "JetBrains Mono Variable", monospace;
   --font-ibm-plex-mono: "IBM Plex Mono", monospace;
@@ -36,6 +38,15 @@
   --font-lora: "Lora Variable", serif;
   --font-libre-baskerville: "Libre Baskerville Variable", serif;
   --font-display: "Playfair Display Variable", serif;
+  /* The homepage's cut-down invoice fonts (consts/home-preview-fonts.ts). */
+  --font-preview-inter: "Inter Preview", "Inter Fallback", sans-serif;
+  --font-preview-dm-sans: "DM Sans Preview", sans-serif;
+  --font-preview-ibm-plex-sans: "IBM Plex Sans Preview", sans-serif;
+  --font-preview-bricolage-grotesque: "Bricolage Grotesque Preview", sans-serif;
+  --font-preview-lora: "Lora Preview", serif;
+  --font-preview-libre-baskerville: "Libre Baskerville Preview", serif;
+  --font-preview-jetbrains-mono: "JetBrains Mono Preview", monospace;
+  --font-preview-ibm-plex-mono: "IBM Plex Mono Preview", monospace;
 
   --radius-surface: 3px;
   --radius-control: 4px;
@@ -99,7 +110,7 @@
   --color-sidebar-primary: var(--sidebar-primary);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar: var(--sidebar);
-  --font-heading: var(--font-geist);
+  --font-heading: var(--font-ui);
   --font-sans: "Inter Variable", "Inter Fallback", sans-serif;
   --color-chart-5: var(--chart-5);
   --color-chart-4: var(--chart-4);
@@ -146,10 +157,9 @@
 }
 
 body {
-  @apply font-geist;
   @apply m-0;
   font-family:
-    var(--font-geist),
+    var(--font-ui),
     -apple-system,
     BlinkMacSystemFont,
     "Segoe UI",
@@ -170,12 +180,18 @@ html {
   overscroll-behavior: none;
 }
 
+html[data-editor-theme] {
+  --font-ui: var(--font-home);
+}
+
 code {
   font-family:
     source-code-pro, Menlo, Monaco, Consolas, "Courier New", monospace;
 }
 
 :root {
+  /* The app chrome's face. The editor takes the homepage's (above). */
+  --font-ui: var(--font-geist);
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
@@ -463,7 +479,6 @@ html[data-editor-theme="dark"] {
 @utility animate-glow-breathe {
   transform-origin: bottom;
   animation: glow-breathe 4s cubic-bezier(0.37, 0, 0.63, 1) infinite alternate;
-  will-change: transform, opacity;
 
   @media (prefers-reduced-motion: reduce) {
     animation: none;
@@ -570,11 +585,18 @@ html[data-editor-theme="dark"] {
 
 @utility animate-cloud-drift {
   animation: cloud-drift var(--duration) linear var(--delay) infinite;
-  will-change: translate;
 
   @media (prefers-reduced-motion: reduce) {
     animation-play-state: paused;
   }
+}
+
+/* The clouds and the closing glow run on the compositor, so they cost little,
+   but nothing needs them off screen: HeroClouds and Closing mark their layer
+   data-paused while it is scrolled away. A running animation gets its own
+   layer anyway, so neither keeps one with will-change. */
+[data-paused] :is(.animate-cloud-drift, .animate-glow-breathe) {
+  animation-play-state: paused;
 }
 
 /* A strong ease-out for entrances: fast off the mark, long soft landing. */

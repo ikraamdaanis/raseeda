@@ -46,8 +46,10 @@ import {
   Wordmark
 } from "~/components/home/site-chrome";
 import { APP_NAME } from "~/consts/app";
+import { useOnScreen } from "~/hooks/use-on-screen";
 import { typeClass } from "~/lib/type-scale";
 import { cn } from "~/lib/utils";
+import { canUseStorage } from "~/utils/can-use-storage";
 import { canonicalLink, siteMeta, SOURCE_URL } from "~/utils/site-meta";
 import { HOME_STRUCTURED_DATA } from "~/utils/structured-data";
 
@@ -55,7 +57,9 @@ export const Route = createFileRoute("/")({
   component: HomePage,
   // The invoice in the hero's editor window preloads too, so it downloads
   // alongside the CSS rather than after it; the preload mirrors the AVIF branch
-  // of its <picture>, and a browser without AVIF skips it.
+  // of its <picture>, and a browser without AVIF skips it. It is the page's
+  // largest paint, so it asks for high priority: an image preload otherwise
+  // starts low and waits behind the fonts.
   head: () => ({
     meta: siteMeta({ path: "/" }),
     links: [
@@ -64,7 +68,8 @@ export const Route = createFileRoute("/")({
         rel: "preload",
         as: "image",
         type: "image/avif",
-        href: toAvif(PDF_RENDERS.hero.src)
+        href: toAvif(PDF_RENDERS.hero.src),
+        fetchPriority: "high"
       }
     ],
     // JSON-LD is data, never run. Escaping "<" keeps any text in it from
@@ -205,7 +210,7 @@ const FEATURES: {
   {
     title: "Your logo, your type",
     description:
-      "Upload your logo and set the whole invoice in any of ten fonts, at three sizes.",
+      "Upload your logo and set the whole invoice in any of eleven fonts, at three sizes.",
     demo: FontDemo,
     hues: [TILE_HUES.lavender, TILE_HUES.blush],
     isBleeding: true
@@ -335,30 +340,48 @@ const QUESTION_GROUPS: {
   }
 ];
 
-// What this browser holds: how many invoices it has saved, "blocked" when it
-// refuses storage, null until known (StorageBlockedNote reads it). The database module loads on demand, off
-// the page's first paint.
-function useSavedInvoices() {
-  const [saved, setSaved] = useState<number | "blocked" | null>(null);
+// Whether this browser refuses storage (StorageBlockedNote reads it). The
+// check waits until the page has loaded and gone idle, so it never competes
+// with the hero, and it loads nothing: see canUseStorage.
+function useIsStorageBlocked() {
+  const [isBlocked, setIsBlocked] = useState(false);
 
   useEffect(() => {
-    let cancelled = false;
+    let isCancelled = false;
+    let idleHandle: number | undefined;
 
-    import("~/db")
-      .then(database => database.countInvoices())
-      .then(count => {
-        if (!cancelled) setSaved(count);
-      })
-      .catch(() => {
-        if (!cancelled) setSaved("blocked");
+    function check() {
+      void canUseStorage().then(canUse => {
+        if (!isCancelled) setIsBlocked(!canUse);
       });
+    }
+
+    // Safari has no requestIdleCallback; a timeout after load is close enough.
+    function scheduleCheck() {
+      idleHandle =
+        typeof requestIdleCallback === "function"
+          ? requestIdleCallback(check, { timeout: 2000 })
+          : window.setTimeout(check, 200);
+    }
+
+    if (document.readyState === "complete") scheduleCheck();
+    else addEventListener("load", scheduleCheck, { once: true });
 
     return () => {
-      cancelled = true;
+      isCancelled = true;
+      removeEventListener("load", scheduleCheck);
+
+      if (idleHandle === undefined) return;
+
+      if (typeof cancelIdleCallback === "function") {
+        cancelIdleCallback(idleHandle);
+      } else {
+        window.clearTimeout(idleHandle);
+      }
     };
   }, []);
 
-  return saved;
+  return isBlocked;
 }
 
 function HomePage() {
@@ -420,18 +443,25 @@ function updateHeaderState() {
   root.toggleAttribute("data-header-pill", isPastHero);
 }
 
+// Tells HEADER_STATE_SCRIPT that useHeaderState has taken over.
+const HEADER_HANDOVER_EVENT = "home-header-handover";
+
 // The header only animates between states once `data-header-ready` is set,
 // two frames after the page has finished parsing: by then a reload's scroll
 // is restored, so the header paints in its final state with no transition or
 // pill entrance playing.
-const HEADER_STATE_SCRIPT = `(function(){var root=document.documentElement;function update(){var actions=document.getElementById(${JSON.stringify(HERO_ACTIONS_ID)});if(!actions)return;var past=actions.getBoundingClientRect().bottom<64;root.toggleAttribute("data-header-solid",past||scrollY>${HEADER_SOLID_SCROLL});root.toggleAttribute("data-header-pill",past)}function ready(){update();requestAnimationFrame(function(){requestAnimationFrame(function(){update();root.setAttribute("data-header-ready","")})})}update();addEventListener("scroll",update,{passive:true});addEventListener("resize",update);if(document.readyState==="loading")addEventListener("DOMContentLoaded",ready);else ready()})()`;
+const HEADER_STATE_SCRIPT = `(function(){var root=document.documentElement;function update(){var actions=document.getElementById(${JSON.stringify(HERO_ACTIONS_ID)});if(!actions)return;var past=actions.getBoundingClientRect().bottom<64;root.toggleAttribute("data-header-solid",past||scrollY>${HEADER_SOLID_SCROLL});root.toggleAttribute("data-header-pill",past)}function ready(){update();requestAnimationFrame(function(){requestAnimationFrame(function(){update();root.setAttribute("data-header-ready","")})})}update();addEventListener("scroll",update,{passive:true});addEventListener("resize",update);document.addEventListener(${JSON.stringify(HEADER_HANDOVER_EVENT)},function(){removeEventListener("scroll",update);removeEventListener("resize",update)},{once:true});if(document.readyState==="loading")addEventListener("DOMContentLoaded",ready);else ready()})()`;
 
-// The same tracking for a client-side visit, where the inline script doesn't
-// run, and the states cleared on the way out so no other page inherits them.
+// The same tracking once the page has hydrated, and on a client-side visit,
+// where the inline script doesn't run; the states are cleared on the way out
+// so no other page inherits them. On hydration it takes over from the inline
+// script, whose listeners stand down, so each scroll is measured once and
+// nothing is left listening after the homepage.
 function useHeaderState() {
   useEffect(() => {
     const root = document.documentElement;
 
+    document.dispatchEvent(new Event(HEADER_HANDOVER_EVENT));
     updateHeaderState();
     addEventListener("scroll", updateHeaderState, { passive: true });
     addEventListener("resize", updateHeaderState);
@@ -701,11 +731,16 @@ function Hero() {
 
 // The sky's drifting clouds, behind everything else in the hero. A cloud
 // waits off the left edge (left-0, pulled back its own width by the drift)
-// and the layer clips it until it crosses in.
+// and the layer clips it until it crosses in. They drift from the first paint
+// and hold still while the sky is scrolled away.
 function HeroClouds() {
+  const { ref, isOnScreen } = useOnScreen<HTMLDivElement>({ initial: true });
+
   return (
     <div
+      ref={ref}
       aria-hidden="true"
+      data-paused={isOnScreen ? undefined : ""}
       className="@container absolute inset-0 -z-10 overflow-hidden"
     >
       {HERO_CLOUDS.map((cloud, index) => (
@@ -744,15 +779,10 @@ function HeroClouds() {
  * desk alone: the window framed on the page and its margins, scaled to fit,
  * so the invoice itself, logo to totals, is what they see. The bezel and
  * window run off the sky's foot, where they are cut, so only their top
- * corners are rounded.
+ * corners are rounded. The window is drawn once, its bezel and crop set per
+ * breakpoint in CSS, so phones and larger screens share the same markup.
  */
 function HeroVisual() {
-  const editor = (
-    <EditorWindow documentName={HERO_INVOICE_NUMBER} {...HERO_WINDOW}>
-      <PdfPaper render={PDF_RENDERS.hero} />
-    </EditorWindow>
-  );
-
   return (
     <figure
       aria-label={`The ${APP_NAME} editor with a sample invoice`}
@@ -761,17 +791,12 @@ function HeroVisual() {
         "hero-fade mt-12 [animation-delay:240ms] sm:mt-16"
       )}
     >
-      <div className="rounded-t-2xl bg-white/45 p-1.5 pb-0 shadow-[0_24px_64px_-16px_rgb(16_60_90/0.25)] ring-1 ring-white/70 sm:hidden">
-        <div className="overflow-hidden rounded-t-[0.625rem]">
-          <ScaledFrame {...HERO_PHONE_FRAME} fill>
-            {editor}
-          </ScaledFrame>
-        </div>
-      </div>
-      <div className="w-max rounded-t-(--bezel-radius) bg-white/45 p-(--pad) pb-0 shadow-[0_24px_64px_-16px_rgb(16_60_90/0.25)] ring-1 ring-white/70 [--bezel-radius:--spacing(5)] [--pad:--spacing(2)] max-lg:rounded-tr-none max-lg:pr-0 max-sm:hidden lg:w-full">
-        <div className="w-[calc(1440px*var(--zoom))] overflow-hidden rounded-t-[calc(var(--bezel-radius)-var(--pad))] [--zoom:0.65] max-lg:rounded-tr-none md:[--zoom:0.75] lg:w-auto">
-          <ScaledFrame {...HERO_FRAME} fill>
-            {editor}
+      <div className="rounded-t-2xl bg-white/45 p-1.5 pb-0 shadow-[0_24px_64px_-16px_rgb(16_60_90/0.25)] ring-1 ring-white/70 [--bezel-radius:--spacing(5)] [--pad:--spacing(2)] sm:w-max sm:rounded-t-(--bezel-radius) sm:p-(--pad) sm:pb-0 sm:max-lg:rounded-tr-none sm:max-lg:pr-0 lg:w-full">
+        <div className="overflow-hidden rounded-t-[0.625rem] [--zoom:0.65] sm:w-[calc(1440px*var(--zoom))] sm:rounded-t-[calc(var(--bezel-radius)-var(--pad))] sm:max-lg:rounded-tr-none md:[--zoom:0.75] lg:w-auto">
+          <ScaledFrame fill className={HERO_FRAME}>
+            <EditorWindow documentName={HERO_INVOICE_NUMBER} {...HERO_WINDOW}>
+              <PdfPaper render={PDF_RENDERS.hero} />
+            </EditorWindow>
           </ScaledFrame>
         </div>
       </div>
@@ -784,14 +809,13 @@ function HeroVisual() {
 // shows so the sky's foot always cuts it.
 const HERO_WINDOW = { width: 1440, height: 1100 };
 
-// The part of the window the hero shows: its full width, down to the
-// invoice's totals.
-const HERO_FRAME = { width: 1440, height: 860 };
-
-// The phones' part of the window: the desk from just left of the page (which
-// starts 307px in, past the invoices panel and the desk's margin) to just
-// right of it, cut a little below the payment terms.
-const HERO_PHONE_FRAME = { width: 834, height: 990, x: 287 };
+// The part of the window the hero shows. Phones get the desk from just left
+// of the page (which starts 307px in, past the invoices panel and the desk's
+// margin) to just right of it, cut a little below the payment terms: 834 x
+// 990 from x 287. From `sm`, the window's full width down to the invoice's
+// totals: 1440 x 860.
+const HERO_FRAME =
+  "[--frame-height:990] [--frame-width:834] [--frame-x:287] sm:[--frame-height:860] sm:[--frame-width:1440] sm:[--frame-x:0]";
 
 /**
  * A real PDF in the editor canvas's place: a screenshot of the top of
@@ -824,9 +848,9 @@ function PdfPaper({ render }: { render: typeof PDF_RENDERS.hero }) {
 // A browser that refuses storage gets told what that means and how to fix it,
 // right under the hero's buttons, before anyone starts an invoice.
 function StorageBlockedNote() {
-  const saved = useSavedInvoices();
+  const isBlocked = useIsStorageBlocked();
 
-  if (saved !== "blocked") return null;
+  if (!isBlocked) return null;
 
   return (
     <p
@@ -1185,7 +1209,7 @@ const PROOFS: {
       { label: "Copy on a server", status: "None", isRefused: true }
     ],
     path: "db/index.ts",
-    firstLine: 177,
+    firstLine: 178,
     lines: [
       "class InvoiceDatabase extends Dexie {",
       "  templates!: Table<InvoiceTemplate, string>;",
@@ -1193,7 +1217,7 @@ const PROOFS: {
       "  images!: Table<StoredImage, string>;",
       "  drafts!: Table<InvoiceDraft, string>;"
     ],
-    highlight: 177,
+    highlight: 178,
     hues: [TILE_HUES.lavender, TILE_HUES.sky]
   },
   {
@@ -1446,11 +1470,18 @@ function Questions() {
 // The last word before the footer: a panel in the hero's sky colour, inset
 // and rounded like the hero from `lg` and edge to edge below it, with a glow
 // rising from its foot under a grid of dots. The glow breathes slowly in and
-// out (animate-glow-breathe); the dots hold still.
+// out (animate-glow-breathe) while the panel is on screen; the dots hold
+// still.
 function Closing() {
+  const { ref, isOnScreen } = useOnScreen<HTMLDivElement>({ initial: true });
+
   return (
     <section className="pt-16 sm:pt-24 lg:px-3">
-      <div className="bg-glow relative isolate overflow-hidden lg:rounded-[2rem]">
+      <div
+        ref={ref}
+        data-paused={isOnScreen ? undefined : ""}
+        className="bg-glow relative isolate overflow-hidden lg:rounded-[2rem]"
+      >
         <div
           aria-hidden="true"
           className="bg-glow-dome animate-glow-breathe absolute inset-0 -z-10"

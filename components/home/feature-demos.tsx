@@ -9,11 +9,15 @@ import {
   IconSearch
 } from "@tabler/icons-react";
 import type { ComponentType, CSSProperties, ReactNode } from "react";
-import { useEffect, useRef, useState } from "react";
 import { ScaledFrame } from "~/components/home/editor-preview";
 import { buttonVariants } from "~/components/ui/button";
 import { formatCurrencyWithCode } from "~/consts/currencies";
+import {
+  FONT_DEMO_WORD,
+  getHomePreviewFontClass
+} from "~/consts/home-preview-fonts";
 import { INVOICE_FONTS } from "~/consts/invoice-fonts";
+import { useOnScreen } from "~/hooks/use-on-screen";
 import { cn } from "~/lib/utils";
 
 // The homepage cards' demos: each tile plays a short loop of the editor doing
@@ -48,23 +52,9 @@ export function DemoTile({
   isBleeding?: boolean;
   className?: string;
 }) {
-  const tileRef = useRef<HTMLDivElement>(null);
-  const [isPlaying, setIsPlaying] = useState(false);
-
-  useEffect(() => {
-    const tile = tileRef.current;
-
-    if (!tile) return;
-
-    const observer = new IntersectionObserver(
-      entries => setIsPlaying(entries.some(entry => entry.isIntersecting)),
-      { threshold: 0.33 }
-    );
-
-    observer.observe(tile);
-
-    return () => observer.disconnect();
-  }, []);
+  const { ref: tileRef, isOnScreen: isPlaying } = useOnScreen<HTMLDivElement>({
+    threshold: 0.33
+  });
 
   return (
     <div
@@ -86,12 +76,12 @@ export function DemoTile({
       <span className="demo-anim demo-drift-a absolute -top-1/3 -left-1/4 -z-10 aspect-square w-[85%] rounded-full bg-[radial-gradient(closest-side,oklch(0.94_0.035_var(--tile-hue-a)),transparent)]" />
       <span className="demo-anim demo-drift-b absolute -right-1/4 -bottom-1/3 -z-10 aspect-square w-[80%] rounded-full bg-[radial-gradient(closest-side,oklch(0.95_0.03_var(--tile-hue-b)),transparent)]" />
       {phoneSize && (
-        <ScaledFrame {...phoneSize} fill={isBleeding} className="sm:hidden">
+        <ScaledFrame frame={phoneSize} fill={isBleeding} className="sm:hidden">
           <Scene {...phoneSize} />
         </ScaledFrame>
       )}
       <ScaledFrame
-        {...size}
+        frame={size}
         fill={isBleeding}
         className={cn(phoneSize && "max-sm:hidden")}
       >
@@ -121,8 +111,11 @@ export const FEATURE_PHONE_SCENE = { width: 360, height: 300 };
 
 const COMPACT_WIDTH = 400;
 
+// Scenes are set in Schibsted Grotesk (font-home), which is both the
+// invoice's default face, for their bits of the page, and the face of the
+// editor's own panels and menus in them.
 const SCENE =
-  "font-geist text-foreground relative flex items-center justify-center [font-feature-settings:normal] antialiased";
+  "font-home text-foreground relative flex items-center justify-center [font-feature-settings:normal] antialiased";
 
 // White paper or panel lifted off the tile.
 const LIFTED =
@@ -223,7 +216,7 @@ export function DownloadDemo({
       <div
         className={cn(
           LIFTED,
-          "bg-background absolute inset-x-0 top-0 flex h-12 items-center justify-end gap-1 rounded-t-lg px-3"
+          "bg-background font-home absolute inset-x-0 top-0 flex h-12 items-center justify-end gap-1 rounded-t-lg px-3"
         )}
       >
         <span className="text-muted-foreground flex size-7 items-center justify-center">
@@ -241,7 +234,7 @@ export function DownloadDemo({
           Download
         </span>
       </div>
-      <div className="demo-anim demo-popover bg-popover ring-foreground/10 shadow-menu rounded-surface absolute top-14 right-3 flex w-72 flex-col gap-3 p-3 text-sm ring-1">
+      <div className="demo-anim demo-popover bg-popover font-home ring-foreground/10 shadow-menu rounded-surface absolute top-14 right-3 flex w-72 flex-col gap-3 p-3 text-sm ring-1">
         <div className="flex items-center gap-2.5">
           <span className="bg-muted text-muted-foreground flex size-9 shrink-0 items-center justify-center rounded-md">
             <IconFileTypePdf className="size-5" />
@@ -338,7 +331,7 @@ export function SavedDemo({
       <div
         className={cn(
           LIFTED,
-          "bg-background flex h-64 w-72 flex-col overflow-hidden rounded-lg [--row:--spacing(11)]"
+          "bg-background font-home flex h-64 w-72 flex-col overflow-hidden rounded-lg [--row:--spacing(11)]"
         )}
       >
         <div className="flex shrink-0 flex-col gap-2 px-3 pt-2.5 pb-2">
@@ -431,10 +424,10 @@ export function FontDemo({ width, height }: { width: number; height: number }) {
                   <span
                     className={cn(
                       "text-3xl leading-none",
-                      font.previewClassName
+                      getHomePreviewFontClass(font)
                     )}
                   >
-                    Invoice
+                    {FONT_DEMO_WORD}
                   </span>
                   <span className="text-paper-muted-foreground text-xs">
                     {font.name}
@@ -474,7 +467,7 @@ export function CurrencyDemo({
       <div
         className={cn(
           LIFTED,
-          "bg-background flex w-full flex-col gap-3 rounded-lg p-4"
+          "bg-background font-home flex w-full flex-col gap-3 rounded-lg p-4"
         )}
       >
         <span className="grid grid-cols-[6rem_minmax(0,1fr)] items-center gap-2">
@@ -566,7 +559,7 @@ export function TotalsDemo({
       <div
         className={cn(
           LIFTED,
-          "bg-background flex shrink-0 flex-col gap-0.5 rounded-lg py-3",
+          "bg-background font-home flex shrink-0 flex-col gap-0.5 rounded-lg py-3",
           isCompact ? "w-36 px-3" : "w-48 px-4"
         )}
       >

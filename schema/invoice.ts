@@ -12,6 +12,7 @@ import "~/lib/configure-zod";
 export const CURRENT_INVOICE_SCHEMA_VERSION = 2;
 
 const INVOICE_FONTS = [
+  "schibsted-grotesk",
   "geist",
   "inter",
   "bricolage-grotesque",
@@ -27,11 +28,20 @@ const INVOICE_FONTS = [
 const FONT_WEIGHTS = ["Normal", "Medium", "Semibold", "Bold"] as const;
 const INVOICE_SIZES = ["small", "medium", "large"] as const;
 
+// A new invoice starts in Schibsted Grotesk, the app's own face.
 export const DEFAULT_INVOICE_THEME = {
-  font: "geist",
+  font: "schibsted-grotesk",
   fontWeight: "Normal",
   size: "medium",
   accent: "#1a1a1a"
+} as const;
+
+// A stored invoice with no usable theme was drawn in Geist, the default
+// before Schibsted Grotesk, so repairing it keeps Geist rather than
+// restyling saved work.
+export const STORED_INVOICE_THEME_FALLBACK = {
+  ...DEFAULT_INVOICE_THEME,
+  font: "geist"
 } as const;
 
 const DEFAULT_LABELS = {
@@ -187,19 +197,21 @@ const invoiceItemSchema = z.object({
 
 const invoiceThemeSchema = z
   .object({
-    font: z.enum(INVOICE_FONTS).catch(DEFAULT_INVOICE_THEME.font),
-    fontWeight: z.enum(FONT_WEIGHTS).catch(DEFAULT_INVOICE_THEME.fontWeight),
-    size: z.enum(INVOICE_SIZES).catch(DEFAULT_INVOICE_THEME.size),
-    accent: z.string().catch(DEFAULT_INVOICE_THEME.accent)
+    font: z.enum(INVOICE_FONTS).catch(STORED_INVOICE_THEME_FALLBACK.font),
+    fontWeight: z
+      .enum(FONT_WEIGHTS)
+      .catch(STORED_INVOICE_THEME_FALLBACK.fontWeight),
+    size: z.enum(INVOICE_SIZES).catch(STORED_INVOICE_THEME_FALLBACK.size),
+    accent: z.string().catch(STORED_INVOICE_THEME_FALLBACK.accent)
   })
   // A stored weight may not be offered by the chosen font; fall back if so.
   .transform(theme => ({
     ...theme,
     fontWeight: getAvailableFontWeights(theme.font).includes(theme.fontWeight)
       ? theme.fontWeight
-      : DEFAULT_INVOICE_THEME.fontWeight
+      : STORED_INVOICE_THEME_FALLBACK.fontWeight
   }))
-  .catch(DEFAULT_INVOICE_THEME);
+  .catch(STORED_INVOICE_THEME_FALLBACK);
 
 const tableSettingsSchema = z
   .object({

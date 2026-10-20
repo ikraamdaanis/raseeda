@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { FOCUS_RING, GithubMark } from "~/components/home/site-chrome";
 import { APP_NAME } from "~/consts/app";
+import { useOnScreen } from "~/hooks/use-on-screen";
 import { cn } from "~/lib/utils";
 import { SOURCE_URL } from "~/utils/site-meta";
 
@@ -190,29 +191,6 @@ function keystrokeDelay(index: number, length: number) {
   return length > 20 ? 25 + ((index * 37) % 30) : 55 + ((index * 37) % 45);
 }
 
-// Whether an element is at least partly on screen.
-function useOnScreen<TElement extends Element>() {
-  const ref = useRef<TElement>(null);
-  const [isOnScreen, setIsOnScreen] = useState(false);
-
-  useEffect(() => {
-    const element = ref.current;
-
-    if (!element) return;
-
-    const observer = new IntersectionObserver(
-      entries => setIsOnScreen(entries.some(entry => entry.isIntersecting)),
-      { threshold: 0.25 }
-    );
-
-    observer.observe(element);
-
-    return () => observer.disconnect();
-  }, []);
-
-  return { ref, isOnScreen };
-}
-
 /**
  * Plays SESSION while `isPlaying`: how many steps are done and how much of
  * the current command is typed. Pausing keeps its place. With reduced motion it shows the dev server running and stays.
@@ -333,7 +311,11 @@ function Terminal({ isPlaying }: { isPlaying: boolean }) {
         A terminal cloning the repository, then running bun install and bun run
         dev, which serves {APP_NAME} at http://localhost:3000/
       </figcaption>
-      <div className="demo-anim terminal-edge rounded-[calc(var(--radius-xl)+1px)] p-px">
+      <div className="relative isolate overflow-hidden rounded-[calc(var(--radius-xl)+1px)] bg-white/8 p-px">
+        <span
+          aria-hidden="true"
+          className="demo-anim terminal-edge absolute top-1/2 left-1/2 -z-10 aspect-square w-[160%] -translate-1/2"
+        />
         <div
           aria-hidden="true"
           className="flex flex-col overflow-hidden rounded-xl bg-[#0c0e10]/95"
@@ -369,7 +351,9 @@ const LIGHTS = [
 ];
 
 export function RunYourOwnCopy() {
-  const { ref, isOnScreen } = useOnScreen<HTMLDivElement>();
+  const { ref, isOnScreen } = useOnScreen<HTMLDivElement>({
+    threshold: 0.25
+  });
 
   return (
     <div

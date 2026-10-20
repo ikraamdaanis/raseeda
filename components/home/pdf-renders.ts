@@ -12,9 +12,10 @@ export const HERO_INVOICE_NUMBER = "INV-0043";
 export const PDF_RENDERS = {
   // The whole page: the desktop hero shows its top, the phone crop runs further
   // down on narrow screens. It displays no wider than the page's CSS width, so
-  // it ships at about twice that rather than the full render scale.
+  // it ships at about twice that rather than the full render scale. Its name
+  // changes with each new render (public/_headers caches it for a month).
   hero: {
-    src: "/home/invoice-hero.webp",
+    src: "/home/invoice-hero-2.webp",
     alt: `A ${APP_NAME} invoice from Marlow Studio in Brooklyn to Fernhill Press in Portland, listing editorial illustrations and cover artwork`,
     crop: { x: 0, y: 0, width: 793.7, height: 1122.5 },
     width: 1600

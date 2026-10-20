@@ -1,11 +1,43 @@
-/* The two interface fonts: Inter sets the homepage, Geist the editor and the
-   rest of the app. Copied from Fontsource (@fontsource-variable/inter/opsz.css
-   and @fontsource-variable/geist) with font-display: optional in place of
-   swap. Both latin files are preloaded, so on almost every first visit they
-   arrive before the first paint; when one doesn't, the page keeps the fallback
-   until the next load instead of re-setting its text mid-read. The fallbacks
-   are Arial resized to each font's width and line metrics, so whichever face
-   draws, the layout doesn't move. */
+/* The interface fonts. Schibsted Grotesk sets the homepage and the editor's
+   chrome, Geist the invoice and the rest of the app, and Inter, one of the
+   invoice fonts, is the default sans. Copied from Fontsource
+   (@fontsource-variable/schibsted-grotesk, @fontsource-variable/inter/opsz.css
+   and @fontsource-variable/geist). The Schibsted and Geist latin files are
+   preloaded (app/routes/__root.tsx), so on almost every first visit they
+   arrive before the first paint. Inter and Geist use font-display: optional:
+   when one is late, the page keeps the fallback until the next load instead
+   of re-setting its text mid-read. Schibsted swaps instead, because it is the
+   homepage's voice and a first visit should never read in Arial throughout.
+   The fallbacks are Arial resized to each font's width and line metrics, so
+   whichever face draws, the layout barely moves. */
+
+/* schibsted-grotesk-latin-ext-wght-normal */
+@font-face {
+  font-family: "Schibsted Grotesk Variable";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400 900;
+  src: url("@fontsource-variable/schibsted-grotesk/files/schibsted-grotesk-latin-ext-wght-normal.woff2")
+    format("woff2-variations");
+  unicode-range:
+    U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304,
+    U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB,
+    U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+/* schibsted-grotesk-latin-wght-normal */
+@font-face {
+  font-family: "Schibsted Grotesk Variable";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400 900;
+  src: url("@fontsource-variable/schibsted-grotesk/files/schibsted-grotesk-latin-wght-normal.woff2")
+    format("woff2-variations");
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC,
+    U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212,
+    U+2215, U+FEFF, U+FFFD;
+}
 
 /* inter-cyrillic-ext-opsz-normal */
 @font-face {
@@ -174,5 +206,14 @@
   size-adjust: 101.88%;
   ascent-override: 98.64%;
   descent-override: 28.96%;
+  line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: "Schibsted Grotesk Fallback";
+  src: local("Arial");
+  size-adjust: 104.81%;
+  ascent-override: 93.18%;
+  descent-override: 24.6%;
   line-gap-override: 0%;
 }

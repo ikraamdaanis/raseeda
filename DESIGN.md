@@ -872,7 +872,8 @@ loop of the editor doing that job: a `tileWash` of its first hue with two soft
 blobs of its pair drifting across it, `rounded-2xl`, a `zinc-950/5` ring, and
 16px padding (24px from `sm`) unless the scene bleeds to the edges. Scenes use
 the editor's own fields, switches, inspector rows and popovers on Lifted
-white panels, in Geist at the editor's sizes, and narrower phone layouts keep
+white panels, in Schibsted Grotesk (the invoice's default face) at the
+editor's sizes, and narrower phone layouts keep
 their text readable. Steps are 4:3, three across from `lg`; on tablets each
 step is a row, its tile beside its words, so the demo stays big enough to
 read. Features are 16:10 from `sm`, two across from `lg` and stacked below it,
@@ -986,7 +987,7 @@ inside the demos. Only transforms, opacity and filter animate.
   action, with a soft pill beside it for the secondary one.
 - **Do** size homepage text with a type role through `typeClass()`.
 - **Do** show the product on the homepage with the editor's own pieces under
-  `data-editor-chrome`, in Geist at the editor's sizes, or with real PDF
+  `data-editor-chrome`, in Schibsted Grotesk at the editor's sizes, or with real PDF
   renders.
 - **Do** give each homepage tile its own pair of `TILE_HUES` so neighbours
   never match.

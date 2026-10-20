@@ -14,8 +14,12 @@ import {
   IconSearch
 } from "@tabler/icons-react";
 import type { CSSProperties, ReactNode } from "react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { buttonVariants } from "~/components/ui/button";
+import {
+  FONT_SWATCH_TEXT,
+  getHomePreviewFontClass
+} from "~/consts/home-preview-fonts";
 import { FONT_WEIGHT_OPTIONS, INVOICE_FONTS } from "~/consts/invoice-fonts";
 import { cn } from "~/lib/utils";
 import type { InvoiceFont, InvoiceTheme, TextRole } from "~/types";
@@ -50,46 +54,45 @@ function roleStyle(
 /**
  * Shows a `width` x `height` window onto native-size content, scaled to the
  * width of its container (never above 1:1 unless `fill` is set), with `x` and
- * `y` picking the region. The first paint scales in pure CSS, where
- * tan(atan2(a, b)) turns the ratio of two lengths into a number. Once hydrated
- * the frame measures itself instead: iOS Safari resolves that 100cqw before a
- * flex item grows and never updates it, which left grown frames drawn tiny.
+ * `y` picking the region. Without a `frame`, the region comes from
+ * `--frame-width`, `--frame-height`, `--frame-x` and `--frame-y` (unitless CSS
+ * pixels) set in `className`, so one frame can show a different region at
+ * each breakpoint. The first paint scales in pure CSS, where
+ * tan(atan2(a, b)) turns the ratio of two lengths into a number. Once
+ * hydrated the frame measures itself into `--measured-width` instead: iOS
+ * Safari resolves that 100cqw before a flex item grows and never updates it,
+ * which left grown frames drawn tiny.
  */
 export function ScaledFrame({
-  width,
-  height,
-  x = 0,
-  y = 0,
+  frame,
   fill = false,
   className,
   children
 }: {
-  width: number;
-  height: number;
-  x?: number;
-  y?: number;
+  frame?: { width: number; height: number; x?: number; y?: number };
   fill?: boolean;
   className?: string;
   children: ReactNode;
 }) {
   const frameRef = useRef<HTMLDivElement>(null);
-  const [measuredScale, setMeasuredScale] = useState<number | null>(null);
 
   useEffect(() => {
-    const frame = frameRef.current;
+    const element = frameRef.current;
 
-    if (!frame) return;
+    if (!element) return;
 
     const observer = new ResizeObserver(entries => {
       const frameWidth = entries[0]?.contentRect.width;
 
-      if (frameWidth) setMeasuredScale(frameWidth / width);
+      if (frameWidth) {
+        element.style.setProperty("--measured-width", `${frameWidth}px`);
+      }
     });
 
-    observer.observe(frame);
+    observer.observe(element);
 
     return () => observer.disconnect();
-  }, [width]);
+  }, []);
 
   return (
     <div
@@ -97,20 +100,33 @@ export function ScaledFrame({
       aria-hidden="true"
       inert
       className={cn("@container relative w-full overflow-hidden", className)}
-      style={{
-        maxWidth: fill ? undefined : width,
-        aspectRatio: `${width} / ${height}`
-      }}
+      style={
+        {
+          "--frame-width": frame?.width,
+          "--frame-height": frame?.height,
+          "--frame-x": frame?.x,
+          "--frame-y": frame?.y,
+          maxWidth: fill ? undefined : "calc(var(--frame-width) * 1px)",
+          aspectRatio: "var(--frame-width) / var(--frame-height)"
+        } as CSSProperties
+      }
     >
       <div
         className="absolute top-0 left-0 origin-top-left"
         style={{
-          width,
-          height,
-          scale: measuredScale ?? `tan(atan2(100cqw, ${width}px))`
+          width: "calc(var(--frame-width) * 1px)",
+          height: "calc(var(--frame-height) * 1px)",
+          scale:
+            "tan(atan2(var(--measured-width, 100cqw), calc(var(--frame-width) * 1px)))"
         }}
       >
-        <div className="absolute" style={{ left: -x, top: -y }}>
+        <div
+          className="absolute"
+          style={{
+            left: "calc(var(--frame-x, 0) * -1px)",
+            top: "calc(var(--frame-y, 0) * -1px)"
+          }}
+        >
           {children}
         </div>
       </div>
@@ -138,7 +154,7 @@ export function EditorWindow({
   return (
     <div
       data-editor-chrome
-      className="bg-background text-foreground font-geist relative flex flex-col [font-feature-settings:normal] antialiased"
+      className="bg-background text-foreground font-home relative flex flex-col [font-feature-settings:normal] antialiased"
       style={{ width, height }}
     >
       <EditorTopBar documentName={documentName} />
@@ -306,8 +322,8 @@ function InvoicesPanelReplica() {
   );
 }
 
-// Mirrors components/editor/shell/inspector/*, set to the hero invoice: Geist
-// at Regular and Medium, US dollars, issued 5 Oct 2026 on Net 30.
+// Mirrors components/editor/shell/inspector/*, set to the hero invoice:
+// Schibsted Grotesk, the default, at Regular and Medium, US dollars, issued 5 Oct 2026 on Net 30.
 function InspectorReplica() {
   return (
     <div className="min-h-0 flex-1 overflow-hidden">
@@ -320,16 +336,17 @@ function InspectorReplica() {
                 key={font.id}
                 className={cn(
                   "bg-muted flex min-w-0 flex-col items-start gap-0.5 rounded-lg border border-transparent px-2.5 py-2",
-                  font.id === "geist" && "border-foreground bg-popover"
+                  font.id === "schibsted-grotesk" &&
+                    "border-foreground bg-popover"
                 )}
               >
                 <span
                   className={cn(
                     "text-foreground text-xl leading-tight",
-                    font.previewClassName
+                    getHomePreviewFontClass(font)
                   )}
                 >
-                  Aa
+                  {FONT_SWATCH_TEXT}
                 </span>
                 <span className="text-muted-foreground w-full truncate text-[11.5px]">
                   {font.name}

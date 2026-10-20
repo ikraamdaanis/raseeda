@@ -32,6 +32,16 @@ const STANDARD_WEIGHTS: FontWeight[] = ["Normal", "Medium", "Semibold", "Bold"];
 
 export const INVOICE_FONTS: InvoiceFontDefinition[] = [
   {
+    id: "schibsted-grotesk",
+    name: "Schibsted Grotesk",
+    category: "sans-serif",
+    cssFamily:
+      '"Schibsted Grotesk Variable", "Schibsted Grotesk Fallback", sans-serif',
+    pdfFamily: "Invoice Schibsted Grotesk",
+    previewClassName: "font-schibsted-grotesk",
+    weights: STANDARD_WEIGHTS
+  },
+  {
     id: "geist",
     name: "Geist",
     category: "sans-serif",

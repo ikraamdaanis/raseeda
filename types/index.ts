@@ -47,6 +47,7 @@ export type InvoiceLabels = {
 };
 
 export type InvoiceFont =
+  | "schibsted-grotesk"
   | "geist"
   | "inter"
   | "bricolage-grotesque"
