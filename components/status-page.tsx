@@ -22,7 +22,7 @@ export function StatusPage({
   children
 }: {
   eyebrow: string;
-  title: ReactNode;
+  title: string;
   description: ReactNode;
   actions: ReactNode;
   children?: ReactNode;

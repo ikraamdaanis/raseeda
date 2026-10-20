@@ -21,12 +21,7 @@ export function RootErrorBoundary({ error, reset }: ErrorComponentProps) {
   return (
     <StatusPage
       eyebrow="Something went wrong"
-      title={
-        <>
-          <span className="block">The page hit</span>
-          <span className="block">a problem.</span>
-        </>
-      }
+      title="The page hit a problem."
       description="Your invoices and templates are saved in this browser, on this device, and are safe. Try again, or reload the page."
       actions={
         <>

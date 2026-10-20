@@ -6,12 +6,7 @@ export function NotFound() {
   return (
     <StatusPage
       eyebrow="404"
-      title={
-        <>
-          <span className="block">This page</span>
-          <span className="block">isn’t here.</span>
-        </>
-      }
+      title="This page isn’t here."
       description="The link may be old or mistyped. Your invoices are still saved in this browser, on this device."
       actions={
         <>
