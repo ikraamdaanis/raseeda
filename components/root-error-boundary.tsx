@@ -37,10 +37,10 @@ export function RootErrorBoundary({ error, reset }: ErrorComponentProps) {
         </>
       }
     >
-      <details className="group w-full max-w-md">
+      <details className="group">
         <summary
           className={cn(
-            "hover:text-ink mx-auto flex w-max cursor-pointer list-none items-center gap-1 rounded-sm text-zinc-800 [&::-webkit-details-marker]:hidden",
+            "hover:text-ink flex w-max cursor-pointer list-none items-center gap-1 rounded-sm text-zinc-800 sm:mx-auto [&::-webkit-details-marker]:hidden",
             typeClass("caption"),
             FOCUS_RING
           )}

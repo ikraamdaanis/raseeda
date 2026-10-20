@@ -1,29 +1,34 @@
-import type { CSSProperties, ReactNode } from "react";
+import { ScriptOnce } from "@tanstack/react-router";
+import type { ReactNode } from "react";
+import { HeroSky } from "~/components/home/hero-sky";
+import { CONTAINER, SiteFooter } from "~/components/home/site-chrome";
 import {
-  CONTAINER,
-  PageHeader,
-  SiteFooter
-} from "~/components/home/site-chrome";
+  HEADER_STATE_SCRIPT,
+  HERO_ACTIONS_ID,
+  SiteHeader,
+  SkipLink,
+  useHeaderState
+} from "~/components/home/site-header";
 import { typeClass } from "~/lib/type-scale";
 import { cn } from "~/lib/utils";
 
-// Each page's colour: the panel's glow turned to an oklch hue (the sky
-// utilities read --sky-hue), and the small label above the heading in a
-// matching shade. Amber warns that a page is missing; red says something
-// broke.
+// Each page's colour: the hero's sky turned to another oklch hue, and the
+// small label above the heading in a matching shade. Amber warns that a page
+// is missing; red says something broke.
 const TONES = {
   warning: { hue: 70, eyebrow: "text-amber-800" },
-  error: { hue: 25, eyebrow: "text-red-700" }
+  error: { hue: 25, eyebrow: "text-red-800" }
 };
 
 /**
- * The frame the not-found and error pages share, in the site's own dress:
- * the header and footer of the privacy page around a panel like the
- * homepage's closing one, the hero's sky gone pale with a glow rising from
- * its foot under a grid of dots. The glow holds still here; nothing on a
- * page that reports a problem should move. `isNoIndex` asks search engines
- * not to index the page (React moves the tag into the head): an error can
- * show in place of a real page's content, under that page's address.
+ * The frame the not-found and error pages share: the homepage's own header,
+ * behaving exactly as it does there, over the homepage's hero sky in the
+ * page's tone, filling the screen, with the copy and buttons set like the
+ * hero's. On phones the copy sits on the left and the sky runs edge to edge;
+ * from `sm` the copy is centred, and from `lg` the sky is inset and rounded.
+ * `isNoIndex` asks search engines not to index the page (React moves the tag
+ * into the head): an error can show in place of a real page's content, under
+ * that page's address.
  */
 export function StatusPage({
   tone,
@@ -42,33 +47,28 @@ export function StatusPage({
   actions: ReactNode;
   children?: ReactNode;
 }) {
+  useHeaderState();
+
   return (
-    <div className="home-type selection:bg-brand-100 bg-canvas text-ink font-home isolate flex min-h-svh flex-col antialiased">
+    <div className="home-type selection:bg-brand-100 bg-canvas text-ink font-home isolate min-h-svh antialiased">
       {isNoIndex && <meta name="robots" content="noindex" />}
-      <PageHeader />
-      <main className="flex flex-1 flex-col lg:px-3">
-        <section
-          className="bg-glow relative isolate flex flex-1 items-center overflow-hidden lg:rounded-[2rem]"
-          style={{ "--sky-hue": TONES[tone].hue } as CSSProperties}
+      <SkipLink />
+      <SiteHeader sectionPath="/" />
+      <main id="main" className="overflow-x-clip">
+        <HeroSky
+          hue={TONES[tone].hue}
+          className="flex min-h-svh flex-col justify-center lg:min-h-[calc(100svh-1.5rem)]"
         >
-          <div
-            aria-hidden="true"
-            className="bg-glow-dome absolute inset-0 -z-10"
-          />
-          <div
-            aria-hidden="true"
-            className="bg-dot-grid absolute inset-0 -z-10 mask-[radial-gradient(70%_90%_at_50%_100%,black,transparent_75%)]"
-          />
           <div
             className={cn(
               CONTAINER,
-              "flex w-full flex-col items-center gap-8 py-24 text-center sm:py-32"
+              "flex w-full flex-col items-start gap-8 pt-14 pb-24 sm:items-center sm:pt-20 sm:pb-32 sm:text-center"
             )}
           >
-            <div className="flex flex-col items-center gap-4">
+            <div className="flex flex-col items-start gap-5 sm:items-center">
               <p
                 className={cn(
-                  "font-medium",
+                  "hero-focus font-medium",
                   TONES[tone].eyebrow,
                   typeClass("body", "compact")
                 )}
@@ -77,27 +77,30 @@ export function StatusPage({
               </p>
               <h1
                 className={cn(
-                  "font-medium tracking-[-0.035em] text-balance",
+                  "hero-focus font-medium tracking-[-0.035em] text-balance [animation-delay:60ms]",
                   typeClass("display")
                 )}
               >
                 {title}
               </h1>
-              <p
-                className={cn(
-                  "max-w-[48ch] text-balance text-zinc-600",
-                  typeClass("body")
-                )}
-              >
+              <p className="hero-focus text-ink/75 max-w-[48ch] text-lg/7 text-pretty [animation-delay:120ms]">
                 {description}
               </p>
             </div>
-            <div className="flex flex-wrap items-center justify-center gap-3">
+            <div
+              id={HERO_ACTIONS_ID}
+              className="hero-focus flex flex-wrap items-center gap-3 [animation-delay:180ms] sm:justify-center"
+            >
               {actions}
             </div>
-            {children}
+            {children && (
+              <div className="hero-fade w-full max-w-md [animation-delay:240ms]">
+                {children}
+              </div>
+            )}
           </div>
-        </section>
+        </HeroSky>
+        <ScriptOnce>{HEADER_STATE_SCRIPT}</ScriptOnce>
       </main>
       <SiteFooter />
     </div>
