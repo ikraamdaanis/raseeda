@@ -738,29 +738,36 @@
   }
 }
 
-/* Payment details: the rows rise into place one after another (--i, 120ms
-   apart) and leave in the same order, close enough together that the card is
-   never left empty for more than a moment. */
+/* Payment details: the card rests filled in, so its first frame (and the
+   tile before it starts playing) shows the whole block. Late in each loop the
+   rows refresh in a wave, one after another (--i, 120ms apart): each lifts
+   out and rises back into place before the last has left, so the card is
+   never empty. */
 .demo-rise {
   animation-name: demo-rise;
   animation-delay: calc(var(--i) * 120ms);
 }
 
 @keyframes demo-rise {
-  0% {
-    opacity: 0;
-    translate: 0 6px;
-  }
-
-  6%,
-  88% {
+  0%,
+  66% {
     opacity: 1;
     translate: 0 0;
   }
 
-  94%,
-  100% {
+  72% {
     opacity: 0;
+    translate: 0 -4px;
+  }
+
+  73% {
+    opacity: 0;
+    translate: 0 6px;
+  }
+
+  80%,
+  100% {
+    opacity: 1;
     translate: 0 0;
   }
 }
