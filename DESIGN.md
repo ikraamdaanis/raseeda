@@ -497,8 +497,9 @@ Homepage (roles from `lib/type-scale.ts`, set at marketing values by
   tabular) and comparison row labels.
 - **Code** (`code`): file lines in the code tiles at 12/24; the terminal at
   13/24.
-- **Wordmark** (`wordmark`): the name in the page's own face and `ink`, a touch
-  looser than tight tracking, in a 44px tap box.
+- **Wordmark** (`wordmark`): the flat-foot r mark in `brand-600` (1.1em tall,
+  the same mark as the share image), 8px, then the name in the page's own face
+  and `ink`, a touch looser than tight tracking, in a 44px tap box.
 
 Weights map to a fixed scale: Regular 400, Medium 500, Semibold 600, Bold 700.
 UI labels and buttons are Medium. Text sizes come from the Tailwind scale or a
@@ -581,9 +582,10 @@ Medium and meta drops to 12px. The homepage's pictures of the editor mirror
   privacy, features, comparison, open source, questions, closing panel,
   footer. Sections pad 64px vertically (80px from `sm`) and are separated by
   that air alone, never by rules.
-- **Section headings.** A heading (35ch) over its description (48ch), 24px
-  apart; from `lg` they split into a row, the description at the right, both
-  aligned at the foot. The comparison centres them.
+- **Section headings.** A heading (35ch) over its description (48ch), 20px
+  apart, left-aligned at every width so the two read as one block; never
+  split into a row with the description pushed to the far edge. The
+  comparison centres them.
 - **Hero.** The sky pulls up under the 64px header, runs edge to edge below
   `lg` and is inset 12px with 32px corners from `lg`. Copy sits left on phones,
   in line with the editor crop below it, and centred from `sm`. The editor
@@ -782,14 +784,15 @@ are 13px, labels `muted-foreground`, fields `muted` fills (`rounded-md`).
   tech); from `lg`, centred section links (How it works, Privacy, Features,
   Compare, Questions) as `zinc-600` pills, hover `ink`; on the right, from
   `sm`, an "Open the editor" `ink` text link with an arrow, hover
-  `brand-800`. As soon as the hero's headline reaches the bar it takes `canvas`
+  `brand-800`. Once the page has scrolled 24px, before any text reaches the bar, it takes `canvas`
   at 90% with a 12px backdrop blur and a 1px `zinc-950/8` bottom shadow, and
   rises by its `lg` padding so the bar sits flush, all easing together over
   300ms; no text ever passes under a clear bar. When the hero's buttons pass
-  under it, the link and the Create invoice ink pill crossfade in one shared
-  slot, in both directions: the leaving one fades, shrinks to 95% and blurs
-  2px over 150ms while the arriving one comes in over 200ms
-  (`--ease-out-strong`), so they never show side by side. Both states are attributes on `<html>` (`data-header-solid`,
+  under it, the link and the Create invoice ink pill hand over in one shared
+  slot, in both directions: the leaving one fades and shrinks to 95% over
+  120ms, and the arriving one starts 60ms later and comes in over 200ms
+  (`--ease-out-strong`), so they barely overlap and never show side by side.
+  No blur: mid-swap it smeared the two labels together. Both states are attributes on `<html>` (`data-header-solid`,
   `data-header-pill`) set by an inline script as the page parses and on every
   scroll, so a reload mid-page paints the right header at once; changes only
   animate once the page has settled (`data-header-ready`), so nothing plays
@@ -870,7 +873,10 @@ blobs of its pair drifting across it, `rounded-2xl`, a `zinc-950/5` ring, and
 16px padding (24px from `sm`) unless the scene bleeds to the edges. Scenes use
 the editor's own fields, switches, inspector rows and popovers on Lifted
 white panels, in Geist at the editor's sizes, and narrower phone layouts keep
-their text readable. Steps are 4:3, features 16:10 from `sm`. Under each tile
+their text readable. Steps are 4:3, three across from `lg`; on tablets each
+step is a row, its tile beside its words, so the demo stays big enough to
+read. Features are 16:10 from `sm`, two across from `lg` and stacked below it,
+so each scene draws at full size. Under each tile
 sit a Title and Body; step titles lead with a 28px `brand-50` disc holding a
 `brand-600` Semibold number.
 

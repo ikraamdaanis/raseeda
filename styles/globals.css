@@ -666,9 +666,11 @@ html[data-header-solid] .home-header {
 }
 
 /* The editor link and the Create invoice pill share one slot, stacked on the
-   same grid cell and right-aligned, and crossfade there: the one leaving
-   fades, shrinks to 95% and blurs a touch over 150ms, the one arriving
-   comes in over 200ms, so the two never sit side by side. The hidden one
+   same grid cell and right-aligned, and hand over there: the one leaving
+   fades and shrinks to 95% over 120ms, and the one arriving starts 60ms
+   later and comes in over 200ms, so they barely overlap (a dark pill fading
+   behind a text link reads as a smudge) and never sit side by side. No blur:
+   it turned the two labels to mush mid-swap. The hidden one
    is out of the tab order and the accessibility tree. Changes animate only
    once the page has settled (data-header-ready), so a reload restored
    mid-page paints the final header with nothing playing. */
@@ -688,7 +690,6 @@ html:not([data-header-pill]) .home-header-pill {
   visibility: hidden;
   opacity: 0;
   scale: 0.95;
-  filter: blur(2px);
 }
 
 html[data-header-ready] .home-header {
@@ -701,26 +702,23 @@ html[data-header-ready] .home-header {
 
 html[data-header-ready] :is(.home-header-pill, .home-header-link) {
   transition:
-    opacity 200ms var(--ease-out-strong),
-    scale 200ms var(--ease-out-strong),
-    filter 200ms var(--ease-out-strong),
+    opacity 200ms var(--ease-out-strong) 60ms,
+    scale 200ms var(--ease-out-strong) 60ms,
     visibility 0s;
 }
 
 html[data-header-ready][data-header-pill] .home-header-link,
 html[data-header-ready]:not([data-header-pill]) .home-header-pill {
   transition:
-    opacity 150ms var(--ease-out-strong),
-    scale 150ms var(--ease-out-strong),
-    filter 150ms var(--ease-out-strong),
-    visibility 0s 150ms;
+    opacity 120ms var(--ease-out-strong),
+    scale 120ms var(--ease-out-strong),
+    visibility 0s 120ms;
 }
 
 @media (prefers-reduced-motion: reduce) {
   html[data-header-pill] .home-header-link,
   html:not([data-header-pill]) .home-header-pill {
     scale: 1;
-    filter: none;
   }
 }
 
