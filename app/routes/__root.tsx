@@ -40,10 +40,16 @@ const NOT_FOUND_META = [
   }
 ];
 
+// Whether the router is showing the not-found page for this match: no route
+// matched the address, or the route's loader threw notFound().
+function isNotFoundMatch(match: { status: string; _notFound?: boolean }) {
+  return match.status === "notFound" || match._notFound === true;
+}
+
 export const Route = createRootRoute({
-  // Every page sets its own title, description and share card. When no route
-  // matched (only the root did), the not-found page shows and takes its own;
-  // otherwise the homepage's stand as the fallback.
+  // Every page sets its own title, description and share card. When the
+  // not-found page shows, it takes its own; otherwise the homepage's stand as
+  // the fallback.
   head: ({ matches }) => ({
     meta: [
       {
@@ -57,7 +63,7 @@ export const Route = createRootRoute({
         name: "theme-color",
         content: "#11746b"
       },
-      ...(matches.length === 1 ? NOT_FOUND_META : siteMeta())
+      ...(matches.some(isNotFoundMatch) ? NOT_FOUND_META : siteMeta())
     ],
     links: [
       // Schibsted Grotesk is the font on every route (and a new invoice's),

@@ -42,6 +42,18 @@ describe("hashInlineScripts", () => {
     expect(policy).toContain("style-src 'self' 'unsafe-inline'");
     expect(policy).not.toMatch(/script-src[^;]*'unsafe-inline'/);
   });
+
+  it("also allows the scripts another page adds on a client-side visit", () => {
+    const policy = hashInlineScripts(
+      CONTENT_SECURITY_POLICY,
+      "<script>run();</script>",
+      ["theme();", "run();"]
+    );
+
+    expect(policy).toContain(
+      `script-src 'self' 'wasm-unsafe-eval' ${hashOf("run();")} ${hashOf("theme();")};`
+    );
+  });
 });
 
 describe("replaceHeaderPolicies", () => {

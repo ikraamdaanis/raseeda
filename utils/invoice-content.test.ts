@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { STORED_INVOICE_THEME_FALLBACK } from "~/schema/invoice";
 import { createBlankInvoice, invoiceDefault } from "~/stores/invoice-store";
 import { isBlankInvoice, isLargeRemoval } from "~/utils/invoice-content";
 
@@ -18,6 +19,22 @@ describe("isBlankInvoice", () => {
       isBlankInvoice({
         ...createBlankInvoice(),
         theme: { ...invoiceDefault.theme, font: "lora" }
+      })
+    ).toBe(false);
+  });
+
+  it("still treats a blank from before the default font changed as blank", () => {
+    expect(
+      isBlankInvoice({
+        ...createBlankInvoice(),
+        theme: STORED_INVOICE_THEME_FALLBACK
+      })
+    ).toBe(true);
+    expect(
+      isBlankInvoice({
+        ...createBlankInvoice(),
+        title: "Quote",
+        theme: STORED_INVOICE_THEME_FALLBACK
       })
     ).toBe(false);
   });

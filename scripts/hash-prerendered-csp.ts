@@ -1,6 +1,7 @@
 import { readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { CONTENT_SECURITY_POLICY } from "~/consts/content-security-policy";
+import { EDITOR_THEME_SCRIPT } from "~/utils/editor-theme";
 import {
   hashInlineScripts,
   replaceHeaderPolicies
@@ -14,6 +15,11 @@ import {
 
 const CLIENT_DIR = join(import.meta.dir, "..", "dist", "client");
 
+// A link from these pages opens the editor without loading a new document, so
+// the router adds the editor route's head script under this page's policy:
+// every route's `head().scripts` with a body belongs here.
+const NAVIGATION_SCRIPTS = [EDITOR_THEME_SCRIPT];
+
 // Each pre-rendered page's file, and the paths it is served at.
 const PAGES = [
   { file: "index.html", paths: ["/", "/index.html"] },
@@ -24,7 +30,11 @@ const policies: Record<string, string> = {};
 
 for (const page of PAGES) {
   const html = await readFile(join(CLIENT_DIR, page.file), "utf8");
-  const policy = hashInlineScripts(CONTENT_SECURITY_POLICY, html);
+  const policy = hashInlineScripts(
+    CONTENT_SECURITY_POLICY,
+    html,
+    NAVIGATION_SCRIPTS
+  );
 
   for (const path of page.paths) policies[path] = policy;
 }

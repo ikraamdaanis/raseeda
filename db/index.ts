@@ -323,6 +323,19 @@ class InvoiceDatabase extends Dexie {
         meta: "key"
       })
       .upgrade(tx => migrateToAutosave(tx));
+    // Version 9: No schema change. Invoices can now be set in Schibsted
+    // Grotesk and invoice locks carry a new name, neither of which an older
+    // build understands, so the bump makes any tab still running one stop
+    // writing and ask to reload (onDatabaseUpgradeElsewhere) instead of
+    // editing an invoice alongside this one or saving it back in Geist.
+    this.version(9).stores({
+      templates: "id, name, createdAt, updatedAt",
+      invoices: "id, name, createdAt, updatedAt",
+      images: "id",
+      drafts: "id",
+      versions: "id, invoiceId, imageId",
+      meta: "key"
+    });
   }
 }
 

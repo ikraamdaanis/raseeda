@@ -1,4 +1,5 @@
 import { isEqual } from "lodash-es";
+import { STORED_INVOICE_THEME_FALLBACK } from "~/schema/invoice";
 import { invoiceDefault } from "~/stores/invoice-store";
 import type { Invoice } from "~/types";
 
@@ -13,12 +14,21 @@ function withoutAutoFilledValues(invoice: Invoice) {
   };
 }
 
-// Whether an invoice is still the blank a new one starts as. Today's date is
-// filled in for you, so it doesn't count as an edit.
+// The blank a new invoice started as before Schibsted Grotesk was the default:
+// the same, drawn in Geist.
+const GEIST_BLANK: Invoice = {
+  ...invoiceDefault,
+  theme: STORED_INVOICE_THEME_FALLBACK
+};
+
+// Whether an invoice is still the blank a new one starts as, now or before
+// the default font changed, so blanks saved then are still cleared up. Today's
+// date is filled in for you, so it doesn't count as an edit.
 export function isBlankInvoice(invoice: Invoice): boolean {
-  return isEqual(
-    withoutAutoFilledValues(invoice),
-    withoutAutoFilledValues(invoiceDefault)
+  const content = withoutAutoFilledValues(invoice);
+
+  return [invoiceDefault, GEIST_BLANK].some(blank =>
+    isEqual(content, withoutAutoFilledValues(blank))
   );
 }
 

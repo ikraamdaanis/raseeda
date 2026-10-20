@@ -9,6 +9,13 @@ const SCRIPT_TYPE = /\btype\s*=\s*["']?([^"'\s>]+)/i;
 // else, like the JSON-LD block, is data the policy never checks.
 const RUNNABLE_TYPES = new Set(["", "module", "text/javascript"]);
 
+// A script's hash in the form a Content-Security-Policy source takes.
+function hashScript(body: string) {
+  const digest = createHash("sha256").update(body, "utf8").digest("base64");
+
+  return `'sha256-${digest}'`;
+}
+
 /**
  * The hash of every inline script in `html` that the browser would run, in
  * the form a Content-Security-Policy source takes ('sha256-...').
@@ -23,22 +30,30 @@ export function getInlineScriptHashes(html: string) {
 
     if (!RUNNABLE_TYPES.has(type)) continue;
 
-    const digest = createHash("sha256").update(body, "utf8").digest("base64");
-
-    hashes.add(`'sha256-${digest}'`);
+    hashes.add(hashScript(body));
   }
 
   return [...hashes];
 }
 
 /**
- * `policy` with its script-src allowing exactly the inline scripts in `html`
- * by hash, in place of 'unsafe-inline'. A page rendered at build time has the
+ * `policy` with its script-src allowing exactly the inline scripts in `html`,
+ * and the `navigationScripts` other pages add on a client-side visit, by
+ * hash, in place of 'unsafe-inline'. A page rendered at build time has the
  * same inline scripts on every visit, so it can name them; one rendered per
  * request (by the Worker) can't, and keeps the base policy.
  */
-export function hashInlineScripts(policy: string, html: string) {
-  const hashes = getInlineScriptHashes(html);
+export function hashInlineScripts(
+  policy: string,
+  html: string,
+  navigationScripts: string[] = []
+) {
+  const hashes = [
+    ...new Set([
+      ...getInlineScriptHashes(html),
+      ...navigationScripts.map(hashScript)
+    ])
+  ];
   const directives = policy.split("; ");
   const scriptIndex = directives.findIndex(directive =>
     directive.startsWith("script-src ")
