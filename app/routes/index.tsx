@@ -43,6 +43,7 @@ import {
   CreateInvoiceLink,
   FOCUS_RING,
   SiteFooter,
+  SOFT_PILL,
   Wordmark
 } from "~/components/home/site-chrome";
 import { APP_NAME } from "~/consts/app";
@@ -101,14 +102,6 @@ const CLOUD_PHASE_SCRIPT = `(function () {
     cloud.style.setProperty("--delay", -(Math.random() * duration) + "s");
   });
 })();`;
-
-// The secondary action beside CreateInvoiceLink: the same pill, frosted white
-// over a coloured panel, so it never outweighs the ink one. Like the ink pill,
-// its hover colour eases in and out over 200ms rather than snapping.
-const SOFT_PILL = cn(
-  "text-ink relative inline-flex shrink-0 items-center gap-1.5 rounded-full bg-white/60 px-4 py-2.5 text-base font-medium whitespace-nowrap ring-1 ring-white/80 backdrop-blur-sm transition-colors duration-200 ease-in-out hover:bg-white/85 sm:py-2 sm:text-sm",
-  FOCUS_RING
-);
 
 const TEXT_LINK = cn(
   "inline-flex items-center gap-1 rounded-sm font-medium text-ink hover:text-brand-700",
