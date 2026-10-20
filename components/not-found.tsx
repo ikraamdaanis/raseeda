@@ -10,7 +10,7 @@ export function NotFound() {
           <IconFileUnknown className="size-6" />
         </div>
         <div className="flex flex-col gap-2">
-          <h1 className="font-display text-foreground text-2xl font-semibold tracking-tight">
+          <h1 className="text-foreground text-2xl font-semibold tracking-tight">
             Page not found
           </h1>
           <p className="text-muted-foreground text-sm text-pretty">

@@ -8,8 +8,8 @@ import { HOME_PREVIEW_FONT_TEXT } from "~/consts/home-preview-fonts";
 // The homepage shows each invoice font only as a word or two ("Invoice" in
 // the font demo, "Aa" in the hero's inspector), so rather than download every
 // full font (400 KB together) it gets each one cut down to those letters at
-// its regular weight, a few KB apiece. Geist and Geist Mono aren't here: the
-// homepage loads them in full anyway. Needs fontTools with brotli
+// its regular weight, a few KB apiece. Schibsted Grotesk and Geist Mono
+// aren't here: the homepage loads them in full for its own text anyway. Needs fontTools with brotli
 // (`pip3 install fonttools brotli`). Run `bun run subset:preview-fonts` after
 // changing the fonts or the preview text.
 
@@ -20,6 +20,11 @@ const OUT_DIR = join(ROOT, "styles", "preview-fonts");
 // Each preview's source: the latin file the app itself serves, and whether
 // it is variable (and so pinned to its regular weight first).
 const SOURCES = [
+  {
+    id: "geist",
+    file: "@fontsource-variable/geist/files/geist-latin-wght-normal.woff2",
+    isVariable: true
+  },
   {
     id: "inter",
     file: "@fontsource-variable/inter/files/inter-latin-opsz-normal.woff2",

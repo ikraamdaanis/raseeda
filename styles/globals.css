@@ -4,7 +4,6 @@
 @import "./fonts.css";
 @import "./home-demos.css";
 @import "@fontsource-variable/bricolage-grotesque";
-@import "@fontsource-variable/playfair-display";
 @import "shadcn/tailwind.css";
 @import "@fontsource-variable/geist-mono";
 @import "@fontsource-variable/jetbrains-mono";
@@ -23,8 +22,8 @@
 
 @theme inline {
   --font-geist: "Geist Variable", "Geist Fallback", sans-serif;
-  /* The homepage's face: slightly condensed, with an editorial edge. The
-     editor's chrome uses it too. */
+  /* The app's face everywhere, and a new invoice's: slightly condensed, with
+     an editorial edge. */
   --font-home:
     "Schibsted Grotesk Variable", "Schibsted Grotesk Fallback", sans-serif;
   --font-schibsted-grotesk:
@@ -37,8 +36,8 @@
   --font-ibm-plex-sans: "IBM Plex Sans Variable", sans-serif;
   --font-lora: "Lora Variable", serif;
   --font-libre-baskerville: "Libre Baskerville Variable", serif;
-  --font-display: "Playfair Display Variable", serif;
   /* The homepage's cut-down invoice fonts (consts/home-preview-fonts.ts). */
+  --font-preview-geist: "Geist Preview", "Geist Fallback", sans-serif;
   --font-preview-inter: "Inter Preview", "Inter Fallback", sans-serif;
   --font-preview-dm-sans: "DM Sans Preview", sans-serif;
   --font-preview-ibm-plex-sans: "IBM Plex Sans Preview", sans-serif;
@@ -111,7 +110,10 @@
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar: var(--sidebar);
   --font-heading: var(--font-ui);
-  --font-sans: "Inter Variable", "Inter Fallback", sans-serif;
+  /* Schibsted Grotesk is the font everywhere, so it is the default sans too.
+     Inter is one of the invoice fonts (font-inter). */
+  --font-sans: var(--font-home);
+  --font-inter: "Inter Variable", "Inter Fallback", sans-serif;
   --color-chart-5: var(--chart-5);
   --color-chart-4: var(--chart-4);
   --color-chart-3: var(--chart-3);
@@ -180,18 +182,14 @@ html {
   overscroll-behavior: none;
 }
 
-html[data-editor-theme] {
-  --font-ui: var(--font-home);
-}
-
 code {
   font-family:
     source-code-pro, Menlo, Monaco, Consolas, "Courier New", monospace;
 }
 
 :root {
-  /* The app chrome's face. The editor takes the homepage's (above). */
-  --font-ui: var(--font-geist);
+  /* The app's face everywhere: homepage, editor, privacy page and menus. */
+  --font-ui: var(--font-home);
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);

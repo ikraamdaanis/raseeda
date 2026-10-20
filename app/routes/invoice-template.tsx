@@ -51,7 +51,7 @@ const INVOICE_PARTS = [
 // finished invoice in that style, not a form to fill.
 function InvoiceTemplatePage() {
   return (
-    <div className="home-type selection:bg-brand-100 bg-canvas text-ink font-geist isolate min-h-svh antialiased">
+    <div className="home-type selection:bg-brand-100 bg-canvas text-ink font-home isolate min-h-svh antialiased">
       <PageHeader />
       <main>
         <div className={cn(CONTAINER, "pt-12 pb-16 sm:pt-20 sm:pb-24")}>

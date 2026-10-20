@@ -15,7 +15,6 @@
         "@fontsource-variable/jetbrains-mono": "^5.3.0",
         "@fontsource-variable/libre-baskerville": "^5.3.0",
         "@fontsource-variable/lora": "^5.3.0",
-        "@fontsource-variable/playfair-display": "^5.3.0",
         "@fontsource-variable/schibsted-grotesk": "^5.3.0",
         "@fontsource/bricolage-grotesque": "^5.3.0",
         "@fontsource/dm-sans": "^5.3.0",
@@ -290,8 +289,6 @@
     "@fontsource-variable/libre-baskerville": ["@fontsource-variable/libre-baskerville@5.3.0", "", {}, "sha512-lIjXwDhcdr0OxSdzlAU4G7Tnny1LhgAiPFdp3/PjwRMqYt2JLU6pQiLwz/M5lRBs/kRtHwxknPUqRt37AnqPFg=="],
 
     "@fontsource-variable/lora": ["@fontsource-variable/lora@5.3.0", "", {}, "sha512-2ph8KiZ8Bn141hWuC3ErtpJ+Ui8p2MJQn8TJNRSRmLmnCIOCtHfiBM9R7WLRPeUG/q6hXyHOxWQ8DvRSX+ixvQ=="],
-
-    "@fontsource-variable/playfair-display": ["@fontsource-variable/playfair-display@5.3.0", "", {}, "sha512-IHdzTvE8eGIXHteZql7KXoqdc3Gfm+Zs1u4XlSC3MeplkwviT3sx/P6gI0tLwg/xIYLF4ZJYveZ5V+bl9cnDwA=="],
 
     "@fontsource-variable/schibsted-grotesk": ["@fontsource-variable/schibsted-grotesk@5.3.0", "", {}, "sha512-ndS6H/KICWANchlHF3q4UdZD+xrZ3Ji0rUobIuXlgvDUzDfqZDsVuXPXZb636nJZMHE9zZ9Fmwgqazm8hMB50Q=="],
 

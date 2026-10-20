@@ -931,6 +931,14 @@
    face. */
 
 @font-face {
+  font-family: "Geist Preview";
+  font-style: normal;
+  font-display: block;
+  font-weight: 400;
+  src: url("./preview-fonts/geist.woff2?no-inline") format("woff2");
+}
+
+@font-face {
   font-family: "Inter Preview";
   font-style: normal;
   font-display: block;

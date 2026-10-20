@@ -1,15 +1,15 @@
-/* The interface fonts. Schibsted Grotesk sets the homepage and the editor's
-   chrome, Geist the invoice and the rest of the app, and Inter, one of the
-   invoice fonts, is the default sans. Copied from Fontsource
+/* Schibsted Grotesk is the font everywhere: the homepage, the editor, every
+   other page, and a new invoice. Geist and Inter are two of the invoice
+   fonts the editor offers. Copied from Fontsource
    (@fontsource-variable/schibsted-grotesk, @fontsource-variable/inter/opsz.css
-   and @fontsource-variable/geist). The Schibsted and Geist latin files are
-   preloaded (app/routes/__root.tsx), so on almost every first visit they
-   arrive before the first paint. Inter and Geist use font-display: optional:
-   when one is late, the page keeps the fallback until the next load instead
-   of re-setting its text mid-read. Schibsted swaps instead, because it is the
-   homepage's voice and a first visit should never read in Arial throughout.
-   The fallbacks are Arial resized to each font's width and line metrics, so
-   whichever face draws, the layout barely moves. */
+   and @fontsource-variable/geist). Schibsted's latin file is preloaded
+   (app/routes/__root.tsx), so on almost every first visit it arrives before
+   the first paint; it swaps rather than waits, so a slow first visit never
+   reads in Arial throughout. Inter and Geist use font-display: optional: when
+   one is late on an invoice, the page keeps the fallback until the next load
+   instead of re-setting its text mid-read. The fallbacks are Arial resized to
+   each font's width and line metrics, so whichever face draws, the layout
+   barely moves. */
 
 /* schibsted-grotesk-latin-ext-wght-normal */
 @font-face {

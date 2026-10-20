@@ -13,9 +13,10 @@ export const FONT_SWATCH_TEXT = "Aa";
 
 export const HOME_PREVIEW_FONT_TEXT = `${FONT_DEMO_WORD}${FONT_SWATCH_TEXT}`;
 
-// Geist and Geist Mono have none: the homepage loads them in full for its
-// own text, so their previews use the real faces.
+// Schibsted Grotesk and Geist Mono have none: the homepage loads them in
+// full for its own text, so their previews use the real faces.
 const HOME_PREVIEW_FONT_CLASSES: Partial<Record<InvoiceFont, string>> = {
+  geist: "font-preview-geist",
   inter: "font-preview-inter",
   "dm-sans": "font-preview-dm-sans",
   "ibm-plex-sans": "font-preview-ibm-plex-sans",

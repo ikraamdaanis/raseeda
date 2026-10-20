@@ -56,7 +56,7 @@ export const INVOICE_FONTS: InvoiceFontDefinition[] = [
     category: "sans-serif",
     cssFamily: '"Inter Variable", "Inter Fallback", sans-serif',
     pdfFamily: "Invoice Inter",
-    previewClassName: "font-sans",
+    previewClassName: "font-inter",
     weights: STANDARD_WEIGHTS
   },
   {

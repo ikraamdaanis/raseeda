@@ -65,27 +65,27 @@ colors:
   themeColor: "#11746b"
 typography:
   title:
-    fontFamily: '"Geist Variable", sans-serif'
+    fontFamily: '"Schibsted Grotesk Variable", sans-serif'
     fontSize: 16px
     fontWeight: 500
     lineHeight: 1.5
   body:
-    fontFamily: '"Geist Variable", sans-serif'
+    fontFamily: '"Schibsted Grotesk Variable", sans-serif'
     fontSize: 14px
     fontWeight: 400
     lineHeight: 1.5
   label:
-    fontFamily: '"Geist Variable", sans-serif'
+    fontFamily: '"Schibsted Grotesk Variable", sans-serif'
     fontSize: 14px
     fontWeight: 500
     lineHeight: 1.4
   control:
-    fontFamily: '"Geist Variable", sans-serif'
+    fontFamily: '"Schibsted Grotesk Variable", sans-serif'
     fontSize: 13px
     fontWeight: 400
     lineHeight: 1.5
   caption:
-    fontFamily: '"Geist Variable", sans-serif'
+    fontFamily: '"Schibsted Grotesk Variable", sans-serif'
     fontSize: 12px
     fontWeight: 400
     lineHeight: 1.4
@@ -446,20 +446,20 @@ homepage and privacy page stay light; do not claim dark mode for them.
 
 ## Typography
 
-**Editor Font:** Geist Variable (with the system UI stack)
-**Homepage Font:** Schibsted Grotesk Variable (with sans-serif), `--font-home`
+**Font:** Schibsted Grotesk Variable everywhere: the homepage, the editor,
+every other page, and a new invoice (`--font-home`, which `--font-ui` and
+`--font-sans` point at)
 **Mono Font:** Geist Mono Variable, for the homepage code tiles and terminal
 
 **Character:** the editor speaks in one even, neutral sans so the invoice's own
 font can lead. The marketing pages set headlines in Medium with tight negative
 tracking (-0.035em), balanced, and keep everything else Regular in grey.
 
-Geist is set on `<body>` and is what every piece of app chrome renders in.
-Inter Variable is wired as `--font-sans` on `<html>`, but no element opts into
-it, so it does not render in the UI; it remains available in the invoice font
-library. The homepage wrapper sets `font-home`; the privacy page sets
-`font-geist`; every picture of the editor on the homepage (`EditorWindow` and
-the demo scenes) sets `font-geist` so it matches the product.
+Schibsted Grotesk is set on `<body>` and is what every piece of the app
+renders in. Geist and Inter are only invoice fonts, offered in the editor's
+font picker like the others (`font-geist`, `font-inter`). Every picture of the
+editor on the homepage (`EditorWindow` and the demo scenes) sets `font-home`,
+so it matches the product.
 
 ### Hierarchy
 

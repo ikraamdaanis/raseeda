@@ -1,4 +1,3 @@
-import geistFont from "@fontsource-variable/geist/files/geist-latin-wght-normal.woff2?url";
 import schibstedFont from "@fontsource-variable/schibsted-grotesk/files/schibsted-grotesk-latin-wght-normal.woff2?url";
 import {
   HeadContent,
@@ -41,19 +40,11 @@ export const Route = createRootRoute({
       ...siteMeta()
     ],
     links: [
-      // Schibsted Grotesk (the homepage and the editor's chrome) and Geist
-      // (the invoice) are on every route, so their latin subsets preload
-      // globally, Schibsted first: it sets the homepage's headline.
+      // Schibsted Grotesk is the font on every route (and a new invoice's),
+      // so its latin subset preloads globally.
       {
         rel: "preload",
         href: schibstedFont,
-        as: "font",
-        type: "font/woff2",
-        crossOrigin: "anonymous"
-      },
-      {
-        rel: "preload",
-        href: geistFont,
         as: "font",
         type: "font/woff2",
         crossOrigin: "anonymous"
