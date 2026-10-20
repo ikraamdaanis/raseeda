@@ -12,15 +12,19 @@ import { cn } from "~/lib/utils";
  * the header and footer of the privacy page around a panel like the
  * homepage's closing one, the hero's sky gone pale with a glow rising from
  * its foot under a grid of dots. The glow holds still here; nothing on a
- * page that reports a problem should move.
+ * page that reports a problem should move. `isNoIndex` asks search engines
+ * not to index the page (React moves the tag into the head): an error can
+ * show in place of a real page's content, under that page's address.
  */
 export function StatusPage({
+  isNoIndex = false,
   eyebrow,
   title,
   description,
   actions,
   children
 }: {
+  isNoIndex?: boolean;
   eyebrow: string;
   title: string;
   description: ReactNode;
@@ -29,6 +33,7 @@ export function StatusPage({
 }) {
   return (
     <div className="home-type selection:bg-brand-100 bg-canvas text-ink font-home isolate flex min-h-svh flex-col antialiased">
+      {isNoIndex && <meta name="robots" content="noindex" />}
       <PageHeader />
       <main className="flex flex-1 flex-col lg:px-3">
         <section className="bg-glow relative isolate flex flex-1 items-center overflow-hidden lg:rounded-[2rem]">

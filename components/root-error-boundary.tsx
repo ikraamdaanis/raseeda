@@ -20,6 +20,7 @@ export function RootErrorBoundary({ error, reset }: ErrorComponentProps) {
 
   return (
     <StatusPage
+      isNoIndex
       eyebrow="Something went wrong"
       title="The page hit a problem."
       description="Your invoices and templates are saved in this browser, on this device, and are safe. Try again, or reload the page."
@@ -38,7 +39,7 @@ export function RootErrorBoundary({ error, reset }: ErrorComponentProps) {
       <details className="group w-full max-w-md">
         <summary
           className={cn(
-            "mx-auto flex w-max cursor-pointer list-none items-center gap-1 rounded-sm text-zinc-500 hover:text-zinc-700 [&::-webkit-details-marker]:hidden",
+            "mx-auto flex w-max cursor-pointer list-none items-center gap-1 rounded-sm text-zinc-700 hover:text-ink [&::-webkit-details-marker]:hidden",
             typeClass("caption"),
             FOCUS_RING
           )}

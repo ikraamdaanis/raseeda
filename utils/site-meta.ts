@@ -23,8 +23,9 @@ export function absoluteUrl(path: string) {
 }
 
 // A page's title, description and share card. The root route sets the
-// homepage's as the fallback for pages without their own (404, errors); each
-// page passes its own path so og:url names it rather than the homepage.
+// homepage's as the fallback for a page without its own (the not-found page
+// has its own, in app/routes/__root.tsx); each page passes its own path so
+// og:url names it rather than the homepage.
 export function siteMeta({
   path = "/",
   title = SITE_TITLE,

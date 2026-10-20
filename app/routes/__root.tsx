@@ -13,6 +13,7 @@ import { AppToaster } from "~/components/app-toaster";
 import { NotFound } from "~/components/not-found";
 import { RootErrorBoundary } from "~/components/root-error-boundary";
 import { PAGE_VIEW_PATHS } from "~/consts/analytics-events";
+import { APP_NAME } from "~/consts/app";
 import appCss from "~/styles/globals.css?url";
 import { RENAME_LEGACY_STORAGE_KEYS_SCRIPT } from "~/utils/legacy-storage-keys";
 import { REGISTER_SERVICE_WORKER_SCRIPT } from "~/utils/register-service-worker";
@@ -23,8 +24,27 @@ import {
 import { siteMeta } from "~/utils/site-meta";
 import { trackPageView } from "~/utils/track";
 
+// The not-found page's own title and description. It asks search engines not
+// to index it and carries no share card: a missing page has nothing to share.
+const NOT_FOUND_META = [
+  {
+    title: `Page not found | ${APP_NAME}`
+  },
+  {
+    name: "description",
+    content: `This page doesn't exist on ${APP_NAME}. Go back to the homepage or open the editor.`
+  },
+  {
+    name: "robots",
+    content: "noindex"
+  }
+];
+
 export const Route = createRootRoute({
-  head: () => ({
+  // Every page sets its own title, description and share card. When no route
+  // matched (only the root did), the not-found page shows and takes its own;
+  // otherwise the homepage's stand as the fallback.
+  head: ({ matches }) => ({
     meta: [
       {
         charSet: "utf-8"
@@ -37,7 +57,7 @@ export const Route = createRootRoute({
         name: "theme-color",
         content: "#11746b"
       },
-      ...siteMeta()
+      ...(matches.length === 1 ? NOT_FOUND_META : siteMeta())
     ],
     links: [
       // Schibsted Grotesk is the font on every route (and a new invoice's),
