@@ -33,7 +33,9 @@ import {
 import { HeroSky } from "~/components/home/hero-sky";
 import {
   HERO_INVOICE_NUMBER,
-  PDF_RENDERS
+  PDF_RENDERS,
+  renderSrc,
+  renderSrcSet
 } from "~/components/home/pdf-renders";
 import { Picture, toAvif } from "~/components/home/picture";
 import { RunYourOwnCopy } from "~/components/home/run-your-own-copy";
@@ -63,9 +65,10 @@ export const Route = createFileRoute("/")({
   component: HomePage,
   // The invoice in the hero's editor window preloads too, so it downloads
   // alongside the CSS rather than after it; the preload mirrors the AVIF branch
-  // of its <picture>, and a browser without AVIF skips it. It is the page's
-  // largest paint, so it asks for high priority: an image preload otherwise
-  // starts low and waits behind the fonts.
+  // of its <picture>, widths and sizes too, so it fetches the same file, and a
+  // browser without AVIF skips it. It is the page's largest paint, so it asks
+  // for high priority: an image preload otherwise starts low and waits behind
+  // the fonts.
   head: () => ({
     meta: siteMeta({ path: "/" }),
     links: [
@@ -74,7 +77,9 @@ export const Route = createFileRoute("/")({
         rel: "preload",
         as: "image",
         type: "image/avif",
-        href: toAvif(PDF_RENDERS.hero.src),
+        href: toAvif(heroPicture.src),
+        imageSrcSet: toAvif(heroPicture.srcSet),
+        imageSizes: heroPicture.sizes,
         fetchPriority: "high"
       }
     ],
@@ -467,17 +472,21 @@ const HERO_FRAME =
  * before the invoice appeared.
  */
 function PdfPaper({ render }: { render: typeof PDF_RENDERS.hero }) {
+  const picture = pdfPicture(render);
+
   return (
     <div
       className="border-paper-border bg-paper overflow-hidden border shadow-md"
       style={{ width: PAGE_WIDTH, height: PAGE_HEIGHT }}
     >
       <Picture
-        src={render.src}
+        src={picture.src}
+        srcSet={picture.srcSet}
+        sizes={picture.sizes}
         alt={render.alt}
-        width={render.width}
+        width={picture.width}
         height={Math.round(
-          (render.width * render.crop.height) / render.crop.width
+          (picture.width * render.crop.height) / render.crop.width
         )}
         fetchPriority="high"
         decoding="sync"
@@ -486,6 +495,23 @@ function PdfPaper({ render }: { render: typeof PDF_RENDERS.hero }) {
     </div>
   );
 }
+
+// A render's <img> attributes. It is laid out at the page's CSS width before
+// the frame scales it, so `sizes` is that width, and the browser picks the
+// file for its pixel density from there: the narrower one on a standard
+// screen, the wider on a dense one.
+function pdfPicture(render: typeof PDF_RENDERS.hero) {
+  const width = Math.max(...render.widths);
+
+  return {
+    src: renderSrc(render, width),
+    srcSet: renderSrcSet(render),
+    sizes: `${PAGE_WIDTH}px`,
+    width
+  };
+}
+
+const heroPicture = pdfPicture(PDF_RENDERS.hero);
 
 // A browser that refuses storage gets told what that means and how to fix it,
 // right under the hero's buttons, before anyone starts an invoice.

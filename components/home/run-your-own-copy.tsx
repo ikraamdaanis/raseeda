@@ -29,7 +29,7 @@ type Step =
 
 // Colours after the terminal's own: Bun's bold names and grey versions,
 // Vite's green banner and cyan address.
-const DIM = "text-zinc-500";
+const DIM = "text-zinc-400";
 const BRIGHT = "font-semibold text-white";
 const GREEN = "text-emerald-400";
 const CYAN = "text-cyan-300";
@@ -326,7 +326,7 @@ function Terminal({ isPlaying }: { isPlaying: boolean }) {
               <span className="size-3 rounded-full bg-white/10" />
               <span className="size-3 rounded-full bg-white/10" />
             </span>
-            <span className="absolute inset-x-0 text-center text-xs text-zinc-500">
+            <span className="absolute inset-x-0 text-center text-xs text-zinc-400">
               ~/{APP_NAME}
             </span>
           </div>

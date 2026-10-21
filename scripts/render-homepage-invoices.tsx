@@ -6,7 +6,8 @@ import { join } from "node:path";
 import {
   HERO_INVOICE_NUMBER,
   PDF_RENDER_SCALE,
-  PDF_RENDERS
+  PDF_RENDERS,
+  renderSrc
 } from "~/components/home/pdf-renders";
 import { InvoicePDF } from "~/components/pdf/invoice-generator";
 import {
@@ -428,13 +429,19 @@ const directory = await mkdtemp(join(tmpdir(), "homepage-renders-"));
 try {
   await mkdir(join(OUTPUT_DIR, "home"), { recursive: true });
 
-  await writeWebp({
-    pngPath: await renderPage(directory, "hero", {
-      ...HERO_INVOICE,
-      image: join(LOGO_DIR, "marlow.png")
-    }),
-    ...PDF_RENDERS.hero
+  const heroPngPath = await renderPage(directory, "hero", {
+    ...HERO_INVOICE,
+    image: join(LOGO_DIR, "marlow.png")
   });
+
+  for (const width of PDF_RENDERS.hero.widths) {
+    await writeWebp({
+      pngPath: heroPngPath,
+      src: renderSrc(PDF_RENDERS.hero, width),
+      crop: PDF_RENDERS.hero.crop,
+      width
+    });
+  }
 
   await mkdir(join(OUTPUT_DIR, "templates"), { recursive: true });
 
