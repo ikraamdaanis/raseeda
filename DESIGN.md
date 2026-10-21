@@ -497,9 +497,9 @@ Homepage (roles from `lib/type-scale.ts`, set at marketing values by
   tabular) and comparison row labels.
 - **Code** (`code`): file lines in the code tiles at 12/24; the terminal at
   13/24.
-- **Wordmark** (`wordmark`): the flat-foot r mark in `brand-600` (1.1em tall,
-  the same mark as the share image), 8px, then the name in the page's own face
-  and `ink`, a touch looser than tight tracking, in a 44px tap box.
+- **Wordmark** (`wordmark`): the name alone in the page's own face and `ink`, a
+  touch looser than tight tracking, in a 44px tap box. The flat-foot r mark
+  stays for the favicon and app icons, not beside the name.
 
 Weights map to a fixed scale: Regular 400, Medium 500, Semibold 600, Bold 700.
 UI labels and buttons are Medium. Text sizes come from the Tailwind scale or a

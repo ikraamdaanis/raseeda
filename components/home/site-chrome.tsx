@@ -29,28 +29,22 @@ export const SOFT_PILL = cn(
   FOCUS_RING
 );
 
-// The wordmark: the flat-foot r mark in the brand teal (public/logo-mark.svg,
-// as on the share image), then the name in the page's own face and ink, a
-// touch looser than Tailwind's tight tracking. The 44px box keeps it a
-// comfortable tap target without changing the type.
+// The wordmark: the name alone in the page's own face and ink, a touch looser
+// than Tailwind's tight tracking. The flat-foot r mark (public/logo-mark.svg)
+// is kept for the favicon and app icons, where the name can't fit; beside the
+// name it only repeated its first letter. The 44px box keeps it a comfortable
+// tap target without changing the type.
 export function Wordmark() {
   return (
     <Link
       to="/"
       aria-label={`${APP_NAME} home`}
       className={cn(
-        "flex min-h-11 items-center gap-2 rounded-md text-lg font-semibold tracking-[-0.0175em]",
+        "text-ink flex min-h-11 items-center rounded-md text-lg font-semibold tracking-[-0.0175em]",
         FOCUS_RING
       )}
     >
-      <svg
-        viewBox="154 114 202 270"
-        aria-hidden="true"
-        className="text-brand-600 h-[1.1em] w-auto shrink-0 fill-current"
-      >
-        <path d="M154 372 V156 A42 42 0 0 1 196 114 H314 A42 42 0 0 1 314 198 C268 198 238 224 238 262 V372 A12 12 0 0 1 226 384 H166 A12 12 0 0 1 154 372 Z" />
-      </svg>
-      <span className="text-ink">{APP_NAME}</span>
+      {APP_NAME}
     </Link>
   );
 }
