@@ -9,7 +9,7 @@ export const SITE_DESCRIPTION =
 
 export const SITE_OG_IMAGE = `${SITE_URL}/og-image.jpg`;
 
-export const SOURCE_URL = "https://github.com/ikraamdaanis/billsend";
+export const SOURCE_URL = "https://github.com/ikraamdaanis/raseeda";
 
 export const MAKER_NAME = "ikraam | freelio";
 

@@ -19,4 +19,4 @@
 
 ## Source
 
-- [GitHub repository](https://github.com/ikraamdaanis/billsend): source code and issues
+- [GitHub repository](https://github.com/ikraamdaanis/raseeda): source code and issues

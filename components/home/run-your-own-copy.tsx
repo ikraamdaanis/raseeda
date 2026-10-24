@@ -34,12 +34,10 @@ const BRIGHT = "font-semibold text-white";
 const GREEN = "text-emerald-400";
 const CYAN = "text-cyan-300";
 
-// The repository under the app's name, and the folder git clones it into. The
-// GitHub repository still carries the old name until it's renamed (GitHub
-// then redirects the old URL), so the terminal shows the name it will have.
-const REPOSITORY = APP_NAME;
+// The folder git clones the repository into.
+const REPOSITORY = SOURCE_URL.slice(SOURCE_URL.lastIndexOf("/") + 1);
 
-const CLONE_URL = `${SOURCE_URL.slice(0, SOURCE_URL.lastIndexOf("/") + 1)}${REPOSITORY}.git`;
+const CLONE_URL = `${SOURCE_URL}.git`;
 
 const SESSION: Step[] = [
   { kind: "command", text: `git clone ${CLONE_URL}` },
@@ -268,7 +266,10 @@ function Transcript({ done, typed }: { done: number; typed: number }) {
         step.kind === "wait" ? null : step.kind === "command" ? (
           <Prompt key={index}>{step.text}</Prompt>
         ) : (
-          <p key={index} className="min-h-6 break-words whitespace-pre-wrap">
+          <p
+            key={index}
+            className="min-h-6 wrap-break-word whitespace-pre-wrap"
+          >
             {step.segments.map((segment, segmentIndex) => (
               <span key={segmentIndex} className={segment.className}>
                 {segment.text}
