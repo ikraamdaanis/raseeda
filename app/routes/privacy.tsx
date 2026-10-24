@@ -62,7 +62,7 @@ function PrivacyPage() {
             </p>
             <p className={PROSE}>
               The PDF is made in your browser too. Nothing you type is uploaded;
-              besides loading the site, the only thing your browser sends
+              besides loading the site, the only thing your browser sends{" "}
               {APP_NAME} is the anonymous usage count described below.
             </p>
             <p className={PROSE}>
@@ -86,7 +86,7 @@ function PrivacyPage() {
               To see roughly how {APP_NAME} is used, your browser tells
               billsend.io when one of these happens: a page is viewed, the
               editor opens, a PDF is made, an invoice or template is first
-              saved, or data is exported or imported. With the event, {APP_NAME}
+              saved, or data is exported or imported. With the event, {APP_NAME}{" "}
               keeps the country the request came from and the browser family,
               operating system and type of device (such as Safari, iOS, mobile).
               A page view also says which page.
