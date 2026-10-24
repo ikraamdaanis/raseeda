@@ -849,14 +849,18 @@ const PROOFS: {
   {
     title: "Other websites are blocked",
     description:
-      "Every page carries this policy. Your browser enforces it, so trackers, analytics and every other site are refused.",
+      "Every page carries this policy. Your browser enforces it, so third-party trackers, analytics and every other site are refused.",
     outcome: [
-      { label: "This page", status: "Allowed" },
-      { label: "Analytics and trackers", status: "Blocked", isRefused: true },
+      { label: "This site", status: "Allowed" },
+      {
+        label: "Third-party analytics",
+        status: "Blocked",
+        isRefused: true
+      },
       { label: "Any other website", status: "Blocked", isRefused: true }
     ],
     path: "consts/content-security-policy.ts",
-    firstLine: 11,
+    firstLine: 12,
     lines: [
       `  "img-src 'self' data: blob:",`,
       `  "font-src 'self' data:",`,
@@ -864,7 +868,7 @@ const PROOFS: {
       `  "worker-src 'self' blob:",`,
       `  "frame-src 'none'",`
     ],
-    highlight: 13,
+    highlight: 14,
     hues: [TILE_HUES.sky, TILE_HUES.sage]
   },
   {
