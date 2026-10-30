@@ -1,12 +1,11 @@
 import interFont from "@fontsource-variable/inter/files/inter-latin-opsz-normal.woff2?url";
-import { IconArrowRight } from "@tabler/icons-react";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import {
   CONTAINER,
   FOCUS_RING,
-  SiteFooter,
-  Wordmark
+  PageHeader,
+  SiteFooter
 } from "~/components/home/site-chrome";
 import { typeClass } from "~/lib/type-scale";
 import { cn } from "~/lib/utils";
@@ -51,24 +50,7 @@ const INLINE_LINK = cn(
 function PrivacyPage() {
   return (
     <div className="home-type selection:bg-brand-100 bg-canvas text-ink isolate min-h-svh font-sans font-features-['cv02','cv03','cv04','cv11'] antialiased">
-      <header>
-        <div className={cn(CONTAINER, "flex h-16 items-center gap-4")}>
-          <div className="flex flex-1 items-center">
-            <Wordmark />
-          </div>
-          <Link
-            to="/create"
-            className={cn(
-              "hover:text-ink-blue text-ink relative inline-flex min-h-11 items-center gap-1 rounded-sm px-1 font-medium whitespace-nowrap",
-              typeClass("body", "compact"),
-              FOCUS_RING
-            )}
-          >
-            Open the editor
-            <IconArrowRight className="size-4 shrink-0" aria-hidden="true" />
-          </Link>
-        </div>
-      </header>
+      <PageHeader />
       <main className={cn(CONTAINER, "pt-12 pb-16 sm:pt-20 sm:pb-24")}>
         <article className="flex max-w-[64ch] flex-col gap-12">
           <div className="flex flex-col gap-6">

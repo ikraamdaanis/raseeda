@@ -14,12 +14,7 @@ import {
   IconX
 } from "@tabler/icons-react";
 import { createFileRoute, Link, ScriptOnce } from "@tanstack/react-router";
-import type {
-  ComponentProps,
-  ComponentType,
-  CSSProperties,
-  ReactNode
-} from "react";
+import type { ComponentType, CSSProperties, ReactNode } from "react";
 import { useEffect, useRef, useState } from "react";
 import {
   EditorWindow,
@@ -34,8 +29,10 @@ import {
   PDF_RENDER_SCALE,
   PDF_RENDERS
 } from "~/components/home/pdf-renders";
+import { Picture, toAvif } from "~/components/home/picture";
 import {
   CONTAINER,
+  CreateInvoiceLink,
   FOCUS_RING,
   SiteFooter,
   Wordmark
@@ -110,13 +107,6 @@ const HERO_LANDSCAPE_SRCSET =
   "/home/hero-harbour-1600.webp 1600w, /home/hero-harbour-2400.webp 2400w, /home/hero-harbour-3200.webp 3200w";
 
 const HERO_LANDSCAPE_SIZES = "(max-width: 1023px) 1960px, max(100vw, 2250px)";
-
-// Every homepage picture has an AVIF beside its WebP (scripts/
-// encode-homepage-avif.ts), about 40% lighter; the WebP stays for browsers
-// without AVIF.
-function toAvif(srcSet: string) {
-  return srcSet.replaceAll(".webp", ".avif");
-}
 
 // Runs as the HTML is parsed, straight after the hero painting and before the
 // copy. It marks the hero to play its entrance (globals.css), which only
@@ -509,28 +499,6 @@ function PhoneMenu() {
   );
 }
 
-// The page's one primary action, shaped the same everywhere it appears: a pill
-// in the homepage ink, larger on touch screens. It preloads the editor on
-// hover or touch (the router's default), not on sight: the editor's code is
-// over 500 KB and, fetched at load, it held up the hero on phones.
-function CreateInvoiceLink() {
-  return (
-    <Link
-      to="/create"
-      className={cn(
-        "bg-ink hover:bg-ink/85 relative inline-flex shrink-0 items-center rounded-full px-4 py-2.5 text-base font-medium whitespace-nowrap text-white shadow-[inset_0_1px_0_rgb(255_255_255/0.12),0_1px_2px_rgb(0_0_0/0.16)] sm:py-2 sm:text-sm",
-        FOCUS_RING
-      )}
-    >
-      Create invoice
-      <span
-        aria-hidden="true"
-        className="absolute top-1/2 left-1/2 size-[max(100%,3rem)] -translate-1/2 pointer-fine:hidden"
-      />
-    </Link>
-  );
-}
-
 // The header's way into the editor: a quiet text link, so it never repeats
 // the hero's button right below it. Phones skip it: the hero's button is the
 // first thing under the header, and the link would crowd the menu button.
@@ -782,25 +750,6 @@ function PdfPaper({ render }: { render: typeof PDF_RENDERS.hero }) {
         className="block h-auto w-full"
       />
     </div>
-  );
-}
-
-/**
- * An image that offers its AVIF first. The <picture> draws no box of its own,
- * so the image keeps its place in its parent's layout.
- */
-function Picture({
-  src,
-  srcSet,
-  sizes,
-  alt,
-  ...props
-}: ComponentProps<"img"> & { src: string; alt: string }) {
-  return (
-    <picture className="contents">
-      <source type="image/avif" srcSet={toAvif(srcSet ?? src)} sizes={sizes} />
-      <img src={src} srcSet={srcSet} sizes={sizes} alt={alt} {...props} />
-    </picture>
   );
 }
 
