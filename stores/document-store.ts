@@ -20,8 +20,8 @@ type DocumentState = {
   // - editing: this tab edits it and every change saves itself
   // - readOnly: another tab is editing it; this one follows along
   // - deleted: it was deleted elsewhere, so nothing more is written to it
-  // - reloadRequired: a newer billsend upgraded storage in another tab
-  // - unavailable: this browser won't give billsend any storage
+  // - reloadRequired: a newer version of the app upgraded storage in another tab
+  // - unavailable: this browser won't give the app any storage
   status: "editing" | "readOnly" | "deleted" | "reloadRequired" | "unavailable";
   // The current save failure, if a save failed. `episode` changes only when a
   // new run of failures starts, not on every retry, so it's announced once.
@@ -31,7 +31,7 @@ type DocumentState = {
     episode: number;
   } | null;
   // Suggest a backup: this is Safari, which clears a site's storage after a
-  // week unused, it refused to keep billsend's storage, and nobody has
+  // week unused, it refused to keep the app's storage, and nobody has
   // dismissed the suggestion yet.
   backupReminder: boolean;
 };

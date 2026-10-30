@@ -1,4 +1,4 @@
-import geistFont from "@fontsource-variable/geist/files/geist-latin-wght-normal.woff2?url";
+import schibstedFont from "@fontsource-variable/schibsted-grotesk/files/schibsted-grotesk-latin-wght-normal.woff2?url";
 import {
   HeadContent,
   ScriptOnce,
@@ -13,7 +13,9 @@ import { AppToaster } from "~/components/app-toaster";
 import { NotFound } from "~/components/not-found";
 import { RootErrorBoundary } from "~/components/root-error-boundary";
 import { PAGE_VIEW_PATHS } from "~/consts/analytics-events";
+import { APP_NAME } from "~/consts/app";
 import appCss from "~/styles/globals.css?url";
+import { RENAME_LEGACY_STORAGE_KEYS_SCRIPT } from "~/utils/legacy-storage-keys";
 import { REGISTER_SERVICE_WORKER_SCRIPT } from "~/utils/register-service-worker";
 import {
   HIDE_UNTIL_SCROLL_RESTORED_SCRIPT,
@@ -22,8 +24,33 @@ import {
 import { siteMeta } from "~/utils/site-meta";
 import { trackPageView } from "~/utils/track";
 
+// The not-found page's own title and description. It asks search engines not
+// to index it and carries no share card: a missing page has nothing to share.
+const NOT_FOUND_META = [
+  {
+    title: `Page not found | ${APP_NAME}`
+  },
+  {
+    name: "description",
+    content: `This page doesn't exist on ${APP_NAME}. Go back to the homepage or open the editor.`
+  },
+  {
+    name: "robots",
+    content: "noindex"
+  }
+];
+
+// Whether the router is showing the not-found page for this match: no route
+// matched the address, or the route's loader threw notFound().
+function isNotFoundMatch(match: { status: string; _notFound?: boolean }) {
+  return match.status === "notFound" || match._notFound === true;
+}
+
 export const Route = createRootRoute({
-  head: () => ({
+  // Every page sets its own title, description and share card. When the
+  // not-found page shows, it takes its own; otherwise the homepage's stand as
+  // the fallback.
+  head: ({ matches }) => ({
     meta: [
       {
         charSet: "utf-8"
@@ -34,18 +61,16 @@ export const Route = createRootRoute({
       },
       {
         name: "theme-color",
-        content: "#005fca"
+        content: "#11746b"
       },
-      ...siteMeta()
+      ...(matches.some(isNotFoundMatch) ? NOT_FOUND_META : siteMeta())
     ],
     links: [
-      // Geist is the base font on every route, so its latin subset preloads
-      // globally. Route-specific fonts (the homepage's Inter)
-      // preload from their own route's head instead, so other pages don't
-      // download files they never render.
+      // Schibsted Grotesk is the font on every route (and a new invoice's),
+      // so its latin subset preloads globally.
       {
         rel: "preload",
-        href: geistFont,
+        href: schibstedFont,
         as: "font",
         type: "font/woff2",
         crossOrigin: "anonymous"
@@ -70,6 +95,7 @@ export const Route = createRootRoute({
       { rel: "manifest", href: "/site.webmanifest" }
     ],
     scripts: [
+      { children: RENAME_LEGACY_STORAGE_KEYS_SCRIPT },
       { children: HIDE_UNTIL_SCROLL_RESTORED_SCRIPT },
       ...(import.meta.env.PROD
         ? [{ children: REGISTER_SERVICE_WORKER_SCRIPT }]

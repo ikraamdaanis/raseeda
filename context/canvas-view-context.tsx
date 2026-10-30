@@ -11,7 +11,7 @@ import {
 
 type CanvasView = "fit" | number;
 
-const VIEW_STORAGE_KEY = "billsend-editor-zoom";
+const VIEW_STORAGE_KEY = "editor-zoom";
 
 // The zoom a phone jumps to when a field on the fitted page is tapped, so the
 // text being typed is full size.

@@ -3,7 +3,7 @@ import type { EditorTheme, EditorThemePreference } from "~/types";
 // The editor's light/dark choice lives in localStorage, so it survives reloads
 // and applies in every tab. It only themes the editor: the attribute and class
 // below are set while /create is open and removed when it closes.
-export const EDITOR_THEME_STORAGE_KEY = "billsend-editor-theme";
+export const EDITOR_THEME_STORAGE_KEY = "editor-theme";
 
 const DARK_SCHEME_QUERY = "(prefers-color-scheme: dark)";
 

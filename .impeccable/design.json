@@ -1,0 +1,1193 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-19T17:25:07+00:00",
+  "title": "Design System: raseeda",
+  "extensions": {
+    "colorMeta": {
+      "background": {
+        "role": "neutral",
+        "displayName": "Chrome White",
+        "canonical": "oklch(1 0 0)",
+        "tonalRamp": [
+          "oklch(0.15 0 0)",
+          "oklch(0.26 0 0)",
+          "oklch(0.38 0 0)",
+          "oklch(0.49 0 0)",
+          "oklch(0.61 0 0)",
+          "oklch(0.72 0 0)",
+          "oklch(0.84 0 0)",
+          "oklch(0.95 0 0)"
+        ]
+      },
+      "foreground": {
+        "role": "neutral",
+        "displayName": "Chrome Ink",
+        "canonical": "oklch(0.145 0 0)",
+        "tonalRamp": [
+          "oklch(0.15 0 0)",
+          "oklch(0.26 0 0)",
+          "oklch(0.38 0 0)",
+          "oklch(0.49 0 0)",
+          "oklch(0.61 0 0)",
+          "oklch(0.72 0 0)",
+          "oklch(0.84 0 0)",
+          "oklch(0.95 0 0)"
+        ]
+      },
+      "card": {
+        "role": "neutral",
+        "displayName": "Card White",
+        "canonical": "oklch(1 0 0)",
+        "tonalRamp": [
+          "oklch(0.15 0 0)",
+          "oklch(0.26 0 0)",
+          "oklch(0.38 0 0)",
+          "oklch(0.49 0 0)",
+          "oklch(0.61 0 0)",
+          "oklch(0.72 0 0)",
+          "oklch(0.84 0 0)",
+          "oklch(0.95 0 0)"
+        ]
+      },
+      "cardForeground": {
+        "role": "neutral",
+        "displayName": "Card Ink",
+        "canonical": "oklch(0.145 0 0)",
+        "tonalRamp": [
+          "oklch(0.15 0 0)",
+          "oklch(0.26 0 0)",
+          "oklch(0.38 0 0)",
+          "oklch(0.49 0 0)",
+          "oklch(0.61 0 0)",
+          "oklch(0.72 0 0)",
+          "oklch(0.84 0 0)",
+          "oklch(0.95 0 0)"
+        ]
+      },
+      "popover": {
+        "role": "neutral",
+        "displayName": "Popover White",
+        "canonical": "oklch(1 0 0)",
+        "tonalRamp": [
+          "oklch(0.15 0 0)",
+          "oklch(0.26 0 0)",
+          "oklch(0.38 0 0)",
+          "oklch(0.49 0 0)",
+          "oklch(0.61 0 0)",
+          "oklch(0.72 0 0)",
+          "oklch(0.84 0 0)",
+          "oklch(0.95 0 0)"
+        ]
+      },
+      "popoverForeground": {
+        "role": "neutral",
+        "displayName": "Popover Ink",
+        "canonical": "oklch(0.145 0 0)",
+        "tonalRamp": [
+          "oklch(0.15 0 0)",
+          "oklch(0.26 0 0)",
+          "oklch(0.38 0 0)",
+          "oklch(0.49 0 0)",
+          "oklch(0.61 0 0)",
+          "oklch(0.72 0 0)",
+          "oklch(0.84 0 0)",
+          "oklch(0.95 0 0)"
+        ]
+      },
+      "primary": {
+        "role": "neutral",
+        "displayName": "Neutral Primary",
+        "canonical": "oklch(0.205 0 0)",
+        "tonalRamp": [
+          "oklch(0.15 0 0)",
+          "oklch(0.26 0 0)",
+          "oklch(0.38 0 0)",
+          "oklch(0.49 0 0)",
+          "oklch(0.61 0 0)",
+          "oklch(0.72 0 0)",
+          "oklch(0.84 0 0)",
+          "oklch(0.95 0 0)"
+        ]
+      },
+      "primaryForeground": {
+        "role": "neutral",
+        "displayName": "On Primary",
+        "canonical": "oklch(0.985 0 0)",
+        "tonalRamp": [
+          "oklch(0.15 0 0)",
+          "oklch(0.26 0 0)",
+          "oklch(0.38 0 0)",
+          "oklch(0.49 0 0)",
+          "oklch(0.61 0 0)",
+          "oklch(0.72 0 0)",
+          "oklch(0.84 0 0)",
+          "oklch(0.95 0 0)"
+        ]
+      },
+      "secondary": {
+        "role": "neutral",
+        "displayName": "Secondary Fill",
+        "canonical": "oklch(0.97 0 0)",
+        "tonalRamp": [
+          "oklch(0.15 0 0)",
+          "oklch(0.26 0 0)",
+          "oklch(0.38 0 0)",
+          "oklch(0.49 0 0)",
+          "oklch(0.61 0 0)",
+          "oklch(0.72 0 0)",
+          "oklch(0.84 0 0)",
+          "oklch(0.95 0 0)"
+        ]
+      },
+      "secondaryForeground": {
+        "role": "neutral",
+        "displayName": "On Secondary",
+        "canonical": "oklch(0.205 0 0)",
+        "tonalRamp": [
+          "oklch(0.15 0 0)",
+          "oklch(0.26 0 0)",
+          "oklch(0.38 0 0)",
+          "oklch(0.49 0 0)",
+          "oklch(0.61 0 0)",
+          "oklch(0.72 0 0)",
+          "oklch(0.84 0 0)",
+          "oklch(0.95 0 0)"
+        ]
+      },
+      "muted": {
+        "role": "neutral",
+        "displayName": "Muted Fill",
+        "canonical": "oklch(0.97 0 0)",
+        "tonalRamp": [
+          "oklch(0.15 0 0)",
+          "oklch(0.26 0 0)",
+          "oklch(0.38 0 0)",
+          "oklch(0.49 0 0)",
+          "oklch(0.61 0 0)",
+          "oklch(0.72 0 0)",
+          "oklch(0.84 0 0)",
+          "oklch(0.95 0 0)"
+        ]
+      },
+      "mutedForeground": {
+        "role": "neutral",
+        "displayName": "Muted Text",
+        "canonical": "oklch(0.556 0 0)",
+        "tonalRamp": [
+          "oklch(0.15 0 0)",
+          "oklch(0.26 0 0)",
+          "oklch(0.38 0 0)",
+          "oklch(0.49 0 0)",
+          "oklch(0.61 0 0)",
+          "oklch(0.72 0 0)",
+          "oklch(0.84 0 0)",
+          "oklch(0.95 0 0)"
+        ]
+      },
+      "accent": {
+        "role": "neutral",
+        "displayName": "Hover Fill",
+        "canonical": "oklch(0.97 0 0)",
+        "tonalRamp": [
+          "oklch(0.15 0 0)",
+          "oklch(0.26 0 0)",
+          "oklch(0.38 0 0)",
+          "oklch(0.49 0 0)",
+          "oklch(0.61 0 0)",
+          "oklch(0.72 0 0)",
+          "oklch(0.84 0 0)",
+          "oklch(0.95 0 0)"
+        ]
+      },
+      "accentForeground": {
+        "role": "neutral",
+        "displayName": "On Hover Fill",
+        "canonical": "oklch(0.205 0 0)",
+        "tonalRamp": [
+          "oklch(0.15 0 0)",
+          "oklch(0.26 0 0)",
+          "oklch(0.38 0 0)",
+          "oklch(0.49 0 0)",
+          "oklch(0.61 0 0)",
+          "oklch(0.72 0 0)",
+          "oklch(0.84 0 0)",
+          "oklch(0.95 0 0)"
+        ]
+      },
+      "destructive": {
+        "role": "status",
+        "displayName": "Destructive",
+        "canonical": "oklch(0.577 0.245 27.325)",
+        "tonalRamp": [
+          "oklch(0.15 0.077 27.325)",
+          "oklch(0.26 0.106 27.325)",
+          "oklch(0.38 0.135 27.325)",
+          "oklch(0.49 0.163 27.325)",
+          "oklch(0.61 0.138 27.325)",
+          "oklch(0.72 0.11 27.325)",
+          "oklch(0.84 0.081 27.325)",
+          "oklch(0.95 0.053 27.325)"
+        ]
+      },
+      "success": {
+        "role": "status",
+        "displayName": "Success",
+        "canonical": "oklch(0.627 0.155 149.21)",
+        "tonalRamp": [
+          "oklch(0.15 0.077 149.21)",
+          "oklch(0.26 0.106 149.21)",
+          "oklch(0.38 0.135 149.21)",
+          "oklch(0.49 0.155 149.21)",
+          "oklch(0.61 0.138 149.21)",
+          "oklch(0.72 0.11 149.21)",
+          "oklch(0.84 0.081 149.21)",
+          "oklch(0.95 0.053 149.21)"
+        ]
+      },
+      "successForeground": {
+        "role": "status",
+        "displayName": "On Success",
+        "canonical": "oklch(0.985 0 0)",
+        "tonalRamp": [
+          "oklch(0.15 0 0)",
+          "oklch(0.26 0 0)",
+          "oklch(0.38 0 0)",
+          "oklch(0.49 0 0)",
+          "oklch(0.61 0 0)",
+          "oklch(0.72 0 0)",
+          "oklch(0.84 0 0)",
+          "oklch(0.95 0 0)"
+        ]
+      },
+      "warning": {
+        "role": "status",
+        "displayName": "Warning",
+        "canonical": "oklch(0.745 0.153 74.2)",
+        "tonalRamp": [
+          "oklch(0.15 0.077 74.2)",
+          "oklch(0.26 0.106 74.2)",
+          "oklch(0.38 0.135 74.2)",
+          "oklch(0.49 0.153 74.2)",
+          "oklch(0.61 0.138 74.2)",
+          "oklch(0.72 0.11 74.2)",
+          "oklch(0.84 0.081 74.2)",
+          "oklch(0.95 0.053 74.2)"
+        ]
+      },
+      "warningForeground": {
+        "role": "status",
+        "displayName": "On Warning",
+        "canonical": "oklch(0.205 0 0)",
+        "tonalRamp": [
+          "oklch(0.15 0 0)",
+          "oklch(0.26 0 0)",
+          "oklch(0.38 0 0)",
+          "oklch(0.49 0 0)",
+          "oklch(0.61 0 0)",
+          "oklch(0.72 0 0)",
+          "oklch(0.84 0 0)",
+          "oklch(0.95 0 0)"
+        ]
+      },
+      "border": {
+        "role": "neutral",
+        "displayName": "Hairline",
+        "canonical": "oklch(0.922 0 0)",
+        "tonalRamp": [
+          "oklch(0.15 0 0)",
+          "oklch(0.26 0 0)",
+          "oklch(0.38 0 0)",
+          "oklch(0.49 0 0)",
+          "oklch(0.61 0 0)",
+          "oklch(0.72 0 0)",
+          "oklch(0.84 0 0)",
+          "oklch(0.95 0 0)"
+        ]
+      },
+      "input": {
+        "role": "neutral",
+        "displayName": "Field Outline",
+        "canonical": "oklch(0.922 0 0)",
+        "tonalRamp": [
+          "oklch(0.15 0 0)",
+          "oklch(0.26 0 0)",
+          "oklch(0.38 0 0)",
+          "oklch(0.49 0 0)",
+          "oklch(0.61 0 0)",
+          "oklch(0.72 0 0)",
+          "oklch(0.84 0 0)",
+          "oklch(0.95 0 0)"
+        ]
+      },
+      "ring": {
+        "role": "primary",
+        "displayName": "Focus Teal",
+        "canonical": "oklch(0.6 0.095 185)",
+        "tonalRamp": [
+          "oklch(0.19 0.033 185)",
+          "oklch(0.255 0.043 185)",
+          "oklch(0.335 0.056 185)",
+          "oklch(0.42 0.07 185)",
+          "oklch(0.505 0.085 185)",
+          "oklch(0.6 0.095 185)",
+          "oklch(0.71 0.095 185)",
+          "oklch(0.8 0.08 185)",
+          "oklch(0.885 0.055 185)",
+          "oklch(0.945 0.03 185)",
+          "oklch(0.975 0.015 185)"
+        ]
+      },
+      "paper": {
+        "role": "neutral",
+        "displayName": "Paper",
+        "canonical": "oklch(1 0 0)",
+        "tonalRamp": [
+          "oklch(0.15 0.006 285.885)",
+          "oklch(0.26 0.006 285.885)",
+          "oklch(0.38 0.006 285.885)",
+          "oklch(0.49 0.006 285.885)",
+          "oklch(0.61 0.006 285.885)",
+          "oklch(0.72 0.006 285.885)",
+          "oklch(0.84 0.006 285.885)",
+          "oklch(0.95 0.006 285.885)"
+        ]
+      },
+      "paperForeground": {
+        "role": "neutral",
+        "displayName": "Paper Ink",
+        "canonical": "oklch(0.21 0.006 285.885)",
+        "tonalRamp": [
+          "oklch(0.15 0.006 285.885)",
+          "oklch(0.26 0.006 285.885)",
+          "oklch(0.38 0.006 285.885)",
+          "oklch(0.49 0.006 285.885)",
+          "oklch(0.61 0.006 285.885)",
+          "oklch(0.72 0.006 285.885)",
+          "oklch(0.84 0.006 285.885)",
+          "oklch(0.95 0.006 285.885)"
+        ]
+      },
+      "paperMuted": {
+        "role": "neutral",
+        "displayName": "Paper Wash",
+        "canonical": "oklch(0.967 0.001 286.375)",
+        "tonalRamp": [
+          "oklch(0.15 0.006 286.375)",
+          "oklch(0.26 0.006 286.375)",
+          "oklch(0.38 0.006 286.375)",
+          "oklch(0.49 0.006 286.375)",
+          "oklch(0.61 0.006 286.375)",
+          "oklch(0.72 0.006 286.375)",
+          "oklch(0.84 0.006 286.375)",
+          "oklch(0.95 0.006 286.375)"
+        ]
+      },
+      "paperMutedForeground": {
+        "role": "neutral",
+        "displayName": "Pencil",
+        "canonical": "oklch(0.5 0.016 286)",
+        "tonalRamp": [
+          "oklch(0.15 0.016 286)",
+          "oklch(0.26 0.016 286)",
+          "oklch(0.38 0.016 286)",
+          "oklch(0.49 0.016 286)",
+          "oklch(0.61 0.016 286)",
+          "oklch(0.72 0.016 286)",
+          "oklch(0.84 0.016 286)",
+          "oklch(0.95 0.016 286)"
+        ]
+      },
+      "paperBorder": {
+        "role": "neutral",
+        "displayName": "Paper Edge",
+        "canonical": "oklch(0.871 0.006 286.286)",
+        "tonalRamp": [
+          "oklch(0.15 0.006 286.286)",
+          "oklch(0.26 0.006 286.286)",
+          "oklch(0.38 0.006 286.286)",
+          "oklch(0.49 0.006 286.286)",
+          "oklch(0.61 0.006 286.286)",
+          "oklch(0.72 0.006 286.286)",
+          "oklch(0.84 0.006 286.286)",
+          "oklch(0.95 0.006 286.286)"
+        ]
+      },
+      "desk": {
+        "role": "neutral",
+        "displayName": "Desk",
+        "canonical": "oklch(0.92 0.004 286.32)",
+        "tonalRamp": [
+          "oklch(0.15 0.004 286.32)",
+          "oklch(0.26 0.004 286.32)",
+          "oklch(0.38 0.004 286.32)",
+          "oklch(0.49 0.004 286.32)",
+          "oklch(0.61 0.004 286.32)",
+          "oklch(0.72 0.004 286.32)",
+          "oklch(0.84 0.004 286.32)",
+          "oklch(0.95 0.004 286.32)"
+        ]
+      },
+      "canvas": {
+        "role": "neutral",
+        "displayName": "Canvas",
+        "canonical": "oklch(0.99 0.003 85)",
+        "tonalRamp": [
+          "oklch(0.15 0.006 85)",
+          "oklch(0.26 0.006 85)",
+          "oklch(0.38 0.006 85)",
+          "oklch(0.49 0.006 85)",
+          "oklch(0.61 0.006 85)",
+          "oklch(0.72 0.006 85)",
+          "oklch(0.84 0.006 85)",
+          "oklch(0.95 0.006 85)"
+        ]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Ink",
+        "canonical": "oklch(0.27 0.007 120)",
+        "tonalRamp": [
+          "oklch(0.15 0.007 120)",
+          "oklch(0.26 0.007 120)",
+          "oklch(0.38 0.007 120)",
+          "oklch(0.49 0.007 120)",
+          "oklch(0.61 0.007 120)",
+          "oklch(0.72 0.007 120)",
+          "oklch(0.84 0.007 120)",
+          "oklch(0.95 0.007 120)"
+        ]
+      },
+      "copyGrey": {
+        "role": "neutral",
+        "displayName": "Copy Grey",
+        "canonical": "oklch(0.442 0.017 285.786)",
+        "tonalRamp": [
+          "oklch(0.15 0.017 285.786)",
+          "oklch(0.26 0.017 285.786)",
+          "oklch(0.38 0.017 285.786)",
+          "oklch(0.49 0.017 285.786)",
+          "oklch(0.61 0.017 285.786)",
+          "oklch(0.72 0.017 285.786)",
+          "oklch(0.84 0.017 285.786)",
+          "oklch(0.95 0.017 285.786)"
+        ]
+      },
+      "sky": {
+        "role": "tertiary",
+        "displayName": "Sky",
+        "canonical": "oklch(0.82 0.075 205)",
+        "tonalRamp": [
+          "oklch(0.15 0.075 205)",
+          "oklch(0.26 0.075 205)",
+          "oklch(0.38 0.075 205)",
+          "oklch(0.49 0.075 205)",
+          "oklch(0.61 0.075 205)",
+          "oklch(0.72 0.075 205)",
+          "oklch(0.84 0.075 205)",
+          "oklch(0.95 0.053 205)"
+        ]
+      },
+      "glow": {
+        "role": "tertiary",
+        "displayName": "Glow",
+        "canonical": "oklch(0.97 0.03 205)",
+        "tonalRamp": [
+          "oklch(0.15 0.075 205)",
+          "oklch(0.26 0.075 205)",
+          "oklch(0.38 0.075 205)",
+          "oklch(0.49 0.075 205)",
+          "oklch(0.61 0.075 205)",
+          "oklch(0.72 0.075 205)",
+          "oklch(0.84 0.075 205)",
+          "oklch(0.95 0.053 205)"
+        ]
+      },
+      "tileWash": {
+        "role": "tertiary",
+        "displayName": "Tile Wash",
+        "canonical": "oklch(0.975 0.014 205)",
+        "tonalRamp": [
+          "oklch(0.15 0.035 205)",
+          "oklch(0.26 0.035 205)",
+          "oklch(0.38 0.035 205)",
+          "oklch(0.49 0.035 205)",
+          "oklch(0.61 0.035 205)",
+          "oklch(0.72 0.035 205)",
+          "oklch(0.84 0.035 205)",
+          "oklch(0.95 0.035 205)"
+        ]
+      },
+      "nightPanel": {
+        "role": "neutral",
+        "displayName": "Night Panel",
+        "canonical": "oklch(0.141 0.005 285.823)",
+        "tonalRamp": [
+          "oklch(0.15 0.005 285.823)",
+          "oklch(0.26 0.005 285.823)",
+          "oklch(0.38 0.005 285.823)",
+          "oklch(0.49 0.005 285.823)",
+          "oklch(0.61 0.005 285.823)",
+          "oklch(0.72 0.005 285.823)",
+          "oklch(0.84 0.005 285.823)",
+          "oklch(0.95 0.005 285.823)"
+        ]
+      },
+      "terminalScreen": {
+        "role": "neutral",
+        "displayName": "Terminal Screen",
+        "canonical": "oklch(0.16 0.005 250)",
+        "tonalRamp": [
+          "oklch(0.15 0.005 250)",
+          "oklch(0.26 0.005 250)",
+          "oklch(0.38 0.005 250)",
+          "oklch(0.49 0.005 250)",
+          "oklch(0.61 0.005 250)",
+          "oklch(0.72 0.005 250)",
+          "oklch(0.84 0.005 250)",
+          "oklch(0.95 0.005 250)"
+        ]
+      },
+      "auroraViolet": {
+        "role": "secondary",
+        "displayName": "Aurora Violet",
+        "canonical": "oklch(0.52 0.17 295)",
+        "tonalRamp": [
+          "oklch(0.15 0.077 295)",
+          "oklch(0.26 0.106 295)",
+          "oklch(0.38 0.135 295)",
+          "oklch(0.49 0.163 295)",
+          "oklch(0.61 0.138 295)",
+          "oklch(0.72 0.11 295)",
+          "oklch(0.84 0.081 295)",
+          "oklch(0.95 0.053 295)"
+        ]
+      },
+      "auroraIndigo": {
+        "role": "secondary",
+        "displayName": "Aurora Indigo",
+        "canonical": "oklch(0.5 0.16 270)",
+        "tonalRamp": [
+          "oklch(0.15 0.077 270)",
+          "oklch(0.26 0.106 270)",
+          "oklch(0.38 0.135 270)",
+          "oklch(0.49 0.16 270)",
+          "oklch(0.61 0.138 270)",
+          "oklch(0.72 0.11 270)",
+          "oklch(0.84 0.081 270)",
+          "oklch(0.95 0.053 270)"
+        ]
+      },
+      "auroraMagenta": {
+        "role": "secondary",
+        "displayName": "Aurora Magenta",
+        "canonical": "oklch(0.55 0.17 330)",
+        "tonalRamp": [
+          "oklch(0.15 0.077 330)",
+          "oklch(0.26 0.106 330)",
+          "oklch(0.38 0.135 330)",
+          "oklch(0.49 0.163 330)",
+          "oklch(0.61 0.138 330)",
+          "oklch(0.72 0.11 330)",
+          "oklch(0.84 0.081 330)",
+          "oklch(0.95 0.053 330)"
+        ]
+      },
+      "pdfMuted": {
+        "role": "neutral",
+        "displayName": "PDF Label Grey",
+        "canonical": "oklch(0.551 0.027 264.364)",
+        "tonalRamp": [
+          "oklch(0.15 0.027 264.364)",
+          "oklch(0.26 0.027 264.364)",
+          "oklch(0.38 0.027 264.364)",
+          "oklch(0.49 0.027 264.364)",
+          "oklch(0.61 0.027 264.364)",
+          "oklch(0.72 0.027 264.364)",
+          "oklch(0.84 0.027 264.364)",
+          "oklch(0.95 0.027 264.364)"
+        ]
+      },
+      "pdfMutedZinc": {
+        "role": "neutral",
+        "displayName": "PDF Payment Grey",
+        "canonical": "oklch(0.552 0.016 285.938)",
+        "tonalRamp": [
+          "oklch(0.15 0.016 285.938)",
+          "oklch(0.26 0.016 285.938)",
+          "oklch(0.38 0.016 285.938)",
+          "oklch(0.49 0.016 285.938)",
+          "oklch(0.61 0.016 285.938)",
+          "oklch(0.72 0.016 285.938)",
+          "oklch(0.84 0.016 285.938)",
+          "oklch(0.95 0.016 285.938)"
+        ]
+      },
+      "themeColor": {
+        "role": "primary",
+        "displayName": "Browser Teal",
+        "canonical": "oklch(0.505 0.085 185)",
+        "tonalRamp": [
+          "oklch(0.19 0.033 185)",
+          "oklch(0.255 0.043 185)",
+          "oklch(0.335 0.056 185)",
+          "oklch(0.42 0.07 185)",
+          "oklch(0.505 0.085 185)",
+          "oklch(0.6 0.095 185)",
+          "oklch(0.71 0.095 185)",
+          "oklch(0.8 0.08 185)",
+          "oklch(0.885 0.055 185)",
+          "oklch(0.945 0.03 185)",
+          "oklch(0.975 0.015 185)"
+        ]
+      },
+      "brand50": {
+        "role": "primary",
+        "displayName": "Brand Wash",
+        "canonical": "oklch(0.975 0.015 185)",
+        "tonalRamp": [
+          "oklch(0.19 0.033 185)",
+          "oklch(0.255 0.043 185)",
+          "oklch(0.335 0.056 185)",
+          "oklch(0.42 0.07 185)",
+          "oklch(0.505 0.085 185)",
+          "oklch(0.6 0.095 185)",
+          "oklch(0.71 0.095 185)",
+          "oklch(0.8 0.08 185)",
+          "oklch(0.885 0.055 185)",
+          "oklch(0.945 0.03 185)",
+          "oklch(0.975 0.015 185)"
+        ]
+      },
+      "brand100": {
+        "role": "primary",
+        "displayName": "Selected Wash",
+        "canonical": "oklch(0.945 0.03 185)",
+        "tonalRamp": [
+          "oklch(0.19 0.033 185)",
+          "oklch(0.255 0.043 185)",
+          "oklch(0.335 0.056 185)",
+          "oklch(0.42 0.07 185)",
+          "oklch(0.505 0.085 185)",
+          "oklch(0.6 0.095 185)",
+          "oklch(0.71 0.095 185)",
+          "oklch(0.8 0.08 185)",
+          "oklch(0.885 0.055 185)",
+          "oklch(0.945 0.03 185)",
+          "oklch(0.975 0.015 185)"
+        ]
+      },
+      "brand200": {
+        "role": "primary",
+        "displayName": "Wash Border",
+        "canonical": "oklch(0.885 0.055 185)",
+        "tonalRamp": [
+          "oklch(0.19 0.033 185)",
+          "oklch(0.255 0.043 185)",
+          "oklch(0.335 0.056 185)",
+          "oklch(0.42 0.07 185)",
+          "oklch(0.505 0.085 185)",
+          "oklch(0.6 0.095 185)",
+          "oklch(0.71 0.095 185)",
+          "oklch(0.8 0.08 185)",
+          "oklch(0.885 0.055 185)",
+          "oklch(0.945 0.03 185)",
+          "oklch(0.975 0.015 185)"
+        ]
+      },
+      "brand300": {
+        "role": "primary",
+        "displayName": "Pale Teal",
+        "canonical": "oklch(0.8 0.08 185)",
+        "tonalRamp": [
+          "oklch(0.19 0.033 185)",
+          "oklch(0.255 0.043 185)",
+          "oklch(0.335 0.056 185)",
+          "oklch(0.42 0.07 185)",
+          "oklch(0.505 0.085 185)",
+          "oklch(0.6 0.095 185)",
+          "oklch(0.71 0.095 185)",
+          "oklch(0.8 0.08 185)",
+          "oklch(0.885 0.055 185)",
+          "oklch(0.945 0.03 185)",
+          "oklch(0.975 0.015 185)"
+        ]
+      },
+      "brand400": {
+        "role": "primary",
+        "displayName": "Dark Teal Text",
+        "canonical": "oklch(0.71 0.095 185)",
+        "tonalRamp": [
+          "oklch(0.19 0.033 185)",
+          "oklch(0.255 0.043 185)",
+          "oklch(0.335 0.056 185)",
+          "oklch(0.42 0.07 185)",
+          "oklch(0.505 0.085 185)",
+          "oklch(0.6 0.095 185)",
+          "oklch(0.71 0.095 185)",
+          "oklch(0.8 0.08 185)",
+          "oklch(0.885 0.055 185)",
+          "oklch(0.945 0.03 185)",
+          "oklch(0.975 0.015 185)"
+        ]
+      },
+      "brand500": {
+        "role": "primary",
+        "displayName": "Focus Teal",
+        "canonical": "oklch(0.6 0.095 185)",
+        "tonalRamp": [
+          "oklch(0.19 0.033 185)",
+          "oklch(0.255 0.043 185)",
+          "oklch(0.335 0.056 185)",
+          "oklch(0.42 0.07 185)",
+          "oklch(0.505 0.085 185)",
+          "oklch(0.6 0.095 185)",
+          "oklch(0.71 0.095 185)",
+          "oklch(0.8 0.08 185)",
+          "oklch(0.885 0.055 185)",
+          "oklch(0.945 0.03 185)",
+          "oklch(0.975 0.015 185)"
+        ]
+      },
+      "brand600": {
+        "role": "primary",
+        "displayName": "Brand Teal",
+        "canonical": "oklch(0.505 0.085 185)",
+        "tonalRamp": [
+          "oklch(0.19 0.033 185)",
+          "oklch(0.255 0.043 185)",
+          "oklch(0.335 0.056 185)",
+          "oklch(0.42 0.07 185)",
+          "oklch(0.505 0.085 185)",
+          "oklch(0.6 0.095 185)",
+          "oklch(0.71 0.095 185)",
+          "oklch(0.8 0.08 185)",
+          "oklch(0.885 0.055 185)",
+          "oklch(0.945 0.03 185)",
+          "oklch(0.975 0.015 185)"
+        ]
+      },
+      "brand700": {
+        "role": "primary",
+        "displayName": "Deep Teal",
+        "canonical": "oklch(0.42 0.07 185)",
+        "tonalRamp": [
+          "oklch(0.19 0.033 185)",
+          "oklch(0.255 0.043 185)",
+          "oklch(0.335 0.056 185)",
+          "oklch(0.42 0.07 185)",
+          "oklch(0.505 0.085 185)",
+          "oklch(0.6 0.095 185)",
+          "oklch(0.71 0.095 185)",
+          "oklch(0.8 0.08 185)",
+          "oklch(0.885 0.055 185)",
+          "oklch(0.945 0.03 185)",
+          "oklch(0.975 0.015 185)"
+        ]
+      },
+      "brand800": {
+        "role": "primary",
+        "displayName": "Deeper Teal",
+        "canonical": "oklch(0.335 0.056 185)",
+        "tonalRamp": [
+          "oklch(0.19 0.033 185)",
+          "oklch(0.255 0.043 185)",
+          "oklch(0.335 0.056 185)",
+          "oklch(0.42 0.07 185)",
+          "oklch(0.505 0.085 185)",
+          "oklch(0.6 0.095 185)",
+          "oklch(0.71 0.095 185)",
+          "oklch(0.8 0.08 185)",
+          "oklch(0.885 0.055 185)",
+          "oklch(0.945 0.03 185)",
+          "oklch(0.975 0.015 185)"
+        ]
+      },
+      "brand900": {
+        "role": "primary",
+        "displayName": "Night Teal",
+        "canonical": "oklch(0.255 0.043 185)",
+        "tonalRamp": [
+          "oklch(0.19 0.033 185)",
+          "oklch(0.255 0.043 185)",
+          "oklch(0.335 0.056 185)",
+          "oklch(0.42 0.07 185)",
+          "oklch(0.505 0.085 185)",
+          "oklch(0.6 0.095 185)",
+          "oklch(0.71 0.095 185)",
+          "oklch(0.8 0.08 185)",
+          "oklch(0.885 0.055 185)",
+          "oklch(0.945 0.03 185)",
+          "oklch(0.975 0.015 185)"
+        ]
+      },
+      "brand950": {
+        "role": "primary",
+        "displayName": "Darkest Teal",
+        "canonical": "oklch(0.19 0.033 185)",
+        "tonalRamp": [
+          "oklch(0.19 0.033 185)",
+          "oklch(0.255 0.043 185)",
+          "oklch(0.335 0.056 185)",
+          "oklch(0.42 0.07 185)",
+          "oklch(0.505 0.085 185)",
+          "oklch(0.6 0.095 185)",
+          "oklch(0.71 0.095 185)",
+          "oklch(0.8 0.08 185)",
+          "oklch(0.885 0.055 185)",
+          "oklch(0.945 0.03 185)",
+          "oklch(0.975 0.015 185)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "title": {
+        "displayName": "Title",
+        "purpose": "Editor document name and dialog titles."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Editor chrome text."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Buttons, menu triggers, table headers."
+      },
+      "control": {
+        "displayName": "Control",
+        "purpose": "Dense editor controls: menu items, command palette, inspector rows, list and table rows, the download popover. The body role's app value (13/20)."
+      },
+      "caption": {
+        "displayName": "Caption",
+        "purpose": "xs buttons and meta in the editor."
+      },
+      "homeDisplay": {
+        "displayName": "Home Display",
+        "purpose": "The hero h1 and closing h2, fluid 32 to 60px, two lines, ink."
+      },
+      "homeHeadline": {
+        "displayName": "Home Headline",
+        "purpose": "Homepage section h2s (the title role at marketing values)."
+      },
+      "homeTitle": {
+        "displayName": "Home Title",
+        "purpose": "Step, card and proof h3s; 16px from sm."
+      },
+      "homeLead": {
+        "displayName": "Home Lead",
+        "purpose": "The hero paragraph only, ink at 75%."
+      },
+      "homeBody": {
+        "displayName": "Home Body",
+        "purpose": "Homepage reading copy in zinc-600; 14/24 from sm. Compact step sets single-line controls."
+      },
+      "homeCaption": {
+        "displayName": "Home Caption",
+        "purpose": "Step numbers and comparison row labels."
+      },
+      "wordmark": {
+        "displayName": "Wordmark",
+        "purpose": "The name in the page face and ink."
+      },
+      "code": {
+        "displayName": "Code",
+        "purpose": "Code tile lines (12/24); the terminal runs 13/24."
+      }
+    },
+    "shadows": [
+      {
+        "name": "menu",
+        "value": "0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)",
+        "purpose": "Menus, popovers, dialogs, the canvas pill and zoom control (--shadow-menu)."
+      },
+      {
+        "name": "floating",
+        "value": "0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)",
+        "purpose": "The editor's side panels as phone bottom sheets (--shadow-floating)."
+      },
+      {
+        "name": "paper-lift",
+        "value": "0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)",
+        "purpose": "The A4 sheet on the desk (Tailwind shadow-md); removed in print."
+      },
+      {
+        "name": "bezel",
+        "value": "0 24px 64px -16px rgb(16 60 90 / 0.25)",
+        "purpose": "The frosted frame of the hero's editor window on the sky."
+      },
+      {
+        "name": "lifted",
+        "value": "0 8px 24px -8px rgb(16 40 60 / 0.18)",
+        "purpose": "White panels and paper inside demo and code tiles, with a zinc-950/5 ring."
+      },
+      {
+        "name": "pill",
+        "value": "inset 0 1px 0 rgb(255 255 255 / 0.12), 0 1px 2px rgb(0 0 0 / 0.16)",
+        "purpose": "The ink pill's top highlight and contact shadow."
+      },
+      {
+        "name": "overlay",
+        "value": "0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)",
+        "purpose": "The homepage skip link and phone menu (Tailwind shadow-lg)."
+      }
+    ],
+    "motion": [
+      {
+        "name": "ease-out-strong",
+        "value": "cubic-bezier(0.23, 1, 0.32, 1)",
+        "purpose": "Arrivals: the hero entrance, dialogs, demo steps."
+      },
+      {
+        "name": "ease-in-out-strong",
+        "value": "cubic-bezier(0.77, 0, 0.175, 1)",
+        "purpose": "Movement inside the homepage demo scenes."
+      },
+      {
+        "name": "button-press",
+        "value": "150ms ease-out; active scale 0.97",
+        "purpose": "Editor buttons' colour, border, shadow, opacity and scale."
+      },
+      {
+        "name": "home-hover",
+        "value": "200ms ease-in-out",
+        "purpose": "Homepage colour hovers on pills and menu rows."
+      },
+      {
+        "name": "hero-focus",
+        "value": "900ms ease-out-strong, from opacity 0 and blur(8px), 80ms stagger",
+        "purpose": "Hero headline lines, lead and pill row on first page load; fade only under reduced motion."
+      },
+      {
+        "name": "hero-fade",
+        "value": "1000ms ease-out-strong at 320ms",
+        "purpose": "The hero's editor window fading in."
+      },
+      {
+        "name": "cloud-drift",
+        "value": "linear, 89s to 211s per cloud, random phase",
+        "purpose": "Clouds crossing the hero sky; paused under reduced motion."
+      },
+      {
+        "name": "demo-loop",
+        "value": "var(--loop) per scene, infinite",
+        "purpose": "Demo tile scenes, running only while a third of the tile is on screen; finished state under reduced motion."
+      },
+      {
+        "name": "glow-breathe",
+        "value": "4s cubic-bezier(0.37, 0, 0.63, 1) alternate",
+        "purpose": "The closing panel's dome, scale and opacity only."
+      },
+      {
+        "name": "aurora",
+        "value": "13s, 17s, 11s ease-in-out",
+        "purpose": "The night panel's three lights, only while on screen."
+      },
+      {
+        "name": "terminal-edge",
+        "value": "8s linear",
+        "purpose": "The band of light round the terminal's edge."
+      },
+      {
+        "name": "history-flash",
+        "value": "900ms ease-out",
+        "purpose": "Undo and redo flash the changed part of the page in brand-500."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "sm",
+        "value": "640px"
+      },
+      {
+        "name": "md",
+        "value": "768px"
+      },
+      {
+        "name": "lg",
+        "value": "1024px"
+      },
+      {
+        "name": "xl",
+        "value": "1280px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button",
+      "description": "The editor's primary action: brand-600 fill, white Medium 14px, 4px corners, 32px tall.",
+      "html": "<button class=\"ds-btn-primary\">Download</button>",
+      "css": ".ds-btn-primary { display: inline-flex; align-items: center; height: 32px; padding: 0 10px; border: 1px solid transparent; border-radius: 4px; background: oklch(0.505 0.085 185); color: #fff; font: 500 14px/1 \"Geist Variable\", system-ui, sans-serif; cursor: pointer; transition: background-color 150ms ease-out, scale 150ms ease-out; } .ds-btn-primary:hover { background: oklch(0.42 0.07 185); } .ds-btn-primary:focus-visible { outline: none; box-shadow: 0 0 0 1px oklch(0.6 0.095 185); } .ds-btn-primary:active { scale: 0.97; }"
+    },
+    {
+      "name": "Outline Button",
+      "kind": "button",
+      "refersTo": "buttonOutline",
+      "description": "Secondary editor action: hairline on the background, hover muted.",
+      "html": "<button class=\"ds-btn-outline\">Preview</button>",
+      "css": ".ds-btn-outline { display: inline-flex; align-items: center; height: 32px; padding: 0 10px; border: 1px solid #eaeaea; border-radius: 4px; background: #fcfcfc; color: #1c1c1c; font: 500 14px/1 \"Geist Variable\", system-ui, sans-serif; cursor: pointer; transition: background-color 150ms ease-out, scale 150ms ease-out; } .ds-btn-outline:hover { background: #f2f2f2; } .ds-btn-outline:focus-visible { outline: none; box-shadow: 0 0 0 1px oklch(0.6 0.095 185); } .ds-btn-outline:active { scale: 0.97; }"
+    },
+    {
+      "name": "Destructive Button",
+      "kind": "button",
+      "refersTo": "buttonDestructive",
+      "description": "Danger as a tint, never a solid red.",
+      "html": "<button class=\"ds-btn-destructive\">Delete invoice</button>",
+      "css": ".ds-btn-destructive { display: inline-flex; align-items: center; height: 32px; padding: 0 10px; border: 1px solid transparent; border-radius: 4px; background: oklch(0.577 0.245 27.325 / 0.1); color: oklch(0.577 0.245 27.325); font: 500 14px/1 \"Geist Variable\", system-ui, sans-serif; cursor: pointer; transition: background-color 150ms ease-out, scale 150ms ease-out; } .ds-btn-destructive:hover { background: oklch(0.577 0.245 27.325 / 0.2); } .ds-btn-destructive:focus-visible { outline: none; box-shadow: 0 0 0 1px oklch(0.577 0.245 27.325); } .ds-btn-destructive:active { scale: 0.97; }"
+    },
+    {
+      "name": "Inspector Field",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "A 13px editor control: muted fill, transparent border that turns to the ring on focus.",
+      "html": "<input class=\"ds-input\" value=\"Net 30\" aria-label=\"Payment terms\">",
+      "css": ".ds-input { height: 32px; width: 220px; padding: 0 8px; border: 1px solid transparent; border-radius: 6px; background: #f2f2f2; color: #1c1c1c; font: 400 13px/20px \"Geist Variable\", system-ui, sans-serif; outline: none; } .ds-input:hover { border-color: #e1e1e1; } .ds-input:focus-visible { border-color: oklch(0.6 0.095 185); }"
+    },
+    {
+      "name": "Invoice Field",
+      "kind": "input",
+      "refersTo": "invoiceField",
+      "description": "A field drawn on the paper: invisible at rest, a brand-50 patch on hover and focus.",
+      "html": "<div class=\"ds-paper\"><input class=\"ds-invoice-field\" placeholder=\"Client name\"></div>",
+      "css": ".ds-paper { padding: 24px; background: #fff; border: 1px solid oklch(0.871 0.006 286.286); } .ds-invoice-field { width: 240px; padding: 0; border: 1px solid transparent; border-radius: 3px; background: transparent; color: oklch(0.21 0.006 285.885); font: 400 14px/1.5 \"Geist Variable\", system-ui, sans-serif; outline: none; } .ds-invoice-field::placeholder { color: oklch(0.5 0.016 286); } .ds-invoice-field:hover { background: oklch(0.975 0.015 185); } .ds-invoice-field:focus-visible { background: oklch(0.975 0.015 185); border-color: oklch(0.6 0.095 185); padding: 4px 8px; }"
+    },
+    {
+      "name": "Menu",
+      "kind": "custom",
+      "refersTo": "menuItem",
+      "description": "Dropdown and context menus: popover surface, 3px corners, ring and menu shadow, 13px items.",
+      "html": "<div class=\"ds-menu\" role=\"menu\"><div class=\"ds-menu-item\" role=\"menuitem\" tabindex=\"0\">Duplicate</div><div class=\"ds-menu-item\" role=\"menuitem\" tabindex=\"0\">Save as template</div><div class=\"ds-menu-item ds-menu-danger\" role=\"menuitem\" tabindex=\"0\">Delete</div></div>",
+      "css": ".ds-menu { display: flex; flex-direction: column; width: 200px; padding: 4px; border-radius: 3px; background: #fff; box-shadow: 0 0 0 1px rgb(28 28 28 / 0.1), 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1); font: 400 13px/1.5 \"Geist Variable\", system-ui, sans-serif; color: #1c1c1c; } .ds-menu-item { padding: 4px 6px; border-radius: 3px; cursor: default; outline: none; } .ds-menu-item:hover, .ds-menu-item:focus-visible { background: #eaeaea; } .ds-menu-danger { color: oklch(0.577 0.245 27.325); }"
+    },
+    {
+      "name": "Ink Pill",
+      "kind": "button",
+      "refersTo": "inkPill",
+      "description": "The homepage's one primary action, Create invoice.",
+      "html": "<a class=\"ds-ink-pill\" href=\"#\">Create invoice</a>",
+      "css": ".ds-ink-pill { display: inline-flex; align-items: center; padding: 8px 16px; border-radius: 9999px; background: #262823; color: #fff; font: 500 14px/20px \"Schibsted Grotesk Variable\", sans-serif; text-decoration: none; white-space: nowrap; box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.12), 0 1px 2px rgb(0 0 0 / 0.16); transition: background-color 200ms ease-in-out; } .ds-ink-pill:hover { background: rgb(38 40 35 / 0.85); } .ds-ink-pill:focus-visible { outline: 2px solid oklch(0.505 0.085 185); outline-offset: 2px; }"
+    },
+    {
+      "name": "Soft Pill",
+      "kind": "button",
+      "refersTo": "softPill",
+      "description": "The secondary homepage action on a coloured panel, frosted white.",
+      "html": "<div class=\"ds-sky\"><a class=\"ds-soft-pill\" href=\"#\">See how it works</a></div>",
+      "css": ".ds-sky { padding: 24px; border-radius: 16px; background: linear-gradient(to bottom, oklch(0.82 0.075 205), oklch(0.9 0.05 199) 45%, oklch(0.97 0.025 192)); } .ds-soft-pill { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 9999px; background: rgb(255 255 255 / 0.6); box-shadow: 0 0 0 1px rgb(255 255 255 / 0.8); backdrop-filter: blur(4px); color: #262823; font: 500 14px/20px \"Schibsted Grotesk Variable\", sans-serif; text-decoration: none; transition: background-color 200ms ease-in-out; } .ds-soft-pill:hover { background: rgb(255 255 255 / 0.85); } .ds-soft-pill:focus-visible { outline: 2px solid oklch(0.505 0.085 185); outline-offset: 2px; }"
+    },
+    {
+      "name": "Demo Tile",
+      "kind": "card",
+      "refersTo": "demoTile",
+      "description": "A pale wash of one tile hue with soft blobs of its pair, holding a lifted piece of the editor.",
+      "html": "<div class=\"ds-tile\" style=\"--h1: 295; --h2: 35\"><span class=\"ds-blob-a\"></span><span class=\"ds-blob-b\"></span><div class=\"ds-lifted\"><span class=\"ds-label\">Bill to</span><span class=\"ds-focus-field\">Fernhill Press</span></div></div>",
+      "css": ".ds-tile { position: relative; isolation: isolate; display: flex; align-items: center; justify-content: center; width: 360px; aspect-ratio: 4 / 3; overflow: hidden; border-radius: 0.9rem; background: oklch(0.975 0.014 var(--h1)); box-shadow: 0 0 0 1px rgb(9 9 11 / 0.05); } .ds-blob-a, .ds-blob-b { position: absolute; z-index: -1; aspect-ratio: 1; border-radius: 9999px; } .ds-blob-a { top: -33%; left: -25%; width: 85%; background: radial-gradient(closest-side, oklch(0.94 0.035 var(--h1)), transparent); } .ds-blob-b { right: -25%; bottom: -33%; width: 80%; background: radial-gradient(closest-side, oklch(0.95 0.03 var(--h2)), transparent); } .ds-lifted { display: flex; flex-direction: column; gap: 6px; width: 240px; padding: 16px; border-radius: 8px; background: #fff; box-shadow: 0 0 0 1px rgb(9 9 11 / 0.05), 0 8px 24px -8px rgb(16 40 60 / 0.18); font-family: \"Geist Variable\", system-ui, sans-serif; } .ds-label { font-size: 12px; font-weight: 500; color: oklch(0.5 0.016 286); } .ds-focus-field { padding: 4px 8px; border: 1px solid oklch(0.6 0.095 185); border-radius: 3px; background: oklch(0.975 0.015 185); color: oklch(0.21 0.006 285.885); font-size: 14px; }"
+    },
+    {
+      "name": "Night Panel Terminal",
+      "kind": "custom",
+      "refersTo": "nightPanel",
+      "description": "The Terminal Exception: a dark violet-lit panel with a terminal replaying a real session.",
+      "html": "<div class=\"ds-night\"><span class=\"ds-aurora\"></span><div class=\"ds-term-edge\"><div class=\"ds-term\"><div class=\"ds-term-bar\"><span></span><span></span><span></span><em>~/raseeda</em></div><div class=\"ds-term-screen\"><p><b>&#10095; </b><i>bun run dev</i></p><p class=\"ds-dim\">$ vite dev</p><p><span class=\"ds-green\">VITE v8.3.4</span><span class=\"ds-dim\">  ready in </span>3044 ms</p></div></div></div></div>",
+      "css": ".ds-night { position: relative; isolation: isolate; overflow: hidden; padding: 40px; border-radius: 0.9rem; background: oklch(0.141 0.005 285.823); box-shadow: 0 0 0 1px rgb(255 255 255 / 0.05); } .ds-aurora { position: absolute; z-index: -1; top: -50%; left: -25%; width: 70%; aspect-ratio: 1; border-radius: 9999px; background: radial-gradient(closest-side, oklch(0.52 0.17 295 / 0.6), transparent); } .ds-term-edge { padding: 1px; border-radius: 13px; background: conic-gradient(from 200deg, transparent 0deg, transparent 200deg, oklch(0.72 0.17 295) 260deg, oklch(0.8 0.12 330) 300deg, transparent 360deg), rgb(255 255 255 / 0.08); } .ds-term { overflow: hidden; border-radius: 12px; background: rgb(12 14 16 / 0.95); } .ds-term-bar { position: relative; display: flex; align-items: center; gap: 6px; height: 40px; padding: 0 16px; border-bottom: 1px solid rgb(255 255 255 / 0.05); } .ds-term-bar span { width: 12px; height: 12px; border-radius: 9999px; background: rgb(255 255 255 / 0.1); } .ds-term-bar em { position: absolute; inset-inline: 0; text-align: center; font: normal 12px \"Geist Variable\", sans-serif; color: #71717a; } .ds-term-screen { padding: 20px; font: 400 13px/24px \"Geist Mono Variable\", monospace; color: #e4e4e7; } .ds-term-screen p { margin: 0; } .ds-term-screen b { color: #f472b6; font-weight: 400; } .ds-term-screen i { font-style: normal; color: #6ee7b7; } .ds-dim { color: #71717a; } .ds-green { color: #34d399; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Precise Paper Desk",
+    "overview": "raseeda is a local-first invoice generator: no accounts, no servers, no tracking, all data in the browser's IndexedDB. The interface should feel like a precise, trustworthy document tool, closer to a spreadsheet or a design canvas than to a consumer landing page. The invoice being edited is the loudest thing on screen: a sheet of white A4 paper lying on a grey desk, surrounded by quiet chrome.\n\nThe visual language is deliberately quiet around that sheet. Chrome is achromatic, the brand accent is a single deep-teal ramp, radii are small, and controls are compact. The paper itself never changes with the app theme, because it is a preview of the PDF that gets downloaded.\n\nThe marketing homepage is light and airy: a warm off-white canvas, warm near-black ink, a pale teal-blue sky with drifting clouds over the real editor, and pale pastel washes behind short loops of the editor at work. It shows the product rather than describing it. Ink carries the actions, teal marks the brand's own column and ticks, and one dark violet panel, the open source terminal, is the named exception.",
+    "keyCharacteristics": [
+      "Neutral chrome; colour is reserved for the brand accent and for status.",
+      "One accent: the deep-teal `brand` ramp carries every emphasis (one named exception on the homepage).",
+      "White paper on a grey desk: the invoice page previews the PDF exactly.",
+      "Tight geometry in the editor: 3px surfaces, 4px controls, 32px default control height, 13px control text.",
+      "The editor has its own neutral chrome (plain greys, a near-black or near-white primary) and a light/dark switch; the rest of the site is light.",
+      "The homepage is rounder and softer: pills, 12 to 32px corners, rings instead of borders, the real editor in every picture."
+    ],
+    "rules": [
+      {
+        "name": "The One Voice Rule",
+        "body": "The teal `brand` ramp is the only accent. Never introduce a second hue for emphasis; status colours are for status only, the homepage's tile hues mark content only, and the night panel is the one recorded exception.",
+        "section": "colors"
+      },
+      {
+        "name": "The Terminal Exception Rule",
+        "body": "The Run your own copy panel is a dark `zinc-950` surface lit by violet, indigo and magenta lights, with a violet band running round its terminal. It is deliberate and approved, and it stays inside that one panel: violet appears nowhere else on the site except as the keyword colour in the code tiles.",
+        "section": "colors"
+      },
+      {
+        "name": "The Ink Action Rule",
+        "body": "Homepage actions are ink, not teal: the primary action is a solid `ink` pill and secondary actions are frosted white pills. Teal on the homepage marks and hovers; it never fills a button there.",
+        "section": "colors"
+      },
+      {
+        "name": "The 600 Fill Rule",
+        "body": "Solid brand fills under white text are `brand-600` or darker. `brand-500` is for rings, switches and borders.",
+        "section": "colors"
+      },
+      {
+        "name": "The Paper Rule",
+        "body": "The invoice page is white paper with dark ink in every app theme, because it previews the printed PDF. Anything drawn on the page uses `paper-*` tokens (or the brand wash for edit affordances), never chrome roles or raw Tailwind greys or blues.",
+        "section": "colors"
+      },
+      {
+        "name": "The Token Rule",
+        "body": "Brand colour comes from the `brand-*` ramp, never raw Tailwind `blue-*`, `teal-*` or hex, so the next change of hue stays a change to `globals.css` and the icons.",
+        "section": "colors"
+      },
+      {
+        "name": "The Dark Mode Honesty Rule",
+        "body": "Only the editor has a dark mode. The `/create` route sets `data-editor-theme` (and `.dark` when dark) on `<html>` before first paint and clears it on the way out, and the `html[data-editor-theme]` blocks in `globals.css` redefine the chrome roles for it (light: panels `#fcfcfc`, desk `#f6f6f6`; dark: panels `#161616`, desk `#121212`). The page (`[data-paper]`) takes the light roles back in both themes, and `dark:` utilities skip it. The homepage and privacy page stay light; do not claim dark mode for them.",
+        "section": "colors"
+      },
+      {
+        "name": "The Role Rule",
+        "body": "Homepage and privacy-page text takes its size and leading from a `lib/type-scale.ts` role through `typeClass()`; `.home-type` re-sets the role variables at marketing values. Pick a role, never a hand-written size.",
+        "section": "typography"
+      },
+      {
+        "name": "The 13px Control Rule",
+        "body": "Dense editor controls are 13px; buttons stay 14px Medium and meta drops to 12px. The homepage's pictures of the editor mirror 13px so they read as the product.",
+        "section": "typography"
+      },
+      {
+        "name": "The Float-Only Shadow Rule",
+        "body": "A shadow means \"this is above the page\". In-flow cards, rows, and panels get a hairline, not a shadow.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Ring Rule",
+        "body": "On the homepage, containers are outlined with a 1px ring, never a border plus shadow: `zinc-950` at 5% around tiles, at 10% around white cards, the comparison table, question groups and menus; `white` at 5% around the night panel.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do reference semantic roles (`bg-background`, `text-muted-foreground`, `border-border`) in app chrome so retheming stays possible.",
+      "Do use `paper-*` tokens for everything drawn on the invoice page, and `brand-50` plus `brand-500` for its edit affordances.",
+      "Do put solid brand fills on `brand-600` (hover `brand-700`) and keep `brand-500` for focus rings and borders.",
+      "Do keep the A4 page free of responsive breakpoints; scale it with zoom.",
+      "Do give coarse pointers 44px targets with `pointer-coarse:` variants.",
+      "Do separate stacked and adjacent surfaces with `flex` or `grid` plus `gap-*` (use `gap-px` on a coloured parent for hairlines).",
+      "Do stay on `rounded-surface` / `rounded-control`, the 32px control height and 13px control text for editor chrome.",
+      "Do reach for `shadow-menu` for floating chrome rather than picking raw shadow utilities per component.",
+      "Do tint destructive actions; reserve solid saturated fills for the brand.",
+      "Do mirror any new PDF colour as a literal hex in the renderer and record it in the PDF palette here.",
+      "Do use the one `CreateInvoiceLink` ink pill for the homepage's primary action, with a soft pill beside it for the secondary one.",
+      "Do size homepage text with a type role through `typeClass()`.",
+      "Do show the product on the homepage with the editor's own pieces under `data-editor-chrome`, in Geist at the editor's sizes, or with real PDF renders.",
+      "Do give each homepage tile its own pair of `TILE_HUES` so neighbours never match.",
+      "Do run looping homepage motion only while it is on screen, in CSS on transforms and opacity, and hold it still or at its end state under reduced motion.",
+      "Do prove privacy claims with something the visitor can check (the real lines of code, links to them) rather than decorative ticks."
+    ],
+    "donts": [
+      "Don't use `space-y-*`, `space-x-*`, `divide-x`, or `divide-y` (breaks with conditional and fragment children; owner-controlled `gap` is the rule).",
+      "Don't put white text on `brand-500` or lighter; it fails AA.",
+      "Don't put brand teal on the PDF.",
+      "Don't let the invoice page follow the app theme or use chrome roles, raw `zinc-*`/`blue-*`/`teal-*`, or responsive classes.",
+      "Don't hard-code hex or raw greys in editor chrome; hex belongs to the PDF renderer and the editor theme blocks in `globals.css`.",
+      "Don't introduce a second accent hue, or bring back the coral accent the rename brief proposed; the night panel's violet is the one recorded exception and stays inside that panel.",
+      "Don't fill a homepage button with teal, or use a tile hue for an action or a link.",
+      "Don't reach for heavy or black shadows; prefer a hairline border or ring, and keep any shadow soft and neutral."
+    ]
+  }
+}

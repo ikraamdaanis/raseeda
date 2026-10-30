@@ -1,4 +1,6 @@
-// The homepage's pictures of finished invoices: real billsend PDFs, rendered
+import { APP_NAME } from "~/consts/app";
+
+// The homepage's picture of a finished invoice: a real PDF, rendered
 // by scripts/render-homepage-invoices.tsx at PDF_RENDER_SCALE times the page's
 // CSS pixel size. Crops are in the page's CSS pixels (793.7 x 1122.5).
 
@@ -10,32 +12,25 @@ export const HERO_INVOICE_NUMBER = "INV-0043";
 export const PDF_RENDERS = {
   // The whole page: the desktop hero shows its top, the phone crop runs further
   // down on narrow screens. It displays no wider than the page's CSS width, so
-  // it ships at about twice that rather than the full render scale.
+  // it ships at about that width and twice it rather than the full render
+  // scale, and each screen takes the one its pixel density needs. Its name
+  // changes with each new render (public/_headers caches it for a month).
   hero: {
-    src: "/home/invoice-hero.webp",
-    alt: "A billsend invoice from Emma Collins Illustration in Brooklyn to Harbor & Pine Co. in Portland, listing editorial illustrations and cover artwork",
-    crop: { x: 0, y: 0, width: 793.7, height: 1122.5 },
-    width: 1600
-  },
-  // The totals, up to the page's right edge, and the payment details with
-  // their label, from the page's left edge. Each crop centres its block's ink
-  // (totals 592 to 711, payment 673 to 801), so the two cards frame alike.
-  totals: {
-    src: "/home/invoice-totals.webp",
-    alt: "Invoice totals with a 10% discount, New York City sales tax at 8.875% and a delivery fee",
-    crop: { x: 374, y: 546.7, width: 419.7, height: 209.85 }
-  },
-  payment: {
-    src: "/home/invoice-payment.webp",
-    alt: "Payment details on an invoice: Bank of America account number, ACH routing number, SWIFT code and terms due within 30 days",
-    crop: { x: 0, y: 631.9, width: 419.7, height: 209.85 }
+    name: "/home/invoice-hero-3",
+    widths: [800, 1600],
+    alt: `A ${APP_NAME} invoice from Marlow Studio in Brooklyn to Fernhill Press in Portland, listing editorial illustrations and cover artwork`,
+    crop: { x: 0, y: 0, width: 793.7, height: 1122.5 }
   }
 };
 
-// The closing invoice: a whole page, shown no wider than 42rem, so it ships at
-// about twice that.
-export const CLOSING_RENDER = {
-  src: "/home/invoice-closing.webp",
-  alt: "A complete billsend invoice from a Seattle app studio, filled out top to bottom",
-  width: 1400
-};
+// A render's WebP at one of its widths.
+export function renderSrc(render: { name: string }, width: number) {
+  return `${render.name}-${width}.webp`;
+}
+
+// Every width of a render, as an <img> srcset.
+export function renderSrcSet(render: { name: string; widths: number[] }) {
+  return render.widths
+    .map(width => `${renderSrc(render, width)} ${width}w`)
+    .join(", ");
+}

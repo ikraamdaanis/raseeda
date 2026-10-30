@@ -14,7 +14,8 @@ import {
   DialogHeader,
   DialogTitle
 } from "~/components/ui/dialog";
-import type { BillsendExportFile, ImportAnalysis, ImportResult } from "~/types";
+import { APP_NAME } from "~/consts/app";
+import type { ExportFile, ImportAnalysis, ImportResult } from "~/types";
 import {
   analyzeImport,
   executeImport,
@@ -34,7 +35,7 @@ export function ImportDataDialog({
   const [state, setState] = useState<ImportState>("idle");
   const [error, setError] = useState<string | null>(null);
   const [analysis, setAnalysis] = useState<ImportAnalysis | null>(null);
-  const [parsedData, setParsedData] = useState<BillsendExportFile | null>(null);
+  const [parsedData, setParsedData] = useState<ExportFile | null>(null);
   const [result, setResult] = useState<ImportResult | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   // Bumped on every close so an import that is still running in the background
@@ -112,7 +113,8 @@ export function ImportDataDialog({
         <DialogHeader>
           <DialogTitle>Import Data</DialogTitle>
           <DialogDescription>
-            Import invoices, templates, and images from a billsend export file.
+            Import invoices, templates, and images from a {APP_NAME} export
+            file.
           </DialogDescription>
         </DialogHeader>
         <div className="px-4 py-2">

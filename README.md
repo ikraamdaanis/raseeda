@@ -1,4 +1,4 @@
-# billsend
+# raseeda
 
 A free, local-first invoice generator that runs entirely in your browser. Fill in the details, pick a font and download a PDF. No account needed, no tracking cookies, and your invoices never leave your device. The site counts anonymous usage (event names, country, browser family, OS and device type) and nothing else.
 
@@ -8,7 +8,7 @@ A free, local-first invoice generator that runs entirely in your browser. Fill i
 
 - Create invoices with seller and client details, line items, tax, fees, discounts, and terms
 - Payment details section: bank name, account and routing numbers, IBAN, BIC / SWIFT, sort code, and payment notes
-- Set the whole invoice in any of ten fonts, with your choice of size and weight
+- Set the whole invoice in any of eleven fonts, with your choice of size and weight
 - Save and load invoice documents locally in IndexedDB
 - Reusable templates for repeat work
 - Upload your logo

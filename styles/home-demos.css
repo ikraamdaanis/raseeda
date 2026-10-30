@@ -1,0 +1,1004 @@
+/* The homepage's card demos (components/home/feature-demos.tsx): each card's
+   tile plays a short loop of the editor doing that card's job. Every animated
+   element shares one loop length per scene (--loop, set on the scene), so the
+   steps inside a scene stay in step with each other.
+
+   A demo plays only while its tile is on screen (DemoTile sets data-playing),
+   and from its first frame, so a visitor sees each loop from the start. With
+   reduced motion nothing moves (the rule is at the end of the file): every
+   element's own styles are its finished state, so the tile shows the end of
+   the story at rest.
+
+   Movement on screen takes the strong ease-in-out; things arriving take the
+   strong ease-out the hero already uses; steps() types text in. */
+
+:root {
+  --ease-in-out-strong: cubic-bezier(0.77, 0, 0.175, 1);
+}
+
+.demo-anim {
+  animation-duration: var(--loop, 7s);
+  animation-iteration-count: infinite;
+  animation-fill-mode: both;
+  animation-timing-function: var(--ease-out-strong);
+  animation-play-state: paused;
+}
+
+[data-playing] .demo-anim {
+  animation-play-state: running;
+}
+
+/* Every scene fades in at the top of its loop and out at the bottom, so the
+   jump back to the first frame happens out of sight. */
+.demo-scene {
+  animation-name: demo-scene;
+  animation-timing-function: ease;
+}
+
+@keyframes demo-scene {
+  0% {
+    opacity: 0;
+  }
+
+  4%,
+  92% {
+    opacity: 1;
+  }
+
+  97%,
+  100% {
+    opacity: 0;
+  }
+}
+
+/* Add the details: the client's name types into the focused Bill to field,
+   then the two lines arrive and the total follows them. */
+.demo-type {
+  animation-name: demo-type;
+  animation-timing-function: steps(14, end);
+}
+
+@keyframes demo-type {
+  0%,
+  6% {
+    clip-path: inset(0 100% 0 0);
+  }
+
+  30%,
+  100% {
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+.demo-type-caret {
+  animation-name: demo-type-caret;
+  animation-timing-function: steps(14, end);
+}
+
+@keyframes demo-type-caret {
+  0%,
+  6% {
+    translate: 0 0;
+  }
+
+  30%,
+  100% {
+    translate: 100% 0;
+  }
+}
+
+.demo-blink {
+  animation-name: demo-blink;
+  animation-duration: 1s;
+  animation-timing-function: steps(1, end);
+}
+
+@keyframes demo-blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+.demo-line-1 {
+  animation-name: demo-line-1;
+}
+
+@keyframes demo-line-1 {
+  0%,
+  36% {
+    opacity: 0;
+    translate: 0 6px;
+  }
+
+  44%,
+  100% {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+
+.demo-line-2 {
+  animation-name: demo-line-2;
+}
+
+@keyframes demo-line-2 {
+  0%,
+  50% {
+    opacity: 0;
+    translate: 0 6px;
+  }
+
+  58%,
+  100% {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+
+.demo-sum-0 {
+  animation-name: demo-sum-0;
+}
+
+@keyframes demo-sum-0 {
+  0%,
+  38% {
+    opacity: 1;
+  }
+
+  42%,
+  100% {
+    opacity: 0;
+  }
+}
+
+.demo-sum-1 {
+  animation-name: demo-sum-1;
+}
+
+@keyframes demo-sum-1 {
+  0%,
+  38% {
+    opacity: 0;
+  }
+
+  42%,
+  52% {
+    opacity: 1;
+  }
+
+  56%,
+  100% {
+    opacity: 0;
+  }
+}
+
+.demo-sum-2 {
+  animation-name: demo-sum-2;
+}
+
+@keyframes demo-sum-2 {
+  0%,
+  52% {
+    opacity: 0;
+  }
+
+  56%,
+  100% {
+    opacity: 1;
+  }
+}
+
+/* Send the PDF: the pointer comes up to Download and clicks it, the download
+   popover opens from the button, and the pointer moves down and clicks
+   Download PDF. The pointer rests on Download; --to-x and --to-y take it to
+   Download PDF. */
+.demo-cursor {
+  animation-name: demo-cursor;
+  animation-timing-function: var(--ease-in-out-strong);
+}
+
+@keyframes demo-cursor {
+  0%,
+  6% {
+    opacity: 0;
+    translate: -150px 120px;
+    scale: 1;
+  }
+
+  12%,
+  84% {
+    opacity: 1;
+  }
+
+  24%,
+  36% {
+    translate: 0 0;
+  }
+
+  27% {
+    scale: 1;
+  }
+
+  29% {
+    scale: 0.85;
+  }
+
+  31% {
+    scale: 1;
+  }
+
+  50%,
+  100% {
+    translate: var(--to-x) var(--to-y);
+  }
+
+  53% {
+    scale: 1;
+  }
+
+  55% {
+    scale: 0.85;
+  }
+
+  57% {
+    scale: 1;
+  }
+
+  90%,
+  100% {
+    opacity: 0;
+  }
+}
+
+.demo-press-1 {
+  animation-name: demo-press-1;
+  animation-timing-function: ease;
+}
+
+@keyframes demo-press-1 {
+  0%,
+  27% {
+    scale: 1;
+  }
+
+  29% {
+    scale: 0.96;
+  }
+
+  31%,
+  100% {
+    scale: 1;
+  }
+}
+
+.demo-press-2 {
+  animation-name: demo-press-2;
+  animation-timing-function: ease;
+}
+
+@keyframes demo-press-2 {
+  0%,
+  53% {
+    scale: 1;
+  }
+
+  55% {
+    scale: 0.96;
+  }
+
+  57%,
+  100% {
+    scale: 1;
+  }
+}
+
+.demo-popover {
+  transform-origin: top right;
+  animation-name: demo-popover;
+}
+
+@keyframes demo-popover {
+  0%,
+  30% {
+    opacity: 0;
+    scale: 0.95;
+  }
+
+  34%,
+  80% {
+    opacity: 1;
+    scale: 1;
+  }
+
+  85%,
+  100% {
+    opacity: 0;
+    scale: 0.95;
+  }
+}
+
+/* Keep a copy: a new invoice for a repeat client joins the top of the
+   library under that client, the rows below making room, and becomes the
+   open one. The list starts a row (--row) up, with the new row out of sight
+   above the clip. */
+.demo-list-shift {
+  animation-name: demo-list-shift;
+  animation-timing-function: var(--ease-in-out-strong);
+}
+
+@keyframes demo-list-shift {
+  0%,
+  16% {
+    translate: 0 calc(-1 * var(--row));
+  }
+
+  28%,
+  96% {
+    translate: 0 0;
+  }
+
+  100% {
+    translate: 0 calc(-1 * var(--row));
+  }
+}
+
+.demo-arrive {
+  animation-name: demo-arrive;
+}
+
+@keyframes demo-arrive {
+  0%,
+  20% {
+    opacity: 0;
+  }
+
+  30%,
+  100% {
+    opacity: 1;
+  }
+}
+
+.demo-depart {
+  animation-name: demo-depart;
+}
+
+@keyframes demo-depart {
+  0%,
+  20% {
+    opacity: 1;
+  }
+
+  30%,
+  100% {
+    opacity: 0;
+  }
+}
+
+/* Your logo, your type: two rows of every invoice font sliding past at a
+   constant speed, the second the other way. Each row holds its fonts twice
+   and slides by half its width, so the end of a loop lines up exactly with
+   its start. Constant motion takes a linear curve. */
+.demo-marquee {
+  animation-name: demo-marquee;
+  animation-timing-function: linear;
+}
+
+.demo-marquee-reverse {
+  animation-direction: reverse;
+}
+
+@keyframes demo-marquee {
+  from {
+    translate: 0 0;
+  }
+
+  to {
+    translate: -50% 0;
+  }
+}
+
+/* The currency scene cycles four states, each on screen for a quarter of the
+   loop. Each element's --phase (0 to 3) shifts it to its quarter. */
+.demo-phase-slide {
+  animation-name: demo-phase-slide;
+  animation-delay: calc(var(--phase) * var(--loop) / 4 - var(--loop));
+}
+
+@keyframes demo-phase-slide {
+  0%,
+  21% {
+    opacity: 1;
+    translate: 0 0;
+  }
+
+  25% {
+    opacity: 0;
+    translate: 0 -8px;
+  }
+
+  26%,
+  96% {
+    opacity: 0;
+    translate: 0 8px;
+  }
+
+  100% {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+
+/* Tax, fees and discounts: the Totals switches turn on one by one, each
+   opening its row on the page and moving the total; then they all turn off
+   together and it starts again. */
+.demo-switch-1,
+.demo-switch-2,
+.demo-switch-3 {
+  animation-timing-function: var(--ease-in-out-strong);
+}
+
+.demo-switch-1 {
+  animation-name: demo-switch-1;
+}
+
+.demo-switch-2 {
+  animation-name: demo-switch-2;
+}
+
+.demo-switch-3 {
+  animation-name: demo-switch-3;
+}
+
+@keyframes demo-switch-1 {
+  0%,
+  12% {
+    opacity: 0;
+  }
+
+  16%,
+  86% {
+    opacity: 1;
+  }
+
+  90%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes demo-switch-2 {
+  0%,
+  32% {
+    opacity: 0;
+  }
+
+  36%,
+  86% {
+    opacity: 1;
+  }
+
+  90%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes demo-switch-3 {
+  0%,
+  52% {
+    opacity: 0;
+  }
+
+  56%,
+  86% {
+    opacity: 1;
+  }
+
+  90%,
+  100% {
+    opacity: 0;
+  }
+}
+
+.demo-thumb-1,
+.demo-thumb-2,
+.demo-thumb-3 {
+  animation-timing-function: var(--ease-in-out-strong);
+}
+
+.demo-thumb-1 {
+  animation-name: demo-thumb-1;
+}
+
+.demo-thumb-2 {
+  animation-name: demo-thumb-2;
+}
+
+.demo-thumb-3 {
+  animation-name: demo-thumb-3;
+}
+
+@keyframes demo-thumb-1 {
+  0%,
+  12% {
+    translate: 0 0;
+  }
+
+  16%,
+  86% {
+    translate: 14px 0;
+  }
+
+  90%,
+  100% {
+    translate: 0 0;
+  }
+}
+
+@keyframes demo-thumb-2 {
+  0%,
+  32% {
+    translate: 0 0;
+  }
+
+  36%,
+  86% {
+    translate: 14px 0;
+  }
+
+  90%,
+  100% {
+    translate: 0 0;
+  }
+}
+
+@keyframes demo-thumb-3 {
+  0%,
+  52% {
+    translate: 0 0;
+  }
+
+  56%,
+  86% {
+    translate: 14px 0;
+  }
+
+  90%,
+  100% {
+    translate: 0 0;
+  }
+}
+
+/* A totals row opening: its grid track grows from nothing, so the rows below
+   slide down to make room the way the page reflows. */
+.demo-open-1,
+.demo-open-2,
+.demo-open-3 {
+  animation-timing-function: var(--ease-in-out-strong);
+}
+
+.demo-open-1 {
+  animation-name: demo-open-1;
+}
+
+.demo-open-2 {
+  animation-name: demo-open-2;
+}
+
+.demo-open-3 {
+  animation-name: demo-open-3;
+}
+
+@keyframes demo-open-1 {
+  0%,
+  14% {
+    grid-template-rows: 0fr;
+    opacity: 0;
+  }
+
+  20%,
+  86% {
+    grid-template-rows: 1fr;
+    opacity: 1;
+  }
+
+  92%,
+  100% {
+    grid-template-rows: 0fr;
+    opacity: 0;
+  }
+}
+
+@keyframes demo-open-2 {
+  0%,
+  34% {
+    grid-template-rows: 0fr;
+    opacity: 0;
+  }
+
+  40%,
+  86% {
+    grid-template-rows: 1fr;
+    opacity: 1;
+  }
+
+  92%,
+  100% {
+    grid-template-rows: 0fr;
+    opacity: 0;
+  }
+}
+
+@keyframes demo-open-3 {
+  0%,
+  54% {
+    grid-template-rows: 0fr;
+    opacity: 0;
+  }
+
+  60%,
+  86% {
+    grid-template-rows: 1fr;
+    opacity: 1;
+  }
+
+  92%,
+  100% {
+    grid-template-rows: 0fr;
+    opacity: 0;
+  }
+}
+
+.demo-total-0 {
+  animation-name: demo-total-0;
+}
+
+.demo-total-1 {
+  animation-name: demo-total-1;
+}
+
+.demo-total-2 {
+  animation-name: demo-total-2;
+}
+
+.demo-total-3 {
+  animation-name: demo-total-3;
+}
+
+@keyframes demo-total-0 {
+  0%,
+  15% {
+    opacity: 1;
+  }
+
+  19%,
+  87% {
+    opacity: 0;
+  }
+
+  91%,
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes demo-total-1 {
+  0%,
+  15% {
+    opacity: 0;
+  }
+
+  19%,
+  35% {
+    opacity: 1;
+  }
+
+  39%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes demo-total-2 {
+  0%,
+  35% {
+    opacity: 0;
+  }
+
+  39%,
+  55% {
+    opacity: 1;
+  }
+
+  59%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes demo-total-3 {
+  0%,
+  55% {
+    opacity: 0;
+  }
+
+  59%,
+  87% {
+    opacity: 1;
+  }
+
+  91%,
+  100% {
+    opacity: 0;
+  }
+}
+
+/* Payment details: the card rests filled in, so its first frame (and the
+   tile before it starts playing) shows the whole block. Late in each loop the
+   rows refresh in a wave, one after another (--i, 120ms apart): each lifts
+   out and rises back into place before the last has left, so the card is
+   never empty. */
+.demo-rise {
+  animation-name: demo-rise;
+  animation-delay: calc(var(--i) * 120ms);
+}
+
+@keyframes demo-rise {
+  0%,
+  66% {
+    opacity: 1;
+    translate: 0 0;
+  }
+
+  72% {
+    opacity: 0;
+    translate: 0 -4px;
+  }
+
+  73% {
+    opacity: 0;
+    translate: 0 6px;
+  }
+
+  80%,
+  100% {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+
+/* A tile's background: two soft blobs of its hues wandering slowly, back and
+   forth, on loops of different lengths so they never fall into step. Only
+   transforms move, so the compositor slides them without repainting. */
+.demo-drift-a,
+.demo-drift-b {
+  animation-direction: alternate;
+  animation-timing-function: ease-in-out;
+}
+
+.demo-drift-a {
+  animation-name: demo-drift-a;
+  animation-duration: 17s;
+}
+
+.demo-drift-b {
+  animation-name: demo-drift-b;
+  animation-duration: 23s;
+}
+
+@keyframes demo-drift-a {
+  from {
+    translate: 0 0;
+    scale: 1;
+  }
+
+  to {
+    translate: 22% 16%;
+    scale: 1.15;
+  }
+}
+
+@keyframes demo-drift-b {
+  from {
+    translate: 0 0;
+    scale: 1.1;
+  }
+
+  to {
+    translate: -20% -14%;
+    scale: 0.95;
+  }
+}
+
+/* The open source panel's lights, wandering loops of different lengths so
+   they never fall into step. Livelier than the card tiles' drift: the dark
+   panel is one large surface, and slow motion on it read as no motion at
+   all. Only transforms move. */
+.aurora-a,
+.aurora-b,
+.aurora-c {
+  animation-timing-function: ease-in-out;
+}
+
+.aurora-a {
+  animation-name: aurora-a;
+  animation-duration: 13s;
+}
+
+.aurora-b {
+  animation-name: aurora-b;
+  animation-duration: 17s;
+}
+
+.aurora-c {
+  animation-name: aurora-c;
+  animation-duration: 11s;
+}
+
+@keyframes aurora-a {
+  0%,
+  100% {
+    translate: 0 0;
+    scale: 1;
+  }
+
+  33% {
+    translate: 30% 25%;
+    scale: 1.2;
+  }
+
+  66% {
+    translate: 10% 45%;
+    scale: 0.9;
+  }
+}
+
+@keyframes aurora-b {
+  0%,
+  100% {
+    translate: 0 0;
+    scale: 1.1;
+  }
+
+  40% {
+    translate: -30% -20%;
+    scale: 0.9;
+  }
+
+  70% {
+    translate: -10% -35%;
+    scale: 1.2;
+  }
+}
+
+@keyframes aurora-c {
+  0%,
+  100% {
+    translate: 0 0;
+    scale: 0.9;
+  }
+
+  50% {
+    translate: 60% 30%;
+    scale: 1.3;
+  }
+}
+
+/* A band of light running round the terminal's edge: a conic gradient on a
+   square well past the terminal's corners, turning behind it, so the 1px
+   gap round the terminal shows the band sweep by. A conic gradient's colours
+   depend only on the angle from its centre, so turning the square is the
+   same as turning the gradient's start, and turning is a transform the
+   compositor runs without repainting. Constant motion, so linear; with
+   reduced motion the band rests where it starts. */
+.terminal-edge {
+  background: conic-gradient(
+    transparent 0deg,
+    transparent 200deg,
+    oklch(0.72 0.17 295) 260deg,
+    oklch(0.8 0.12 330) 300deg,
+    transparent 360deg
+  );
+  rotate: 200deg;
+  animation-name: terminal-edge;
+  animation-duration: 8s;
+  animation-timing-function: linear;
+}
+
+@keyframes terminal-edge {
+  from {
+    rotate: 200deg;
+  }
+
+  to {
+    rotate: 560deg;
+  }
+}
+
+/* With reduced motion nothing moves. This stays the last animation rule in
+   the file: a part's own rule above names its animation and duration, and
+   any that came after this would set it playing again. */
+@media (prefers-reduced-motion: reduce) {
+  .demo-anim {
+    animation: none;
+  }
+}
+
+/* The invoice fonts as the homepage shows them: cut down to the letters of
+   its previews at the regular weight (scripts/subset-preview-fonts.ts), a
+   few KB each instead of the full files. They block rather than swap: they
+   arrive within the hero's fade-in, so the swatches never flash another
+   face. */
+
+@font-face {
+  font-family: "Geist Preview";
+  font-style: normal;
+  font-display: block;
+  font-weight: 400;
+  src: url("./preview-fonts/geist.woff2?no-inline") format("woff2");
+}
+
+@font-face {
+  font-family: "Inter Preview";
+  font-style: normal;
+  font-display: block;
+  font-weight: 400;
+  src: url("./preview-fonts/inter.woff2?no-inline") format("woff2");
+}
+
+@font-face {
+  font-family: "DM Sans Preview";
+  font-style: normal;
+  font-display: block;
+  font-weight: 400;
+  src: url("./preview-fonts/dm-sans.woff2?no-inline") format("woff2");
+}
+
+@font-face {
+  font-family: "IBM Plex Sans Preview";
+  font-style: normal;
+  font-display: block;
+  font-weight: 400;
+  src: url("./preview-fonts/ibm-plex-sans.woff2?no-inline") format("woff2");
+}
+
+@font-face {
+  font-family: "Bricolage Grotesque Preview";
+  font-style: normal;
+  font-display: block;
+  font-weight: 400;
+  src: url("./preview-fonts/bricolage-grotesque.woff2?no-inline")
+    format("woff2");
+}
+
+@font-face {
+  font-family: "Lora Preview";
+  font-style: normal;
+  font-display: block;
+  font-weight: 400;
+  src: url("./preview-fonts/lora.woff2?no-inline") format("woff2");
+}
+
+@font-face {
+  font-family: "Libre Baskerville Preview";
+  font-style: normal;
+  font-display: block;
+  font-weight: 400;
+  src: url("./preview-fonts/libre-baskerville.woff2?no-inline") format("woff2");
+}
+
+@font-face {
+  font-family: "JetBrains Mono Preview";
+  font-style: normal;
+  font-display: block;
+  font-weight: 400;
+  src: url("./preview-fonts/jetbrains-mono.woff2?no-inline") format("woff2");
+}
+
+@font-face {
+  font-family: "IBM Plex Mono Preview";
+  font-style: normal;
+  font-display: block;
+  font-weight: 400;
+  src: url("./preview-fonts/ibm-plex-mono.woff2?no-inline") format("woff2");
+}

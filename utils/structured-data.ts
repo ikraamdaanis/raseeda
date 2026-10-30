@@ -1,9 +1,9 @@
+import { APP_NAME } from "~/consts/app";
 import { INVOICE_FONTS } from "~/consts/invoice-fonts";
 import {
   MAKER_NAME,
   MAKER_URL,
   SITE_DESCRIPTION,
-  SITE_NAME,
   SITE_OG_IMAGE,
   SITE_TITLE,
   SITE_URL,
@@ -11,9 +11,9 @@ import {
   absoluteUrl
 } from "~/utils/site-meta";
 
-// What search engines and AI answer engines read about billsend: who makes it,
+// What search engines and AI answer engines read about the app: who makes it,
 // the site, the homepage, the app and its source, linked by `@id`. Only facts
-// the page itself states; no ratings or reviews, since billsend collects none.
+// the page itself states; no ratings or reviews, since the app collects none.
 // It is a data block the browser never runs, so the CSP is unaffected.
 export const HOME_STRUCTURED_DATA = {
   "@context": "https://schema.org",
@@ -28,11 +28,11 @@ export const HOME_STRUCTURED_DATA = {
     {
       "@type": "Organization",
       "@id": `${SITE_URL}/#organization`,
-      name: SITE_NAME,
+      name: APP_NAME,
       url: absoluteUrl("/"),
       logo: {
         "@type": "ImageObject",
-        url: absoluteUrl("/billsend.png"),
+        url: absoluteUrl("/logo.png"),
         width: 1500,
         height: 1500
       },
@@ -43,7 +43,7 @@ export const HOME_STRUCTURED_DATA = {
       "@type": "WebSite",
       "@id": `${SITE_URL}/#website`,
       url: absoluteUrl("/"),
-      name: SITE_NAME,
+      name: APP_NAME,
       description: SITE_DESCRIPTION,
       inLanguage: "en",
       publisher: { "@id": `${SITE_URL}/#organization` }
@@ -67,7 +67,7 @@ export const HOME_STRUCTURED_DATA = {
     {
       "@type": "WebApplication",
       "@id": `${SITE_URL}/#app`,
-      name: SITE_NAME,
+      name: APP_NAME,
       url: absoluteUrl("/create"),
       description:
         "A free invoice generator that runs in your browser. No account and no uploads: invoices are saved in your browser on your device, and the PDF is made on your device too.",
@@ -102,7 +102,7 @@ export const HOME_STRUCTURED_DATA = {
     {
       "@type": "SoftwareSourceCode",
       "@id": `${SITE_URL}/#source`,
-      name: "billsend source code",
+      name: `${APP_NAME} source code`,
       codeRepository: SOURCE_URL,
       programmingLanguage: "TypeScript",
       license: "https://opensource.org/license/mit",

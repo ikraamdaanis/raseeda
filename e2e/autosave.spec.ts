@@ -1,3 +1,4 @@
+import { APP_NAME } from "../consts/app";
 import { expect, test } from "./fixtures";
 import {
   DB_NAME,
@@ -299,7 +300,7 @@ test("whitespace-only names are rejected on Save As Template", async ({
   await expect(dialog).toBeVisible();
 });
 
-test("a newer billsend upgrading storage in another tab asks to reload", async ({
+test("a newer version upgrading storage in another tab asks to reload", async ({
   page
 }) => {
   await gotoEditorReady(page, "Before the upgrade");
@@ -328,9 +329,7 @@ test("a newer billsend upgrading storage in another tab asks to reload", async (
     });
   }, DB_NAME);
 
-  await expect(
-    page.getByText(/billsend was updated in another tab/)
-  ).toBeVisible();
+  await expect(page.getByText(/was updated in another tab/)).toBeVisible();
   await expect(page.getByRole("button", { name: "Reload" })).toBeVisible();
 });
 
@@ -395,7 +394,9 @@ test("a failed save is announced once, kept, backed up and retried", async ({
     chunks.push(chunk as Buffer);
   }
 
-  expect(download.suggestedFilename()).toMatch(/^billsend-backup-/);
+  expect(download.suggestedFilename()).toMatch(
+    new RegExp(`^${APP_NAME}-backup-`)
+  );
   expect(Buffer.concat(chunks).toString("utf8")).toContain(
     "Written while full"
   );
@@ -405,15 +406,26 @@ test("a failed save is announced once, kept, backed up and retried", async ({
   await expect(alert).toContainText("storage is full");
   await expect(page.getByRole("alert")).toHaveCount(1);
 
-  await page.evaluate(() => {
+  // Retry now is disabled while a retry runs. Wait for the one above to
+  // finish, so the click after storage frees up isn't dropped and left to the
+  // background retry, which by now is 10 to 30 seconds away.
+  const retryNow = alert.getByRole("button", { name: "Retry now" });
+
+  await expect(retryNow).toBeEnabled();
+  await page.evaluate(() =>
     Object.assign((window as unknown as { storage: object }).storage, {
       full: false
-    });
-    // The background retry may get there first and take the message away.
-    document.querySelector<HTMLButtonElement>("[role='alert'] button")?.click();
-  });
+    })
+  );
+  // A background retry may get there first and take the message away, so
+  // retry until it's gone rather than clicking once.
+  await expect(async () => {
+    if (await retryNow.isEnabled({ timeout: 500 }).catch(() => false)) {
+      await retryNow.click({ timeout: 500 }).catch(() => {});
+    }
 
-  await expect(page.getByRole("alert")).toHaveCount(0);
+    await expect(page.getByRole("alert")).toHaveCount(0, { timeout: 1000 });
+  }).toPass({ timeout: 15_000 });
   await expect.poll(() => savedContains(page, "Written while full")).toBe(true);
 });
 
@@ -465,7 +477,7 @@ test.describe("in Safari, when the browser won't keep storage", () => {
     await reminder.getByRole("button", { name: "download a backup" }).click();
 
     expect((await downloadPromise).suggestedFilename()).toMatch(
-      /^billsend-backup-/
+      new RegExp(`^${APP_NAME}-backup-`)
     );
     await expect(reminder).toHaveCount(0);
   });

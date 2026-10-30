@@ -1,7 +1,13 @@
-import { IconAlertTriangle, IconRotate } from "@tabler/icons-react";
+import { IconChevronDown, IconRotate } from "@tabler/icons-react";
 import type { ErrorComponentProps } from "@tanstack/react-router";
-import { Button } from "~/components/ui/button";
+import { FOCUS_RING, INK_PILL, SOFT_PILL } from "~/components/home/site-chrome";
+import { StatusPage } from "~/components/status-page";
+import { typeClass } from "~/lib/type-scale";
+import { cn } from "~/lib/utils";
 
+// The error itself stays folded away under the actions: most visitors only
+// need to know their invoices are safe and how to get going again, and the
+// message is there for a bug report.
 export function RootErrorBoundary({ error, reset }: ErrorComponentProps) {
   const message =
     error instanceof Error && error.message
@@ -13,37 +19,42 @@ export function RootErrorBoundary({ error, reset }: ErrorComponentProps) {
   }
 
   return (
-    <div className="bg-background text-foreground flex min-h-svh items-center justify-center px-6 antialiased">
-      <div className="rounded-surface border-border bg-card flex w-full max-w-md flex-col items-center gap-6 border p-10 text-center shadow-xl shadow-black/5">
-        <div className="border-brand-200 bg-brand-50 text-brand-600 rounded-surface flex size-12 items-center justify-center border">
-          <IconAlertTriangle className="size-6" />
-        </div>
-        <div className="flex flex-col gap-2">
-          <h1 className="font-display text-foreground text-2xl font-semibold tracking-tight">
-            Something went wrong
-          </h1>
-          <p className="text-muted-foreground text-sm text-pretty">
-            The page ran into an unexpected problem. Your saved invoices and
-            templates are stored on your device and are safe.
-          </p>
-        </div>
-        <pre className="rounded-surface border-border bg-muted text-muted-foreground max-h-32 w-full overflow-auto border p-3 text-left font-mono text-xs">
+    <StatusPage
+      tone="error"
+      isNoIndex
+      eyebrow="Something went wrong"
+      title="The page hit a problem."
+      description="Your invoices and templates are saved in this browser, on this device, and are safe. Try again, or reload the page."
+      actions={
+        <>
+          <button type="button" onClick={reset} className={INK_PILL}>
+            <IconRotate className="size-4 shrink-0" aria-hidden="true" />
+            Try again
+          </button>
+          <button type="button" onClick={handleReload} className={SOFT_PILL}>
+            Reload page
+          </button>
+        </>
+      }
+    >
+      <details className="group">
+        <summary
+          className={cn(
+            "hover:text-ink flex w-max cursor-pointer list-none items-center gap-1 rounded-sm text-zinc-800 sm:mx-auto [&::-webkit-details-marker]:hidden",
+            typeClass("caption"),
+            FOCUS_RING
+          )}
+        >
+          Error details
+          <IconChevronDown
+            className="size-4 shrink-0 transition-transform duration-200 group-open:rotate-180"
+            aria-hidden="true"
+          />
+        </summary>
+        <pre className="font-geist-mono mt-3 max-h-40 overflow-auto rounded-xl bg-white/70 p-4 text-left text-xs/5 whitespace-pre-wrap text-zinc-700 ring-1 ring-zinc-950/5">
           {message}
         </pre>
-        <div className="flex w-full flex-col gap-3 sm:flex-row sm:justify-center">
-          <Button onClick={reset} className="h-9 px-4 text-sm">
-            <IconRotate className="size-4" />
-            Try again
-          </Button>
-          <Button
-            variant="outline"
-            onClick={handleReload}
-            className="h-9 px-4 text-sm"
-          >
-            Reload page
-          </Button>
-        </div>
-      </div>
-    </div>
+      </details>
+    </StatusPage>
   );
 }

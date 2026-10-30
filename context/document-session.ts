@@ -1,5 +1,6 @@
 import { isEqual } from "lodash-es";
 import { toast } from "sonner";
+import { APP_NAME } from "~/consts/app";
 import { createSaveController } from "~/context/save-controller";
 import {
   addInvoiceVersion,
@@ -70,18 +71,18 @@ const VERSION_IDLE_MS = 30_000;
 
 const VERSION_MIN_INTERVAL_MS = 10 * 60_000;
 
-const LOCK_PREFIX = "billsend-invoice:";
+const LOCK_PREFIX = "invoice-lock:";
 
 // Per tab: which invoice this tab has open, so a reload reopens it.
-const OPEN_INVOICE_KEY = "billsend-open-invoice";
+const OPEN_INVOICE_KEY = "open-invoice";
 
 // Per tab: edits not yet known to be written when the page went away.
-const UNSAVED_KEY_PREFIX = "billsend-unsaved:";
+const UNSAVED_KEY_PREFIX = "unsaved:";
 
-const BACKUP_REMINDER_KEY = "billsend-backup-reminder";
+const BACKUP_REMINDER_KEY = "backup-reminder";
 
 // Per browser: invoices a page left blank as it went away, to delete.
-const BLANK_KEY_PREFIX = "billsend-blank:";
+const BLANK_KEY_PREFIX = "blank:";
 
 // Thrown when an invoice that's being opened no longer exists (it was deleted,
 // perhaps in another tab).
@@ -163,10 +164,10 @@ function displayName(session: Session, content: Invoice = liveContent()) {
 
 export function failureMessage(failure: unknown): string {
   if (isStorageFullError(failure)) {
-    return "Browser storage is full, so your latest changes aren't saved. They're kept in this tab while billsend tries again.";
+    return `Browser storage is full, so your latest changes aren't saved. They're kept in this tab while ${APP_NAME} tries again.`;
   }
 
-  return "Your latest changes couldn't be saved. They're kept in this tab while billsend tries again.";
+  return `Your latest changes couldn't be saved. They're kept in this tab while ${APP_NAME} tries again.`;
 }
 
 function publish(session: Session) {
@@ -336,7 +337,7 @@ function keepVersionQuietly(
   );
 }
 
-// Asks the browser to keep billsend's storage when it runs short, once an
+// Asks the browser to keep the app's storage when it runs short, once an
 // invoice exists to keep. Chrome decides from how much the site is used,
 // Firefox asks, and Safari mostly says no in a browser tab, where it also
 // clears storage after seven days without a visit. Safari is the one that
@@ -822,7 +823,7 @@ async function leaveCurrent(): Promise<boolean> {
 
   if (session.status === "reloadRequired") {
     toast.error("Reload the page to open another invoice", {
-      description: "billsend was updated in another tab."
+      description: `${APP_NAME} was updated in another tab.`
     });
 
     return false;

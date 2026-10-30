@@ -1,6 +1,6 @@
 {
-  "name": "billsend",
-  "short_name": "billsend",
+  "name": "raseeda",
+  "short_name": "raseeda",
   "description": "Free, private invoice generator that runs in your browser.",
   "icons": [
     {
@@ -28,7 +28,7 @@
       "purpose": "maskable"
     }
   ],
-  "theme_color": "#005fca",
+  "theme_color": "#11746b",
   "background_color": "#ffffff",
   "display": "standalone"
 }

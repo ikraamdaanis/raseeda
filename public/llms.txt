@@ -1,21 +1,21 @@
-# billsend
+# raseeda
 
-> billsend is a free, private invoice generator that runs entirely in the browser. There is no account and nothing is uploaded: invoices are saved in the browser on the user's device (IndexedDB), the PDF is made on the device, and invoice data leaves it only in files the user saves. The site counts anonymous usage (event names, country, browser family, OS and device type) with no cookies or identifiers. It is open source under the MIT licence.
+> raseeda is a free, private invoice generator that runs entirely in the browser. There is no account and nothing is uploaded: invoices are saved in the browser on the user's device (IndexedDB), the PDF is made on the device, and invoice data leaves it only in files the user saves. The site counts anonymous usage (event names, country, browser family, OS and device type) with no cookies or identifiers. It is open source under the MIT licence.
 
 ## Pages
 
-- [Home](https://billsend.io/): what billsend does, how it compares with other invoice generators and accounting software, what goes on the invoice, and common questions
+- [Home](https://billsend.io/): what raseeda does, how it compares with other invoice generators and accounting software, what goes on the invoice, and common questions
 - [Invoice editor](https://billsend.io/create): create, edit and download an invoice as an A4 PDF (requires JavaScript)
-- [Privacy](https://billsend.io/privacy): what billsend stores, where, and what never leaves the device
+- [Privacy](https://billsend.io/privacy): what raseeda stores, where, and what never leaves the device
 
 ## Facts
 
 - Free, with no paid plan, no ads and no watermark on the PDF.
 - No account and no sign-up.
 - Any currency, VAT or sales tax, fees, discounts, payment details (bank, account and routing numbers, IBAN, BIC / SWIFT, sort code), templates for repeat clients, and import / export backups.
-- billsend makes the PDF; it does not email invoices or track payments.
+- raseeda makes the PDF; it does not email invoices or track payments.
 - No API and no server-side storage.
 
 ## Source
 
-- [GitHub repository](https://github.com/ikraamdaanis/billsend): source code and issues
+- [GitHub repository](https://github.com/ikraamdaanis/raseeda): source code and issues

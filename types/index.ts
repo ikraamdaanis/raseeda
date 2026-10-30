@@ -47,6 +47,7 @@ export type InvoiceLabels = {
 };
 
 export type InvoiceFont =
+  | "schibsted-grotesk"
   | "geist"
   | "inter"
   | "bricolage-grotesque"
@@ -275,11 +276,11 @@ export type InvoiceDraft = {
   updatedAt: Date;
 };
 
-export type BillsendExportFile = {
+export type ExportFile = {
   meta: {
     version: number;
     exportedAt: string;
-    appName: "billsend";
+    appName: string;
   };
   templates: Array<{
     id: string;

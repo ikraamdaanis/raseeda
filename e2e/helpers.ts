@@ -161,8 +161,8 @@ export async function nameInvoice(page: Page, name: string) {
   await expect.poll(() => savedContains(page, name)).toBe(true);
 }
 
-// Presses one of billsend's own shortcuts, written with "Mod" for ⌘ or Ctrl.
-// billsend picks the key from the platform the page reports, not the machine
+// Presses one of the app's own shortcuts, written with "Mod" for ⌘ or Ctrl.
+// The app picks the key from the platform the page reports, not the machine
 // running the test: WebKit runs as Mac Safari even on Linux, so it listens for
 // ⌘ there while Playwright's ControlOrMeta would send Ctrl.
 export async function pressShortcut(page: Page, keys: string) {

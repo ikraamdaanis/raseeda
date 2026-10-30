@@ -22,7 +22,7 @@ export function InspectorSection({
   children: ReactNode;
 }) {
   const [open, setOpen] = usePersistentState(
-    `billsend-editor-inspector-${id}`,
+    `editor-inspector-${id}`,
     true,
     parseBoolean
   );

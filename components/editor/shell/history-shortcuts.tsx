@@ -65,7 +65,7 @@ function run(command: "undo" | "redo") {
   }
 }
 
-// billsend owns undo and redo for the whole invoice, inside its fields too:
+// The app owns undo and redo for the whole invoice, inside its fields too:
 // React-controlled inputs break the browser's own undo, so each field's
 // native stack is never used. Keys are caught in the capture phase, before a
 // field sees them, and `beforeinput` catches undo from the Edit menu, the

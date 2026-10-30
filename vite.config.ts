@@ -13,7 +13,7 @@ import { defineConfig } from "vite";
 // any changed file installs fresh.
 function serviceWorker(): Plugin {
   return {
-    name: "billsend:service-worker",
+    name: "service-worker",
     applyToEnvironment: environment => environment.name === "client",
     generateBundle(_options, bundle) {
       const files = Object.keys(bundle)

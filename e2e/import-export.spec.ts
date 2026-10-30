@@ -1,3 +1,4 @@
+import { APP_NAME } from "../consts/app";
 import { expect, test } from "./fixtures";
 import {
   clickFileMenuItem,
@@ -11,13 +12,15 @@ import {
 // Group K: import / export. Export a real file, then mutate it to exercise the
 // import edge cases, so the payloads always match the current export schema.
 
-test("Export Data downloads a dated billsend export file", async ({ page }) => {
+test("Export Data downloads a dated export file", async ({ page }) => {
   await gotoEditorReady(page, "Exportable");
   await nameInvoice(page, "Exportable doc");
 
   const { filename } = await exportData(page);
 
-  expect(filename).toMatch(/^billsend-export-\d{4}-\d{2}-\d{2}\.json$/);
+  expect(filename).toMatch(
+    new RegExp(`^${APP_NAME}-export-\\d{4}-\\d{2}-\\d{2}\\.json$`)
+  );
 });
 
 test("a full export/import round-trip restores the data", async ({
@@ -84,7 +87,7 @@ test("importing a newer-version file shows the please-update message [R]", async
 
   const dialog = await selectImportFile(page, json);
 
-  await expect(dialog.getByText(/newer version of billsend/)).toBeVisible();
+  await expect(dialog.getByText(/newer version of/)).toBeVisible();
 });
 
 test("importing a record with an unparseable date does not crash [R]", async ({

@@ -126,3 +126,24 @@ test("the homepage makes no requests to other websites", async ({ page }) => {
   expect(requested.length).toBeGreaterThan(0);
   expect(elsewhere).toEqual([]);
 });
+
+test("the header offers Create invoice once the hero scrolls away", async ({
+  page
+}) => {
+  await page.goto("/");
+
+  const banner = page.getByRole("banner");
+  const headerPill = banner.getByRole("link", {
+    name: "Create invoice",
+    exact: true
+  });
+
+  await expect(headerPill).toHaveCount(0);
+
+  await page.locator("#privacy").scrollIntoViewIfNeeded();
+  await expect(headerPill).toBeVisible();
+  await expect(banner).toBeInViewport();
+
+  await headerPill.click();
+  await expect(page).toHaveURL("/create");
+});

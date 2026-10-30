@@ -1,4 +1,4 @@
-// billsend's service worker, so every visit after the first loads from the
+// The app's service worker, so every visit after the first loads from the
 // device and the editor opens offline. vite.config.ts writes it into the build
 // as /sw.js, with BUILD ({ version, files }) defined above this code: files
 // lists the build's scripts, styles and latin fonts.
@@ -13,9 +13,11 @@
 // - Everything else (icons, other fonts) comes from the cache when it's there
 //   and is refreshed in the background.
 
-const PRECACHE_PREFIX = "billsend-precache-";
+const PRECACHE_PREFIX = "precache-";
 const PRECACHE = PRECACHE_PREFIX + BUILD.version;
-const RUNTIME = "billsend-runtime";
+const RUNTIME = "runtime";
+const LEGACY_PRECACHE_PREFIX = "billsend-precache-";
+const LEGACY_RUNTIME = "billsend-runtime";
 const PAGES = ["/", "/privacy", "/create"];
 
 self.addEventListener("install", event => {
@@ -46,13 +48,24 @@ self.addEventListener("install", event => {
 self.addEventListener("activate", event => {
   event.waitUntil(
     (async () => {
-      const older = (await caches.keys()).filter(
-        name => name.startsWith(PRECACHE_PREFIX) && name !== PRECACHE
+      const names = await caches.keys();
+      // The app was called billsend, and its caches still carry that name: its
+      // last precache counts as the previous version, its runtime cache goes.
+      const older = names.filter(
+        name =>
+          (name.startsWith(PRECACHE_PREFIX) ||
+            name.startsWith(LEGACY_PRECACHE_PREFIX)) &&
+          name !== PRECACHE
       );
 
       // caches.keys() lists caches oldest first, so the last is the previous
       // version.
-      await Promise.all(older.slice(0, -1).map(name => caches.delete(name)));
+      await Promise.all(
+        [
+          ...older.slice(0, -1),
+          ...names.filter(name => name === LEGACY_RUNTIME)
+        ].map(name => caches.delete(name))
+      );
       await self.clients.claim();
     })()
   );

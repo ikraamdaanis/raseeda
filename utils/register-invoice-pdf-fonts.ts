@@ -38,6 +38,10 @@ import lora400 from "@fontsource/lora/files/lora-latin-400-normal.woff?url";
 import lora500 from "@fontsource/lora/files/lora-latin-500-normal.woff?url";
 import lora600 from "@fontsource/lora/files/lora-latin-600-normal.woff?url";
 import lora700 from "@fontsource/lora/files/lora-latin-700-normal.woff?url";
+import schibsted400 from "@fontsource/schibsted-grotesk/files/schibsted-grotesk-latin-400-normal.woff?url";
+import schibsted500 from "@fontsource/schibsted-grotesk/files/schibsted-grotesk-latin-500-normal.woff?url";
+import schibsted600 from "@fontsource/schibsted-grotesk/files/schibsted-grotesk-latin-600-normal.woff?url";
+import schibsted700 from "@fontsource/schibsted-grotesk/files/schibsted-grotesk-latin-700-normal.woff?url";
 import { Font } from "@react-pdf/renderer";
 
 interface PdfFontWeight {
@@ -66,6 +70,12 @@ function weights(
 }
 
 export const PDF_FONT_FAMILIES: PdfFontFamily[] = [
+  weights("Invoice Schibsted Grotesk", [
+    schibsted400,
+    schibsted500,
+    schibsted600,
+    schibsted700
+  ]),
   weights("Invoice Geist", [geist400, geist500, geist600, geist700]),
   weights("Invoice Inter", [inter400, inter500, inter600, inter700]),
   weights("Invoice DM Sans", [dmSans400, dmSans500, dmSans600, dmSans700]),

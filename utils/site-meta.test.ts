@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { APP_NAME } from "~/consts/app";
 import {
   SITE_DESCRIPTION,
   SITE_TITLE,
@@ -23,7 +24,7 @@ describe("siteMeta", () => {
     const titleEntry = meta.find(entry => "title" in entry);
 
     expect(titleEntry).toEqual({ title: SITE_TITLE });
-    expect(SITE_TITLE).toMatch(/^billsend/);
+    expect(SITE_TITLE.startsWith(APP_NAME)).toBe(true);
   });
 
   it("includes a non-empty meta description", () => {

@@ -1,93 +1,89 @@
-import interFont from "@fontsource-variable/inter/files/inter-latin-opsz-normal.woff2?url";
 import {
   IconAlertTriangle,
-  IconArrowRight,
   IconArrowUpRight,
+  IconBan,
   IconCheck,
-  IconCloudOff,
-  IconCode,
-  IconEyeOff,
-  IconFileTypePdf,
-  IconMenu2,
+  IconCircleCheckFilled,
   IconPlus,
-  IconUserOff,
   IconX
 } from "@tabler/icons-react";
-import { createFileRoute, Link, ScriptOnce } from "@tanstack/react-router";
+import { createFileRoute, ScriptOnce } from "@tanstack/react-router";
 import type {
   ComponentProps,
   ComponentType,
   CSSProperties,
   ReactNode
 } from "react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   EditorWindow,
-  getTitleStyle,
   PAGE_HEIGHT,
   PAGE_WIDTH,
   ScaledFrame
 } from "~/components/home/editor-preview";
 import {
-  CLOSING_RENDER,
+  CurrencyDemo,
+  DemoTile,
+  DetailsDemo,
+  DownloadDemo,
+  FEATURE_PHONE_SCENE,
+  FEATURE_SCENE,
+  FontDemo,
+  PaymentDemo,
+  SavedDemo,
+  STEP_SCENE,
+  TILE_HUES,
+  TotalsDemo
+} from "~/components/home/feature-demos";
+import { HeroSky } from "~/components/home/hero-sky";
+import {
   HERO_INVOICE_NUMBER,
-  PDF_RENDER_SCALE,
-  PDF_RENDERS
+  PDF_RENDERS,
+  renderSrc,
+  renderSrcSet
 } from "~/components/home/pdf-renders";
+import { RunYourOwnCopy } from "~/components/home/run-your-own-copy";
 import {
   CONTAINER,
   FOCUS_RING,
   SiteFooter,
-  Wordmark
+  SOFT_PILL
 } from "~/components/home/site-chrome";
-import { formatCurrencyWithCode } from "~/consts/currencies";
-import { getInvoiceFontDefinition } from "~/consts/invoice-fonts";
+import {
+  CreateInvoiceLink,
+  HEADER_STATE_SCRIPT,
+  HERO_ACTIONS_ID,
+  SiteHeader,
+  SkipLink,
+  useHeaderState
+} from "~/components/home/site-header";
+import { APP_NAME } from "~/consts/app";
+import { useOnScreen } from "~/hooks/use-on-screen";
 import { typeClass } from "~/lib/type-scale";
 import { cn } from "~/lib/utils";
-import type { InvoiceFont } from "~/types";
+import { canUseStorage } from "~/utils/can-use-storage";
 import { canonicalLink, siteMeta, SOURCE_URL } from "~/utils/site-meta";
 import { HOME_STRUCTURED_DATA } from "~/utils/structured-data";
 
 export const Route = createFileRoute("/")({
   component: HomePage,
-  // The homepage is set in Inter, so its latin subset preloads here rather
-  // than in the root head, where every route would download it.
-  // The hero painting and the invoice in its editor window preload too, so
-  // they download alongside the CSS rather than after it; each preload mirrors
-  // one AVIF branch of a <picture>, and a browser without AVIF skips them.
+  // The invoice in the hero's editor window preloads too, so it downloads
+  // alongside the CSS rather than after it; the preload mirrors the AVIF branch
+  // of its <picture>, widths and sizes too, so it fetches the same file, and a
+  // browser without AVIF skips it. It is the page's largest paint, so it asks
+  // for high priority: an image preload otherwise starts low and waits behind
+  // the fonts.
   head: () => ({
     meta: siteMeta({ path: "/" }),
     links: [
       canonicalLink("/"),
       {
         rel: "preload",
-        href: interFont,
-        as: "font",
-        type: "font/woff2",
-        crossOrigin: "anonymous"
-      },
-      {
-        rel: "preload",
         as: "image",
         type: "image/avif",
-        href: toAvif(PDF_RENDERS.hero.src)
-      },
-      {
-        rel: "preload",
-        as: "image",
-        type: "image/avif",
-        media: "(max-width: 639px)",
-        imageSrcSet: toAvif(HERO_PORTRAIT_SRCSET),
-        imageSizes: "100vw",
-        fetchPriority: "high"
-      },
-      {
-        rel: "preload",
-        as: "image",
-        type: "image/avif",
-        media: "(min-width: 640px)",
-        imageSrcSet: toAvif(HERO_LANDSCAPE_SRCSET),
-        imageSizes: HERO_LANDSCAPE_SIZES,
+        href: toAvif(heroPicture.src),
+        imageSrcSet: toAvif(heroPicture.srcSet),
+        imageSizes: heroPicture.sizes,
         fetchPriority: "high"
       }
     ],
@@ -102,15 +98,6 @@ export const Route = createFileRoute("/")({
   })
 });
 
-// The hero painting's sizes, shared by its <picture> and the head's preloads.
-const HERO_PORTRAIT_SRCSET =
-  "/home/hero-harbour-portrait-900.webp 900w, /home/hero-harbour-portrait-1350.webp 1350w";
-
-const HERO_LANDSCAPE_SRCSET =
-  "/home/hero-harbour-1600.webp 1600w, /home/hero-harbour-2400.webp 2400w, /home/hero-harbour-3200.webp 3200w";
-
-const HERO_LANDSCAPE_SIZES = "(max-width: 1023px) 1960px, max(100vw, 2250px)";
-
 // Every homepage picture has an AVIF beside its WebP (scripts/
 // encode-homepage-avif.ts), about 40% lighter; the WebP stays for browsers
 // without AVIF.
@@ -118,35 +105,14 @@ function toAvif(srcSet: string) {
   return srcSet.replaceAll(".webp", ".avif");
 }
 
-// Runs as the HTML is parsed, straight after the hero painting and before the
-// copy. It marks the hero to play its entrance (globals.css), which only
-// happens when the homepage loads as a page: ScriptOnce writes the script into
-// the server's HTML alone, so coming back through a link shows the hero at
-// rest. The painting usually lands before React hydrates, so the check is made
-// here too: if it isn't loaded yet it holds back its entrance, so the blurred
-// placeholder shows, and plays it once the painting loads.
-const HERO_ENTRANCE_SCRIPT = `(function () {
-  var hero = document.getElementById("hero");
-  if (hero) hero.dataset.entrance = "";
-  var painting = document.getElementById("hero-painting");
-  if (!painting || painting.complete) return;
-  painting.dataset.loading = "";
-  function show() {
-    delete painting.dataset.loading;
-  }
-  painting.addEventListener("load", show, { once: true });
-  painting.addEventListener("error", show, { once: true });
-})();`;
-
 const TEXT_LINK = cn(
-  "inline-flex items-center gap-1 rounded-sm font-medium text-ink hover:text-ink-blue",
+  "inline-flex items-center gap-1 rounded-sm font-medium text-ink hover:text-brand-700",
   typeClass("body"),
   FOCUS_RING
 );
 
-// Headlines use Inter's Display optical size, which the browser picks up from
-// the opsz axis at large sizes. Sizes come from the type roles, which the
-// homepage sets at marketing values through `.home-type`.
+// Headlines are in the page's own face (font-home). Sizes come from the type
+// roles, which the homepage sets at marketing values through `.home-type`.
 const HEADING = "font-medium tracking-[-0.035em] text-balance";
 
 // Single-line controls: buttons, labels, nav links.
@@ -156,98 +122,43 @@ const CONTROL_TEXT = typeClass("body", "compact");
 // browsers fall back to normal wrapping.
 const BODY_TEXT = cn("text-balance text-zinc-600", typeClass("body"));
 
-const SECTIONS = [
-  { href: "#how-it-works", label: "How it works" },
-  { href: "#compare", label: "Compare" },
-  { href: "#features", label: "Features" },
-  { href: "#questions", label: "Questions" }
-];
-
-// The privacy promise in four words, each on a tile of one of the secondary
-// hues. Features get their own section, so they stay out of this strip.
-const FACTS: {
-  label: string;
-  icon: ComponentType<{ className?: string }>;
-  tile: string;
-}[] = [
-  {
-    label: "No account",
-    icon: IconUserOff,
-    tile: "bg-blush-tint text-blush-ink"
-  },
-  {
-    label: "No uploads",
-    icon: IconCloudOff,
-    tile: "bg-sage-tint text-sage-ink"
-  },
-  {
-    label: "No trackers",
-    icon: IconEyeOff,
-    tile: "bg-butter-tint text-butter-ink"
-  },
-  {
-    label: "Open source",
-    icon: IconCode,
-    tile: "bg-lavender-tint text-lavender-ink"
-  }
-];
-
-// Paper lifted off a feature card's wash.
-const PAPER_SHADOW =
-  "shadow-[0_4px_16px_-6px_rgb(0_0_0/0.12)] outline-1 -outline-offset-1 outline-zinc-950/5";
-
-// The secondary hues' washes: a pale painting in each hue, over its flat tint
-// so the panel already has its colour while the painting loads.
-// Each painting comes at 600px and 1200px wide; phones and the step cards
-// take the small one.
-const WASHES = {
-  lavender: { tint: "bg-lavender-tint", name: "wash-lavender" },
-  sage: { tint: "bg-sage-tint", name: "wash-sage" },
-  butter: { tint: "bg-butter-tint", name: "wash-butter" },
-  blush: { tint: "bg-blush-tint", name: "wash-blush" }
-};
-
-// Each feature shows a fragment of a real invoice rather than an icon, on a
-// pale wash of its own colour. Blue belongs to billsend and its controls, so
-// the features take the secondary hues, all at the same lightness. A specimen
-// that is a crop of a PDF page runs off the card where it was cut, so only the
-// paper's edge shows; the others sit on a slip of paper.
+// Each feature shows the editor doing it, a short loop on a pale tile, rather
+// than an icon. The demos are built from the editor's own pieces
+// (components/home/feature-demos.tsx).
 const FEATURES: {
   title: string;
   description: string;
-  specimen: ReactNode;
-  hue: keyof typeof WASHES;
-  isPageCrop?: boolean;
+  demo: ComponentType<{ width: number; height: number }>;
+  hues: [number, number];
+  isBleeding?: boolean;
 }[] = [
   {
     title: "Your logo, your type",
     description:
-      "Upload your logo and set the whole invoice in any of ten fonts, at three sizes.",
-    specimen: <TypeSpecimen />,
-    hue: "lavender"
+      "Upload your logo and set the whole invoice in any of eleven fonts, at three sizes.",
+    demo: FontDemo,
+    hues: [TILE_HUES.lavender, TILE_HUES.blush],
+    isBleeding: true
   },
   {
     title: "Any currency",
     description:
       "Choose the currency for each invoice, with custom symbols when you need them.",
-    specimen: <CurrencySpecimen />,
-    hue: "sage"
+    demo: CurrencyDemo,
+    hues: [TILE_HUES.sage, TILE_HUES.butter]
   },
   {
     title: "Tax, fees and discounts",
-    description:
-      "Add VAT or sales tax, fees, and a fixed or percentage discount. billsend does the sums, taxing the amount after any discount.",
-    specimen: <TotalsSpecimen />,
-    hue: "butter",
-    isPageCrop: true
+    description: `Add VAT or sales tax, fees, and a fixed or percentage discount. ${APP_NAME} does the sums, taxing the amount after any discount.`,
+    demo: TotalsDemo,
+    hues: [TILE_HUES.butter, TILE_HUES.blush]
   },
   {
     title: "Payment details clients can use",
     description:
       "Bank name, account and routing numbers, IBAN, BIC / SWIFT and sort code, laid out so your client can pay without asking.",
-    specimen: <PaymentSpecimen />,
-    hue: "blush",
-    isPageCrop: true
+    demo: PaymentDemo,
+    hues: [TILE_HUES.sky, TILE_HUES.sage]
   }
 ];
 
@@ -268,7 +179,7 @@ const MORE_FEATURES = [
 // so rather than claim a tick or a cross.
 // Short labels fit the narrow value columns on phones.
 const COMPARISON_COLUMNS = [
-  { label: "billsend", shortLabel: "billsend" },
+  { label: APP_NAME, shortLabel: APP_NAME },
   { label: "Online invoice generators", shortLabel: "Generators" },
   { label: "Accounting software", shortLabel: "Accounting" }
 ];
@@ -282,8 +193,11 @@ const COMPARISON_GRID =
   "grid grid-cols-[minmax(0,1.3fr)_repeat(var(--comparison-columns),minmax(0,1fr))] min-[400px]:grid-cols-[minmax(0,1.5fr)_repeat(var(--comparison-columns),minmax(0,1fr))] md:grid-cols-[minmax(0,2fr)_repeat(var(--comparison-columns),minmax(0,1fr))]";
 
 // A cell is a tick, a cross, or one short word where tools vary; longer
-// phrases wrap into tall rows in the narrow phone columns.
-type ComparisonValue = boolean | "Some" | "Paid" | "Varies";
+// phrases wrap into tall rows in the narrow phone columns. A cross is only for
+// what a kind of tool never does: where exceptions exist (free or desktop
+// accounting software, an open source generator), the cell says "Some" or
+// "Rarely" instead.
+type ComparisonValue = boolean | "Some" | "Rarely";
 
 // One value per column, in column order. Keep labels to about 35 characters so
 // a phone shows them in two or three lines.
@@ -291,11 +205,14 @@ const COMPARISON_ROWS: {
   label: string;
   cells: [ComparisonValue, ComparisonValue, ComparisonValue];
 }[] = [
-  { label: "Free, with no paid plan", cells: [true, "Some", false] },
-  { label: "No account needed", cells: [true, "Some", false] },
-  { label: "Invoice data stays on your device", cells: [true, false, false] },
+  { label: "Free, with no paid plan", cells: [true, "Some", "Rarely"] },
+  { label: "No account needed", cells: [true, "Some", "Rarely"] },
+  {
+    label: "Invoice data stays on your device",
+    cells: [true, "Rarely", "Rarely"]
+  },
   { label: "No watermark on the PDF", cells: [true, "Some", true] },
-  { label: "Open source", cells: [true, false, false] },
+  { label: "Open source", cells: [true, "Rarely", "Some"] },
   { label: "Sends invoices and tracks payment", cells: [false, "Some", true] }
 ];
 
@@ -308,14 +225,12 @@ const QUESTION_GROUPS: {
     title: "Making invoices",
     questions: [
       {
-        question: "Does billsend send the invoice to my client?",
-        answer:
-          "No. billsend makes the PDF and you send it however you like, usually as an email attachment. It never contacts your client, and there’s nothing on our side that could."
+        question: `Does ${APP_NAME} send the invoice to my client?`,
+        answer: `No. ${APP_NAME} makes the PDF and you send it however you like, usually as an email attachment. It never contacts your client, and there’s nothing on our side that could.`
       },
       {
         question: "Can I add VAT or sales tax?",
-        answer:
-          "Yes. Enter a tax rate and billsend charges it on the amount after any discount, then adds it to the total. For reverse charge or zero-rated work, mark the invoice tax-exempt and add a note such as “Reverse charge”."
+        answer: `Yes. Enter a tax rate and ${APP_NAME} charges it on the amount after any discount, then adds it to the total. For reverse charge or zero-rated work, mark the invoice tax-exempt and add a note such as “Reverse charge”.`
       },
       {
         question: "Can I reuse an invoice for the same client?",
@@ -344,213 +259,76 @@ const QUESTION_GROUPS: {
       },
       {
         question: "Why is it free, and what’s the catch?",
-        answer:
-          "There’s very little to pay for. billsend keeps no accounts and stores nothing about you on a server; once a page has loaded, your browser does all the work. There’s no paid plan, no ads and nothing about you to sell: beyond anonymous counts, like how many PDFs are made, the site collects nothing. The code is public on GitHub under the MIT licence, so you can check."
+        answer: `There’s very little to pay for. ${APP_NAME} keeps no accounts and stores nothing about you on a server; once a page has loaded, your browser does all the work. There’s no paid plan, no ads and nothing about you to sell: beyond anonymous counts, like how many PDFs are made, the site collects nothing. The code is public on GitHub under the MIT licence, so you can check.`
       }
     ]
   }
 ];
 
-// Whether this browser refuses storage: null until known. The database module
-// loads on demand so first-time visitors never download it.
-function useStorageBlocked() {
-  const [blocked, setBlocked] = useState<boolean | null>(null);
+// Whether this browser refuses storage (StorageBlockedNote reads it). The
+// check waits until the page has loaded and gone idle, so it never competes
+// with the hero, and it loads nothing: see canUseStorage.
+function useIsStorageBlocked() {
+  const [isBlocked, setIsBlocked] = useState(false);
 
   useEffect(() => {
-    let cancelled = false;
+    let isCancelled = false;
+    let idleHandle: number | undefined;
 
-    import("~/db")
-      .then(database => database.countInvoices())
-      .then(() => {
-        if (!cancelled) setBlocked(false);
-      })
-      .catch(() => {
-        if (!cancelled) setBlocked(true);
+    function check() {
+      void canUseStorage().then(canUse => {
+        if (!isCancelled) setIsBlocked(!canUse);
       });
+    }
+
+    // Safari has no requestIdleCallback; a timeout after load is close enough.
+    function scheduleCheck() {
+      idleHandle =
+        typeof requestIdleCallback === "function"
+          ? requestIdleCallback(check, { timeout: 2000 })
+          : window.setTimeout(check, 200);
+    }
+
+    if (document.readyState === "complete") scheduleCheck();
+    else addEventListener("load", scheduleCheck, { once: true });
 
     return () => {
-      cancelled = true;
+      isCancelled = true;
+      removeEventListener("load", scheduleCheck);
+
+      if (idleHandle === undefined) return;
+
+      if (typeof cancelIdleCallback === "function") {
+        cancelIdleCallback(idleHandle);
+      } else {
+        window.clearTimeout(idleHandle);
+      }
     };
   }, []);
 
-  return blocked;
+  return isBlocked;
 }
 
 function HomePage() {
+  useHeaderState();
+
   return (
-    <div className="home-type selection:bg-brand-100 bg-canvas text-ink isolate min-h-svh font-sans font-features-['cv02','cv03','cv04','cv11'] antialiased">
-      <a
-        href="#main"
-        className={cn(
-          "fixed top-3 left-3 z-60 -translate-y-16 rounded-full bg-white px-4 py-2 font-medium shadow-lg ring-1 ring-zinc-950/10 focus:translate-y-0",
-          CONTROL_TEXT,
-          FOCUS_RING
-        )}
-      >
-        Skip to content
-      </a>
+    <div className="home-type selection:bg-brand-100 bg-canvas text-ink font-home isolate min-h-svh antialiased">
+      <SkipLink />
       <SiteHeader />
       <main id="main" className="overflow-x-clip">
         <Hero />
+        <ScriptOnce>{HEADER_STATE_SCRIPT}</ScriptOnce>
         <HowItWorks />
-        <Comparison />
+        <Privacy />
         <Features />
+        <Comparison />
+        <OpenSource />
         <Questions />
         <Closing />
       </main>
       <SiteFooter />
     </div>
-  );
-}
-
-function SiteHeader() {
-  return (
-    <header className="relative z-10">
-      <div className={cn(CONTAINER, "flex h-16 items-center gap-4")}>
-        <div className="flex flex-1 items-center">
-          <Wordmark />
-        </div>
-        <nav
-          aria-label="Sections"
-          className="flex items-center gap-1 max-md:hidden"
-        >
-          {SECTIONS.map(section => (
-            <a
-              key={section.href}
-              href={section.href}
-              className={cn(
-                "hover:text-ink rounded-full px-3 py-2 text-zinc-600",
-                CONTROL_TEXT,
-                FOCUS_RING
-              )}
-            >
-              {section.label}
-            </a>
-          ))}
-        </nav>
-        <div className="flex flex-1 items-center justify-end gap-1">
-          <HeaderAction />
-          <PhoneMenu />
-        </div>
-      </div>
-    </header>
-  );
-}
-
-// Below `md` the section links fold into a native disclosure, so they work
-// before hydration. Once hydrated it also closes on Escape or a tap outside,
-// like any menu.
-function PhoneMenu() {
-  const [isOpen, setIsOpen] = useState(false);
-  const menuRef = useRef<HTMLDetailsElement>(null);
-
-  useEffect(() => {
-    if (!isOpen) return;
-
-    function handleKeyDown(event: KeyboardEvent) {
-      if (event.key !== "Escape") return;
-
-      setIsOpen(false);
-      menuRef.current?.querySelector("summary")?.focus();
-    }
-
-    function handlePointerDown(event: PointerEvent) {
-      if (!(event.target instanceof Node)) return;
-      if (menuRef.current?.contains(event.target)) return;
-
-      setIsOpen(false);
-    }
-
-    document.addEventListener("keydown", handleKeyDown);
-    document.addEventListener("pointerdown", handlePointerDown);
-
-    return () => {
-      document.removeEventListener("keydown", handleKeyDown);
-      document.removeEventListener("pointerdown", handlePointerDown);
-    };
-  }, [isOpen]);
-
-  return (
-    <details
-      ref={menuRef}
-      open={isOpen}
-      onToggle={event => setIsOpen(event.currentTarget.open)}
-      className="relative md:hidden"
-    >
-      <summary
-        className={cn(
-          "flex size-11 cursor-pointer list-none items-center justify-center rounded-full [&::-webkit-details-marker]:hidden",
-          FOCUS_RING
-        )}
-      >
-        <IconMenu2 className="size-6 shrink-0" aria-hidden="true" />
-        <span className="sr-only">Sections</span>
-      </summary>
-      <nav
-        aria-label="Sections"
-        className="absolute top-full right-0 z-10 mt-2 flex w-56 flex-col rounded-xl bg-white p-1.5 shadow-lg ring-1 ring-zinc-950/10"
-      >
-        {SECTIONS.map(section => (
-          <a
-            key={section.href}
-            href={section.href}
-            onClick={() => setIsOpen(false)}
-            className={cn(
-              "hover:text-ink rounded-lg px-3 py-3 text-zinc-700 hover:bg-zinc-100",
-              CONTROL_TEXT,
-              FOCUS_RING
-            )}
-          >
-            {section.label}
-          </a>
-        ))}
-      </nav>
-    </details>
-  );
-}
-
-// The page's one primary action, shaped the same everywhere it appears: a pill
-// in the homepage ink, larger on touch screens. It preloads the editor on
-// hover or touch (the router's default), not on sight: the editor's code is
-// over 500 KB and, fetched at load, it held up the hero on phones.
-function CreateInvoiceLink() {
-  return (
-    <Link
-      to="/create"
-      className={cn(
-        "bg-ink hover:bg-ink/85 relative inline-flex shrink-0 items-center rounded-full px-4 py-2.5 text-base font-medium whitespace-nowrap text-white shadow-[inset_0_1px_0_rgb(255_255_255/0.12),0_1px_2px_rgb(0_0_0/0.16)] sm:py-2 sm:text-sm",
-        FOCUS_RING
-      )}
-    >
-      Create invoice
-      <span
-        aria-hidden="true"
-        className="absolute top-1/2 left-1/2 size-[max(100%,3rem)] -translate-1/2 pointer-fine:hidden"
-      />
-    </Link>
-  );
-}
-
-// The header's way into the editor: a quiet text link, so it never repeats
-// the hero's button right below it. Phones skip it: the hero's button is the
-// first thing under the header, and the link would crowd the menu button.
-function HeaderAction() {
-  return (
-    <Link
-      to="/create"
-      className={cn(
-        "hover:text-ink-blue text-ink relative inline-flex items-center gap-1 rounded-sm px-1 py-2 font-medium whitespace-nowrap max-sm:hidden",
-        CONTROL_TEXT,
-        FOCUS_RING
-      )}
-    >
-      Open the editor
-      <IconArrowRight className="size-4 shrink-0" aria-hidden="true" />
-      <span
-        aria-hidden="true"
-        className="absolute top-1/2 left-1/2 size-[max(100%,3rem)] -translate-1/2 pointer-fine:hidden"
-      />
-    </Link>
   );
 }
 
@@ -574,208 +352,152 @@ function SectionHeading({
     );
   }
 
+  // The description sits right under its title at every width, so the two
+  // read as one block rather than drifting to opposite edges of the page.
   return (
-    <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between lg:gap-16">
+    <div className="flex flex-col gap-5">
       <h2 className={cn(HEADING, typeClass("title"), "max-w-[35ch]")}>
         {title}
       </h2>
-      <p className={cn(BODY_TEXT, "max-w-[48ch] lg:max-w-[40ch]")}>
-        {description}
-      </p>
+      <p className={cn(BODY_TEXT, "max-w-[48ch]")}>{description}</p>
     </div>
   );
 }
 
-// The hero is one painting, the full width of the viewport, from behind the
-// header (the section pulls up under it) to the editor window's cut. The copy
-// sits centred on its sky, over a fade to the canvas colour that keeps the
-// nav and headline legible, and the window rises from the painting's foot.
-// The painting is cut from an 8K master in three widths, up to 3200px: on a
-// 2x screen a 4096px cut looked no different and weighed twice as much.
-// Covering a hero taller than 16:9 draws it wider than the viewport (about
-// 1960px by `lg`, 2250px from there), hence the sizes. Phones get a 9:16
-// centre crop, since they only ever show its middle. It decodes in step with
-// the page (no decoding="async"), so a reload with the file cached paints it
-// in the first frame instead of flashing the placeholder for a frame or two.
-// Its entrance waits for it: HERO_ENTRANCE_SCRIPT holds it back until it loads.
-// The copy comes into focus line by line, 80ms apart, then the editor window
-// fades in.
+// The hero is a sky from behind the header (the section pulls up under it) to
+// the editor window's cut: inset from the viewport with rounded corners from
+// `lg`, and running to the screen's edges below it. The copy sits centred on
+// it and the window rises from its foot. The copy rises into place line by
+// line, 60ms apart, then the editor window fades in. On phones the copy and
+// buttons sit on the left, in line with the editor window's crop below them;
+// from `sm` they are centred over the whole window.
 function Hero() {
   return (
-    <section id="hero" suppressHydrationWarning className="-mt-16">
-      <div className="bg-hero-placeholder relative isolate overflow-hidden pt-16">
-        <picture>
-          <source
-            type="image/avif"
-            media="(max-width: 639px)"
-            srcSet={toAvif(HERO_PORTRAIT_SRCSET)}
-            sizes="100vw"
-            width={1350}
-            height={2400}
-          />
-          <source
-            media="(max-width: 639px)"
-            srcSet={HERO_PORTRAIT_SRCSET}
-            sizes="100vw"
-            width={1350}
-            height={2400}
-          />
-          <source
-            type="image/avif"
-            srcSet={toAvif(HERO_LANDSCAPE_SRCSET)}
-            sizes={HERO_LANDSCAPE_SIZES}
-          />
-          <img
-            id="hero-painting"
-            src="/home/hero-harbour-2400.webp"
-            srcSet={HERO_LANDSCAPE_SRCSET}
-            sizes={HERO_LANDSCAPE_SIZES}
-            alt=""
-            width={3200}
-            height={1800}
-            fetchPriority="high"
-            suppressHydrationWarning
-            className="hero-settle absolute inset-0 -z-10 size-full object-cover"
-          />
-        </picture>
-        <ScriptOnce>{HERO_ENTRANCE_SCRIPT}</ScriptOnce>
-        <div
-          aria-hidden="true"
-          className="from-canvas/60 via-canvas/25 absolute inset-x-0 top-0 -z-10 h-1/2 bg-linear-to-b to-transparent"
-        />
-        <div
-          className={cn(
-            CONTAINER,
-            "flex flex-col items-center gap-10 pt-16 text-center sm:pt-24"
-          )}
-        >
-          <div className="flex flex-col items-center gap-6">
-            <h1 className={cn(HEADING, typeClass("display"))}>
-              <span className="hero-focus block">Send the invoice.</span>
-              <span className="hero-focus text-ink-blue block [animation-delay:80ms]">
-                Keep everything else.
-              </span>
-            </h1>
-            <p className="hero-focus text-ink/75 max-w-[48ch] text-lg/7 text-pretty [animation-delay:160ms]">
-              A free invoice generator in your browser.{" "}
-              <br className="max-sm:hidden" />
-              No account, and your details never leave your device.
-            </p>
-          </div>
-          <div className="hero-focus flex flex-wrap items-center justify-center gap-x-6 gap-y-3 [animation-delay:240ms]">
-            <CreateInvoiceLink />
+    <HeroSky>
+      <div
+        className={cn(
+          CONTAINER,
+          "flex flex-col items-start gap-8 pt-14 sm:items-center sm:pt-20 sm:text-center"
+        )}
+      >
+        <div className="flex flex-col items-start gap-5 sm:items-center">
+          <h1 className={cn(HEADING, typeClass("display"))}>
+            <span className="hero-focus block">Make the invoice.</span>
+            <span className="hero-focus block [animation-delay:60ms]">
+              Keep your data.
+            </span>
+          </h1>
+          <p className="hero-focus text-ink/75 max-w-[48ch] text-lg/7 text-pretty [animation-delay:120ms]">
+            A free,{" "}
             <a
-              href="#how-it-works"
-              className={cn(TEXT_LINK, "py-2.5 text-base sm:py-2 sm:text-sm")}
-            >
-              See how it works
-            </a>
-          </div>
-        </div>
-        <HeroVisual />
-      </div>
-      <div className={CONTAINER}>
-        <StorageBlockedNote />
-        <ul className="grid grid-cols-2 gap-x-6 gap-y-4 border-b border-zinc-950/10 py-8 lg:grid-cols-4">
-          {FACTS.map(fact => (
-            <li
-              key={fact.label}
+              href={SOURCE_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="open source on GitHub (opens in a new tab)"
               className={cn(
-                "flex items-center gap-3 font-medium text-zinc-700",
-                CONTROL_TEXT
+                "group text-ink inline-flex items-center gap-0.5 rounded-sm whitespace-nowrap",
+                FOCUS_RING
               )}
             >
-              <span
-                aria-hidden="true"
-                className={cn(
-                  "flex size-8 shrink-0 items-center justify-center rounded-lg",
-                  fact.tile
-                )}
-              >
-                <fact.icon className="size-4" />
+              <span className="border-ink/40 group-hover:border-ink border-b border-dotted">
+                open source
               </span>
-              {fact.label}
-            </li>
-          ))}
-        </ul>
+              <IconArrowUpRight
+                className="size-4 shrink-0"
+                aria-hidden="true"
+              />
+            </a>{" "}
+            invoice maker that runs in your browser. No account, and nothing you
+            type is uploaded.
+          </p>
+        </div>
+        <div
+          id={HERO_ACTIONS_ID}
+          className="hero-focus flex flex-wrap items-center gap-3 [animation-delay:180ms] sm:justify-center"
+        >
+          <CreateInvoiceLink />
+          <a href="#how-it-works" className={SOFT_PILL}>
+            See how it works
+          </a>
+        </div>
+        <StorageBlockedNote />
       </div>
-    </section>
+      <HeroVisual />
+    </HeroSky>
   );
 }
 
 /**
- * The editor, shown rather than described: the real editor layout with a real
- * billsend PDF of the invoice on its desk, rising from the foot of the hero's
- * painting. The window keeps to the page's column inside a 17:10 frame; on
- * phones the frame is a fixed 638px of window tall (at the 0.6 zoom), which
- * ends it just under the fourth line item. The frame's min-h-0 holds its
- * height while the window overflows it, and the painting's overflow-hidden
- * makes the cut. The window starts at the frame's top. From `lg` the whole
- * window sits centred in the frame. Below it the window is drawn at a fixed
- * zoom, inset --pad from the frame's left edge, and runs off the viewport's
- * right edge and the frame's foot, so phones and tablets see a readable crop
- * of its top-left corner.
+ * The editor, shown rather than described: the real editor layout, both side
+ * panels open, with a real PDF of the invoice on its desk, in a frosted bezel
+ * that rises from the foot of the sky. From `lg` the whole window's width
+ * sits in the page's column. On tablets the window is drawn at a fixed zoom
+ * from its top-left corner and runs off the sky's right edge, a readable crop
+ * of the invoices panel and the page. Phones, too narrow for both, get the
+ * desk alone: the window framed on the page and its margins, scaled to fit,
+ * so the invoice itself, logo to totals, is what they see. The bezel and
+ * window run off the sky's foot, where they are cut, so only their top
+ * corners are rounded. The window is drawn once, its bezel and crop set per
+ * breakpoint in CSS, so phones and larger screens share the same markup.
  */
 function HeroVisual() {
   return (
     <figure
-      aria-label="The billsend editor with a sample invoice"
+      aria-label={`The ${APP_NAME} editor with a sample invoice`}
       className={cn(
         CONTAINER,
-        "hero-fade relative mt-14 h-[calc(638px*0.6)] min-h-0 [animation-delay:320ms] sm:mt-16 sm:aspect-17/10 sm:h-auto"
+        "hero-fade mt-12 [animation-delay:240ms] sm:mt-16"
       )}
     >
-      <div className="pl-(--pad) [--pad:--spacing(5)] sm:[--pad:--spacing(10)] lg:px-(--pad) lg:[--pad:--spacing(16)]">
-        <div className="w-[calc(1024px*var(--zoom))] [--zoom:0.6] sm:[--zoom:0.7] md:[--zoom:0.92] lg:hidden">
-          <ScaledFrame
-            {...HERO_WINDOW}
-            fill
-            className="rounded-tl-xl shadow-2xl"
-          >
+      <div className="rounded-t-2xl bg-white/45 p-1.5 pb-0 shadow-[0_24px_64px_-16px_rgb(16_60_90/0.25)] ring-1 ring-white/70 [--bezel-radius:--spacing(5)] [--pad:--spacing(2)] sm:w-max sm:rounded-t-(--bezel-radius) sm:p-(--pad) sm:pb-0 sm:max-lg:rounded-tr-none sm:max-lg:pr-0 lg:w-full">
+        <div className="overflow-hidden rounded-t-[0.625rem] [--zoom:0.65] sm:w-[calc(1440px*var(--zoom))] sm:rounded-t-[calc(var(--bezel-radius)-var(--pad))] sm:max-lg:rounded-tr-none md:[--zoom:0.75] lg:w-auto">
+          <ScaledFrame fill className={HERO_FRAME}>
             <EditorWindow documentName={HERO_INVOICE_NUMBER} {...HERO_WINDOW}>
               <PdfPaper render={PDF_RENDERS.hero} />
             </EditorWindow>
           </ScaledFrame>
         </div>
-        <ScaledFrame
-          {...HERO_WINDOW}
-          className="rounded-t-xl shadow-2xl max-lg:hidden"
-        >
-          <EditorWindow documentName={HERO_INVOICE_NUMBER} {...HERO_WINDOW}>
-            <PdfPaper render={PDF_RENDERS.hero} />
-          </EditorWindow>
-        </ScaledFrame>
       </div>
     </figure>
   );
 }
 
-// The hero's editor window, drawn taller than any frame shows so the frame's
-// foot always cuts it: the tallest need is a phone's 638px of window. Each
-// crop zoom is the smallest that still reaches the frame's right edge at the
-// top of its range (571px of window at 639px, 679px at 767px, 935px at
-// 1023px).
-const HERO_WINDOW = { width: 1024, height: 1240 };
+// The hero's editor window, at a laptop's width so the page fits between the
+// two panels (256px + 288px + the 858px desk), drawn taller than the frame
+// shows so the sky's foot always cuts it.
+const HERO_WINDOW = { width: 1440, height: 1100 };
+
+// The part of the window the hero shows. Phones get the desk from just left
+// of the page (which starts 307px in, past the invoices panel and the desk's
+// margin) to just right of it, cut a little below the payment terms: 834 x
+// 990 from x 287. From `sm`, the window's full width down to the invoice's
+// totals: 1440 x 860.
+const HERO_FRAME =
+  "[--frame-height:990] [--frame-width:834] [--frame-x:287] sm:[--frame-height:860] sm:[--frame-width:1440] sm:[--frame-x:0]";
 
 /**
- * A real billsend PDF in the editor canvas's place: a screenshot of the top of
+ * A real PDF in the editor canvas's place: a screenshot of the top of
  * the page on the same paper, shown first thing, so it preloads with the page.
  * It decodes synchronously: left to itself, WebKit decodes a picture this
  * large off the main thread, so a reload painted the paper blank for a frame
  * before the invoice appeared.
  */
 function PdfPaper({ render }: { render: typeof PDF_RENDERS.hero }) {
+  const picture = pdfPicture(render);
+
   return (
     <div
       className="border-paper-border bg-paper overflow-hidden border shadow-md"
       style={{ width: PAGE_WIDTH, height: PAGE_HEIGHT }}
     >
       <Picture
-        src={render.src}
+        src={picture.src}
+        srcSet={picture.srcSet}
+        sizes={picture.sizes}
         alt={render.alt}
-        width={render.width}
+        width={picture.width}
         height={Math.round(
-          (render.width * render.crop.height) / render.crop.width
+          (picture.width * render.crop.height) / render.crop.width
         )}
         fetchPriority="high"
         decoding="sync"
@@ -784,6 +506,23 @@ function PdfPaper({ render }: { render: typeof PDF_RENDERS.hero }) {
     </div>
   );
 }
+
+// A render's <img> attributes. It is laid out at the page's CSS width before
+// the frame scales it, so `sizes` is that width, and the browser picks the
+// file for its pixel density from there: the narrower one on a standard
+// screen, the wider on a dense one.
+function pdfPicture(render: typeof PDF_RENDERS.hero) {
+  const width = Math.max(...render.widths);
+
+  return {
+    src: renderSrc(render, width),
+    srcSet: renderSrcSet(render),
+    sizes: `${PAGE_WIDTH}px`,
+    width
+  };
+}
+
+const heroPicture = pdfPicture(PDF_RENDERS.hero);
 
 /**
  * An image that offers its AVIF first. The <picture> draws no box of its own,
@@ -804,16 +543,20 @@ function Picture({
   );
 }
 
-const EDITOR_FONTS: InvoiceFont[] = ["geist", "lora", "jetbrains-mono"];
-
-// A browser that refuses storage gets told what that means and how to fix it.
+// A browser that refuses storage gets told what that means and how to fix it,
+// right under the hero's buttons, before anyone starts an invoice.
 function StorageBlockedNote() {
-  const blocked = useStorageBlocked();
+  const isBlocked = useIsStorageBlocked();
 
-  if (!blocked) return null;
+  if (!isBlocked) return null;
 
   return (
-    <p className={cn(BODY_TEXT, "mt-6 flex items-start gap-2")}>
+    <p
+      className={cn(
+        typeClass("body"),
+        "text-ink/80 flex max-w-[52ch] items-start gap-2 text-left text-pretty"
+      )}
+    >
       <IconAlertTriangle
         className="size-5 h-lh shrink-0 text-amber-600 sm:size-4"
         aria-hidden="true"
@@ -826,42 +569,36 @@ function StorageBlockedNote() {
 }
 
 // From a blank page to a sent invoice, in the order a visitor does it. Each
-// step shows a slip of the app doing it, on a wash of one of the secondary
-// hues, like the feature cards further down.
+// step plays a short loop of the editor doing it, like the feature cards
+// further down. Three across from `lg`; on tablets each step is a row, its
+// tile beside its words, so the demo stays big enough to read; phones stack.
 const STEPS: {
   title: string;
   description: string;
-  specimen: ReactNode;
-  hue: keyof typeof WASHES;
+  demo: ComponentType<{ width: number; height: number }>;
+  hues: [number, number];
 }[] = [
   {
     title: "Add the details",
-    description:
-      "Your details, your client and the line items. billsend does the sums as you type.",
-    specimen: <DetailsSpecimen />,
-    hue: "butter"
+    description: `Your details, your client and the line items. ${APP_NAME} does the sums as you type.`,
+    demo: DetailsDemo,
+    hues: [TILE_HUES.butter, TILE_HUES.sky]
   },
   {
-    title: "Send the PDF",
+    title: "Download the PDF",
     description:
-      "Download an A4 PDF or print it, then send it to your client however you like.",
-    specimen: <PdfSpecimen />,
-    hue: "blush"
+      "Download an A4 PDF, with no watermark, or print it, then send it to your client however you like.",
+    demo: DownloadDemo,
+    hues: [TILE_HUES.blush, TILE_HUES.lavender]
   },
   {
     title: "Keep a copy",
     description:
-      "Invoices save in this browser, so a repeat client’s next invoice starts from the last one.",
-    specimen: <SavedSpecimen />,
-    hue: "sage"
+      "Invoices save in this browser, so a repeat client’s next invoice starts from the last one. Clearing the browser’s site data deletes them, so back them up with Export Data in the File menu.",
+    demo: SavedDemo,
+    hues: [TILE_HUES.sage, TILE_HUES.sky]
   }
 ];
-
-// The slip each step's specimen sits on: the app's own surface, in Geist.
-const SLIP = cn(
-  PAPER_SHADOW,
-  "font-geist flex w-full max-w-64 flex-col rounded-lg bg-white p-3 text-xs text-zinc-950"
-);
 
 function HowItWorks() {
   return (
@@ -869,28 +606,21 @@ function HowItWorks() {
       <div className={CONTAINER}>
         <SectionHeading
           title="How it works."
-          description="billsend is a private invoice generator: no sign-up and nothing to install. Open the editor and start typing."
+          description={`${APP_NAME} is a private invoice generator: no sign-up and nothing to install. Open the editor and start typing.`}
         />
-        <ol className="mt-12 grid gap-6 sm:mt-16 md:grid-cols-3">
+        <ol className="mt-12 grid gap-x-6 gap-y-12 sm:mt-16 lg:grid-cols-3">
           {STEPS.map((step, index) => (
             <li
               key={step.title}
-              className="flex flex-col overflow-hidden rounded-xl bg-white ring-1 ring-zinc-950/10"
+              className="flex flex-col gap-6 md:grid md:grid-cols-2 md:items-center md:gap-8 lg:flex lg:items-stretch lg:gap-6"
             >
-              <div
-                aria-hidden="true"
-                className={cn(
-                  "relative isolate flex h-48 items-center justify-center p-6",
-                  WASHES[step.hue].tint
-                )}
-              >
-                <Wash
-                  hue={step.hue}
-                  sizes="(min-width: 1152px) 370px, (min-width: 768px) 33vw, 100vw"
-                />
-                {step.specimen}
-              </div>
-              <div className="flex flex-col gap-2 p-6">
+              <DemoTile
+                scene={step.demo}
+                hues={step.hues}
+                size={STEP_SCENE}
+                className="aspect-4/3"
+              />
+              <div className="flex flex-col gap-2">
                 <h3
                   className={cn(
                     typeClass("subtitle"),
@@ -901,7 +631,7 @@ function HowItWorks() {
                     aria-hidden="true"
                     className={cn(
                       typeClass("caption"),
-                      "bg-brand-50 text-ink-blue flex size-7 shrink-0 items-center justify-center rounded-full font-semibold tabular-nums"
+                      "bg-brand-50 text-brand-600 flex size-7 shrink-0 items-center justify-center rounded-full font-semibold tabular-nums"
                     )}
                   >
                     {index + 1}
@@ -918,137 +648,27 @@ function HowItWorks() {
   );
 }
 
-// The page's pictures below the hero load straight away at low priority, not
-// lazily: lazy loading fetches an image only as it nears the viewport (late
-// in Safari), so it popped in while scrolling. They total about 450 KB, and
-// low priority keeps them behind the hero.
-// `sizes` is the card's width: a third of the column for the steps, half for
-// the features, and the full width below `md`.
-function Wash({ hue, sizes }: { hue: keyof typeof WASHES; sizes: string }) {
-  const { name } = WASHES[hue];
-
-  return (
-    <Picture
-      src={`/home/${name}.webp`}
-      srcSet={`/home/${name}-600.webp 600w, /home/${name}.webp 1200w`}
-      sizes={sizes}
-      alt=""
-      width={1200}
-      height={900}
-      fetchPriority="low"
-      className="absolute inset-0 -z-10 size-full object-cover"
-    />
-  );
-}
-
-// A client typed in, and the lines summing as they go.
-function DetailsSpecimen() {
-  return (
-    <div className={cn(SLIP, "gap-2")}>
-      <span className="text-zinc-500">Bill to</span>
-      <span className="ring-brand-600 rounded-md px-2 py-1.5 font-medium ring-2">
-        Harbor & Pine Co.
-        <span className="bg-brand-600 ml-px inline-block h-3.5 w-px translate-y-0.5" />
-      </span>
-      <div className="mt-1 flex flex-col gap-1.5 border-t border-zinc-950/10 pt-2.5 tabular-nums">
-        <span className="flex justify-between gap-4">
-          Editorial illustrations
-          <span>$1,800.00</span>
-        </span>
-        <span className="flex justify-between gap-4">
-          Cover artwork
-          <span>$950.00</span>
-        </span>
-        <span className="flex justify-between gap-4 font-semibold">
-          Total
-          <span>$2,750.00 USD</span>
-        </span>
-      </div>
-    </div>
-  );
-}
-
-// The finished file, ready to download.
-function PdfSpecimen() {
-  return (
-    <div className={cn(SLIP, "gap-3")}>
-      <div className="flex items-center gap-3">
-        <span className="bg-blush-tint text-blush-ink flex size-9 shrink-0 items-center justify-center rounded-md">
-          <IconFileTypePdf className="size-5" />
-        </span>
-        <span className="flex min-w-0 flex-col">
-          <span className="truncate font-medium">INV-0043.pdf</span>
-          <span className="text-zinc-500">A4, 1 page</span>
-        </span>
-      </div>
-      <span className="bg-brand-600 rounded-md py-1.5 text-center font-medium text-white">
-        Download
-      </span>
-    </div>
-  );
-}
-
-// Past invoices waiting in the browser, a repeat client among them.
-function SavedSpecimen() {
-  return (
-    <div className={cn(SLIP, "gap-1")}>
-      <span className="pb-1 text-zinc-500">Saved in this browser</span>
-      {[
-        { number: "INV-0043", client: "Harbor & Pine Co." },
-        { number: "INV-0042", client: "Fieldnote Press" },
-        { number: "INV-0041", client: "Harbor & Pine Co." }
-      ].map(saved => (
-        <span
-          key={saved.number}
-          className="flex items-center justify-between gap-3 rounded-md px-2 py-1.5 odd:bg-zinc-50"
-        >
-          <span className="font-medium tabular-nums">{saved.number}</span>
-          <span className="truncate text-zinc-500">{saved.client}</span>
-        </span>
-      ))}
-    </div>
-  );
-}
-
+// Two across from `lg`; below it the cards stack, so each scene draws at its
+// full size rather than shrunk into a half-width tablet column.
 function Features() {
   return (
     <section id="features" className="py-16 sm:py-20">
       <div className={CONTAINER}>
         <SectionHeading
           title="What goes on the invoice."
-          description="For freelancers and anyone with a side project who needs to bill a client, not set up accounting software."
+          description="Your logo, your client’s currency, the right tax, and the bank details they need to pay you."
         />
-        <ul className="mt-12 grid gap-x-6 gap-y-12 sm:mt-16 md:grid-cols-2">
+        <ul className="mt-12 grid gap-x-6 gap-y-12 sm:mt-16 lg:grid-cols-2">
           {FEATURES.map(feature => (
-            <li
-              key={feature.title}
-              className="row-span-2 grid grid-rows-subgrid gap-6"
-            >
-              <div
-                aria-hidden="true"
-                className={cn(
-                  "relative isolate flex items-center overflow-hidden rounded-xl p-(--pad) ring-1 ring-zinc-950/5 [--pad:--spacing(6)] sm:[--pad:--spacing(8)]",
-                  WASHES[feature.hue].tint,
-                  !feature.isPageCrop && "min-h-48 max-sm:[--pad:--spacing(4)]"
-                )}
-              >
-                <Wash
-                  hue={feature.hue}
-                  sizes="(min-width: 1152px) 560px, (min-width: 768px) 50vw, 100vw"
-                />
-                {feature.isPageCrop ? (
-                  feature.specimen
-                ) : (
-                  <div
-                    className={cn(
-                      PAPER_SHADOW,
-                      "w-full rounded-lg bg-white p-4 sm:p-6"
-                    )}
-                  >
-                    {feature.specimen}
-                  </div>
-                )}
-              </div>
+            <li key={feature.title} className="flex flex-col gap-6">
+              <DemoTile
+                scene={feature.demo}
+                hues={feature.hues}
+                size={FEATURE_SCENE}
+                phoneSize={FEATURE_PHONE_SCENE}
+                isBleeding={feature.isBleeding}
+                className="sm:aspect-16/10"
+              />
               <div className="flex flex-col gap-2">
                 <h3 className={cn(typeClass("subtitle"), "font-medium")}>
                   {feature.title}
@@ -1087,91 +707,6 @@ function Features() {
   );
 }
 
-// The invoice title in three of the editor's faces, set as the editor sets it.
-// The size follows the card's width so three titles fit a phone's paper slip:
-// the monospace "Invoice" is 4.2em wide, so three plus two gaps need 12.6em.
-function TypeSpecimen() {
-  return (
-    <div className="@container grid w-full grid-cols-3 gap-4">
-      {EDITOR_FONTS.map(specimenFont => (
-        <div key={specimenFont} className="flex flex-col gap-2">
-          <p
-            className="text-[length:min(1.875rem,calc((100cqi-2rem)/12.6))] leading-tight"
-            style={{ ...getTitleStyle(specimenFont), fontSize: undefined }}
-          >
-            Invoice
-          </p>
-          <p className={cn(typeClass("caption"), "text-zinc-500")}>
-            {getInvoiceFontDefinition(specimenFont).name}
-          </p>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-// One total in four currencies, formatted by the editor's own formatter.
-function CurrencySpecimen() {
-  return (
-    <ul className="font-geist flex w-full flex-col gap-2 text-lg font-semibold text-zinc-950 tabular-nums sm:text-xl">
-      {[
-        { symbol: "$", code: "USD" },
-        { symbol: "€", code: "EUR" },
-        { symbol: "£", code: "GBP" },
-        { symbol: "¥", code: "JPY" }
-      ].map(currency => (
-        <li key={currency.code} className="whitespace-nowrap">
-          {formatCurrencyWithCode(2475, currency.symbol, currency.code)}
-        </li>
-      ))}
-    </ul>
-  );
-}
-
-/**
- * A crop of a real billsend PDF, filling its container's width. The two
- * feature crops share an aspect ratio so their cards match.
- */
-function PdfCrop({
-  render,
-  className
-}: {
-  render: (typeof PDF_RENDERS)[keyof typeof PDF_RENDERS];
-  className?: string;
-}) {
-  return (
-    <Picture
-      src={render.src}
-      alt={render.alt}
-      width={Math.round(render.crop.width * PDF_RENDER_SCALE)}
-      height={Math.round(render.crop.height * PDF_RENDER_SCALE)}
-      fetchPriority="low"
-      className={cn("block h-auto w-full max-w-none min-w-0 grow", className)}
-    />
-  );
-}
-
-// A print studio's totals with a 10% discount, New York City's 8.875% sales
-// tax and a delivery fee. Cut from the middle of the page, it runs off the card
-// on every side but the page's right edge.
-function TotalsSpecimen() {
-  return (
-    <PdfCrop
-      render={PDF_RENDERS.totals}
-      className={cn(PAPER_SHADOW, "-my-(--pad) -ml-(--pad) sm:mr-[16%]")}
-    />
-  );
-}
-
-function PaymentSpecimen() {
-  return (
-    <PdfCrop
-      render={PDF_RENDERS.payment}
-      className={cn(PAPER_SHADOW, "-my-(--pad) -mr-(--pad) sm:ml-[16%]")}
-    />
-  );
-}
-
 // A real <table>, so text extractors and AI crawlers keep the comparison,
 // laid out as one grid per row. The roles repeat the elements' own because
 // Safari drops table semantics from table elements given a CSS display.
@@ -1189,8 +724,8 @@ function Comparison() {
     <section id="compare" className="py-16 sm:py-20">
       <div className={CONTAINER}>
         <SectionHeading
-          title="How billsend compares with other invoice generators."
-          description="billsend makes the invoice and stops there. To email invoices and track payments, you want accounting software."
+          title={`How ${APP_NAME} compares with other ways to invoice.`}
+          description={`Each column is the typical tool of its kind. ${APP_NAME} makes the invoice and stops there; to email invoices and track payments, you want accounting software.`}
           isCentered
         />
         <table
@@ -1214,12 +749,12 @@ function Comparison() {
                   role="columnheader"
                   scope="col"
                   className={cn(
-                    // Phones set the short headers small (11px under 400px,
-                    // then 12px) so they fit the narrowest columns.
-                    "flex items-end justify-center px-0.5 pt-4 pb-3 text-center text-[11px]/4 font-medium text-balance min-[400px]:px-1 min-[400px]:text-xs/4 sm:text-sm/5 md:px-4",
+                    // Phones set the short headers at 12px, hyphenated if a
+                    // word is still wider than the narrowest columns.
+                    "flex items-end justify-center px-0.5 pt-4 pb-3 text-center text-xs/4 font-medium text-balance hyphens-auto min-[400px]:px-1 sm:text-sm/5 md:px-4",
                     index === 0
-                      ? "text-ink-blue rounded-t-xl bg-blue-50 font-semibold"
-                      : "text-zinc-500"
+                      ? "text-brand-700 bg-brand-50 rounded-t-xl"
+                      : "text-zinc-600"
                   )}
                 >
                   <span className="md:hidden">{column.shortLabel}</span>
@@ -1236,7 +771,11 @@ function Comparison() {
                 <tr
                   key={row.label}
                   role="row"
-                  className={cn(COMPARISON_GRID, "border-t border-zinc-950/10")}
+                  className={cn(
+                    COMPARISON_GRID,
+                    "border-t",
+                    rowIndex === 0 ? "border-zinc-950/10" : "border-zinc-950/5"
+                  )}
                 >
                   <th
                     role="rowheader"
@@ -1254,11 +793,14 @@ function Comparison() {
                       role="cell"
                       className={cn(
                         "flex items-center justify-center px-1 py-4 md:px-4",
-                        cellIndex === 0 && "bg-blue-50",
+                        cellIndex === 0 && "bg-brand-50",
                         cellIndex === 0 && isLastRow && "rounded-b-xl"
                       )}
                     >
-                      <ComparisonCell value={row.cells[cellIndex]} />
+                      <ComparisonCell
+                        value={row.cells[cellIndex]}
+                        isOwnColumn={cellIndex === 0}
+                      />
                     </td>
                   ))}
                 </tr>
@@ -1273,24 +815,37 @@ function Comparison() {
 
 /* eslint-enable jsx-a11y/no-redundant-roles, jsx-a11y/no-interactive-element-to-noninteractive-role */
 
-// Colour carries the answer: sage yes, blush no, butter where tools vary. The
-// shapes differ too, so the table reads without colour.
-function ComparisonCell({ value }: { value: ComparisonValue }) {
+// Only raseeda's column carries colour: a filled brand tick. The other
+// columns answer in greys (an ink tick, a faint cross, "Some" or "Rarely"
+// where tools vary), so the eye reads raseeda's column first and nothing reads as a
+// warning. The shapes differ too, so the table reads without colour.
+function ComparisonCell({
+  value,
+  isOwnColumn
+}: {
+  value: ComparisonValue;
+  isOwnColumn: boolean;
+}) {
   if (typeof value === "string") {
     return (
-      <span className={cn(typeClass("caption"), "text-butter-ink font-medium")}>
-        {value}
-      </span>
+      <span className={cn(typeClass("caption"), "text-zinc-600")}>{value}</span>
     );
   }
 
   if (value) {
     return (
       <>
-        <IconCheck
-          className="text-sage-ink mx-auto size-5 shrink-0"
-          aria-hidden="true"
-        />
+        {isOwnColumn ? (
+          <IconCircleCheckFilled
+            className="text-brand-600 mx-auto size-6 shrink-0"
+            aria-hidden="true"
+          />
+        ) : (
+          <IconCheck
+            className="text-ink mx-auto size-5 shrink-0"
+            aria-hidden="true"
+          />
+        )}
         <span className="sr-only">Yes</span>
       </>
     );
@@ -1299,11 +854,255 @@ function ComparisonCell({ value }: { value: ComparisonValue }) {
   return (
     <>
       <IconX
-        className="text-blush-ink mx-auto size-5 shrink-0"
+        className="mx-auto size-5 shrink-0 text-zinc-500"
         aria-hidden="true"
       />
       <span className="sr-only">No</span>
     </>
+  );
+}
+
+// Each promise on the page, first as what it means for your invoices
+// (`outcome`, in plain words), then as the code that keeps it: the real
+// lines, with their real line numbers, from the file on GitHub. `highlight`
+// is the line that does the work.
+const PROOFS: {
+  title: string;
+  description: string;
+  outcome: { label: string; status: string; isRefused?: boolean }[];
+  path: string;
+  firstLine: number;
+  lines: string[];
+  highlight: number;
+  hues: [number, number];
+}[] = [
+  {
+    title: "Other websites are blocked",
+    description:
+      "Every page carries this policy. Your browser enforces it, so third-party trackers, analytics and every other site are refused.",
+    outcome: [
+      { label: "This site", status: "Allowed" },
+      {
+        label: "Third-party analytics",
+        status: "Blocked",
+        isRefused: true
+      },
+      { label: "Any other website", status: "Blocked", isRefused: true }
+    ],
+    path: "consts/content-security-policy.ts",
+    firstLine: 12,
+    lines: [
+      `  "img-src 'self' data: blob:",`,
+      `  "font-src 'self' data:",`,
+      `  "connect-src 'self' data: blob:",`,
+      `  "worker-src 'self' blob:",`,
+      `  "frame-src 'none'",`
+    ],
+    highlight: 14,
+    hues: [TILE_HUES.sky, TILE_HUES.sage]
+  },
+  {
+    title: "Invoices stay in this browser",
+    description:
+      "They're saved in your browser's own database, on your device. There's no account and no copy on a server.",
+    outcome: [
+      { label: "Invoices and templates", status: "This device" },
+      { label: "Logos and images", status: "This device" },
+      { label: "Copy on a server", status: "None", isRefused: true }
+    ],
+    path: "db/index.ts",
+    firstLine: 178,
+    lines: [
+      "class InvoiceDatabase extends Dexie {",
+      "  templates!: Table<InvoiceTemplate, string>;",
+      "  invoices!: Table<InvoiceDocument, string>;",
+      "  images!: Table<StoredImage, string>;",
+      "  drafts!: Table<InvoiceDraft, string>;"
+    ],
+    highlight: 178,
+    hues: [TILE_HUES.lavender, TILE_HUES.sky]
+  },
+  {
+    title: "Tested on every change",
+    description:
+      "Every change runs a browser test that loads this page and fails if it asks another website for anything.",
+    outcome: [
+      { label: "This page", status: "Loaded" },
+      { label: "Requests to other sites", status: "None", isRefused: true },
+      { label: "Checked", status: "Every change" }
+    ],
+    path: "e2e/home.spec.ts",
+    firstLine: 123,
+    lines: [
+      `    return url.protocol.startsWith("http") && url.origin !== homeOrigin;`,
+      "  });",
+      "",
+      "  expect(requested.length).toBeGreaterThan(0);",
+      "  expect(elsewhere).toEqual([]);"
+    ],
+    highlight: 127,
+    hues: [TILE_HUES.butter, TILE_HUES.blush]
+  }
+];
+
+// The privacy promise in plain words, then on each tile what it means for your
+// invoices above the lines of code that keep it, so a reader who can't read
+// code still gets the promise and one who can gets the proof.
+function Privacy() {
+  return (
+    <section id="privacy" className="py-16 sm:py-20">
+      <div className={CONTAINER}>
+        <SectionHeading
+          title="Your invoices never leave your device."
+          description="Not to us and not to anyone else. The page is blocked from sending data to any other site, and the code is public, so you don’t have to take our word for it."
+        />
+        <ul className="mt-12 grid gap-x-6 gap-y-12 sm:mt-16 lg:grid-cols-3">
+          {PROOFS.map(proof => (
+            <li key={proof.path} className="flex min-w-0 flex-col gap-6">
+              <CodeTile proof={proof} />
+              <div className="flex flex-col gap-2">
+                <h3 className={cn(typeClass("subtitle"), "font-medium")}>
+                  {proof.title}
+                </h3>
+                <p className={BODY_TEXT}>{proof.description}</p>
+              </div>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </section>
+  );
+}
+
+// The licence and how to run a copy, for readers who want the code itself.
+function OpenSource() {
+  return (
+    <section id="open-source" className="py-16 sm:py-20">
+      <div className={CONTAINER}>
+        <SectionHeading
+          title="Open source, all of it."
+          description="MIT licensed and public on GitHub. Read every line, or run your own copy."
+        />
+        <RunYourOwnCopy />
+      </div>
+    </section>
+  );
+}
+
+// Words the snippets colour as keywords, and their strings.
+const CODE_TOKEN =
+  /("[^"]*"|`[^`]*`|\b(?:export|const|class|extends|return|new)\b)/;
+
+function CodeLine({ text }: { text: string }) {
+  return text.split(CODE_TOKEN).map((part, index) => {
+    if (!part) return null;
+
+    const isString = /^["`]/.test(part);
+    const isKeyword = !isString && CODE_TOKEN.test(part);
+
+    return (
+      <span
+        key={index}
+        className={cn(
+          isString && "text-brand-700",
+          isKeyword && "text-violet-600"
+        )}
+      >
+        {part}
+      </span>
+    );
+  });
+}
+
+// A promise's outcome card over the file it comes from, on a tile like the
+// feature cards'. The card says what happens to your data; the file below,
+// open at the lines that matter, runs off the tile's right and bottom edges,
+// where it was cut, fading out at the right so a long line reads as
+// continuing, and its path links to those lines on GitHub.
+function CodeTile({ proof }: { proof: (typeof PROOFS)[number] }) {
+  const lastLine = proof.firstLine + proof.lines.length - 1;
+
+  return (
+    <div
+      className="bg-tile relative isolate flex min-w-0 flex-col gap-4 overflow-hidden rounded-2xl pt-6 pl-6 ring-1 ring-zinc-950/5"
+      style={
+        {
+          "--tile-hue-a": proof.hues[0],
+          "--tile-hue-b": proof.hues[1]
+        } as CSSProperties
+      }
+    >
+      <span
+        aria-hidden="true"
+        className="absolute -top-1/3 -left-1/4 -z-10 aspect-square w-[85%] rounded-full bg-[radial-gradient(closest-side,oklch(0.94_0.035_var(--tile-hue-a)),transparent)]"
+      />
+      <span
+        aria-hidden="true"
+        className="absolute -right-1/4 -bottom-1/3 -z-10 aspect-square w-[80%] rounded-full bg-[radial-gradient(closest-side,oklch(0.95_0.03_var(--tile-hue-b)),transparent)]"
+      />
+      <ul className="mr-6 flex flex-col rounded-xl bg-white px-4 py-1 shadow-[0_8px_24px_-8px_rgb(16_40_60/0.18)] ring-1 ring-zinc-950/5">
+        {proof.outcome.map(row => {
+          const Icon = row.isRefused ? IconBan : IconCircleCheckFilled;
+
+          return (
+            <li
+              key={row.label}
+              className={cn(
+                "text-ink flex items-center justify-between gap-3 border-t border-zinc-950/5 py-2.5 first:border-t-0",
+                CONTROL_TEXT
+              )}
+            >
+              <span className="min-w-0">{row.label}</span>
+              <span className="flex shrink-0 items-center gap-1.5 font-medium">
+                <Icon
+                  className="text-brand-600 size-4 shrink-0"
+                  aria-hidden="true"
+                />
+                {row.status}
+              </span>
+            </li>
+          );
+        })}
+      </ul>
+      <div className="flex min-h-0 flex-1 flex-col rounded-tl-xl bg-white shadow-[0_8px_24px_-8px_rgb(16_40_60/0.18)] ring-1 ring-zinc-950/5">
+        <a
+          href={`${SOURCE_URL}/blob/main/${proof.path}#L${proof.firstLine}-L${lastLine}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={cn(
+            "font-geist-mono flex items-center gap-1.5 rounded-tl-xl border-b border-zinc-950/5 px-4 py-3 text-xs text-zinc-500 hover:text-zinc-900",
+            FOCUS_RING
+          )}
+        >
+          <span className="truncate">{proof.path}</span>
+          <IconArrowUpRight className="size-3.5 shrink-0" aria-hidden="true" />
+          <span className="sr-only"> (opens in a new tab)</span>
+        </a>
+        <div className="font-geist-mono flex flex-col mask-[linear-gradient(to_right,black_calc(100%-3rem),transparent)] py-3 text-[0.75rem] leading-6 text-zinc-800">
+          {proof.lines.map((line, index) => {
+            const lineNumber = proof.firstLine + index;
+            const isHighlighted = lineNumber === proof.highlight;
+
+            return (
+              <p
+                key={lineNumber}
+                className={cn(
+                  "flex gap-4 border-l-2 border-transparent pr-4 pl-3 whitespace-pre",
+                  isHighlighted && "border-brand-500 bg-brand-50"
+                )}
+              >
+                <span className="w-7 shrink-0 text-right text-zinc-500 tabular-nums select-none">
+                  {lineNumber}
+                </span>
+                <span>
+                  <CodeLine text={line} />
+                </span>
+              </p>
+            );
+          })}
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -1370,54 +1169,60 @@ function Questions() {
   );
 }
 
-// The closing band mirrors the hero: dark headline, blue second line, and a
-// painting that runs the full width of the viewport. The page rising from the
-// panel's foot is a real billsend PDF. Its box is sized from the page's own
-// width, so it always shows the same top share of the page, and the page runs
-// past the box to be cut by the panel's foot: 4:3 shows about half on phones,
-// 16:9 about 40% from `sm`. Like the hero, the copy sits above the panel.
+// The last word before the footer: a panel in the hero's sky colour, inset
+// and rounded like the hero from `lg` and edge to edge below it, with a glow
+// rising from its foot under a grid of dots. The glow breathes slowly in and
+// out (animate-glow-breathe) while the panel is on screen; the dots hold
+// still.
 function Closing() {
+  const { ref, isOnScreen } = useOnScreen<HTMLDivElement>({ initial: true });
+
   return (
-    <section className="bg-white pt-16 sm:pt-20">
-      <div className={CONTAINER}>
-        <div className="flex flex-col gap-8 xl:flex-row xl:justify-between xl:gap-16">
-          <h2 className={cn(HEADING, typeClass("display"), "max-w-[20ch]")}>
-            <span className="block">Your next invoice</span>
-            <span className="text-ink-blue block">starts here.</span>
-          </h2>
-          <div className="flex flex-col items-start gap-6 xl:justify-end">
-            <p className={cn(BODY_TEXT, "max-w-[48ch]")}>
-              Free, with no account. Opens straight into the editor.
-            </p>
-            <CreateInvoiceLink />
-          </div>
-        </div>
-      </div>
-      <div className="relative isolate mt-12 flex justify-center overflow-hidden bg-blue-100 px-6 pt-12 pb-16 sm:mt-16 sm:pt-16 sm:pb-20">
-        <Picture
-          src="/home/closing-city.webp"
-          srcSet="/home/closing-city-900.webp 900w, /home/closing-city-1200.webp 1200w, /home/closing-city.webp 1792w"
-          sizes="100vw"
-          alt=""
-          width={1792}
-          height={1008}
-          fetchPriority="low"
-          className="absolute inset-0 -z-10 size-full object-cover"
+    <section className="pt-16 sm:pt-24 lg:px-3">
+      <div
+        ref={ref}
+        data-paused={isOnScreen ? undefined : ""}
+        className="bg-glow relative isolate overflow-hidden lg:rounded-[2rem]"
+      >
+        <div
+          aria-hidden="true"
+          className="bg-glow-dome animate-glow-breathe absolute inset-0 -z-10"
         />
         <div
           aria-hidden="true"
-          className="relative aspect-4/3 w-full max-w-md sm:aspect-video sm:max-w-xl lg:max-w-2xl"
+          className="bg-dot-grid absolute inset-0 -z-10 mask-[radial-gradient(70%_90%_at_50%_100%,black,transparent_75%)]"
+        />
+        <div
+          className={cn(
+            CONTAINER,
+            "flex flex-col items-center gap-8 py-24 text-center sm:py-32"
+          )}
         >
-          <Picture
-            src={CLOSING_RENDER.src}
-            alt={CLOSING_RENDER.alt}
-            width={CLOSING_RENDER.width}
-            height={Math.round(
-              (CLOSING_RENDER.width * PAGE_HEIGHT) / PAGE_WIDTH
-            )}
-            fetchPriority="low"
-            className="absolute inset-x-0 top-0 h-auto w-full shadow-[0_12px_32px_-12px_rgb(0_0_0/0.25)] outline-1 -outline-offset-1 outline-zinc-950/5"
-          />
+          <div className="flex flex-col items-center gap-4">
+            <p className={cn("text-brand-700 font-medium", CONTROL_TEXT)}>
+              Nothing to sign up for
+            </p>
+            <h2 className={cn(HEADING, typeClass("display"))}>
+              <span className="block">Your next invoice</span>
+              <span className="block">starts here.</span>
+            </h2>
+          </div>
+          <div className="flex flex-wrap items-center justify-center gap-3">
+            <CreateInvoiceLink />
+            <a
+              href={SOURCE_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={SOFT_PILL}
+            >
+              View the source
+              <IconArrowUpRight
+                className="size-4 shrink-0"
+                aria-hidden="true"
+              />
+              <span className="sr-only"> (opens in a new tab)</span>
+            </a>
+          </div>
         </div>
       </div>
     </section>

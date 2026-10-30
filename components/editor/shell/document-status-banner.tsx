@@ -7,6 +7,7 @@ import {
 import type { ReactNode } from "react";
 import { createContext, useContext, useState } from "react";
 import { toast } from "sonner";
+import { APP_NAME } from "~/consts/app";
 import { useFileActions } from "~/context/file-actions-context";
 import { useInvoiceDocument } from "~/context/invoice-document-context";
 import { cn } from "~/lib/utils";
@@ -45,7 +46,7 @@ export function DocumentStatusBanner() {
   if (status === "reloadRequired") {
     return (
       <Banner tone="warning">
-        billsend was updated in another tab.{" "}
+        {APP_NAME} was updated in another tab.{" "}
         <Action onClick={() => window.location.reload()}>Reload</Action> to keep
         editing; your latest changes come back with you.
       </Banner>
@@ -55,7 +56,7 @@ export function DocumentStatusBanner() {
   if (status === "unavailable") {
     return (
       <Banner tone="warning" busy={busy}>
-        This browser isn’t letting billsend store anything, so this invoice
+        This browser isn’t letting {APP_NAME} store anything, so this invoice
         can’t be saved here.{" "}
         <Action onClick={() => void act(downloadBackup)}>
           Download a backup
@@ -126,13 +127,13 @@ const TONES = {
   info: {
     icon: IconInfoCircleFilled,
     surface:
-      "bg-blue-50 border-blue-600/10 dark:bg-[color-mix(in_oklab,var(--color-blue-500)_14%,var(--popover))] dark:border-blue-400/20",
-    iconColour: "text-blue-500 dark:text-blue-400",
-    text: "text-blue-800 dark:text-blue-200/80",
+      "bg-brand-50 border-brand-600/10 dark:bg-[color-mix(in_oklab,var(--color-brand-500)_14%,var(--popover))] dark:border-brand-400/20",
+    iconColour: "text-brand-500 dark:text-brand-400",
+    text: "text-brand-800 dark:text-brand-200/80",
     action:
-      "focus-visible:outline-blue-600 dark:focus-visible:outline-blue-400",
+      "focus-visible:outline-brand-600 dark:focus-visible:outline-brand-400",
     dismiss:
-      "text-blue-900 hover:bg-blue-100 dark:text-blue-100 dark:hover:bg-blue-500/15"
+      "text-brand-900 hover:bg-brand-100 dark:text-brand-100 dark:hover:bg-brand-500/15"
   },
   warning: {
     icon: IconAlertTriangleFilled,

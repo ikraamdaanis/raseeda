@@ -1,6 +1,7 @@
 import type { Table } from "dexie";
 import Dexie, { liveQuery } from "dexie";
 import { isEqual } from "lodash-es";
+import { DATABASE_NAME } from "~/consts/database";
 import {
   LAST_OPENED_INVOICE_KEY,
   migrateToAutosave
@@ -183,7 +184,7 @@ class InvoiceDatabase extends Dexie {
   meta!: Table<{ key: string; value: unknown }, string>;
 
   constructor() {
-    super("InvoiceDatabase");
+    super(DATABASE_NAME);
     // Version 1: Initial schema with templates and images
     this.version(1).stores({
       templates: "id, name, createdAt, updatedAt",
@@ -322,6 +323,19 @@ class InvoiceDatabase extends Dexie {
         meta: "key"
       })
       .upgrade(tx => migrateToAutosave(tx));
+    // Version 9: No schema change. Invoices can now be set in Schibsted
+    // Grotesk and invoice locks carry a new name, neither of which an older
+    // build understands, so the bump makes any tab still running one stop
+    // writing and ask to reload (onDatabaseUpgradeElsewhere) instead of
+    // editing an invoice alongside this one or saving it back in Geist.
+    this.version(9).stores({
+      templates: "id, name, createdAt, updatedAt",
+      invoices: "id, name, createdAt, updatedAt",
+      images: "id",
+      drafts: "id",
+      versions: "id, invoiceId, imageId",
+      meta: "key"
+    });
   }
 }
 
@@ -793,7 +807,7 @@ export async function setLastOpenedInvoiceId(id: string): Promise<void> {
   }
 }
 
-// Runs when a newer billsend in another tab needs to upgrade the database.
+// Runs when a newer version of the app in another tab needs to upgrade the database.
 // Dexie closes this tab's connection so the upgrade can go ahead, after which
 // nothing here can be written until the page reloads. Returns the unsubscribe.
 export function onDatabaseUpgradeElsewhere(listener: () => void): () => void {

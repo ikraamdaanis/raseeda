@@ -1,21 +1,21 @@
-export const SITE_URL = "https://billsend.io";
-export const SITE_NAME = "billsend";
+import { APP_NAME } from "~/consts/app";
 
-export const SITE_TITLE = "billsend: Free, Private Invoice Generator";
+export const SITE_URL = "https://billsend.io";
+
+export const SITE_TITLE = `${APP_NAME}: Free, Private Invoice Generator`;
 
 export const SITE_DESCRIPTION =
   "Free invoice generator that runs in your browser. Add your details, download a PDF, send it. No account, and your invoices never leave your device.";
 
 export const SITE_OG_IMAGE = `${SITE_URL}/og-image.jpg`;
 
-export const SOURCE_URL = "https://github.com/ikraamdaanis/billsend";
+export const SOURCE_URL = "https://github.com/ikraamdaanis/raseeda";
 
-export const MAKER_NAME = "Ikraam";
+export const MAKER_NAME = "ikraam | freelio";
 
 export const MAKER_URL = "https://github.com/ikraamdaanis";
 
-const SITE_OG_IMAGE_ALT =
-  "billsend: Send the invoice. Keep everything else. Sailing ships on a calm harbour at sunrise.";
+const SITE_OG_IMAGE_ALT = `${APP_NAME}: Make the invoice. Keep your data. A finished invoice on a pale blue sky.`;
 
 // The absolute address of a page, the form canonicals and og:url need.
 export function absoluteUrl(path: string) {
@@ -23,8 +23,9 @@ export function absoluteUrl(path: string) {
 }
 
 // A page's title, description and share card. The root route sets the
-// homepage's as the fallback for pages without their own (404, errors); each
-// page passes its own path so og:url names it rather than the homepage.
+// homepage's as the fallback for a page without its own (the not-found page
+// has its own, in app/routes/__root.tsx); each page passes its own path so
+// og:url names it rather than the homepage.
 export function siteMeta({
   path = "/",
   title = SITE_TITLE,
@@ -48,7 +49,7 @@ export function siteMeta({
     },
     {
       property: "og:site_name",
-      content: SITE_NAME
+      content: APP_NAME
     },
     {
       property: "og:url",

@@ -2,8 +2,8 @@
 
 @import "tw-animate-css";
 @import "./fonts.css";
+@import "./home-demos.css";
 @import "@fontsource-variable/bricolage-grotesque";
-@import "@fontsource-variable/playfair-display";
 @import "shadcn/tailwind.css";
 @import "@fontsource-variable/geist-mono";
 @import "@fontsource-variable/jetbrains-mono";
@@ -22,6 +22,12 @@
 
 @theme inline {
   --font-geist: "Geist Variable", "Geist Fallback", sans-serif;
+  /* The app's face everywhere, and a new invoice's: slightly condensed, with
+     an editorial edge. */
+  --font-home:
+    "Schibsted Grotesk Variable", "Schibsted Grotesk Fallback", sans-serif;
+  --font-schibsted-grotesk:
+    "Schibsted Grotesk Variable", "Schibsted Grotesk Fallback", sans-serif;
   --font-geist-mono: "Geist Mono Variable", monospace;
   --font-jetbrains-mono: "JetBrains Mono Variable", monospace;
   --font-ibm-plex-mono: "IBM Plex Mono", monospace;
@@ -30,17 +36,16 @@
   --font-ibm-plex-sans: "IBM Plex Sans Variable", sans-serif;
   --font-lora: "Lora Variable", serif;
   --font-libre-baskerville: "Libre Baskerville Variable", serif;
-  --font-display: "Playfair Display Variable", serif;
-
-  --brand-top: oklch(0.677 0.17 263.89);
-  --brand-bottom: oklch(0.419 0.152 257.57);
-  --brand-top-hover: oklch(0.603 0.218 257.42);
-  --brand-bottom-hover: oklch(0.322 0.117 257.5);
-  --brand-gradient: linear-gradient(
-    180deg,
-    var(--brand-top) 0%,
-    var(--brand-bottom) 100%
-  );
+  /* The homepage's cut-down invoice fonts (consts/home-preview-fonts.ts). */
+  --font-preview-geist: "Geist Preview", "Geist Fallback", sans-serif;
+  --font-preview-inter: "Inter Preview", "Inter Fallback", sans-serif;
+  --font-preview-dm-sans: "DM Sans Preview", sans-serif;
+  --font-preview-ibm-plex-sans: "IBM Plex Sans Preview", sans-serif;
+  --font-preview-bricolage-grotesque: "Bricolage Grotesque Preview", sans-serif;
+  --font-preview-lora: "Lora Preview", serif;
+  --font-preview-libre-baskerville: "Libre Baskerville Preview", serif;
+  --font-preview-jetbrains-mono: "JetBrains Mono Preview", monospace;
+  --font-preview-ibm-plex-mono: "IBM Plex Mono Preview", monospace;
 
   --radius-surface: 3px;
   --radius-control: 4px;
@@ -64,27 +69,29 @@
   --color-warning: var(--warning);
   --color-warning-foreground: var(--warning-foreground);
 
-  --color-brand-50: oklch(0.957 0.02 277);
-  --color-brand-100: oklch(0.925 0.036 273.72);
-  --color-brand-200: oklch(0.839 0.079 271.26);
-  --color-brand-300: oklch(0.762 0.121 268.88);
-  --color-brand-400: oklch(0.677 0.17 263.89);
-  --color-brand-500: oklch(0.603 0.218 257.42);
-  --color-brand-600: oklch(0.505 0.183 257.47);
-  --color-brand-700: oklch(0.419 0.152 257.57);
-  --color-brand-800: oklch(0.322 0.117 257.5);
-  --color-brand-900: oklch(0.235 0.085 257.39);
-  --color-brand-950: oklch(0.18 0.064 257.25);
+  /* The brand: one deep teal. Teal holds about half the chroma blue can at the
+     same lightness in sRGB, so the ramp reads calm; it keeps the lightness steps
+     the blue had, so 600 still carries white text (5.6:1) and 500 still makes a
+     ring that clears 3:1 on the light and the dark editor. */
+  --color-brand-50: oklch(0.975 0.015 185);
+  --color-brand-100: oklch(0.945 0.03 185);
+  --color-brand-200: oklch(0.885 0.055 185);
+  --color-brand-300: oklch(0.8 0.08 185);
+  --color-brand-400: oklch(0.71 0.095 185);
+  --color-brand-500: oklch(0.6 0.095 185);
+  --color-brand-600: oklch(0.505 0.085 185);
+  --color-brand-700: oklch(0.42 0.07 185);
+  --color-brand-800: oklch(0.335 0.056 185);
+  --color-brand-900: oklch(0.255 0.043 185);
+  --color-brand-950: oklch(0.19 0.033 185);
 
-  /* The homepage's warm canvas and its four secondary hues. Blue stays the
+  /* The homepage's warm canvas and its four secondary hues. Teal stays the
      brand's; these mark content. Each hue has a tint for card washes and an
      ink for marks and short text on white (at least 4.5:1). The tints share
      one lightness and a low chroma, leaning warm to sit on the canvas. */
   --color-canvas: oklch(0.99 0.003 85);
-  /* The homepage's text: a warm near-black for copy and a deep, muted blue for
-     the second line of headings and for blue text. */
+  /* The homepage's text: a warm near-black. Brand text there is brand-600. */
   --color-ink: #262823;
-  --color-ink-blue: #2460a8;
   --color-lavender-tint: oklch(0.948 0.02 295);
   --color-lavender-ink: oklch(0.5 0.13 295);
   --color-sage-tint: oklch(0.948 0.026 145);
@@ -102,8 +109,11 @@
   --color-sidebar-primary: var(--sidebar-primary);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar: var(--sidebar);
-  --font-heading: var(--font-geist);
-  --font-sans: "Inter Variable", "Inter Fallback", sans-serif;
+  --font-heading: var(--font-ui);
+  /* Schibsted Grotesk is the font everywhere, so it is the default sans too.
+     Inter is one of the invoice fonts (font-inter). */
+  --font-sans: var(--font-home);
+  --font-inter: "Inter Variable", "Inter Fallback", sans-serif;
   --color-chart-5: var(--chart-5);
   --color-chart-4: var(--chart-4);
   --color-chart-3: var(--chart-3);
@@ -149,10 +159,9 @@
 }
 
 body {
-  @apply font-geist;
   @apply m-0;
   font-family:
-    var(--font-geist),
+    var(--font-ui),
     -apple-system,
     BlinkMacSystemFont,
     "Segoe UI",
@@ -179,6 +188,8 @@ code {
 }
 
 :root {
+  /* The app's face everywhere: homepage, editor, privacy page and menus. */
+  --font-ui: var(--font-home);
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
@@ -283,7 +294,7 @@ code {
 }
 
 /* The editor's chrome: plain neutral greys with a near-black (light) or
-   near-white (dark) primary, and blue kept for focus rings and switches. The
+   near-white (dark) primary, and the brand teal kept for focus rings and switches. The
    /create route sets data-editor-theme on <html> (its head script before first
    paint, then useEditorTheme), and removes it on the way out, so the homepage
    keeps its own palette. It sits on <html> rather than an editor wrapper
@@ -311,7 +322,7 @@ html[data-editor-theme] [data-paper],
   --accent-foreground: #1c1c1c;
   --border: #eaeaea;
   --input: #e1e1e1;
-  --ring: #3c7eeb;
+  --ring: var(--color-brand-500);
   --desk: #f6f6f6;
   color-scheme: light;
 }
@@ -333,7 +344,7 @@ html[data-editor-theme="dark"] {
   --accent-foreground: #f5f5f5;
   --border: #232323;
   --input: #303030;
-  --ring: #326ccb;
+  --ring: var(--color-brand-500);
   --desk: #121212;
   color-scheme: dark;
 }
@@ -396,12 +407,194 @@ html[data-editor-theme="dark"] {
   }
 }
 
-/* The hero painting at 64px, inlined so the hero shows its colours on the
-   first paint while the full painting downloads. Generated from the 8K master
-   (blur 0.6px, WebP quality 55). */
-@utility bg-hero-placeholder {
-  background: url("data:image/webp;base64,UklGRugAAABXRUJQVlA4INwAAACQBwCdASpAACQAPsFOoEqnpCMhsBVdUPAYCUAWdnaYqqsm2pDuVaWm1akICGI+YRQR7YE09GhJqBPcsIvwwsKus98GB4AA/usqN6h4zLzdqfcigp3M482rOEXLvA9/imqwm9WEgPQMo8yZG/c1u+fmVNEMgR5GbO5WWx4mGXnvDvBSO9ilV9dMzY5wgxijrxnverHRhxuI8Gv1iXiE9fJ6ZzmNDVE/BcePhpMDpJMNK5kM9onm7355oVZRypqBL5xCg4GBx82VSG2zTuWqWr8xbSTWhMMRarSzgAAA")
-    center / cover no-repeat;
+/* The hero's sky: a teal-leaning blue, picked to sit beside the brand teal,
+   that pales towards the horizon, with a haze
+   low down. The clouds drift across it in their own layer (HeroClouds). Its
+   colour is a hue, chroma and lightness for the top, with the horizon paler
+   and a touch greener. */
+@utility bg-sky {
+  background:
+    radial-gradient(
+      60% 18% at 50% 100%,
+      rgb(255 255 255 / 0.7),
+      transparent 70%
+    ),
+    linear-gradient(
+      to bottom,
+      oklch(
+        var(--sky-lightness, 0.82) var(--sky-chroma, 0.075) var(--sky-hue, 205)
+      ),
+      oklch(
+          calc(var(--sky-lightness, 0.82) + 0.08)
+            calc(var(--sky-chroma, 0.075) * 0.67) calc(var(--sky-hue, 205) - 6)
+        )
+        45%,
+      oklch(
+        min(calc(var(--sky-lightness, 0.82) + 0.15), 0.98)
+          calc(var(--sky-chroma, 0.075) * 0.33) calc(var(--sky-hue, 205) - 13)
+      )
+    );
+}
+
+/* The closing panel: the hero's sky gone pale (bg-glow), with a glow of it
+   rising from the foot and paling to white at the lower corners
+   (bg-glow-dome, on a layer of its own so it can breathe). */
+@utility bg-glow {
+  background: linear-gradient(
+    to bottom,
+    oklch(0.97 0.03 var(--sky-hue, 205)),
+    oklch(0.99 0.01 var(--sky-hue, 205))
+  );
+}
+
+@utility bg-glow-dome {
+  background: radial-gradient(
+    70% 95% at 50% 100%,
+    oklch(0.66 0.13 var(--sky-hue, 205)),
+    oklch(0.8 0.09 var(--sky-hue, 205)) 35%,
+    oklch(0.93 0.04 var(--sky-hue, 205)) 60%,
+    transparent 80%
+  );
+}
+
+/* The glow breathes: in, it sinks towards the foot and pales a little (never
+   to white, the teal stays); out, it rises
+   and deepens again, past its resting height. Scale and opacity only, from
+   the bottom edge, so the compositor does it without repainting.
+   easeInOutSine (easings.net) gives the slow turn at each end that reads as a
+   breath; 4s each way. With reduced motion it holds still at rest. */
+@keyframes glow-breathe {
+  from {
+    transform: scaleY(1.12);
+  }
+
+  to {
+    transform: scaleY(0.62);
+    opacity: 0.8;
+  }
+}
+
+@utility animate-glow-breathe {
+  transform-origin: bottom;
+  animation: glow-breathe 4s cubic-bezier(0.37, 0, 0.63, 1) infinite alternate;
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+}
+
+/* A card's demo tile on the homepage: its first hue gone very pale. Two soft
+   blobs of its hues drift over it (DemoTile, demo-drift in home-demos.css). */
+@utility bg-tile {
+  background: oklch(0.975 0.014 var(--tile-hue-a, 205));
+}
+
+/* A fine grid of white dots, shown only where its layer's mask lets it. */
+@utility bg-dot-grid {
+  background: radial-gradient(
+      circle at center,
+      rgb(255 255 255 / 0.7) 1px,
+      transparent 1.5px
+    )
+    0 0 / 22px 22px;
+}
+
+/* Three cloud shapes, each a few overlapping soft puffs. Gradients rather than
+   a blur filter, so a drifting cloud is a plain bitmap the compositor slides
+   along without redrawing. */
+@utility bg-cloud-heap {
+  background:
+    radial-gradient(
+      28% 42% at 30% 58%,
+      rgb(255 255 255 / 0.95),
+      rgb(255 255 255 / 0.55) 45%,
+      transparent 72%
+    ),
+    radial-gradient(
+      26% 50% at 50% 42%,
+      rgb(255 255 255 / 0.95),
+      rgb(255 255 255 / 0.55) 45%,
+      transparent 72%
+    ),
+    radial-gradient(
+      22% 40% at 69% 56%,
+      rgb(255 255 255 / 0.9),
+      rgb(255 255 255 / 0.5) 45%,
+      transparent 72%
+    ),
+    radial-gradient(
+      48% 28% at 50% 74%,
+      rgb(255 255 255 / 0.85),
+      rgb(255 255 255 / 0.4) 50%,
+      transparent 75%
+    );
+}
+
+@utility bg-cloud-bank {
+  background:
+    radial-gradient(
+      50% 32% at 50% 58%,
+      rgb(255 255 255 / 0.85),
+      rgb(255 255 255 / 0.4) 50%,
+      transparent 75%
+    ),
+    radial-gradient(
+      28% 30% at 30% 48%,
+      rgb(255 255 255 / 0.8),
+      rgb(255 255 255 / 0.4) 45%,
+      transparent 72%
+    ),
+    radial-gradient(
+      24% 26% at 74% 50%,
+      rgb(255 255 255 / 0.75),
+      rgb(255 255 255 / 0.35) 45%,
+      transparent 72%
+    );
+}
+
+@utility bg-cloud-puff {
+  background:
+    radial-gradient(
+      34% 46% at 38% 58%,
+      rgb(255 255 255 / 0.95),
+      rgb(255 255 255 / 0.5) 45%,
+      transparent 72%
+    ),
+    radial-gradient(
+      30% 50% at 62% 46%,
+      rgb(255 255 255 / 0.9),
+      rgb(255 255 255 / 0.5) 45%,
+      transparent 72%
+    );
+}
+
+/* A cloud enters past the sky's left edge, crosses it and leaves past the
+   right one, then starts over. Its layer is the size container, so 100cqw is
+   the sky's width at any viewport. */
+@keyframes cloud-drift {
+  from {
+    translate: -100% 0;
+  }
+
+  to {
+    translate: 100cqw 0;
+  }
+}
+
+@utility animate-cloud-drift {
+  animation: cloud-drift var(--duration) linear var(--delay) infinite;
+
+  @media (prefers-reduced-motion: reduce) {
+    animation-play-state: paused;
+  }
+}
+
+/* The clouds and the closing glow run on the compositor, so they cost little,
+   but nothing needs them off screen: HeroClouds and Closing mark their layer
+   data-paused while it is scrolled away. A running animation gets its own
+   layer anyway, so neither keeps one with will-change. */
+[data-paused] :is(.animate-cloud-drift, .animate-glow-breathe) {
+  animation-play-state: paused;
 }
 
 /* A strong ease-out for entrances: fast off the mark, long soft landing. */
@@ -412,23 +605,16 @@ html[data-editor-theme="dark"] {
 /* The hero's entrance, played when the homepage loads as a page: the inline
    script after the painting (HERO_ENTRANCE_SCRIPT) marks the hero with
    data-entrance, so coming back to it through a link doesn't replay it. The
-   copy comes into focus line by line, fading in from a blur; the editor window
-   fades in after it; the painting fades in over its placeholder while settling
-   from a slight zoom. CSS animations run off the main thread, so they stay
-   smooth while the page is still loading. A painting that isn't loaded yet
-   (data-loading) waits hidden and plays its entrance when it arrives. With
-   reduced motion everything only fades. */
+   copy rises 8px into place line by line, 60ms apart, fading in; the editor
+   window fades in after it, and it is all done inside a second. Only opacity
+   and translate move, which the compositor runs off the main thread without
+   repainting, so it stays smooth while the page is still loading and
+   hydrating (a blur repaints the big headline every frame and stuttered).
+   With reduced motion everything only fades. */
 @keyframes hero-focus {
   from {
     opacity: 0;
-    filter: blur(8px);
-  }
-}
-
-@keyframes hero-settle {
-  from {
-    opacity: 0;
-    transform: scale(1.04);
+    translate: 0 8px;
   }
 }
 
@@ -441,25 +627,15 @@ html[data-editor-theme="dark"] {
 /* In the components layer, so the stagger's animation-delay utilities win. */
 @layer components {
   [data-entrance] .hero-focus {
-    animation: hero-focus 900ms var(--ease-out-strong) both;
+    animation: hero-focus 600ms var(--ease-out-strong) both;
   }
 
   [data-entrance] .hero-fade {
-    animation: hero-fade 1000ms var(--ease-out-strong) both;
-  }
-
-  [data-entrance] .hero-settle {
-    animation: hero-settle 1400ms var(--ease-out-strong) both;
-  }
-
-  [data-entrance] .hero-settle[data-loading] {
-    animation: none;
-    opacity: 0;
+    animation: hero-fade 700ms var(--ease-out-strong) both;
   }
 
   @media (prefers-reduced-motion: reduce) {
-    [data-entrance] .hero-focus,
-    [data-entrance] .hero-settle {
+    [data-entrance] .hero-focus {
       animation-name: hero-fade;
     }
   }
@@ -470,15 +646,17 @@ html[data-editor-theme="dark"] {
    for single-line controls and secondary headings: display drops a notch and
    body tightens its leading to fit a button or label. The hero's display size
    grows with the viewport, from 36/40 at 400px to 60/60 at 800px, rather than
-   jumping at a breakpoint; below 400px it keeps shrinking so "Keep everything
-   else." stays on one line down to a 360px phone. */
+   jumping at a breakpoint; below 400px it keeps shrinking so "Make the
+   invoice." stays on one line down to a 360px phone. Section titles grow
+   the same way, from 28px on phones to 36px by 672px, so they never match
+   the hero's headline. */
 .home-type {
   --fs-display: clamp(2rem, 0.75rem + 6vw, 3.75rem);
   --lh-display: clamp(2.25rem, 1.25rem + 5vw, 3.75rem);
   --fs-display-compact: 2.25rem;
   --lh-display-compact: 2.5rem;
-  --fs-title: 2.25rem;
-  --lh-title: 2.5rem;
+  --fs-title: clamp(1.75rem, 1.2rem + 2.5vw, 2.25rem);
+  --lh-title: clamp(2.125rem, 1.6rem + 2.5vw, 2.5rem);
   --fs-subtitle: 1.125rem;
   --lh-subtitle: 1.75rem;
   --fs-subtitle-compact: 1rem;
@@ -489,6 +667,84 @@ html[data-editor-theme="dark"] {
   --lh-body-compact: 1.5rem;
   --fs-caption: 0.875rem;
   --lh-caption: 1.25rem;
+}
+
+/* The homepage header's states, set on <html> by HEADER_STATE_SCRIPT
+   (app/routes/index.tsx) before first paint and on every scroll: solid once
+   the hero's headline reaches it (lifted flush from `lg`), and the Create
+   invoice pill in place of the editor link once the hero's buttons are gone. */
+html[data-header-solid] .home-header {
+  background-color: color-mix(in oklab, var(--color-canvas) 90%, transparent);
+  box-shadow: 0 1px 0 rgb(9 9 11 / 0.08);
+  backdrop-filter: blur(12px);
+}
+
+@media (width >= 64rem) {
+  html[data-header-solid] .home-header {
+    translate: 0 -1.25rem;
+  }
+}
+
+/* The editor link and the Create invoice pill share one slot, stacked on the
+   same grid cell and right-aligned, and hand over there: the one leaving
+   fades and shrinks to 95% over 120ms, and the one arriving starts 60ms
+   later and comes in over 200ms, so they barely overlap (a dark pill fading
+   behind a text link reads as a smudge) and never sit side by side. No blur:
+   it turned the two labels to mush mid-swap. The hidden one
+   is out of the tab order and the accessibility tree. Changes animate only
+   once the page has settled (data-header-ready), so a reload restored
+   mid-page paints the final header with nothing playing. */
+.home-header-swap {
+  display: grid;
+  align-items: center;
+  justify-items: end;
+}
+
+.home-header-swap > * {
+  grid-area: 1 / 1;
+  transform-origin: right center;
+}
+
+html[data-header-pill] .home-header-link,
+html:not([data-header-pill]) .home-header-pill {
+  visibility: hidden;
+  opacity: 0;
+  scale: 0.95;
+}
+
+html[data-header-ready] .home-header {
+  transition:
+    translate 300ms ease-out,
+    background-color 300ms ease-out,
+    box-shadow 300ms ease-out,
+    backdrop-filter 300ms ease-out;
+}
+
+html[data-header-ready] :is(.home-header-pill, .home-header-link) {
+  transition:
+    opacity 200ms var(--ease-out-strong) 60ms,
+    scale 200ms var(--ease-out-strong) 60ms,
+    visibility 0s;
+}
+
+html[data-header-ready][data-header-pill] .home-header-link,
+html[data-header-ready]:not([data-header-pill]) .home-header-pill {
+  transition:
+    opacity 120ms var(--ease-out-strong),
+    scale 120ms var(--ease-out-strong),
+    visibility 0s 120ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html[data-header-pill] .home-header-link,
+  html:not([data-header-pill]) .home-header-pill {
+    scale: 1;
+  }
+}
+
+/* Anchored sections stop clear of the homepage's sticky header. */
+.home-type section[id] {
+  scroll-margin-top: 4.5rem;
 }
 
 @media (width >= 40rem) {

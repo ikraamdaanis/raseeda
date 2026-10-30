@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { DEFAULT_INVOICE_THEME } from "~/schema/invoice";
+import {
+  DEFAULT_INVOICE_THEME,
+  STORED_INVOICE_THEME_FALLBACK
+} from "~/schema/invoice";
 import {
   CURRENT_INVOICE_SCHEMA_VERSION,
   migrateInvoiceData
@@ -62,7 +65,7 @@ describe("migrateInvoiceData", () => {
 
     expect(invoice.items).toEqual([]);
     expect(invoice.tax).toEqual({ percentage: 0, exempt: false, note: "" });
-    expect(invoice.theme).toEqual(DEFAULT_INVOICE_THEME);
+    expect(invoice.theme).toEqual(STORED_INVOICE_THEME_FALLBACK);
     expect(invoice.currency).toBe("$");
   });
 
@@ -78,12 +81,14 @@ describe("migrateInvoiceData", () => {
     expect(twice).toEqual(once);
   });
 
-  it("fills a missing theme with the default", () => {
+  it("fills a missing theme with Geist, the font it was drawn in", () => {
     const { theme: _theme, ...withoutTheme } = currentRaw();
 
     expect(migrateInvoiceData(withoutTheme).theme).toEqual(
-      DEFAULT_INVOICE_THEME
+      STORED_INVOICE_THEME_FALLBACK
     );
+    expect(STORED_INVOICE_THEME_FALLBACK.font).toBe("geist");
+    expect(DEFAULT_INVOICE_THEME.font).toBe("schibsted-grotesk");
   });
 
   it("maps the legacy textFont onto the new theme font", () => {
@@ -205,6 +210,6 @@ describe("migrateInvoiceData", () => {
     const raw = { ...currentRaw(), theme: { textFont: "inter" } };
     const normalized = migrateInvoiceData(raw, CURRENT_INVOICE_SCHEMA_VERSION);
 
-    expect(normalized.theme.font).toBe(DEFAULT_INVOICE_THEME.font);
+    expect(normalized.theme.font).toBe(STORED_INVOICE_THEME_FALLBACK.font);
   });
 });
