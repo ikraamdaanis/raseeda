@@ -105,6 +105,35 @@ test("a font hand-off never restyles work in progress", async ({ page }) => {
   );
 });
 
+test("a template starts a fresh invoice in its font", async ({ page }) => {
+  await page.goto("/invoice-template");
+
+  await page
+    .getByRole("main")
+    .getByRole("link", { name: "Start in Lora", exact: true })
+    .click();
+
+  await expect(page).toHaveURL("/create");
+  await expect(page.locator(".bg-paper").first()).toHaveCSS(
+    "font-family",
+    /Lora/
+  );
+});
+
+test("the footer links to the template gallery", async ({ page }) => {
+  await page.goto("/");
+
+  await page
+    .getByRole("contentinfo")
+    .getByRole("link", { name: "Invoice templates", exact: true })
+    .click();
+
+  await expect(page).toHaveURL("/invoice-template");
+  await expect(
+    page.getByRole("heading", { name: "Free invoice templates", level: 1 })
+  ).toBeVisible();
+});
+
 test("the homepage makes no requests to other websites", async ({ page }) => {
   const requested: string[] = [];
 

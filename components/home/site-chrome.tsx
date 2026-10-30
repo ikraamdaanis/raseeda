@@ -6,8 +6,8 @@ import { cn } from "~/lib/utils";
 import { MAKER_NAME, MAKER_URL, SOURCE_URL } from "~/utils/site-meta";
 
 // The marketing pages' shared frame: column, focus ring, wordmark, the way
-// into the editor and the footer. The homepage and the privacy page draw it
-// the same way.
+// into the editor and the footer. The homepage, the template gallery and the
+// privacy page draw it the same way.
 
 export const CONTAINER = "mx-auto max-w-6xl px-6 lg:px-8";
 
@@ -99,6 +99,17 @@ export function SiteFooter() {
             "flex flex-wrap items-center gap-x-6 gap-y-2 text-zinc-600"
           )}
         >
+          <li>
+            <Link
+              to="/invoice-template"
+              className={cn(
+                "hover:text-ink inline-flex min-h-11 items-center rounded-sm sm:min-h-10",
+                FOCUS_RING
+              )}
+            >
+              Invoice templates
+            </Link>
+          </li>
           <li>
             <Link
               to="/privacy"

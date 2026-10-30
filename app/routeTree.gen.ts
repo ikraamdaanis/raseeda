@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as CreateRouteImport } from './routes/create'
+import { Route as InvoiceTemplateRouteImport } from './routes/invoice-template'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 
 const IndexRoute = IndexRouteImport.update({
@@ -23,6 +24,11 @@ const CreateRoute = CreateRouteImport.update({
   path: '/create',
   getParentRoute: () => rootRouteImport,
 } as any)
+const InvoiceTemplateRoute = InvoiceTemplateRouteImport.update({
+  id: '/invoice-template',
+  path: '/invoice-template',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PrivacyRoute = PrivacyRouteImport.update({
   id: '/privacy',
   path: '/privacy',
@@ -32,30 +38,34 @@ const PrivacyRoute = PrivacyRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/create': typeof CreateRoute
+  '/invoice-template': typeof InvoiceTemplateRoute
   '/privacy': typeof PrivacyRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/create': typeof CreateRoute
+  '/invoice-template': typeof InvoiceTemplateRoute
   '/privacy': typeof PrivacyRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/create': typeof CreateRoute
+  '/invoice-template': typeof InvoiceTemplateRoute
   '/privacy': typeof PrivacyRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/create' | '/privacy'
+  fullPaths: '/' | '/create' | '/invoice-template' | '/privacy'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/create' | '/privacy'
-  id: '__root__' | '/' | '/create' | '/privacy'
+  to: '/' | '/create' | '/invoice-template' | '/privacy'
+  id: '__root__' | '/' | '/create' | '/invoice-template' | '/privacy'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   CreateRoute: typeof CreateRoute
+  InvoiceTemplateRoute: typeof InvoiceTemplateRoute
   PrivacyRoute: typeof PrivacyRoute
 }
 
@@ -75,6 +85,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CreateRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/invoice-template': {
+      id: '/invoice-template'
+      path: '/invoice-template'
+      fullPath: '/invoice-template'
+      preLoaderRoute: typeof InvoiceTemplateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/privacy': {
       id: '/privacy'
       path: '/privacy'
@@ -88,6 +105,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   CreateRoute: CreateRoute,
+  InvoiceTemplateRoute: InvoiceTemplateRoute,
   PrivacyRoute: PrivacyRoute,
 }
 export const routeTree = rootRouteImport

@@ -53,12 +53,12 @@ export default defineConfig({
   plugins: [
     cloudflare({ viteEnvironment: { name: "ssr" } }),
     tailwindcss(),
-    // The homepage and the privacy page are the same for every visitor, so
-    // they are rendered once at build time and served as static files instead
-    // of by the Worker on each request. Their security headers then come from
-    // public/_headers. The privacy page is written as privacy.html, not
-    // privacy/index.html, so it is served at /privacy with no redirect to a
-    // trailing slash. Every page listed here goes into the generated
+    // The homepage, the template gallery and the privacy page are the same
+    // for every visitor, so they are rendered once at build time and served as
+    // static files instead of by the Worker on each request. Their security
+    // headers then come from public/_headers. The other pages are written as
+    // privacy.html and the like, not privacy/index.html, so each is served at
+    // its path with no redirect to a trailing slash. Every page listed here goes into the generated
     // sitemap.xml; the editor is listed but rendered by the Worker.
     tanstackStart({
       srcDirectory: "./app",
@@ -76,6 +76,10 @@ export default defineConfig({
       pages: [
         { path: "/", prerender: { enabled: true } },
         { path: "/create", prerender: { enabled: false } },
+        {
+          path: "/invoice-template",
+          prerender: { enabled: true, autoSubfolderIndex: false }
+        },
         {
           path: "/privacy",
           prerender: { enabled: true, autoSubfolderIndex: false }

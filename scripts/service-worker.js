@@ -16,7 +16,7 @@
 const PRECACHE_PREFIX = "billsend-precache-";
 const PRECACHE = PRECACHE_PREFIX + BUILD.version;
 const RUNTIME = "billsend-runtime";
-const PAGES = ["/", "/privacy", "/create"];
+const PAGES = ["/", "/invoice-template", "/privacy", "/create"];
 
 self.addEventListener("install", event => {
   // Where the browser supports it, pictures skip the worker altogether rather

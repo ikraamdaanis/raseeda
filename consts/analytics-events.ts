@@ -12,4 +12,9 @@ export const ANALYTICS_EVENTS = [
 ] as const;
 
 // The route patterns a page_view may name. Any other path is dropped.
-export const PAGE_VIEW_PATHS = ["/", "/create", "/privacy"] as const;
+export const PAGE_VIEW_PATHS = [
+  "/",
+  "/create",
+  "/invoice-template",
+  "/privacy"
+] as const;

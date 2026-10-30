@@ -32,14 +32,18 @@ function readHeaderRules() {
 describe("Content-Security-Policy", () => {
   const rules = readHeaderRules();
 
-  it.each(["/", "/index.html", "/privacy", "/privacy.html"])(
-    "public/_headers sends the Worker's policy for %s",
-    path => {
-      expect(rules.get(path)?.get("content-security-policy")).toBe(
-        CONTENT_SECURITY_POLICY
-      );
-    }
-  );
+  it.each([
+    "/",
+    "/index.html",
+    "/invoice-template",
+    "/invoice-template.html",
+    "/privacy",
+    "/privacy.html"
+  ])("public/_headers sends the Worker's policy for %s", path => {
+    expect(rules.get(path)?.get("content-security-policy")).toBe(
+      CONTENT_SECURITY_POLICY
+    );
+  });
 
   it.each(Object.entries(SECURITY_HEADERS))(
     "public/_headers sends the Worker's %s on every static file",
