@@ -10,6 +10,10 @@ import {
   PDF_RENDERS
 } from "~/components/home/pdf-renders";
 import { InvoicePDF } from "~/components/pdf/invoice-generator";
+import {
+  INVOICE_TEMPLATES,
+  TEMPLATE_RENDER_SIZE
+} from "~/components/templates/invoice-templates";
 import { invoiceDefault } from "~/stores/invoice-store";
 import type { Invoice, InvoiceItem } from "~/types";
 import { PDF_FONT_FAMILIES } from "~/utils/register-invoice-pdf-fonts";
@@ -225,6 +229,249 @@ const CLOSING_INVOICE = sampleInvoice({
   }
 });
 
+// The template gallery's invoices (components/templates/invoice-templates.ts),
+// one per line of work, each in its template's font.
+const TEMPLATE_INVOICES: Partial<Record<string, Invoice>> = {
+  // A Chicago brand designer's project for a health startup, partly hourly.
+  freelance: sampleInvoice({
+    number: "MO-0118",
+    invoiceDate: "2026-10-09",
+    dueDate: "2026-10-23",
+    seller: {
+      label: "From",
+      content:
+        "Maya Okafor Design\n1847 W Division Street, Unit 3\nChicago, IL 60622\nmaya@okafor.design",
+      placeholder: ""
+    },
+    client: {
+      label: "Bill to",
+      content:
+        "Brightloop Health, Inc.\n333 N Green Street, Suite 1100\nChicago, IL 60607",
+      placeholder: ""
+    },
+    items: items([
+      ["Brand identity design", 1, "ea", 3200],
+      ["Logo files and usage guide", 1, "ea", 450],
+      ["Landing page design", 18, "hrs", 95],
+      ["Revisions", 4, "hrs", 95]
+    ]),
+    paymentDetails: {
+      label: "Payment details",
+      bankName: "BMO Bank N.A.",
+      accountNumber: "4417 2093 8851",
+      routingNumber: "071000288",
+      iban: "",
+      bic: "HATRUS44",
+      sortCode: "",
+      terms: "Payment due within 14 days."
+    },
+    notes: {
+      label: "Notes",
+      content: "Thanks, Priya! The final files are in the shared folder."
+    }
+  }),
+  // A Boston strategy firm's monthly retainer for a biotech, against a PO.
+  consulting: sampleInvoice({
+    number: "WAG-2026-031",
+    poNumber: "PO-58213",
+    invoiceDate: "2026-10-31",
+    dueDate: "2026-11-30",
+    servicePeriod: "Oct 1–31, 2026",
+    dateFormat: "MMMM d, yyyy",
+    seller: {
+      label: "From",
+      content:
+        "Whitcombe Advisory Group LLC\n100 Federal Street, 22nd Floor\nBoston, MA 02110\n(617) 555-0172",
+      placeholder: ""
+    },
+    client: {
+      label: "Bill to",
+      content:
+        "Kestrel Biologics, Inc.\nAttn: Finance Department\n35 Cambridgepark Drive\nCambridge, MA 02140",
+      placeholder: ""
+    },
+    items: items([
+      ["Strategy retainer, October", 1, "mo", 12000],
+      ["Leadership workshops", 2, "days", 3500],
+      ["Market sizing analysis", 24, "hrs", 275]
+    ]),
+    paymentDetails: {
+      label: "Payment details",
+      bankName: "Citizens Bank, N.A.",
+      accountNumber: "1308 4472 9915",
+      routingNumber: "211070175",
+      iban: "",
+      bic: "CTZIUS33",
+      sortCode: "",
+      terms: "Net 30."
+    },
+    latePayment: {
+      label: "Late payment",
+      content: "Balances unpaid after 30 days accrue interest at 1% a month."
+    }
+  }),
+  // An Austin bakery's catering order for an office, with Texas sales tax.
+  "small-business": sampleInvoice({
+    number: "SB-1593",
+    invoiceDate: "2026-10-14",
+    dueDate: "2026-10-28",
+    seller: {
+      label: "From",
+      content:
+        "Sunflour Bakery & Café\n1515 S Congress Avenue\nAustin, TX 78704\n(512) 555-0136",
+      placeholder: ""
+    },
+    client: {
+      label: "Bill to",
+      content:
+        "Lonestar Robotics\n500 W 5th Street, Suite 800\nAustin, TX 78701",
+      placeholder: ""
+    },
+    items: items([
+      ["Breakfast catering, 40 guests", 1, "ea", 680],
+      ["Assorted pastry boxes", 12, "pcs", 38],
+      ["Custom celebration cake", 1, "ea", 145],
+      ["Coffee service", 3, "gal", 42]
+    ]),
+    tax: { percentage: 8.25, exempt: false, note: "" },
+    fees: 35,
+    labels: { ...invoiceDefault.labels, fees: "Delivery" },
+    paymentDetails: {
+      label: "Payment details",
+      bankName: "Frost Bank",
+      accountNumber: "6620 3817 4459",
+      routingNumber: "114000093",
+      iban: "",
+      bic: "FRSTUS44",
+      sortCode: "",
+      terms: "Due within 14 days."
+    },
+    notes: {
+      label: "Notes",
+      content: "Thank you for ordering with us!"
+    }
+  }),
+  // A Denver remodeler's kitchen job for homeowners, less the deposit.
+  contractor: sampleInvoice({
+    number: "SRB-0742",
+    invoiceDate: "2026-10-20",
+    dueDate: "2026-11-03",
+    dateFormat: "MM/dd/yyyy",
+    seller: {
+      label: "From",
+      content:
+        "Summit Ridge Builders LLC\n4280 Tennyson Street\nDenver, CO 80212\n(303) 555-0187",
+      placeholder: ""
+    },
+    client: {
+      label: "Bill to",
+      content:
+        "Daniel and Rachel Moreno\n2731 S Josephine Street\nDenver, CO 80210",
+      placeholder: ""
+    },
+    shipping: {
+      label: "Job site",
+      content: "Kitchen remodel\n2731 S Josephine Street\nDenver, CO 80210",
+      placeholder: ""
+    },
+    items: items([
+      ["Demolition and haul-away", 1, "ea", 1850],
+      ["Framing and drywall labor", 42, "hrs", 68],
+      ["Electrical rough-in", 1, "ea", 2400],
+      ["Cabinets and hardware", 1, "ea", 6240],
+      ["Tile and setting materials", 120, "sq ft", 14.5]
+    ]),
+    amountPaid: 6000,
+    labels: { ...invoiceDefault.labels, amountPaid: "Deposit paid" },
+    paymentDetails: {
+      label: "Payment details",
+      bankName: "Wells Fargo Bank, N.A.",
+      accountNumber: "8104 6629 3375",
+      routingNumber: "102000076",
+      iban: "",
+      bic: "WFBIUS6S",
+      sortCode: "",
+      terms: "Balance due within 14 days of completion."
+    }
+  }),
+  // A Charleston wedding photographer's package, less the retainer.
+  photography: sampleInvoice({
+    number: "ARP-2611",
+    invoiceDate: "2026-10-06",
+    dueDate: "2026-10-31",
+    dateFormat: "MMMM d, yyyy",
+    seller: {
+      label: "From",
+      content:
+        "Ashley Rivers Photography\n89 Rutledge Avenue\nCharleston, SC 29401\nhello@ashleyrivers.photo",
+      placeholder: ""
+    },
+    client: {
+      label: "Bill to",
+      content:
+        "Olivia Bennett and James Carter\n412 Coleman Boulevard\nMount Pleasant, SC 29464",
+      placeholder: ""
+    },
+    items: items([
+      ["Wedding day coverage", 8, "hrs", 475],
+      ["Second shooter", 8, "hrs", 75],
+      ["Engagement session", 1, "ea", 450],
+      ["Fine art album, 10 × 10", 1, "ea", 650]
+    ]),
+    amountPaid: 1000,
+    labels: { ...invoiceDefault.labels, amountPaid: "Retainer paid" },
+    paymentDetails: {
+      label: "Payment details",
+      bankName: "Truist Bank",
+      accountNumber: "1150 7738 2046",
+      routingNumber: "053201607",
+      iban: "",
+      bic: "BRBTUS33",
+      sortCode: "",
+      terms: "Balance due two weeks before the wedding."
+    },
+    notes: {
+      label: "Notes",
+      content: "Thank you for trusting me with your day. I can’t wait!"
+    }
+  }),
+  // A Raleigh studio's month of work on a patient portal, plus hosting.
+  "web-development": sampleInvoice({
+    number: "PC-0256",
+    invoiceDate: "2026-11-01",
+    dueDate: "2026-12-01",
+    servicePeriod: "Oct 1–31, 2026",
+    seller: {
+      label: "From",
+      content:
+        "Pinecrest Code LLC\n412 Fayetteville Street, Suite 1100\nRaleigh, NC 27601\nbilling@pinecrestcode.com",
+      placeholder: ""
+    },
+    client: {
+      label: "Bill to",
+      content:
+        "Triangle Home Health Partners\n8601 Six Forks Road, Suite 400\nRaleigh, NC 27615",
+      placeholder: ""
+    },
+    items: items([
+      ["Patient portal development", 56, "hrs", 135],
+      ["Accessibility fixes", 12, "hrs", 135],
+      ["Hosting, October", 1, "mo", 180],
+      ["Domain renewal", 1, "yr", 24]
+    ]),
+    paymentDetails: {
+      label: "Payment details",
+      bankName: "PNC Bank, N.A.",
+      accountNumber: "5302 1186 7740",
+      routingNumber: "043000096",
+      iban: "",
+      bic: "PNCCUS33",
+      sortCode: "",
+      terms: "Net 30."
+    }
+  })
+};
+
 async function run(command: string[]) {
   const child = spawn(command, { stderr: "pipe" });
   const exitCode = await child.exited;
@@ -321,8 +568,25 @@ try {
     ...CLOSING_RENDER
   });
 
+  await mkdir(join(OUTPUT_DIR, "templates"), { recursive: true });
+
+  for (const template of INVOICE_TEMPLATES) {
+    const invoice = TEMPLATE_INVOICES[template.id];
+
+    if (!invoice) throw new Error(`No sample invoice for ${template.id}`);
+
+    await writeWebp({
+      pngPath: await renderPage(directory, template.id, {
+        ...invoice,
+        theme: { ...invoice.theme, font: template.font }
+      }),
+      src: template.src,
+      width: TEMPLATE_RENDER_SIZE.width
+    });
+  }
+
   process.stdout.write(
-    `Wrote the invoice renders to ${join(OUTPUT_DIR, "home")}\n`
+    `Wrote the invoice renders to ${join(OUTPUT_DIR, "home")} and ${join(OUTPUT_DIR, "templates")}\n`
   );
 } finally {
   if (process.argv.includes("--keep")) {
