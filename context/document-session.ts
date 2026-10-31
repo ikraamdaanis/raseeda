@@ -1220,10 +1220,16 @@ function applyStartingFont(font: InvoiceFont): void {
 
 // Starts a new invoice in a font, as the template gallery's links do, leaving
 // the open one in the library. An untouched blank takes the font instead, so
-// following a link twice never leaves a spare blank behind.
+// following a link twice never leaves a spare blank behind; one started from
+// a saved template isn't blank, so it's replaced.
 function startInFont(font: InvoiceFont): Promise<void> {
   return enqueue(async () => {
-    if (current && !current.disposed && isUntouchedBlank(current)) {
+    if (
+      current &&
+      !current.disposed &&
+      current.templateId === null &&
+      isUntouchedBlank(current)
+    ) {
       applyStartingFont(font);
 
       return;
