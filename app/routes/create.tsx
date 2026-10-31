@@ -5,6 +5,7 @@ import {
   useNavigate
 } from "@tanstack/react-router";
 import { useEffect } from "react";
+import { toast } from "sonner";
 import { InvoiceEditor } from "~/components/editor/invoice-editor";
 import { INVOICE_FONTS } from "~/consts/invoice-fonts";
 import {
@@ -19,8 +20,9 @@ import { track } from "~/utils/track";
 
 // Optional hand-offs from the homepage and the template gallery: `font` sets
 // an untouched invoice in the face picked there (one already under way keeps
-// its own), and `open=invoices` opens the saved-invoice list.
-// Anything unrecognised is dropped rather than trusted.
+// its own), `font` with `new` starts a new invoice in it, and `open=invoices`
+// opens the saved-invoice list. Anything unrecognised is dropped rather than
+// trusted.
 export const Route = createFileRoute("/create")({
   component: RouteComponent,
   head: () => ({
@@ -46,8 +48,9 @@ export const Route = createFileRoute("/create")({
   }),
   validateSearch: (
     search: Record<string, unknown>
-  ): { font?: InvoiceFont; open?: "invoices" } => ({
+  ): { font?: InvoiceFont; new?: true; open?: "invoices" } => ({
     font: INVOICE_FONTS.find(definition => definition.id === search.font)?.id,
+    new: search.new === true ? true : undefined,
     open: search.open === "invoices" ? "invoices" : undefined
   })
 });
@@ -91,20 +94,31 @@ function EditorThemeSync() {
 // is about to be replaced. The param is cleared afterwards so a reload or a
 // later blank doesn't re-apply it.
 function StartingFont() {
-  const { font } = Route.useSearch();
+  const { font, new: isNew } = Route.useSearch();
   const navigate = useNavigate();
-  const { applyStartingFont } = useInvoiceDocument();
+  const { applyStartingFont, startInFont } = useInvoiceDocument();
 
   useEffect(() => {
     if (!font) return;
 
-    applyStartingFont(font);
+    if (isNew) {
+      startInFont(font).catch((error: unknown) => {
+        toast.error(
+          error instanceof Error
+            ? error.message
+            : "Failed to start a new invoice"
+        );
+      });
+    } else {
+      applyStartingFont(font);
+    }
+
     void navigate({
       to: "/create",
-      search: previous => ({ ...previous, font: undefined }),
+      search: previous => ({ ...previous, font: undefined, new: undefined }),
       replace: true
     });
-  }, [font, applyStartingFont, navigate]);
+  }, [font, isNew, applyStartingFont, startInFont, navigate]);
 
   return null;
 }

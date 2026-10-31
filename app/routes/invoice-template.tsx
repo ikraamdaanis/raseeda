@@ -55,9 +55,9 @@ const INVOICE_PARTS = [
 ];
 
 // A gallery of real billsend PDFs, one per line of work. Each opens the
-// editor with the `?font=` hand-off, which sets a new, untouched invoice in
-// its template's font (an invoice already under way keeps its own). The
-// pictures show a finished invoice in that style, not a form to fill.
+// editor on a new invoice in its template's font (`?font=` with `new`), and
+// an invoice already under way stays in the library. The pictures show a
+// finished invoice in that style, not a form to fill.
 function InvoiceTemplatePage() {
   return (
     <div className="home-type selection:bg-brand-100 bg-canvas text-ink isolate min-h-svh font-sans font-features-['cv02','cv03','cv04','cv11'] antialiased">
@@ -175,7 +175,7 @@ function TemplateCard({
       <p className={BODY_TEXT}>{template.description}</p>
       <Link
         to="/create"
-        search={{ font: template.font }}
+        search={{ font: template.font, new: true }}
         className={cn(
           "text-ink group-hover:text-ink-blue inline-flex items-center gap-1 justify-self-start rounded-sm font-medium after:absolute after:inset-0 after:rounded-xl",
           typeClass("body"),

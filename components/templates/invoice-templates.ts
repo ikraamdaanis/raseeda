@@ -4,7 +4,7 @@ import type { InvoiceFont } from "~/types";
 // each for a different line of work and set in a different invoice font.
 // scripts/render-homepage-invoices.tsx renders them (the samples live there)
 // into public/templates at TEMPLATE_RENDER_SIZE. Each links to the editor's
-// `?font=` hand-off, which sets an untouched invoice in that face.
+// `?font=` hand-off with `new`, which starts a new invoice in that face.
 
 // The gallery shows a page no wider than about 360px, so it ships at a little
 // over twice that. The height follows from the A4 page.

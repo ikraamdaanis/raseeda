@@ -120,6 +120,32 @@ test("a template starts a fresh invoice in its font", async ({ page }) => {
   );
 });
 
+test("a template starts a new invoice beside work in progress", async ({
+  page
+}) => {
+  await gotoEditorSettled(page);
+  await page.getByLabel("Invoice title").fill("Half-finished invoice");
+  await expect
+    .poll(() => savedContains(page, "Half-finished invoice"))
+    .toBe(true);
+
+  await page.goto("/invoice-template");
+  await page
+    .getByRole("main")
+    .getByRole("link", { name: "Start in Lora", exact: true })
+    .click();
+
+  await expect(page).toHaveURL("/create");
+  await expect(page.locator(".bg-paper").first()).toHaveCSS(
+    "font-family",
+    /Lora/
+  );
+  await expect(page.getByLabel("Invoice title")).not.toHaveValue(
+    "Half-finished invoice"
+  );
+  expect(await savedContains(page, "Half-finished invoice")).toBe(true);
+});
+
 test("the footer links to the template gallery", async ({ page }) => {
   await page.goto("/");
 

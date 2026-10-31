@@ -1193,21 +1193,49 @@ async function downloadBackup(): Promise<void> {
   await downloadBackupFile(open);
 }
 
+// A new invoice nobody has edited yet, so not in the library either.
+function isUntouchedBlank(session: Session) {
+  return (
+    !session.isRecord &&
+    session.pristine !== null &&
+    isEqual(liveContent(), session.pristine)
+  );
+}
+
 // Sets the font on a new invoice nobody has edited yet, such as one started
 // from the homepage's font picker. It isn't an edit: the invoice still starts
 // from that font.
 function applyStartingFont(font: InvoiceFont): void {
   const session = current;
 
-  if (!session || session.isRecord || !session.pristine) return;
-  if (!isEqual(liveContent(), session.pristine)) return;
-  if (session.pristine.theme.font === font) return;
+  if (!session || !isUntouchedBlank(session)) return;
+  if (liveContent().theme.font === font) return;
 
   runWithOrigin("load", () => {
     useInvoiceStore.getState().setTheme(theme => ({ ...theme, font }));
   });
   session.pristine = liveContent();
   session.shownContent = session.pristine;
+}
+
+// Starts a new invoice in a font, as the template gallery's links do, leaving
+// the open one in the library. An untouched blank takes the font instead, so
+// following a link twice never leaves a spare blank behind.
+function startInFont(font: InvoiceFont): Promise<void> {
+  return enqueue(async () => {
+    if (current && !current.disposed && isUntouchedBlank(current)) {
+      applyStartingFont(font);
+
+      return;
+    }
+
+    if (!(await leaveCurrent())) return;
+
+    const blank = createBlankInvoice();
+
+    blank.theme.font = font;
+    await switchTo(newSession(blank), blank);
+  });
 }
 
 function scheduleIdleVersion(session: Session) {
@@ -1603,5 +1631,6 @@ export const documentActions = {
   restoreVersion,
   downloadBackup,
   dismissBackupReminder,
-  applyStartingFont
+  applyStartingFont,
+  startInFont
 } as const;

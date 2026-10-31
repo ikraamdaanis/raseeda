@@ -769,3 +769,49 @@ describe("usage counts", () => {
     expect(track.mock.calls).toEqual([["invoice_saved"], ["invoice_saved"]]);
   });
 });
+
+describe("starting in a font", () => {
+  beforeEach(async () => {
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout", "Date"] });
+    await Dexie.delete("InvoiceDatabase");
+  });
+
+  afterEach(async () => {
+    await closePages();
+    vi.useRealTimers();
+  });
+
+  it("starts a new invoice and keeps the one under way", async () => {
+    const page = await loadPage();
+
+    page.edit().setTitle("Half-finished invoice");
+    await settle();
+
+    const previousId = page.documentState().documentId;
+
+    await page.startInFont("lora");
+
+    expect(page.documentState()).toMatchObject({ isRecord: false });
+    expect(page.documentState().documentId).not.toBe(previousId);
+    expect(page.invoice().theme.font).toBe("lora");
+    expect(page.invoice().title).toBe(invoiceDefault.title);
+    expect(await page.getAllInvoices()).toMatchObject([
+      { id: previousId, invoiceData: { title: "Half-finished invoice" } }
+    ]);
+  });
+
+  it("sets an untouched blank in the font rather than replacing it", async () => {
+    const page = await loadPage();
+    const blankId = page.documentState().documentId;
+
+    await page.startInFont("lora");
+    await page.startInFont("lora");
+
+    expect(page.documentState().documentId).toBe(blankId);
+    expect(page.invoice().theme.font).toBe("lora");
+
+    await settle(5000);
+
+    expect(await page.getAllInvoices()).toEqual([]);
+  });
+});
