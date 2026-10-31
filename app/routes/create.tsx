@@ -17,8 +17,9 @@ import { EDITOR_THEME_SCRIPT } from "~/utils/editor-theme";
 import { canonicalLink, siteMeta } from "~/utils/site-meta";
 import { track } from "~/utils/track";
 
-// Optional hand-offs from the homepage: `font` starts a fresh invoice in the
-// face picked in the preview, and `open=invoices` opens the saved-invoice list.
+// Optional hand-offs from the homepage and the template gallery: `font` sets
+// an untouched invoice in the face picked there (one already under way keeps
+// its own), and `open=invoices` opens the saved-invoice list.
 // Anything unrecognised is dropped rather than trusted.
 export const Route = createFileRoute("/create")({
   component: RouteComponent,

@@ -4,20 +4,13 @@ import type { InvoiceFont } from "~/types";
 // each for a different line of work and set in a different invoice font.
 // scripts/render-homepage-invoices.tsx renders them (the samples live there)
 // into public/templates at TEMPLATE_RENDER_SIZE. Each links to the editor's
-// `?font=` hand-off, which starts a blank invoice in that face.
+// `?font=` hand-off, which sets an untouched invoice in that face.
 
 // The gallery shows a page no wider than about 360px, so it ships at a little
 // over twice that. The height follows from the A4 page.
 export const TEMPLATE_RENDER_SIZE = { width: 800, height: 1132 };
 
-export const INVOICE_TEMPLATES: {
-  id: string;
-  name: string;
-  font: InvoiceFont;
-  description: string;
-  src: string;
-  alt: string;
-}[] = [
+export const INVOICE_TEMPLATES = [
   {
     id: "freelance",
     name: "Freelance",
@@ -72,4 +65,11 @@ export const INVOICE_TEMPLATES: {
     src: "/templates/web-development.webp",
     alt: "A web development invoice from Pinecrest Code in Raleigh to Triangle Home Health Partners, listing development hours and monthly hosting"
   }
-];
+] as const satisfies readonly {
+  id: string;
+  name: string;
+  font: InvoiceFont;
+  description: string;
+  src: string;
+  alt: string;
+}[];

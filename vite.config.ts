@@ -58,8 +58,9 @@ export default defineConfig({
     // static files instead of by the Worker on each request. Their security
     // headers then come from public/_headers. The other pages are written as
     // privacy.html and the like, not privacy/index.html, so each is served at
-    // its path with no redirect to a trailing slash. Every page listed here goes into the generated
-    // sitemap.xml; the editor is listed but rendered by the Worker.
+    // its path with no redirect to a trailing slash. Every page listed here
+    // goes into the generated sitemap.xml; the editor is listed but rendered
+    // by the Worker.
     tanstackStart({
       srcDirectory: "./app",
       router: {

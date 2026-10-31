@@ -231,7 +231,10 @@ const CLOSING_INVOICE = sampleInvoice({
 
 // The template gallery's invoices (components/templates/invoice-templates.ts),
 // one per line of work, each in its template's font.
-const TEMPLATE_INVOICES: Partial<Record<string, Invoice>> = {
+const TEMPLATE_INVOICES: Record<
+  (typeof INVOICE_TEMPLATES)[number]["id"],
+  Invoice
+> = {
   // A Chicago brand designer's project for a health startup, partly hourly.
   freelance: sampleInvoice({
     number: "MO-0118",
@@ -572,8 +575,6 @@ try {
 
   for (const template of INVOICE_TEMPLATES) {
     const invoice = TEMPLATE_INVOICES[template.id];
-
-    if (!invoice) throw new Error(`No sample invoice for ${template.id}`);
 
     await writeWebp({
       pngPath: await renderPage(directory, template.id, {
