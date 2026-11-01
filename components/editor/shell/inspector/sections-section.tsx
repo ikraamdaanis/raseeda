@@ -27,8 +27,7 @@ const SECTION_GROUPS: {
       { key: "discounts", label: "Discounts" },
       { key: "tax", label: "Tax" },
       { key: "fees", label: "Fees" },
-      { key: "amountPaid", label: "Amount paid" },
-      { key: "currencyConversion", label: "Second currency" }
+      { key: "amountPaid", label: "Amount paid" }
     ]
   },
   {

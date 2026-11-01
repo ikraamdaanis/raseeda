@@ -47,6 +47,7 @@ import { useInvoiceDocument } from "~/context/invoice-document-context";
 import { watchInvoices } from "~/db";
 import { useEditorTheme } from "~/hooks/use-editor-theme";
 import { useInvoicePdf } from "~/hooks/use-invoice-pdf";
+import { useSecondCurrency } from "~/hooks/use-second-currency";
 import {
   redoInvoiceChange,
   undoInvoiceChange,
@@ -115,6 +116,7 @@ function PaletteCommands() {
   const { theme, setTheme } = useThemeSlice();
   const { currency, setCurrency, setCurrencyCode } = useCurrencySlice();
   const { sections, setSection } = useSectionsSlice();
+  const secondCurrency = useSecondCurrency();
   const { libraryDocumentId, isRecord, status } = useInvoiceDocument();
   const history = useInvoiceHistory();
   const canEdit = status === "editing" || status === "unavailable";
@@ -271,14 +273,26 @@ function PaletteCommands() {
       </CommandGroup>
       {canEdit && (
         <CommandGroup heading="Sections">
-          {(Object.keys(SECTION_LABELS) as InvoiceSectionKey[]).map(section => (
-            <PaletteItem
-              key={section}
-              onSelect={run(() => setSection(section, !sections[section]))}
-            >
-              {`${sections[section] ? "Hide" : "Show"} ${SECTION_LABELS[section]}`}
-            </PaletteItem>
-          ))}
+          {(Object.keys(SECTION_LABELS) as InvoiceSectionKey[])
+            .filter(section => section !== "currencyConversion")
+            .map(section => (
+              <PaletteItem
+                key={section}
+                onSelect={run(() => setSection(section, !sections[section]))}
+              >
+                {`${sections[section] ? "Hide" : "Show"} ${SECTION_LABELS[section]}`}
+              </PaletteItem>
+            ))}
+          <PaletteItem
+            onSelect={run(
+              secondCurrency.isOn ? secondCurrency.remove : secondCurrency.add
+            )}
+            keywords={["currency", "exchange rate", "conversion"]}
+          >
+            {secondCurrency.isOn
+              ? "Remove second currency"
+              : "Add second currency"}
+          </PaletteItem>
         </CommandGroup>
       )}
       {canEdit && (

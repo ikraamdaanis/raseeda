@@ -1,6 +1,8 @@
-import { IconCalendar } from "@tabler/icons-react";
+import { IconCalendar, IconPlus, IconX } from "@tabler/icons-react";
 import { format } from "date-fns";
-import { useId, useState } from "react";
+import type { ReactNode } from "react";
+import { useId, useRef, useState } from "react";
+import { flushSync } from "react-dom";
 import { CustomCurrencyDialog } from "~/components/dialogs/custom-currency-dialog";
 import {
   inspectorFieldClassName,
@@ -20,13 +22,13 @@ import {
   getCurrencyMarker,
   normalizeCurrency
 } from "~/consts/currencies";
+import { useSecondCurrency } from "~/hooks/use-second-currency";
 import { cn } from "~/lib/utils";
 import { INVOICE_DATE_FORMATS } from "~/schema/invoice";
 import {
   useCurrencyConversionSlice,
   useCurrencySlice,
-  useDetailsSlice,
-  useSectionsSlice
+  useDetailsSlice
 } from "~/stores/invoice-selectors";
 import { formatInvoiceDate } from "~/utils/format-invoice-date";
 import { parseIsoDate } from "~/utils/parse-iso-date";
@@ -39,58 +41,99 @@ import {
 
 const CUSTOM_CURRENCY = "__custom";
 const CUSTOM_TERMS = "custom";
+const SECOND_CURRENCY_ID = "inspector-second-currency";
 
 export function DetailsSection() {
   return (
     <InspectorSection id="details" title="Details">
-      <CurrencyRow />
-      <ConversionCurrencyRow />
+      <CurrencyRows />
       <DatesRows />
       <DateFormatRow />
     </InspectorSection>
   );
 }
 
-function CurrencyRow() {
+// The currency, and a second one the amounts are also shown in: a quiet link
+// under the currency until one is added, then its own picker with a way to
+// remove it. Focus follows, to the new picker or back to the link.
+function CurrencyRows() {
   const { currency, currencyCode, setCurrency, setCurrencyCode } =
     useCurrencySlice();
-
-  return (
-    <CurrencyPicker
-      id="inspector-currency"
-      label="Currency"
-      currency={currency}
-      currencyCode={currencyCode}
-      onChange={(symbol, code) => {
-        setCurrency(symbol);
-        setCurrencyCode(code);
-      }}
-    />
-  );
-}
-
-// The second currency the amounts are also shown in, while it's switched on.
-function ConversionCurrencyRow() {
-  const { sections } = useSectionsSlice();
   const { currencyConversion, setCurrencyConversion } =
     useCurrencyConversionSlice();
+  const secondCurrency = useSecondCurrency();
+  const addButtonRef = useRef<HTMLButtonElement>(null);
 
-  if (!sections.currencyConversion) return null;
+  function handleAdd() {
+    flushSync(secondCurrency.add);
+    document.getElementById(SECOND_CURRENCY_ID)?.focus();
+  }
+
+  function handleRemove() {
+    flushSync(secondCurrency.remove);
+    addButtonRef.current?.focus();
+  }
 
   return (
-    <CurrencyPicker
-      id="inspector-conversion-currency"
-      label="Also show in"
-      currency={currencyConversion.currency}
-      currencyCode={currencyConversion.currencyCode}
-      onChange={(symbol, code) =>
-        setCurrencyConversion(prev => ({
-          ...prev,
-          currency: symbol,
-          currencyCode: code
-        }))
-      }
-    />
+    <div
+      className={cn("flex flex-col", secondCurrency.isOn ? "gap-3" : "gap-1")}
+    >
+      <CurrencyPicker
+        id="inspector-currency"
+        label="Currency"
+        currency={currency}
+        currencyCode={currencyCode}
+        onChange={(symbol, code) => {
+          setCurrency(symbol);
+          setCurrencyCode(code);
+        }}
+      />
+      {secondCurrency.isOn ? (
+        <CurrencyPicker
+          id={SECOND_CURRENCY_ID}
+          label="Also show in"
+          currency={currencyConversion.currency}
+          currencyCode={currencyConversion.currencyCode}
+          onChange={(symbol, code) =>
+            setCurrencyConversion(prev => ({
+              ...prev,
+              currency: symbol,
+              currencyCode: code
+            }))
+          }
+          action={
+            <button
+              type="button"
+              aria-label="Remove second currency"
+              onClick={handleRemove}
+              className="text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:ring-ring relative -mr-1 flex h-8 w-6 shrink-0 items-center justify-center rounded-md outline-none focus-visible:ring-1"
+            >
+              <IconX aria-hidden="true" className="size-3.5 shrink-0" />
+              <span
+                aria-hidden="true"
+                className="absolute top-1/2 left-1/2 size-[max(100%,3rem)] -translate-1/2 pointer-fine:hidden"
+              />
+            </button>
+          }
+        />
+      ) : (
+        <div className="grid grid-cols-[6rem_minmax(0,1fr)] gap-2">
+          <button
+            ref={addButtonRef}
+            type="button"
+            onClick={handleAdd}
+            className="text-muted-foreground hover:text-foreground focus-visible:ring-ring relative col-start-2 -mx-1 flex h-6 w-fit items-center gap-1 rounded-md px-1 text-xs outline-none focus-visible:ring-1"
+          >
+            <IconPlus aria-hidden="true" className="size-3.5 shrink-0" />
+            Add second currency
+            <span
+              aria-hidden="true"
+              className="absolute top-1/2 left-1/2 size-[max(100%,3rem)] -translate-1/2 pointer-fine:hidden"
+            />
+          </button>
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -99,12 +142,14 @@ function CurrencyPicker({
   label,
   currency,
   currencyCode,
+  action,
   onChange
 }: {
   id: string;
   label: string;
   currency: string;
   currencyCode: string;
+  action?: ReactNode;
   onChange: (symbol: string, code: string) => void;
 }) {
   const [customOpen, setCustomOpen] = useState(false);
@@ -126,21 +171,24 @@ function CurrencyPicker({
   return (
     <>
       <InspectorRow label={label} htmlFor={id}>
-        <NativeSelect
-          id={id}
-          value={isCustom ? CUSTOM_CURRENCY : selected}
-          onChange={event => handleChange(event.target.value)}
-          className={cn(inspectorFieldClassName, "pr-7")}
-        >
-          {currencyOptions.map(({ symbol, code, label: name }) => (
-            <option key={symbol} value={symbol}>
-              {`${getCurrencyMarker(symbol)} ${name} · ${code}`}
+        <div className="flex min-w-0 items-center gap-0.5">
+          <NativeSelect
+            id={id}
+            value={isCustom ? CUSTOM_CURRENCY : selected}
+            onChange={event => handleChange(event.target.value)}
+            className={cn(inspectorFieldClassName, "pr-7")}
+          >
+            {currencyOptions.map(({ symbol, code, label: name }) => (
+              <option key={symbol} value={symbol}>
+                {`${getCurrencyMarker(symbol)} ${name} · ${code}`}
+              </option>
+            ))}
+            <option value={CUSTOM_CURRENCY}>
+              {isCustom ? `Custom (${selected})` : "Custom…"}
             </option>
-          ))}
-          <option value={CUSTOM_CURRENCY}>
-            {isCustom ? `Custom (${selected})` : "Custom…"}
-          </option>
-        </NativeSelect>
+          </NativeSelect>
+          {action}
+        </div>
       </InspectorRow>
       <CustomCurrencyDialog
         open={customOpen}

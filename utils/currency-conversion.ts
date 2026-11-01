@@ -1,4 +1,8 @@
-import { getCurrencyMarker, normalizeCurrency } from "~/consts/currencies";
+import {
+  currencyOptions,
+  getCurrencyMarker,
+  normalizeCurrency
+} from "~/consts/currencies";
 import type { CurrencyConversion, Invoice } from "~/types";
 import { roundCents } from "~/utils/calculate-invoice-totals";
 import { formatInvoiceDate } from "~/utils/format-invoice-date";
@@ -13,7 +17,7 @@ function currencyLabel({ currency, currencyCode }: CurrencyPair) {
 
 // Two currencies are the same when their codes match. A "$" in USD and a "$"
 // in CAD differ; without codes, the symbols decide.
-function isSameCurrency(first: CurrencyPair, second: CurrencyPair) {
+export function isSameCurrency(first: CurrencyPair, second: CurrencyPair) {
   const firstCode = first.currencyCode.trim().toUpperCase();
   const secondCode = second.currencyCode.trim().toUpperCase();
 
@@ -22,6 +26,21 @@ function isSameCurrency(first: CurrencyPair, second: CurrencyPair) {
   return (
     normalizeCurrency(first.currency) === normalizeCurrency(second.currency)
   );
+}
+
+// The first preset that isn't the invoice's own currency, offered when a
+// second currency is added and the stored one would match the invoice's.
+export function pickSecondCurrency(invoice: CurrencyPair): CurrencyPair {
+  const option =
+    currencyOptions.find(
+      candidate =>
+        !isSameCurrency(invoice, {
+          currency: candidate.symbol,
+          currencyCode: candidate.code
+        })
+    ) ?? currencyOptions[0];
+
+  return { currency: option.symbol, currencyCode: option.code };
 }
 
 // The conversion when it's switched on and the invoice isn't already in the
