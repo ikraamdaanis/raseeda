@@ -175,7 +175,7 @@ const LINE_ITEM_COLUMNS: LineItemColumnConfig[] = [
 ];
 
 // An invoice shown in a second currency names its own on the price columns,
-// "Unit Price (GBP)", beside the amount in the other, "Amount (AED)".
+// "Unit Price (GBP)", beside the amount in the other, "Amount (USD)".
 function getColumnLabel(
   column: LineItemColumnConfig,
   columnLabels: TableSettings["columnLabels"],

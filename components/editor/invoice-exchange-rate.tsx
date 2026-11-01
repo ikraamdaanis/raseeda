@@ -19,7 +19,7 @@ function normalizeRateInput(value: string): string {
 }
 
 // The rate under the totals, typed into the line as it prints: "Exchange
-// rate: 1 GBP = 4.912518 AED (Central Bank of the UAE rate, 30 Oct 2026)".
+// rate: 1 GBP = 1.2875 USD (Bank of England rate, 30 Oct 2026)".
 export function InvoiceExchangeRate() {
   const conversion = useCurrencyConversion();
   const { currencyConversion, dateFormat, setCurrencyConversion } =

@@ -121,16 +121,15 @@ const DEFAULT_PAYMENT_DETAILS = {
   terms: ""
 } as const;
 
-// A second currency the invoice's amounts are also shown in, at a rate typed
-// in and stored with the invoice, so the converted figures never change after
-// the fact. It starts as dirhams for a UAE tax invoice (issue #99), which must
-// show its amounts and VAT in AED, but can be any currency.
+// A second currency the invoice's amounts are also shown in (issue #99), at a
+// rate typed in and stored with the invoice, so the converted figures never
+// change after the fact.
 export const DEFAULT_CURRENCY_CONVERSION = {
-  currency: "د.إ",
-  currencyCode: "AED",
+  currency: "$",
+  currencyCode: "USD",
   rate: 0,
   date: "",
-  source: "Central Bank of the UAE"
+  source: ""
 } as const;
 
 const DEFAULT_COLUMN_LABELS = {

@@ -35,7 +35,7 @@ const styles = StyleSheet.create({
   totalValue: {
     width: "24%"
   },
-  // Both currencies, "£7,150.00 / AED 35,124.50", need more of the line.
+  // Both currencies, "£7,150.00 / $9,205.63", need more of the line.
   convertedTotalValue: {
     width: "45%"
   },

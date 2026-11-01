@@ -52,8 +52,8 @@ export function convertAmount(amount: number, rate: number): number {
   return roundCents(amount * rate);
 }
 
-// A marker that ends in a letter ("AED", "CHF") is spaced from the figure, so
-// it reads "AED 35,124.50"; a symbol sits against it, "£7,150.00".
+// A marker that ends in a letter ("CHF", a custom "Rs") is spaced from the
+// figure, so it reads "CHF 6,292.00"; a symbol sits against it, "$9,205.63".
 export function formatConvertedAmount(
   amount: number,
   conversion: CurrencyConversion
@@ -69,7 +69,7 @@ export function formatConvertedAmount(
     : `${marker}${formatted}`;
 }
 
-// A total in both currencies, "£7,150.00 / AED 35,124.50".
+// A total in both currencies, "£7,150.00 / $9,205.63".
 export function withConvertedAmount(
   value: string,
   amount: number,
@@ -88,8 +88,8 @@ export function formatExchangeRate(rate: number): string {
   });
 }
 
-// The line under the totals: "Exchange rate: 1 GBP = 4.912518 AED (Central
-// Bank of the UAE rate, 30 Oct 2026)".
+// The line under the totals: "Exchange rate: 1 GBP = 1.2875 USD (Bank of
+// England rate, 30 Oct 2026)".
 export function buildExchangeRateLine({
   conversion,
   currencyConversion,

@@ -446,8 +446,9 @@ describe("buildInvoiceViewModel with a second currency", () => {
       sections: { ...DEFAULT_INVOICE_SECTIONS, currencyConversion: true },
       currencyConversion: {
         ...DEFAULT_CURRENCY_CONVERSION,
-        rate: 4.912518,
-        date: "2026-10-30"
+        rate: 1.2875,
+        date: "2026-10-30",
+        source: "Bank of England"
       },
       dateFormat: "d MMM yyyy",
       ...overrides
@@ -462,15 +463,15 @@ describe("buildInvoiceViewModel with a second currency", () => {
     );
 
     expect(conversion).toEqual({
-      rate: 4.912518,
+      rate: 1.2875,
       fromCode: "GBP",
-      toCurrency: "د.إ",
-      toCode: "AED"
+      toCurrency: "$",
+      toCode: "USD"
     });
-    expect(lineItems[0].convertedAmount).toBe("AED 35,124.50");
-    expect(valueById.subtotal).toBe("£7,150.00 / AED 35,124.50");
-    expect(valueById.tax).toBe("£0.00 / AED 0.00");
-    expect(valueById.total).toBe("£7,150.00 GBP / AED 35,124.50");
+    expect(lineItems[0].convertedAmount).toBe("$9,205.63");
+    expect(valueById.subtotal).toBe("£7,150.00 / $9,205.63");
+    expect(valueById.tax).toBe("£0.00 / $0.00");
+    expect(valueById.total).toBe("£7,150.00 GBP / $9,205.63");
   });
 
   it("converts to any currency, a custom one included", () => {
@@ -481,6 +482,16 @@ describe("buildInvoiceViewModel with a second currency", () => {
           currency: "€",
           currencyCode: "EUR",
           rate: 1.2
+        }
+      })
+    );
+    const franc = buildInvoiceViewModel(
+      makeGbpInvoice({
+        currencyConversion: {
+          ...DEFAULT_CURRENCY_CONVERSION,
+          currency: "CHF",
+          currencyCode: "CHF",
+          rate: 0.88
         }
       })
     );
@@ -497,6 +508,7 @@ describe("buildInvoiceViewModel with a second currency", () => {
 
     expect(conversion?.toCode).toBe("EUR");
     expect(lineItems[0].convertedAmount).toBe("€8,580.00");
+    expect(franc.lineItems[0].convertedAmount).toBe("CHF 6,292.00");
     expect(custom.lineItems[0].convertedAmount).toBe("Rs 786,500.00");
   });
 
@@ -512,7 +524,7 @@ describe("buildInvoiceViewModel with a second currency", () => {
           dateFormat: invoice.dateFormat
         })
     ).toBe(
-      "Exchange rate: 1 GBP = 4.912518 AED (Central Bank of the UAE rate, 30 Oct 2026)"
+      "Exchange rate: 1 GBP = 1.2875 USD (Bank of England rate, 30 Oct 2026)"
     );
   });
 
@@ -526,7 +538,7 @@ describe("buildInvoiceViewModel with a second currency", () => {
       })
     );
     const sameCurrency = buildInvoiceViewModel(
-      makeGbpInvoice({ currency: "د.إ", currencyCode: "AED" })
+      makeGbpInvoice({ currency: "$", currencyCode: "USD" })
     );
 
     for (const viewModel of [off, noRate, sameCurrency]) {
