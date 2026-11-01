@@ -22,6 +22,7 @@ const TEMPLATE_SMALL_WIDTHS = [400, 600];
 // file at every width.
 export function templateSrc(template: { src: string }, width: number) {
   if (width === TEMPLATE_RENDER_SIZE.width) return template.src;
+
   if (!template.src.endsWith(".webp")) {
     throw new Error(`${template.src} isn't a WebP.`);
   }
