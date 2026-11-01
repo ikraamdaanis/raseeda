@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { format, parseISO } from "date-fns";
 import type { ReactNode } from "react";
 import {
   CONTAINER,
@@ -11,25 +12,26 @@ import { typeClass } from "~/lib/type-scale";
 import { cn } from "~/lib/utils";
 import {
   canonicalLink,
+  PAGE_META,
   SITE_HOST,
   siteMeta,
   SOURCE_URL
 } from "~/utils/site-meta";
+import { jsonLdScript, privacyStructuredData } from "~/utils/structured-data";
 
 export const Route = createFileRoute("/privacy")({
   component: PrivacyPage,
   head: () => ({
-    meta: siteMeta({
-      path: "/privacy",
-      title: `${APP_NAME} privacy: Your invoices stay on your device`,
-      description: `${APP_NAME} keeps your invoices in your browser, on your device, and never uploads them. What is stored, where, and what the site's host can see.`
-    }),
-    links: [canonicalLink("/privacy")]
+    meta: siteMeta(PAGE_META.privacy),
+    links: [canonicalLink(PAGE_META.privacy.path)],
+    scripts: [jsonLdScript(privacyStructuredData(LAST_UPDATED))]
   })
 });
 
-// The date the policy last changed in substance; update it with the copy.
-const LAST_UPDATED = "1 November 2026";
+// The date the policy last changed in substance (YYYY-MM-DD); update it with
+// the copy. The page shows it written out, and the structured data carries it
+// as is.
+const LAST_UPDATED = "2026-11-01";
 
 const HEADING = "font-medium tracking-[-0.035em] text-balance";
 
@@ -56,7 +58,10 @@ function PrivacyPage() {
               host can see.
             </p>
             <p className={cn(typeClass("caption"), "text-zinc-500")}>
-              Last updated {LAST_UPDATED}
+              Last updated{" "}
+              <time dateTime={LAST_UPDATED}>
+                {format(parseISO(LAST_UPDATED), "d MMMM yyyy")}
+              </time>
             </p>
           </div>
           <PolicySection title="What stays on your device">

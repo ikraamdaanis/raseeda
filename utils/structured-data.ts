@@ -1,9 +1,12 @@
+import { INVOICE_TEMPLATES } from "~/components/templates/invoice-templates";
 import { APP_NAME } from "~/consts/app";
 import { INVOICE_FONTS } from "~/consts/invoice-fonts";
 import {
-  MAKER_NAME,
+  MAKER_PERSON_NAME,
   MAKER_URL,
+  PAGE_META,
   SITE_DESCRIPTION,
+  SITE_HOST,
   SITE_OG_IMAGE,
   SITE_TITLE,
   SITE_URL,
@@ -11,23 +14,40 @@ import {
   absoluteUrl
 } from "~/utils/site-meta";
 
+// The `@id`s the homepage's graph defines; the other pages point at them
+// rather than repeat the nodes.
+const WEBSITE_ID = `${SITE_URL}/#website`;
+
+const ORGANIZATION_ID = `${SITE_URL}/#organization`;
+
+// A page's JSON-LD as a `head().scripts` entry. JSON-LD is data, never run,
+// so the CSP is unaffected. Escaping "<" keeps any text in it from closing
+// the script tag early.
+export function jsonLdScript(data: object) {
+  return {
+    type: "application/ld+json",
+    children: JSON.stringify(data).replace(/</g, "\\u003c")
+  };
+}
+
 // What search engines and AI answer engines read about the app: who makes it,
 // the site, the homepage, the app and its source, linked by `@id`. Only facts
 // the page itself states; no ratings or reviews, since the app collects none.
-// It is a data block the browser never runs, so the CSP is unaffected.
+// Google reads the site's name from the WebSite node, which must be on the
+// homepage; `alternateName` offers the domain as a fallback.
 export const HOME_STRUCTURED_DATA = {
   "@context": "https://schema.org",
   "@graph": [
     {
       "@type": "Person",
       "@id": `${SITE_URL}/#maker`,
-      name: MAKER_NAME,
+      name: MAKER_PERSON_NAME,
       url: MAKER_URL,
       sameAs: [MAKER_URL]
     },
     {
       "@type": "Organization",
-      "@id": `${SITE_URL}/#organization`,
+      "@id": ORGANIZATION_ID,
       name: APP_NAME,
       url: absoluteUrl("/"),
       logo: {
@@ -41,12 +61,13 @@ export const HOME_STRUCTURED_DATA = {
     },
     {
       "@type": "WebSite",
-      "@id": `${SITE_URL}/#website`,
+      "@id": WEBSITE_ID,
       url: absoluteUrl("/"),
       name: APP_NAME,
+      alternateName: SITE_HOST,
       description: SITE_DESCRIPTION,
       inLanguage: "en",
-      publisher: { "@id": `${SITE_URL}/#organization` }
+      publisher: { "@id": ORGANIZATION_ID }
     },
     {
       "@type": "WebPage",
@@ -55,7 +76,7 @@ export const HOME_STRUCTURED_DATA = {
       name: SITE_TITLE,
       description: SITE_DESCRIPTION,
       inLanguage: "en",
-      isPartOf: { "@id": `${SITE_URL}/#website` },
+      isPartOf: { "@id": WEBSITE_ID },
       about: { "@id": `${SITE_URL}/#app` },
       primaryImageOfPage: {
         "@type": "ImageObject",
@@ -97,7 +118,7 @@ export const HOME_STRUCTURED_DATA = {
         "No account, no uploads, no tracking cookies"
       ],
       author: { "@id": `${SITE_URL}/#maker` },
-      publisher: { "@id": `${SITE_URL}/#organization` }
+      publisher: { "@id": ORGANIZATION_ID }
     },
     {
       "@type": "SoftwareSourceCode",
@@ -111,3 +132,83 @@ export const HOME_STRUCTURED_DATA = {
     }
   ]
 };
+
+const TEMPLATES_URL = absoluteUrl(PAGE_META.templates.path);
+
+// The template gallery: the page, the six templates on it in order (each
+// pointing at its card's anchor, as Google asks of a list whose items are all
+// on one page), and the trail back to the homepage.
+export const TEMPLATES_STRUCTURED_DATA = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "CollectionPage",
+      "@id": `${TEMPLATES_URL}#webpage`,
+      url: TEMPLATES_URL,
+      name: PAGE_META.templates.title,
+      description: PAGE_META.templates.description,
+      inLanguage: "en",
+      isPartOf: { "@id": WEBSITE_ID },
+      publisher: { "@id": ORGANIZATION_ID },
+      breadcrumb: { "@id": `${TEMPLATES_URL}#breadcrumb` },
+      primaryImageOfPage: {
+        "@type": "ImageObject",
+        url: PAGE_META.templates.image,
+        width: 1200,
+        height: 630
+      },
+      mainEntity: {
+        "@type": "ItemList",
+        numberOfItems: INVOICE_TEMPLATES.length,
+        itemListElement: INVOICE_TEMPLATES.map((template, index) => ({
+          "@type": "ListItem",
+          position: index + 1,
+          item: {
+            "@type": "CreativeWork",
+            url: `${TEMPLATES_URL}#${template.id}`,
+            name: `${template.name} invoice template`,
+            description: template.description,
+            image: absoluteUrl(template.src)
+          }
+        }))
+      }
+    },
+    {
+      "@type": "BreadcrumbList",
+      "@id": `${TEMPLATES_URL}#breadcrumb`,
+      itemListElement: [
+        {
+          "@type": "ListItem",
+          position: 1,
+          name: "Home",
+          item: absoluteUrl("/")
+        },
+        {
+          "@type": "ListItem",
+          position: 2,
+          name: "Invoice templates",
+          item: TEMPLATES_URL
+        }
+      ]
+    }
+  ] as const
+};
+
+const PRIVACY_URL = absoluteUrl(PAGE_META.privacy.path);
+
+// The privacy policy, as a page of the site, dated by its last change in
+// substance (an ISO date, `YYYY-MM-DD`).
+export function privacyStructuredData(dateModified: string) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    "@id": `${PRIVACY_URL}#webpage`,
+    url: PRIVACY_URL,
+    name: PAGE_META.privacy.title,
+    description: PAGE_META.privacy.description,
+    inLanguage: "en",
+    dateModified,
+    isPartOf: { "@id": WEBSITE_ID },
+    publisher: { "@id": ORGANIZATION_ID }
+  };
+}

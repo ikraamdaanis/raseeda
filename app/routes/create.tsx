@@ -16,7 +16,7 @@ import {
 import { useApplyEditorTheme } from "~/hooks/use-editor-theme";
 import type { InvoiceFont } from "~/types";
 import { EDITOR_THEME_SCRIPT } from "~/utils/editor-theme";
-import { canonicalLink, siteMeta } from "~/utils/site-meta";
+import { canonicalLink, PAGE_META, siteMeta } from "~/utils/site-meta";
 import { track } from "~/utils/track";
 
 // Optional hand-offs from the homepage and the template gallery: `font` sets
@@ -37,14 +37,9 @@ export const Route = createFileRoute("/create")({
         content:
           "width=device-width, initial-scale=1, maximum-scale=1, interactive-widget=resizes-content"
       },
-      ...siteMeta({
-        path: "/create",
-        title: `${APP_NAME} editor: Create a Free Invoice PDF`,
-        description:
-          "Fill in your details, your client and the line items, then download the invoice as a PDF. Free, with no account, and it all stays in this browser."
-      })
+      ...siteMeta(PAGE_META.create)
     ],
-    links: [canonicalLink("/create")],
+    links: [canonicalLink(PAGE_META.create.path)],
     scripts: [{ children: EDITOR_THEME_SCRIPT }]
   }),
   validateSearch: (

@@ -10,24 +10,25 @@ import {
 } from "~/components/home/site-chrome";
 import {
   INVOICE_TEMPLATES,
-  TEMPLATE_RENDER_SIZE
+  TEMPLATE_RENDER_SIZE,
+  templateSrcSet
 } from "~/components/templates/invoice-templates";
 import { APP_NAME } from "~/consts/app";
 import { getInvoiceFontDefinition } from "~/consts/invoice-fonts";
 import { typeClass } from "~/lib/type-scale";
 import { cn } from "~/lib/utils";
-import { canonicalLink, siteMeta } from "~/utils/site-meta";
+import { canonicalLink, PAGE_META, siteMeta } from "~/utils/site-meta";
+import {
+  jsonLdScript,
+  TEMPLATES_STRUCTURED_DATA
+} from "~/utils/structured-data";
 
 export const Route = createFileRoute("/invoice-template")({
   component: InvoiceTemplatePage,
   head: () => ({
-    meta: siteMeta({
-      path: "/invoice-template",
-      title: `${APP_NAME} invoice templates: Fill In Free, Download a PDF`,
-      description:
-        "Free invoice templates for freelancers, consultants, contractors, photographers and small businesses. Pick a style, fill it in online and download a PDF. No account."
-    }),
-    links: [canonicalLink("/invoice-template")]
+    meta: siteMeta(PAGE_META.templates),
+    links: [canonicalLink(PAGE_META.templates.path)],
+    scripts: [jsonLdScript(TEMPLATES_STRUCTURED_DATA)]
   })
 });
 
@@ -72,6 +73,7 @@ function InvoiceTemplatePage() {
                 key={template.id}
                 template={template}
                 isAboveFold={index < 3}
+                isFirst={index === 0}
               />
             ))}
           </ul>
@@ -131,27 +133,48 @@ function InvoiceTemplatePage() {
   );
 }
 
+// The width a template's page is drawn at, as `sizes`: a column of the grid
+// (one, two from `sm`, three from `lg`, with 32px between) less the sheet's
+// 24px padding (32px from `sm`), in a column that is at most 1152px and has
+// 24px gutters (32px from `lg`).
+const TEMPLATE_PAGE_SIZES = [
+  "(min-width: 1152px) 278px",
+  "(min-width: 1024px) calc(33.34vw - 107px)",
+  "(min-width: 640px) calc(50vw - 104px)",
+  "calc(100vw - 96px)"
+].join(", ");
+
 // One template: its invoice on a sheet of paper, then its name, font and use.
 // The whole card is the link (its ::after covers the card); the rows line up
-// across a row of cards through the list's subgrid.
+// across a row of cards through the list's subgrid. Its id is the anchor the
+// structured data points each template at. The first card's picture is the
+// page's largest paint, so it asks for high priority.
 function TemplateCard({
   template,
-  isAboveFold
+  isAboveFold,
+  isFirst
 }: {
   template: (typeof INVOICE_TEMPLATES)[number];
   isAboveFold: boolean;
+  isFirst: boolean;
 }) {
   const fontName = getInvoiceFontDefinition(template.font).name;
 
   return (
-    <li className="group relative row-span-4 grid grid-rows-subgrid gap-y-3">
+    <li
+      id={template.id}
+      className="group relative row-span-4 grid grid-rows-subgrid gap-y-3"
+    >
       <div className="mb-3 rounded-xl bg-zinc-100 p-6 ring-1 ring-zinc-950/10 transition-colors group-hover:bg-zinc-200/70 sm:p-8">
         <Picture
           src={template.src}
+          srcSet={templateSrcSet(template)}
+          sizes={TEMPLATE_PAGE_SIZES}
           alt={template.alt}
           width={TEMPLATE_RENDER_SIZE.width}
           height={TEMPLATE_RENDER_SIZE.height}
           loading={isAboveFold ? "eager" : "lazy"}
+          fetchPriority={isFirst ? "high" : undefined}
           className="block h-auto w-full bg-white shadow-[0_4px_16px_-6px_rgb(0_0_0/0.12)] outline-1 -outline-offset-1 outline-zinc-950/5"
         />
       </div>
