@@ -2,6 +2,7 @@ import { cloudflare } from "@cloudflare/vite-plugin";
 import tailwindcss from "@tailwindcss/vite";
 import { tanstackStart } from "@tanstack/react-start/plugin/vite";
 import viteReact from "@vitejs/plugin-react";
+import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import type { Plugin } from "vite";
@@ -43,6 +44,62 @@ function serviceWorker(): Plugin {
   };
 }
 
+// When any of a page's files last changed, from the last commit that touched
+// them, for its sitemap lastmod. Google uses lastmod only while it matches the
+// page's real changes, and TanStack writes the build date when it's unset, so
+// every page would claim a change on every deploy. A shallow clone's history
+// stops at its latest commit, which would date every page to it, so then (or
+// without git) this warns and leaves lastmod unset.
+function lastChanged(paths: string[]) {
+  try {
+    const isShallow = execFileSync(
+      "git",
+      ["rev-parse", "--is-shallow-repository"],
+      { encoding: "utf8" }
+    ).trim();
+
+    if (isShallow === "true") throw new Error("the clone is shallow");
+
+    const date = execFileSync(
+      "git",
+      ["log", "-1", "--format=%cI", "--", ...paths],
+      { encoding: "utf8" }
+    ).trim();
+
+    if (!date) throw new Error(`no commit touches ${paths.join(", ")}`);
+
+    return date;
+  } catch (error) {
+    console.warn(
+      `[sitemap] No lastmod from git, so the build date stands in: ${error instanceof Error ? error.message : String(error)}`
+    );
+
+    return undefined;
+  }
+}
+
+// Each page's files: what changes its content, structured data or links.
+const PAGE_FILES = {
+  home: [
+    "app/routes/index.tsx",
+    "components/home",
+    "public/home",
+    "utils/structured-data.ts"
+  ],
+  templates: [
+    "app/routes/invoice-template.tsx",
+    "components/templates",
+    "components/home/site-chrome.tsx",
+    "public/templates",
+    "utils/structured-data.ts"
+  ],
+  privacy: [
+    "app/routes/privacy.tsx",
+    "components/home/site-chrome.tsx",
+    "utils/structured-data.ts"
+  ]
+};
+
 export default defineConfig({
   server: {
     port: Number(process.env.PORT) || 3000
@@ -59,8 +116,10 @@ export default defineConfig({
     // headers then come from public/_headers. The other pages are written as
     // privacy.html and the like, not privacy/index.html, so each is served at
     // its path with no redirect to a trailing slash. Every page listed here
-    // goes into the generated sitemap.xml; the editor is listed but rendered
-    // by the Worker.
+    // goes into the generated sitemap.xml, dated by its own files, except the
+    // editor: it is rendered by the Worker and kept out of search results
+    // (PAGE_META in utils/site-meta.ts). Google ignores priority and
+    // changefreq, so they're left out.
     tanstackStart({
       srcDirectory: "./app",
       router: {
@@ -75,15 +134,25 @@ export default defineConfig({
         host: "https://raseeda.com"
       },
       pages: [
-        { path: "/", prerender: { enabled: true } },
-        { path: "/create", prerender: { enabled: false } },
+        {
+          path: "/",
+          prerender: { enabled: true },
+          sitemap: { lastmod: lastChanged(PAGE_FILES.home) }
+        },
+        {
+          path: "/create",
+          prerender: { enabled: false },
+          sitemap: { exclude: true }
+        },
         {
           path: "/invoice-template",
-          prerender: { enabled: true, autoSubfolderIndex: false }
+          prerender: { enabled: true, autoSubfolderIndex: false },
+          sitemap: { lastmod: lastChanged(PAGE_FILES.templates) }
         },
         {
           path: "/privacy",
-          prerender: { enabled: true, autoSubfolderIndex: false }
+          prerender: { enabled: true, autoSubfolderIndex: false },
+          sitemap: { lastmod: lastChanged(PAGE_FILES.privacy) }
         }
       ]
     }),
