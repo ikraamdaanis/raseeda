@@ -141,7 +141,7 @@ function buildSummaryRows(input: {
         : formatCurrency(input.tax.amount, currency),
       percentage: input.tax.exempt ? undefined : input.tax.percentage,
       note: input.tax.exempt ? input.tax.note.trim() : undefined,
-      isVisible: sections.tax && (input.tax.exempt || input.tax.percentage > 0),
+      isVisible: sections.tax,
       isTotal: false
     },
     {

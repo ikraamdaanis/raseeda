@@ -247,7 +247,7 @@ describe("buildInvoiceViewModel", () => {
       ]);
     });
 
-    it("keeps subtotal and total visible but hides the optional rows when empty", () => {
+    it("keeps subtotal, tax and total visible but hides the other optional rows when empty", () => {
       const { summaryRows } = buildInvoiceViewModel(makeInvoice());
       const visibleById = Object.fromEntries(
         summaryRows.map(row => [row.id, row.isVisible])
@@ -255,7 +255,7 @@ describe("buildInvoiceViewModel", () => {
 
       expect(visibleById).toEqual({
         subtotal: true,
-        tax: false,
+        tax: true,
         fees: false,
         discounts: false,
         total: true,
@@ -279,6 +279,20 @@ describe("buildInvoiceViewModel", () => {
       expect(byId.balanceDue.value).toBe("£60.00");
       expect(byId.balanceDue.isTotal).toBe(true);
       expect(byId.total.isTotal).toBe(false);
+    });
+
+    it("shows a zero-rated tax row at 0% with a zero amount", () => {
+      const { summaryRows } = buildInvoiceViewModel(
+        makeInvoice({
+          items: [makeItem({ quantity: 1, unitPrice: 100 })],
+          tax: { percentage: 0, exempt: false, note: "" }
+        })
+      );
+      const tax = summaryRows.find(row => row.id === "tax");
+
+      expect(tax?.isVisible).toBe(true);
+      expect(tax?.percentage).toBe(0);
+      expect(tax?.value).toBe("£0.00");
     });
 
     it("marks tax exempt with the note in place of an amount", () => {

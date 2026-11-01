@@ -44,7 +44,7 @@ export function getPrintedSections(
     servicePeriod: sections.servicePeriod && hasText(invoice.servicePeriod),
     shipping: sections.shipping && hasText(invoice.shipping.content),
     discounts: sections.discounts && invoice.discounts > 0,
-    tax: sections.tax && (invoice.tax.exempt || invoice.tax.percentage > 0),
+    tax: sections.tax,
     fees: sections.fees && invoice.fees > 0,
     amountPaid: sections.amountPaid && invoice.amountPaid > 0,
     paymentDetails:

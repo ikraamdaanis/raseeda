@@ -30,6 +30,14 @@ describe("printed sections", () => {
     expect(printed.terms).toBe(false);
   });
 
+  it("prints switched-on tax even at 0%", () => {
+    const printed = getPrintedSections(
+      makeInvoice({ tax: { percentage: 0, exempt: false, note: "" } })
+    );
+
+    expect(printed.tax).toBe(true);
+  });
+
   it("never prints a switched-off section, even with content", () => {
     const printed = getPrintedSections(
       makeInvoice({
@@ -41,6 +49,17 @@ describe("printed sections", () => {
 
     expect(printed.logo).toBe(false);
     expect(printed.fees).toBe(false);
+  });
+
+  it("never prints switched-off tax", () => {
+    const printed = getPrintedSections(
+      makeInvoice({
+        sections: { ...DEFAULT_INVOICE_SECTIONS, tax: false },
+        tax: { percentage: 20, exempt: false, note: "" }
+      })
+    );
+
+    expect(printed.tax).toBe(false);
   });
 });
 
