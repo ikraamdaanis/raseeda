@@ -3,12 +3,39 @@ import type { InvoiceFont } from "~/types";
 // The template gallery's invoices: real PDFs of six sample invoices,
 // each for a different line of work and set in a different invoice font.
 // scripts/render-homepage-invoices.tsx renders them (the samples live there)
-// into public/templates at TEMPLATE_RENDER_SIZE. Each links to the editor's
+// into public/templates at TEMPLATE_RENDER_WIDTHS. Each links to the editor's
 // `?font=` hand-off with `new`, which starts a new invoice in that face.
 
 // The gallery shows a page no wider than about 360px, so it ships at a little
 // over twice that. The height follows from the A4 page.
 export const TEMPLATE_RENDER_SIZE = { width: 800, height: 1132 };
+
+// The narrower copies beside each render, so a screen that draws the page at
+// about 300px picks the file its pixel density needs rather than the full
+// render: 400 for a standard screen, 600 for most phones. Each is the render's
+// name with its width (freelance-400.webp); the full render keeps its plain
+// name.
+const TEMPLATE_SMALL_WIDTHS = [400, 600];
+
+// A template's render at one of its widths.
+export function templateSrc(template: { src: string }, width: number) {
+  if (width === TEMPLATE_RENDER_SIZE.width) return template.src;
+
+  return template.src.replace(/\.webp$/, `-${width}.webp`);
+}
+
+// Every width of a template's render, narrowest first.
+export const TEMPLATE_RENDER_WIDTHS = [
+  ...TEMPLATE_SMALL_WIDTHS,
+  TEMPLATE_RENDER_SIZE.width
+];
+
+// Every width of a template's render, as an <img> srcset.
+export function templateSrcSet(template: { src: string }) {
+  return TEMPLATE_RENDER_WIDTHS.map(
+    width => `${templateSrc(template, width)} ${width}w`
+  ).join(", ");
+}
 
 export const INVOICE_TEMPLATES = [
   {

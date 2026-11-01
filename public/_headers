@@ -28,7 +28,7 @@
 /fonts/*
   Cache-Control: public, max-age=2592000, stale-while-revalidate=604800
 
-# Icons and the share image keep their names too, and can't easily be renamed
+# Icons and the share images keep their names too, and can't easily be renamed
 # (browsers and link previews ask for them by name), so they cache for a week.
 /favicon.svg
   Cache-Control: public, max-age=604800, stale-while-revalidate=604800
@@ -41,6 +41,8 @@
 /web-app-manifest-*
   Cache-Control: public, max-age=604800, stale-while-revalidate=604800
 /og-image.jpg
+  Cache-Control: public, max-age=604800, stale-while-revalidate=604800
+/og-invoice-template.jpg
   Cache-Control: public, max-age=604800, stale-while-revalidate=604800
 
 # The service worker (vite.config.ts) is checked on every visit, so a deploy

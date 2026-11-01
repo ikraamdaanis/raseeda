@@ -1,8 +1,10 @@
 import { Font, renderToFile } from "@react-pdf/renderer";
 import { spawn } from "bun";
+import { Buffer } from "node:buffer";
 import { mkdir, mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import sharp from "sharp";
 import {
   HERO_INVOICE_NUMBER,
   PDF_RENDER_SCALE,
@@ -12,14 +14,17 @@ import {
 import { InvoicePDF } from "~/components/pdf/invoice-generator";
 import {
   INVOICE_TEMPLATES,
-  TEMPLATE_RENDER_SIZE
+  TEMPLATE_RENDER_WIDTHS,
+  templateSrc
 } from "~/components/templates/invoice-templates";
 import { invoiceDefault } from "~/stores/invoice-store";
 import type { Invoice, InvoiceItem } from "~/types";
 import { PDF_FONT_FAMILIES } from "~/utils/register-invoice-pdf-fonts";
+import { PAGE_META } from "~/utils/site-meta";
 
-// Renders the homepage's invoice picture with the app's own PDF component, so
-// it is a real PDF rather than a drawing of one. Run `bun run render:home`
+// Renders the homepage's invoice picture and the template gallery's, with
+// its share card, using the app's own PDF component, so each is a real PDF
+// rather than a drawing of one. Run `bun run render:home`
 // after changing the PDF layout or the sample; it needs poppler (pdftoppm)
 // and cwebp on the PATH.
 
@@ -424,6 +429,68 @@ async function writeWebp({
   ]);
 }
 
+// The template gallery's share card (PAGE_META.templates.image): the top of
+// each template's page, three across and two down, on the same sky as the
+// homepage's card (public/og-image.jpg).
+const SHARE_CARD = { width: 1200, height: 630, margin: 40, gap: 28 };
+
+async function writeTemplatesShareCard(pngPaths: string[]) {
+  const { width, height, margin, gap } = SHARE_CARD;
+  const cellWidth = Math.floor((width - margin * 2 - gap * 2) / 3);
+  const cellHeight = Math.floor((height - margin * 2 - gap) / 2);
+  const left = Math.round((width - cellWidth * 3 - gap * 2) / 2);
+  const top = Math.round((height - cellHeight * 2 - gap) / 2);
+  const cells = pngPaths.map((pngPath, index) => ({
+    pngPath,
+    left: left + (index % 3) * (cellWidth + gap),
+    top: top + Math.floor(index / 3) * (cellHeight + gap)
+  }));
+  const sheets = cells
+    .map(
+      cell =>
+        `<rect x="${cell.left}" y="${cell.top + 4}" width="${cellWidth}" height="${cellHeight}" rx="4" fill="rgb(16 60 90 / 0.18)" filter="url(#shadow)"/>`
+    )
+    .join("");
+  const background = Buffer.from(
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">
+      <defs>
+        <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#8ad5db"/>
+          <stop offset="0.5" stop-color="#bdebeb"/>
+          <stop offset="1" stop-color="#e2fbf8"/>
+        </linearGradient>
+        <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+          <feGaussianBlur stdDeviation="8"/>
+        </filter>
+      </defs>
+      <rect width="${width}" height="${height}" fill="url(#sky)"/>
+      ${sheets}
+    </svg>`
+  );
+  const pages = await Promise.all(
+    cells.map(async cell => ({
+      input: await sharp(cell.pngPath)
+        .resize({ width: cellWidth })
+        .extract({ left: 0, top: 0, width: cellWidth, height: cellHeight })
+        .composite([
+          {
+            input: Buffer.from(
+              `<svg xmlns="http://www.w3.org/2000/svg" width="${cellWidth}" height="${cellHeight}"><rect x="0.5" y="0.5" width="${cellWidth - 1}" height="${cellHeight - 1}" fill="none" stroke="rgb(0 0 0 / 0.08)"/></svg>`
+            )
+          }
+        ])
+        .toBuffer(),
+      left: cell.left,
+      top: cell.top
+    }))
+  );
+
+  await sharp(background)
+    .composite(pages)
+    .jpeg({ quality: 85, mozjpeg: true })
+    .toFile(join(OUTPUT_DIR, new URL(PAGE_META.templates.image).pathname));
+}
+
 const directory = await mkdtemp(join(tmpdir(), "homepage-renders-"));
 
 try {
@@ -445,21 +512,30 @@ try {
 
   await mkdir(join(OUTPUT_DIR, "templates"), { recursive: true });
 
+  const templatePngPaths: string[] = [];
+
   for (const template of INVOICE_TEMPLATES) {
     const invoice = TEMPLATE_INVOICES[template.id];
-
-    await writeWebp({
-      pngPath: await renderPage(directory, template.id, {
-        ...invoice,
-        theme: { ...invoice.theme, font: template.font }
-      }),
-      src: template.src,
-      width: TEMPLATE_RENDER_SIZE.width
+    const pngPath = await renderPage(directory, template.id, {
+      ...invoice,
+      theme: { ...invoice.theme, font: template.font }
     });
+
+    templatePngPaths.push(pngPath);
+
+    for (const width of TEMPLATE_RENDER_WIDTHS) {
+      await writeWebp({
+        pngPath,
+        src: templateSrc(template, width),
+        width
+      });
+    }
   }
 
+  await writeTemplatesShareCard(templatePngPaths);
+
   process.stdout.write(
-    `Wrote the invoice renders to ${join(OUTPUT_DIR, "home")} and ${join(OUTPUT_DIR, "templates")}\n`
+    `Wrote the invoice renders to ${join(OUTPUT_DIR, "home")} and ${join(OUTPUT_DIR, "templates")}, and the template gallery's share card\n`
   );
 } finally {
   if (process.argv.includes("--keep")) {
