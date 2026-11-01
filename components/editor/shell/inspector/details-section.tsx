@@ -22,7 +22,12 @@ import {
 } from "~/consts/currencies";
 import { cn } from "~/lib/utils";
 import { INVOICE_DATE_FORMATS } from "~/schema/invoice";
-import { useCurrencySlice, useDetailsSlice } from "~/stores/invoice-selectors";
+import {
+  useCurrencyConversionSlice,
+  useCurrencySlice,
+  useDetailsSlice,
+  useSectionsSlice
+} from "~/stores/invoice-selectors";
 import { formatInvoiceDate } from "~/utils/format-invoice-date";
 import { parseIsoDate } from "~/utils/parse-iso-date";
 import {
@@ -39,6 +44,7 @@ export function DetailsSection() {
   return (
     <InspectorSection id="details" title="Details">
       <CurrencyRow />
+      <ConversionCurrencyRow />
       <DatesRows />
       <DateFormatRow />
     </InspectorSection>
@@ -48,6 +54,59 @@ export function DetailsSection() {
 function CurrencyRow() {
   const { currency, currencyCode, setCurrency, setCurrencyCode } =
     useCurrencySlice();
+
+  return (
+    <CurrencyPicker
+      id="inspector-currency"
+      label="Currency"
+      currency={currency}
+      currencyCode={currencyCode}
+      onChange={(symbol, code) => {
+        setCurrency(symbol);
+        setCurrencyCode(code);
+      }}
+    />
+  );
+}
+
+// The second currency the amounts are also shown in, while it's switched on.
+function ConversionCurrencyRow() {
+  const { sections } = useSectionsSlice();
+  const { currencyConversion, setCurrencyConversion } =
+    useCurrencyConversionSlice();
+
+  if (!sections.currencyConversion) return null;
+
+  return (
+    <CurrencyPicker
+      id="inspector-conversion-currency"
+      label="Also show in"
+      currency={currencyConversion.currency}
+      currencyCode={currencyConversion.currencyCode}
+      onChange={(symbol, code) =>
+        setCurrencyConversion(prev => ({
+          ...prev,
+          currency: symbol,
+          currencyCode: code
+        }))
+      }
+    />
+  );
+}
+
+function CurrencyPicker({
+  id,
+  label,
+  currency,
+  currencyCode,
+  onChange
+}: {
+  id: string;
+  label: string;
+  currency: string;
+  currencyCode: string;
+  onChange: (symbol: string, code: string) => void;
+}) {
   const [customOpen, setCustomOpen] = useState(false);
   const selected = normalizeCurrency(currency);
   const isCustom = !currencyOptions.some(option => option.symbol === selected);
@@ -61,22 +120,21 @@ function CurrencyRow() {
       return;
     }
 
-    setCurrency(value);
-    setCurrencyCode(getCurrencyCodeForSymbol(value));
+    onChange(value, getCurrencyCodeForSymbol(value));
   }
 
   return (
     <>
-      <InspectorRow label="Currency" htmlFor="inspector-currency">
+      <InspectorRow label={label} htmlFor={id}>
         <NativeSelect
-          id="inspector-currency"
+          id={id}
           value={isCustom ? CUSTOM_CURRENCY : selected}
           onChange={event => handleChange(event.target.value)}
           className={cn(inspectorFieldClassName, "pr-7")}
         >
-          {currencyOptions.map(({ symbol, code, label }) => (
+          {currencyOptions.map(({ symbol, code, label: name }) => (
             <option key={symbol} value={symbol}>
-              {`${getCurrencyMarker(symbol)} ${label} · ${code}`}
+              {`${getCurrencyMarker(symbol)} ${name} · ${code}`}
             </option>
           ))}
           <option value={CUSTOM_CURRENCY}>
@@ -89,10 +147,7 @@ function CurrencyRow() {
         onOpenChange={setCustomOpen}
         currentSymbol={selected}
         currentCode={isCustom ? currencyCode : ""}
-        onSubmit={(symbol, code) => {
-          setCurrency(symbol);
-          setCurrencyCode(code);
-        }}
+        onSubmit={onChange}
       />
     </>
   );

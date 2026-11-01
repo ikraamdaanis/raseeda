@@ -1,5 +1,11 @@
 import { StyleSheet, Text, View } from "@react-pdf/renderer";
-import type { Invoice, InvoiceSummaryRow, InvoiceTheme } from "~/types";
+import type {
+  CurrencyConversion,
+  Invoice,
+  InvoiceSummaryRow,
+  InvoiceTheme
+} from "~/types";
+import { buildExchangeRateLine } from "~/utils/currency-conversion";
 import { pdfRoleStyle } from "~/utils/pdf-styles";
 
 const styles = StyleSheet.create({
@@ -28,6 +34,14 @@ const styles = StyleSheet.create({
   },
   totalValue: {
     width: "24%"
+  },
+  // Both currencies, "£7,150.00 / AED 35,124.50", need more of the line.
+  convertedTotalValue: {
+    width: "45%"
+  },
+  exchangeRate: {
+    marginTop: 6,
+    textAlign: "right"
   }
 });
 
@@ -35,12 +49,14 @@ function InvoicePdfTotalRow({
   theme,
   label,
   value,
-  isTotal
+  isTotal,
+  isConverted
 }: {
   theme: InvoiceTheme;
   label: string;
   value: string;
   isTotal: boolean;
+  isConverted: boolean;
 }) {
   return (
     <View style={styles.totalRow}>
@@ -56,7 +72,7 @@ function InvoicePdfTotalRow({
       </View>
       <Text
         style={{
-          ...styles.totalValue,
+          ...(isConverted ? styles.convertedTotalValue : styles.totalValue),
           ...pdfRoleStyle(theme, isTotal ? "grandTotalValue" : "totalsValue")
         }}
       >
@@ -68,10 +84,12 @@ function InvoicePdfTotalRow({
 
 export function InvoicePdfTotals({
   invoice,
-  summaryRows
+  summaryRows,
+  conversion
 }: {
   invoice: Invoice;
   summaryRows: InvoiceSummaryRow[];
+  conversion: CurrencyConversion | null;
 }) {
   const theme = invoice.theme;
 
@@ -90,8 +108,23 @@ export function InvoicePdfTotals({
             }
             value={row.value}
             isTotal={row.isTotal}
+            isConverted={conversion !== null}
           />
         ))}
+      {conversion && (
+        <Text
+          style={{
+            ...pdfRoleStyle(theme, "totalsLabel"),
+            ...styles.exchangeRate
+          }}
+        >
+          {buildExchangeRateLine({
+            conversion,
+            currencyConversion: invoice.currencyConversion,
+            dateFormat: invoice.dateFormat
+          })}
+        </Text>
+      )}
     </View>
   );
 }

@@ -3,7 +3,7 @@ import type { Invoice, InvoiceSections, InvoiceTotals } from "~/types";
 // Rounds to whole cents, half up. The product is first trimmed to 15
 // significant digits, so binary float noise can't round a half cent the wrong
 // way (1.005 * 100 is 100.49999999999999 in floating point).
-function roundCents(value: number): number {
+export function roundCents(value: number): number {
   return Math.round(Number((value * 100).toPrecision(15))) / 100;
 }
 

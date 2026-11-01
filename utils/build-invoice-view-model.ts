@@ -1,5 +1,6 @@
 import { formatCurrency, formatCurrencyWithCode } from "~/consts/currencies";
 import type {
+  CurrencyConversion,
   Invoice,
   InvoiceDetailRow,
   InvoiceItem,
@@ -13,7 +14,13 @@ import {
   calculateInvoiceTotals,
   calculateLineAmount
 } from "~/utils/calculate-invoice-totals";
+import {
+  formatConvertedAmount,
+  getCurrencyConversion,
+  withConvertedAmount
+} from "~/utils/currency-conversion";
 import { formatInvoiceDate } from "~/utils/format-invoice-date";
+import { getPrintedSections } from "~/utils/section-visibility";
 
 // Maps an invoice to an ordered, fully-formatted view-model so the HTML canvas
 // and the PDF render from one source instead of duplicating ordering,
@@ -21,17 +28,18 @@ import { formatInvoiceDate } from "~/utils/format-invoice-date";
 // builders are exported so the canvas (which only has a slice of the store, not
 // the whole Invoice) can derive the same rows without subscribing to everything.
 
-// Optional rows (PO number, service period) whose section is switched off are
-// left out altogether; switched-on ones are marked optional so the PDF skips
-// them while empty.
+// Optional rows (PO number, date of supply, service period) whose section is
+// switched off are left out altogether; switched-on ones are marked optional
+// so the PDF skips them while empty.
 export function buildDetailRows(input: {
   labels: InvoiceLabels;
   number: string;
   poNumber: string;
   invoiceDate: string;
+  supplyDate: string;
   dueDate: string;
   servicePeriod: string;
-  sections: Pick<InvoiceSections, "poNumber" | "servicePeriod">;
+  sections: Pick<InvoiceSections, "poNumber" | "supplyDate" | "servicePeriod">;
   dateFormat: Invoice["dateFormat"];
 }): InvoiceDetailRow[] {
   const rows: InvoiceDetailRow[] = [
@@ -57,6 +65,13 @@ export function buildDetailRows(input: {
       isOptional: false
     },
     {
+      id: "supplyDate",
+      labelKey: "supplyDate",
+      label: input.labels.supplyDate,
+      value: formatInvoiceDate(input.supplyDate, input.dateFormat),
+      isOptional: true
+    },
+    {
       id: "dueDate",
       labelKey: "paymentDue",
       label: input.labels.paymentDue,
@@ -75,24 +90,30 @@ export function buildDetailRows(input: {
   return rows.filter(
     row =>
       (row.id !== "poNumber" || input.sections.poNumber) &&
+      (row.id !== "supplyDate" || input.sections.supplyDate) &&
       (row.id !== "servicePeriod" || input.sections.servicePeriod)
   );
 }
 
+// With a conversion, the line's converted amount is its own amount times the
+// rate, so each line reads on its own.
 export function buildLineItemRow(
   item: InvoiceItem,
-  currency: string
+  currency: string,
+  conversion: CurrencyConversion | null = null
 ): InvoiceLineItemRow {
+  const amount = calculateLineAmount(item.quantity, item.unitPrice);
+
   return {
     id: item.id,
     description: item.description,
     quantity: item.quantity,
     unit: item.unit,
     unitPrice: formatCurrency(item.unitPrice, currency),
-    amount: formatCurrency(
-      calculateLineAmount(item.quantity, item.unitPrice),
-      currency
-    )
+    amount: formatCurrency(amount, currency),
+    convertedAmount: conversion
+      ? formatConvertedAmount(amount, conversion)
+      : undefined
   };
 }
 
@@ -110,15 +131,20 @@ function buildSummaryRows(input: {
   currency: string;
   currencyCode: string;
   sections: Pick<InvoiceSections, "discounts" | "tax" | "fees" | "amountPaid">;
+  conversion: CurrencyConversion | null;
 }): InvoiceSummaryRow[] {
-  const { labels, currency, sections } = input;
+  const { labels, currency, sections, conversion } = input;
   const hasPayment = sections.amountPaid && input.amountPaid > 0;
 
   return [
     {
       id: "subtotal",
       label: labels.subtotal,
-      value: formatCurrency(input.subtotal, currency),
+      value: withConvertedAmount(
+        formatCurrency(input.subtotal, currency),
+        input.subtotal,
+        conversion
+      ),
       isVisible: true,
       isTotal: false
     },
@@ -138,7 +164,11 @@ function buildSummaryRows(input: {
       label: labels.tax,
       value: input.tax.exempt
         ? input.tax.note.trim() || "Exempt"
-        : formatCurrency(input.tax.amount, currency),
+        : withConvertedAmount(
+            formatCurrency(input.tax.amount, currency),
+            input.tax.amount,
+            conversion
+          ),
       percentage: input.tax.exempt ? undefined : input.tax.percentage,
       note: input.tax.exempt ? input.tax.note.trim() : undefined,
       isVisible: sections.tax,
@@ -154,7 +184,11 @@ function buildSummaryRows(input: {
     {
       id: "total",
       label: labels.total,
-      value: formatCurrencyWithCode(input.total, currency, input.currencyCode),
+      value: withConvertedAmount(
+        formatCurrencyWithCode(input.total, currency, input.currencyCode),
+        input.total,
+        conversion
+      ),
       // Without a recorded payment the grand total is the final figure; with a
       // payment the balance-due row below becomes the emphasised total instead.
       isVisible: true,
@@ -183,11 +217,14 @@ function buildSummaryRows(input: {
 
 export function buildInvoiceViewModel(invoice: Invoice): InvoiceViewModel {
   const totals = calculateInvoiceTotals(invoice);
+  const conversion = getPrintedSections(invoice).currencyConversion
+    ? getCurrencyConversion(invoice)
+    : null;
 
   return {
     detailRows: buildDetailRows(invoice),
     lineItems: invoice.items.map(item =>
-      buildLineItemRow(item, invoice.currency)
+      buildLineItemRow(item, invoice.currency, conversion)
     ),
     summaryRows: buildSummaryRows({
       labels: invoice.labels,
@@ -207,7 +244,9 @@ export function buildInvoiceViewModel(invoice: Invoice): InvoiceViewModel {
       balanceDue: totals.balanceDue,
       currency: invoice.currency,
       currencyCode: invoice.currencyCode,
-      sections: invoice.sections
-    })
+      sections: invoice.sections,
+      conversion
+    }),
+    conversion
   };
 }

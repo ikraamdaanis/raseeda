@@ -90,11 +90,13 @@ const SECTION_NAMES: Record<InvoiceSectionKey, string> = {
   logo: "Logo",
   poNumber: "PO number",
   servicePeriod: "Service period",
+  supplyDate: "Date of supply",
   shipping: "Shipping address",
   discounts: "Discounts",
   tax: "Tax",
   fees: "Fees",
   amountPaid: "Amount paid",
+  currencyConversion: "Second currency",
   paymentDetails: "Payment details",
   notes: "Notes",
   terms: "Terms",
@@ -105,11 +107,13 @@ const SECTION_AREAS: Record<InvoiceSectionKey, string> = {
   logo: "logo",
   poNumber: "details",
   servicePeriod: "details",
+  supplyDate: "details",
   shipping: "shipping",
   discounts: "pricing",
   tax: "pricing",
   fees: "pricing",
   amountPaid: "pricing",
+  currencyConversion: "pricing",
   paymentDetails: "paymentDetails",
   notes: "notes",
   terms: "terms",
@@ -139,6 +143,13 @@ function describeAction(
       return { label: next.labels.invoiceDate || "Date", area: "details" };
     case "dueDate":
       return { label: next.labels.paymentDue || "Due date", area: "details" };
+    case "supplyDate":
+      return {
+        label: next.labels.supplyDate || "Date of supply",
+        area: "details"
+      };
+    case "currencyConversion":
+      return { label: "Exchange rate", area: "pricing" };
     case "items":
       return { label: "Line items", area: "items" };
     case "image":

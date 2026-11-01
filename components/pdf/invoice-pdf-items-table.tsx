@@ -1,35 +1,69 @@
 import { StyleSheet, Text, View } from "@react-pdf/renderer";
-import type { Invoice, InvoiceLineItemRow } from "~/types";
+import type { CurrencyConversion, Invoice, InvoiceLineItemRow } from "~/types";
 import { pdfRoleStyle } from "~/utils/pdf-styles";
+
+// Column widths in percent of the table, with and without the unit column,
+// and with the converted amount taking its room from the others.
+const COLUMN_WIDTHS = {
+  units: {
+    description: "34%",
+    quantity: "14%",
+    unit: "14%",
+    unitPrice: "19%",
+    amount: "19%",
+    convertedAmount: "0%"
+  },
+  noUnits: {
+    description: "40%",
+    quantity: "20%",
+    unit: "0%",
+    unitPrice: "20%",
+    amount: "20%",
+    convertedAmount: "0%"
+  },
+  convertedUnits: {
+    description: "21%",
+    quantity: "13%",
+    unit: "9%",
+    unitPrice: "18%",
+    amount: "18%",
+    convertedAmount: "21%"
+  },
+  convertedNoUnits: {
+    description: "28%",
+    quantity: "13%",
+    unit: "0%",
+    unitPrice: "18%",
+    amount: "19%",
+    convertedAmount: "22%"
+  }
+};
 
 export function InvoicePdfItemsTable({
   invoice,
-  lineItems
+  lineItems,
+  conversion
 }: {
   invoice: Invoice;
   lineItems: InvoiceLineItemRow[];
+  conversion: CurrencyConversion | null;
 }) {
   const theme = invoice.theme;
+  const labels = invoice.tableSettings.columnLabels;
+  // An invoice shown in a second currency names its own on the price columns.
+  const currencySuffix = conversion ? ` (${conversion.fromCode})` : "";
 
   // The unit column only prints when at least one item has a unit, so invoices
   // that never use units (including all previously saved ones) keep the
   // original four-column layout instead of gaining an empty column.
   const hasUnits = lineItems.some(row => row.unit.trim().length > 0);
-  const columnWidths = hasUnits
-    ? {
-        description: "34%",
-        quantity: "14%",
-        unit: "14%",
-        unitPrice: "19%",
-        amount: "19%"
-      }
-    : {
-        description: "40%",
-        quantity: "20%",
-        unit: "0%",
-        unitPrice: "20%",
-        amount: "20%"
-      };
+  const columnWidths = conversion
+    ? hasUnits
+      ? COLUMN_WIDTHS.convertedUnits
+      : COLUMN_WIDTHS.convertedNoUnits
+    : hasUnits
+      ? COLUMN_WIDTHS.units
+      : COLUMN_WIDTHS.noUnits;
   const styles = StyleSheet.create({
     table: {
       display: "flex",
@@ -69,31 +103,40 @@ export function InvoicePdfItemsTable({
       >
         <View style={[styles.tableCell, { width: columnWidths.description }]}>
           <Text style={pdfRoleStyle(theme, "tableHeaderLeft")}>
-            {invoice.tableSettings.columnLabels.description}
+            {labels.description}
           </Text>
         </View>
         <View style={[styles.tableCell, { width: columnWidths.quantity }]}>
           <Text style={pdfRoleStyle(theme, "tableHeaderCenter")}>
-            {invoice.tableSettings.columnLabels.quantity}
+            {labels.quantity}
           </Text>
         </View>
         {hasUnits && (
           <View style={[styles.tableCell, { width: columnWidths.unit }]}>
             <Text style={pdfRoleStyle(theme, "tableHeaderCenter")}>
-              {invoice.tableSettings.columnLabels.unit}
+              {labels.unit}
             </Text>
           </View>
         )}
         <View style={[styles.tableCell, { width: columnWidths.unitPrice }]}>
           <Text style={pdfRoleStyle(theme, "tableHeaderCenter")}>
-            {invoice.tableSettings.columnLabels.unitPrice}
+            {`${labels.unitPrice}${currencySuffix}`}
           </Text>
         </View>
         <View style={[styles.tableCell, { width: columnWidths.amount }]}>
           <Text style={pdfRoleStyle(theme, "tableHeaderRight")}>
-            {invoice.tableSettings.columnLabels.amount}
+            {`${labels.amount}${currencySuffix}`}
           </Text>
         </View>
+        {conversion && (
+          <View
+            style={[styles.tableCell, { width: columnWidths.convertedAmount }]}
+          >
+            <Text style={pdfRoleStyle(theme, "tableHeaderRight")}>
+              {`${labels.amount || "Amount"} (${conversion.toCode})`}
+            </Text>
+          </View>
+        )}
       </View>
       {lineItems.map((row, index) => {
         const isLastItem = index === lineItems.length - 1;
@@ -132,6 +175,18 @@ export function InvoicePdfItemsTable({
                 {row.amount}
               </Text>
             </View>
+            {conversion && (
+              <View
+                style={[
+                  styles.tableCell,
+                  { width: columnWidths.convertedAmount }
+                ]}
+              >
+                <Text style={pdfRoleStyle(theme, "tableRowRight")}>
+                  {row.convertedAmount}
+                </Text>
+              </View>
+            )}
           </View>
         );
       })}

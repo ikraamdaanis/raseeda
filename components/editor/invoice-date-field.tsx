@@ -9,52 +9,36 @@ import {
 } from "~/components/ui/popover";
 import { useIsPreview } from "~/hooks/use-shown-sections";
 import { cn } from "~/lib/utils";
-import { useDetailsSlice } from "~/stores/invoice-selectors";
+import { useInvoiceStore } from "~/stores/invoice-store";
 import { formatInvoiceDate } from "~/utils/format-invoice-date";
 import { parseIsoDate } from "~/utils/parse-iso-date";
-import { dueDateForNewInvoiceDate } from "~/utils/payment-terms";
 
-// The invoice or due date on the page: written in the invoice's date format,
-// and picked from a calendar rather than typed, so it's always a real date.
-// Moving the invoice date carries a Net 7/14/30/60 due date along with it.
+// A date on the page: written in the invoice's date format, and picked from a
+// calendar rather than typed, so it's always a real date.
 export function InvoiceDateField({
-  field,
+  value,
   label,
   placeholder,
-  style
+  style,
+  onSelect
 }: {
-  field: "invoiceDate" | "dueDate";
+  value: string;
   label: string;
   placeholder: string;
   style: CSSProperties;
+  onSelect: (isoDate: string) => void;
 }) {
-  const { invoiceDate, dueDate, dateFormat, setInvoiceDate, setDueDate } =
-    useDetailsSlice();
+  const dateFormat = useInvoiceStore(state => state.dateFormat);
   const [open, setOpen] = useState(false);
   const textId = useId();
   const isPreview = useIsPreview();
-  const value = field === "invoiceDate" ? invoiceDate : dueDate;
   const selected = parseIsoDate(value) ?? undefined;
   const text = value ? formatInvoiceDate(value, dateFormat) : "";
 
   function handleSelect(date: Date | undefined) {
     if (!date) return;
 
-    const isoDate = format(date, "yyyy-MM-dd");
-
-    if (field === "invoiceDate") {
-      const nextDueDate = dueDateForNewInvoiceDate({
-        invoiceDate,
-        dueDate,
-        nextInvoiceDate: isoDate
-      });
-
-      setInvoiceDate(isoDate);
-      if (nextDueDate) setDueDate(nextDueDate);
-    } else {
-      setDueDate(isoDate);
-    }
-
+    onSelect(format(date, "yyyy-MM-dd"));
     setOpen(false);
   }
 

@@ -16,6 +16,7 @@ const SECTION_GROUPS: {
     items: [
       { key: "logo", label: "Logo" },
       { key: "poNumber", label: "PO number" },
+      { key: "supplyDate", label: "Date of supply" },
       { key: "servicePeriod", label: "Service period" },
       { key: "shipping", label: "Shipping address" }
     ]
@@ -26,7 +27,8 @@ const SECTION_GROUPS: {
       { key: "discounts", label: "Discounts" },
       { key: "tax", label: "Tax" },
       { key: "fees", label: "Fees" },
-      { key: "amountPaid", label: "Amount paid" }
+      { key: "amountPaid", label: "Amount paid" },
+      { key: "currencyConversion", label: "Second currency" }
     ]
   },
   {

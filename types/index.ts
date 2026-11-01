@@ -37,6 +37,7 @@ export type InvoiceLabels = {
   paymentDue: string;
   poNumber: string;
   servicePeriod: string;
+  supplyDate: string;
   subtotal: string;
   tax: string;
   fees: string;
@@ -166,11 +167,18 @@ export type PdfSettings = {
 };
 
 export type InvoiceDetailRow = {
-  id: "number" | "poNumber" | "invoiceDate" | "dueDate" | "servicePeriod";
+  id:
+    | "number"
+    | "poNumber"
+    | "invoiceDate"
+    | "supplyDate"
+    | "dueDate"
+    | "servicePeriod";
   labelKey:
     | "invoiceNumber"
     | "poNumber"
     | "invoiceDate"
+    | "supplyDate"
     | "paymentDue"
     | "servicePeriod";
   label: string;
@@ -187,6 +195,8 @@ export type InvoiceLineItemRow = {
   unit: string;
   unitPrice: string;
   amount: string;
+  // The amount in the second currency, when the invoice shows one.
+  convertedAmount?: string;
 };
 
 export type InvoiceSummaryRow = {
@@ -206,10 +216,20 @@ export type InvoiceSummaryRow = {
   isTotal: boolean;
 };
 
+// An invoice's amounts shown in a second currency: the rate typed in, and the
+// codes that name the columns and the rate line.
+export type CurrencyConversion = {
+  rate: number;
+  fromCode: string;
+  toCurrency: string;
+  toCode: string;
+};
+
 export type InvoiceViewModel = {
   detailRows: InvoiceDetailRow[];
   lineItems: InvoiceLineItemRow[];
   summaryRows: InvoiceSummaryRow[];
+  conversion: CurrencyConversion | null;
 };
 
 export type InvoiceTotals = {

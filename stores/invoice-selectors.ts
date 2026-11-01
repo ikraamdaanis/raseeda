@@ -17,6 +17,7 @@ export const INVOICE_DATA_KEYS = [
   "invoiceDate",
   "dueDate",
   "servicePeriod",
+  "supplyDate",
   "seller",
   "client",
   "shipping",
@@ -28,6 +29,7 @@ export const INVOICE_DATA_KEYS = [
   "discounts",
   "discountType",
   "amountPaid",
+  "currencyConversion",
   "terms",
   "notes",
   "latePayment",
@@ -124,6 +126,7 @@ export function useDetailsSlice() {
       invoiceDate: state.invoiceDate,
       dueDate: state.dueDate,
       servicePeriod: state.servicePeriod,
+      supplyDate: state.supplyDate,
       dateFormat: state.dateFormat,
       labels: state.labels,
       setNumber: state.setNumber,
@@ -131,6 +134,7 @@ export function useDetailsSlice() {
       setInvoiceDate: state.setInvoiceDate,
       setDueDate: state.setDueDate,
       setServicePeriod: state.setServicePeriod,
+      setSupplyDate: state.setSupplyDate,
       setDateFormat: state.setDateFormat,
       setLabels: state.setLabels
     }))
@@ -180,6 +184,17 @@ export function usePricingSlice() {
       setDiscountType: state.setDiscountType,
       setAmountPaid: state.setAmountPaid,
       setLabels: state.setLabels
+    }))
+  );
+}
+
+// Currency conversion slice - the second currency and the rate to it
+export function useCurrencyConversionSlice() {
+  return useInvoiceStore(
+    useShallow(state => ({
+      currencyConversion: state.currencyConversion,
+      dateFormat: state.dateFormat,
+      setCurrencyConversion: state.setCurrencyConversion
     }))
   );
 }

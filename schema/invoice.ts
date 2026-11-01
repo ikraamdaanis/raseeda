@@ -50,6 +50,7 @@ const DEFAULT_LABELS = {
   paymentDue: "Due date",
   poNumber: "PO number",
   servicePeriod: "Service period",
+  supplyDate: "Date of supply",
   subtotal: "Subtotal",
   tax: "Tax",
   fees: "Fees",
@@ -79,11 +80,13 @@ export const INVOICE_SECTION_KEYS = [
   "logo",
   "poNumber",
   "servicePeriod",
+  "supplyDate",
   "shipping",
   "discounts",
   "tax",
   "fees",
   "amountPaid",
+  "currencyConversion",
   "paymentDetails",
   "notes",
   "terms",
@@ -94,11 +97,13 @@ export const DEFAULT_INVOICE_SECTIONS = {
   logo: true,
   poNumber: true,
   servicePeriod: true,
+  supplyDate: false,
   shipping: false,
   discounts: true,
   tax: true,
   fees: true,
   amountPaid: true,
+  currencyConversion: false,
   paymentDetails: true,
   notes: false,
   terms: false,
@@ -114,6 +119,18 @@ const DEFAULT_PAYMENT_DETAILS = {
   bic: "",
   sortCode: "",
   terms: ""
+} as const;
+
+// A second currency the invoice's amounts are also shown in, at a rate typed
+// in and stored with the invoice, so the converted figures never change after
+// the fact. It starts as dirhams for a UAE tax invoice (issue #99), which must
+// show its amounts and VAT in AED, but can be any currency.
+export const DEFAULT_CURRENCY_CONVERSION = {
+  currency: "د.إ",
+  currencyCode: "AED",
+  rate: 0,
+  date: "",
+  source: "Central Bank of the UAE"
 } as const;
 
 const DEFAULT_COLUMN_LABELS = {
@@ -175,11 +192,15 @@ const invoiceSectionsSchema = z
     logo: z.boolean().catch(DEFAULT_INVOICE_SECTIONS.logo),
     poNumber: z.boolean().catch(DEFAULT_INVOICE_SECTIONS.poNumber),
     servicePeriod: z.boolean().catch(DEFAULT_INVOICE_SECTIONS.servicePeriod),
+    supplyDate: z.boolean().catch(DEFAULT_INVOICE_SECTIONS.supplyDate),
     shipping: z.boolean().catch(DEFAULT_INVOICE_SECTIONS.shipping),
     discounts: z.boolean().catch(DEFAULT_INVOICE_SECTIONS.discounts),
     tax: z.boolean().catch(DEFAULT_INVOICE_SECTIONS.tax),
     fees: z.boolean().catch(DEFAULT_INVOICE_SECTIONS.fees),
     amountPaid: z.boolean().catch(DEFAULT_INVOICE_SECTIONS.amountPaid),
+    currencyConversion: z
+      .boolean()
+      .catch(DEFAULT_INVOICE_SECTIONS.currencyConversion),
     paymentDetails: z.boolean().catch(DEFAULT_INVOICE_SECTIONS.paymentDetails),
     notes: z.boolean().catch(DEFAULT_INVOICE_SECTIONS.notes),
     terms: z.boolean().catch(DEFAULT_INVOICE_SECTIONS.terms),
@@ -236,6 +257,7 @@ const invoiceLabelsSchema = z
     paymentDue: z.string().catch(DEFAULT_LABELS.paymentDue),
     poNumber: z.string().catch(DEFAULT_LABELS.poNumber),
     servicePeriod: z.string().catch(DEFAULT_LABELS.servicePeriod),
+    supplyDate: z.string().catch(DEFAULT_LABELS.supplyDate),
     subtotal: z.string().catch(DEFAULT_LABELS.subtotal),
     tax: z.string().catch(DEFAULT_LABELS.tax),
     fees: z.string().catch(DEFAULT_LABELS.fees),
@@ -255,6 +277,7 @@ export const invoiceSchema = z.object({
   invoiceDate: z.string().catch(""),
   dueDate: z.string().catch(""),
   servicePeriod: z.string().catch(""),
+  supplyDate: z.string().catch(""),
   seller: contactSchema("From"),
   client: contactSchema("To"),
   shipping: contactSchema("Ship to"),
@@ -293,6 +316,15 @@ export const invoiceSchema = z.object({
   // the subtotal. The numeric value lives in `discounts` either way.
   discountType: z.enum(["fixed", "percentage"]).catch("fixed"),
   amountPaid: z.coerce.number().catch(0),
+  currencyConversion: z
+    .object({
+      currency: z.string().catch(DEFAULT_CURRENCY_CONVERSION.currency),
+      currencyCode: z.string().catch(DEFAULT_CURRENCY_CONVERSION.currencyCode),
+      rate: z.coerce.number().catch(DEFAULT_CURRENCY_CONVERSION.rate),
+      date: z.string().catch(DEFAULT_CURRENCY_CONVERSION.date),
+      source: z.string().catch(DEFAULT_CURRENCY_CONVERSION.source)
+    })
+    .catch(DEFAULT_CURRENCY_CONVERSION),
   terms: z
     .object({
       label: z.string().catch("Terms and conditions"),

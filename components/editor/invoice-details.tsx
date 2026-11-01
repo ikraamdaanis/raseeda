@@ -7,6 +7,7 @@ import type { InvoiceDetailRow } from "~/types";
 import { buildDetailRows } from "~/utils/build-invoice-view-model";
 import { getRoleSettings } from "~/utils/get-role-settings";
 import { getTextStyles } from "~/utils/get-text-styles";
+import { dueDateForNewInvoiceDate } from "~/utils/payment-terms";
 
 // The previous whole calendar month as a realistic Service period example, e.g.
 // "1–30 Jun 2026" (and "1–31 Dec 2025" when run in January, since the year rolls
@@ -26,6 +27,7 @@ function buildDetailPlaceholders(): Record<
     number: { label: "Invoice No.", value: "########" },
     poNumber: { label: "PO number", value: "Add a PO / reference" },
     invoiceDate: { label: "Date", value: "Pick a date" },
+    supplyDate: { label: "Date of supply", value: "Pick the supply date" },
     dueDate: { label: "Due date", value: "Pick a due date" },
     servicePeriod: {
       label: "Service period",
@@ -39,6 +41,7 @@ export function InvoiceDetails() {
     number,
     poNumber,
     invoiceDate,
+    supplyDate,
     dueDate,
     servicePeriod,
     dateFormat,
@@ -51,6 +54,7 @@ export function InvoiceDetails() {
     number,
     poNumber,
     invoiceDate,
+    supplyDate,
     dueDate,
     servicePeriod,
     sections,
@@ -74,9 +78,13 @@ function DetailRow({
   placeholders: { label: string; value: string };
 }) {
   const {
+    invoiceDate,
+    supplyDate,
+    dueDate,
     setNumber,
     setPoNumber,
     setInvoiceDate,
+    setSupplyDate,
     setDueDate,
     setServicePeriod,
     setLabels
@@ -93,9 +101,29 @@ function DetailRow({
     number: setNumber,
     poNumber: setPoNumber,
     invoiceDate: setInvoiceDate,
+    supplyDate: setSupplyDate,
     dueDate: setDueDate,
     servicePeriod: setServicePeriod
   }[row.id];
+  const dateValues = { invoiceDate, supplyDate, dueDate };
+
+  // Moving the invoice date carries a Net 7/14/30/60 due date along with it.
+  function handleDateSelect(isoDate: string) {
+    if (row.id !== "invoiceDate") {
+      setValue(isoDate);
+
+      return;
+    }
+
+    const nextDueDate = dueDateForNewInvoiceDate({
+      invoiceDate,
+      dueDate,
+      nextInvoiceDate: isoDate
+    });
+
+    setInvoiceDate(isoDate);
+    if (nextDueDate) setDueDate(nextDueDate);
+  }
 
   function handleLabelChange(value: string) {
     setLabels(prev => ({ ...prev, [row.labelKey]: value }));
@@ -114,12 +142,15 @@ function DetailRow({
           placeholder={placeholders.label}
         />
       </div>
-      {row.id === "invoiceDate" || row.id === "dueDate" ? (
+      {row.id === "invoiceDate" ||
+      row.id === "supplyDate" ||
+      row.id === "dueDate" ? (
         <InvoiceDateField
-          field={row.id}
+          value={dateValues[row.id]}
           label={row.label || placeholders.label}
           placeholder={placeholders.value}
           style={valueStyle}
+          onSelect={handleDateSelect}
         />
       ) : (
         <InvoiceInput

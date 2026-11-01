@@ -1,4 +1,5 @@
 import type { Invoice, InvoiceSectionKey } from "~/types";
+import { getCurrencyConversion } from "~/utils/currency-conversion";
 
 export function hasText(value: string): boolean {
   return value.trim().length > 0;
@@ -25,11 +26,15 @@ export function getPrintedSections(
     | "image"
     | "poNumber"
     | "servicePeriod"
+    | "supplyDate"
     | "shipping"
     | "discounts"
     | "tax"
     | "fees"
     | "amountPaid"
+    | "currency"
+    | "currencyCode"
+    | "currencyConversion"
     | "paymentDetails"
     | "notes"
     | "terms"
@@ -37,16 +42,20 @@ export function getPrintedSections(
   >
 ): Record<InvoiceSectionKey, boolean> {
   const { sections } = invoice;
+  const conversion = getCurrencyConversion(invoice);
 
   return {
     logo: sections.logo && invoice.image !== "",
     poNumber: sections.poNumber && hasText(invoice.poNumber),
     servicePeriod: sections.servicePeriod && hasText(invoice.servicePeriod),
+    supplyDate: sections.supplyDate && hasText(invoice.supplyDate),
     shipping: sections.shipping && hasText(invoice.shipping.content),
     discounts: sections.discounts && invoice.discounts > 0,
     tax: sections.tax,
     fees: sections.fees && invoice.fees > 0,
     amountPaid: sections.amountPaid && invoice.amountPaid > 0,
+    // Not in that currency already, and with a rate to convert at.
+    currencyConversion: conversion !== null && conversion.rate > 0,
     paymentDetails:
       sections.paymentDetails &&
       PAYMENT_DETAIL_FIELDS.some(field =>

@@ -3,6 +3,7 @@ import { create } from "zustand";
 import { subscribeWithSelector } from "zustand/middleware";
 import { immer } from "zustand/middleware/immer";
 import {
+  DEFAULT_CURRENCY_CONVERSION,
   DEFAULT_INVOICE_DATE_FORMAT,
   DEFAULT_INVOICE_SECTIONS,
   DEFAULT_INVOICE_THEME
@@ -35,6 +36,7 @@ export const invoiceDefault: Invoice = {
   invoiceDate: "",
   dueDate: "",
   servicePeriod: "",
+  supplyDate: "",
   seller: {
     label: "From",
     content: "",
@@ -79,6 +81,7 @@ export const invoiceDefault: Invoice = {
     paymentDue: "Due date",
     poNumber: "PO number",
     servicePeriod: "Service period",
+    supplyDate: "Date of supply",
     subtotal: "Subtotal",
     tax: "Tax",
     fees: "Fees",
@@ -96,6 +99,7 @@ export const invoiceDefault: Invoice = {
   discounts: 0,
   discountType: "fixed",
   amountPaid: 0,
+  currencyConversion: DEFAULT_CURRENCY_CONVERSION,
   terms: {
     label: "Terms and conditions",
     content: ""
@@ -206,6 +210,7 @@ interface InvoiceActions {
   setInvoiceDate: (date: string) => void;
   setDueDate: (date: string) => void;
   setServicePeriod: (servicePeriod: string) => void;
+  setSupplyDate: (date: string) => void;
 
   // Labels
   setLabels: (
@@ -232,6 +237,11 @@ interface InvoiceActions {
   setDiscounts: (discounts: number) => void;
   setDiscountType: (discountType: Invoice["discountType"]) => void;
   setAmountPaid: (amountPaid: number) => void;
+  setCurrencyConversion: (
+    currencyConversion:
+      | Invoice["currencyConversion"]
+      | ((prev: Invoice["currencyConversion"]) => Invoice["currencyConversion"])
+  ) => void;
 
   // Terms
   setTerms: (
@@ -368,6 +378,11 @@ export const useInvoiceStore = create<InvoiceStore>()(
           state.servicePeriod = servicePeriod;
         }),
 
+      setSupplyDate: date =>
+        set(state => {
+          state.supplyDate = date;
+        }),
+
       // Labels
       setLabels: labels =>
         set(state => {
@@ -441,6 +456,14 @@ export const useInvoiceStore = create<InvoiceStore>()(
       setAmountPaid: amountPaid =>
         set(state => {
           state.amountPaid = amountPaid;
+        }),
+
+      setCurrencyConversion: currencyConversion =>
+        set(state => {
+          state.currencyConversion = applyUpdater(
+            state.currencyConversion,
+            currencyConversion
+          );
         }),
 
       // Terms

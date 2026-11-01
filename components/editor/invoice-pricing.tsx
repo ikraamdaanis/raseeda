@@ -2,6 +2,7 @@ import type { CSSProperties, ReactNode } from "react";
 import { useEffect, useState } from "react";
 import { InvoiceInput } from "~/components/editor/invoice-input";
 import { formatCurrency, formatCurrencyWithCode } from "~/consts/currencies";
+import { useCurrencyConversion } from "~/hooks/use-currency-conversion";
 import { useIsPreview, useShownSections } from "~/hooks/use-shown-sections";
 import { cn } from "~/lib/utils";
 import {
@@ -10,6 +11,7 @@ import {
   usePricingSlice,
   useTheme
 } from "~/stores/invoice-selectors";
+import { withConvertedAmount } from "~/utils/currency-conversion";
 import { getRoleSettings } from "~/utils/get-role-settings";
 import { getTextStyles } from "~/utils/get-text-styles";
 import { handleCurrencyInput } from "~/utils/handle-currency-input";
@@ -138,11 +140,17 @@ function MoneyInput({
 /**
  * Displays the pricing information for the invoice.
  */
+// Totals in two currencies need half the page rather than a third.
 export function InvoicePricing() {
   const sections = useShownSections();
+  const conversion = useCurrencyConversion();
 
   return (
-    <div data-field-area="pricing" className="flex flex-col gap-1 text-right">
+    <div
+      data-field-area="pricing"
+      data-converted={conversion ? "" : undefined}
+      className="group/pricing flex flex-col gap-1 text-right"
+    >
       <SubtotalRow />
       {sections.discounts && <DiscountsRow />}
       {sections.tax && <TaxRow />}
@@ -157,12 +165,13 @@ export function InvoicePricing() {
 function SubtotalRow() {
   const { currency, labels, setLabels } = usePricingSlice();
   const { subtotal } = useInvoiceTotals();
+  const conversion = useCurrencyConversion();
   const theme = useTheme();
   const labelSettings = getRoleSettings(theme, "totalsLabel");
   const valueSettings = getRoleSettings(theme, "totalsValue");
 
   return (
-    <div className="ml-auto flex w-1/3 items-center justify-end gap-1 text-sm">
+    <div className="ml-auto flex w-1/3 items-center justify-end gap-1 text-sm group-data-converted/pricing:w-1/2">
       <InvoiceInput
         aria-label="Subtotal label"
         data-field="labels.subtotal"
@@ -174,10 +183,14 @@ function SubtotalRow() {
       />
       <span
         data-testid="subtotal-value"
-        className="text-paper-foreground inline-block min-w-40 text-right"
+        className="text-paper-foreground inline-block min-w-40 shrink-0 text-right whitespace-nowrap"
         style={getTextStyles({ settings: valueSettings })}
       >
-        {formatCurrency(subtotal, currency)}
+        {withConvertedAmount(
+          formatCurrency(subtotal, currency),
+          subtotal,
+          conversion
+        )}
       </span>
     </div>
   );
@@ -186,6 +199,7 @@ function SubtotalRow() {
 function TaxRow() {
   const { tax, currency, setTax, labels, setLabels } = usePricingSlice();
   const { taxAmount } = useInvoiceTotals();
+  const conversion = useCurrencyConversion();
   const isPreview = useIsPreview();
   const theme = useTheme();
   const labelSettings = getRoleSettings(theme, "totalsLabel");
@@ -194,7 +208,7 @@ function TaxRow() {
   const [taxInput, setTaxInput] = usePricingInput(tax.percentage);
 
   return (
-    <div className="group/pricing-row ml-auto flex w-1/3 items-center justify-end gap-1 text-sm">
+    <div className="group/pricing-row ml-auto flex w-1/3 items-center justify-end gap-1 text-sm group-data-converted/pricing:w-1/2">
       <PricingRowToggle
         label="Toggle tax exempt"
         active={tax.exempt}
@@ -255,10 +269,14 @@ function TaxRow() {
       ) : (
         <span
           data-testid="tax-amount"
-          className="ml-auto min-w-40 items-center"
+          className="ml-auto min-w-40 shrink-0 items-center whitespace-nowrap"
           style={getTextStyles({ settings: valueSettings })}
         >
-          {formatCurrency(taxAmount, currency)}
+          {withConvertedAmount(
+            formatCurrency(taxAmount, currency),
+            taxAmount,
+            conversion
+          )}
         </span>
       )}
     </div>
@@ -275,7 +293,7 @@ function FeesRow() {
   const [feesInput, setFeesInput] = usePricingInput(fees);
 
   return (
-    <div className="ml-auto flex w-1/3 items-center justify-end gap-1 text-sm">
+    <div className="ml-auto flex w-1/3 items-center justify-end gap-1 text-sm group-data-converted/pricing:w-1/2">
       <InvoiceInput
         aria-label="Fees label"
         data-field="labels.fees"
@@ -328,7 +346,7 @@ function DiscountsRow() {
   const isPercentage = discountType === "percentage";
 
   return (
-    <div className="group/pricing-row ml-auto flex w-1/3 items-center justify-end gap-1 text-sm">
+    <div className="group/pricing-row ml-auto flex w-1/3 items-center justify-end gap-1 text-sm group-data-converted/pricing:w-1/2">
       <PricingRowToggle
         label="Toggle discount type"
         active={isPercentage}
@@ -419,6 +437,7 @@ function TotalRow() {
   const { currency, currencyCode, amountPaid, labels, setLabels } =
     usePricingSlice();
   const { total } = useInvoiceTotals();
+  const conversion = useCurrencyConversion();
   const theme = useTheme();
   const sections = useShownSections();
   const hasPayment = sections.amountPaid && amountPaid > 0;
@@ -430,7 +449,7 @@ function TotalRow() {
   );
 
   return (
-    <div className="ml-auto flex w-1/3 items-center justify-end gap-1 text-sm">
+    <div className="ml-auto flex w-1/3 items-center justify-end gap-1 text-sm group-data-converted/pricing:w-1/2">
       <InvoiceInput
         aria-label="Total label"
         data-field="labels.total"
@@ -443,12 +462,16 @@ function TotalRow() {
       <span
         data-testid="total-value"
         className={cn(
-          "inline-block min-w-40 text-right",
+          "inline-block min-w-40 shrink-0 text-right whitespace-nowrap",
           hasPayment ? "" : "font-bold"
         )}
         style={getTextStyles({ settings: valueSettings })}
       >
-        {formatCurrencyWithCode(total, currency, currencyCode)}
+        {withConvertedAmount(
+          formatCurrencyWithCode(total, currency, currencyCode),
+          total,
+          conversion
+        )}
       </span>
     </div>
   );
@@ -465,7 +488,7 @@ function AmountPaidRow() {
   const [amountPaidInput, setAmountPaidInput] = usePricingInput(amountPaid);
 
   return (
-    <div className="ml-auto flex w-1/3 items-center justify-end gap-1 text-sm">
+    <div className="ml-auto flex w-1/3 items-center justify-end gap-1 text-sm group-data-converted/pricing:w-1/2">
       <InvoiceInput
         aria-label="Amount paid label"
         data-field="labels.amountPaid"
@@ -518,7 +541,7 @@ function BalanceDueRow() {
   }
 
   return (
-    <div className="ml-auto flex w-1/3 items-center justify-end gap-1 text-sm">
+    <div className="ml-auto flex w-1/3 items-center justify-end gap-1 text-sm group-data-converted/pricing:w-1/2">
       <InvoiceInput
         aria-label="Balance due label"
         data-field="labels.balanceDue"

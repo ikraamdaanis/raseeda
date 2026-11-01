@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { DEFAULT_INVOICE_SECTIONS } from "~/schema/invoice";
+import {
+  DEFAULT_CURRENCY_CONVERSION,
+  DEFAULT_INVOICE_SECTIONS
+} from "~/schema/invoice";
 import type { Invoice, InvoiceItem } from "~/types";
 import { calculateInvoiceTotals } from "~/utils/calculate-invoice-totals";
 
@@ -17,6 +20,7 @@ function makeInvoice(overrides: Partial<Invoice> = {}): Invoice {
     invoiceDate: "2026-01-01",
     dueDate: "2026-01-31",
     servicePeriod: "",
+    supplyDate: "",
     seller: { label: "From", content: "", placeholder: "" },
     client: { label: "To", content: "", placeholder: "" },
     shipping: { label: "Ship to", content: "", placeholder: "" },
@@ -38,6 +42,7 @@ function makeInvoice(overrides: Partial<Invoice> = {}): Invoice {
       paymentDue: "Due date",
       poNumber: "PO number",
       servicePeriod: "Service period",
+      supplyDate: "Date of supply",
       subtotal: "Subtotal",
       tax: "Tax",
       fees: "Fees",
@@ -51,6 +56,7 @@ function makeInvoice(overrides: Partial<Invoice> = {}): Invoice {
     discounts: 0,
     discountType: "fixed",
     amountPaid: 0,
+    currencyConversion: DEFAULT_CURRENCY_CONVERSION,
     terms: { label: "Terms", content: "" },
     notes: { label: "Notes", content: "" },
     latePayment: { label: "Late payment", content: "" },

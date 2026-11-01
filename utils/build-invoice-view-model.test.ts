@@ -1,7 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { DEFAULT_INVOICE_SECTIONS } from "~/schema/invoice";
+import {
+  DEFAULT_CURRENCY_CONVERSION,
+  DEFAULT_INVOICE_SECTIONS
+} from "~/schema/invoice";
 import type { Invoice, InvoiceItem } from "~/types";
 import { buildInvoiceViewModel } from "~/utils/build-invoice-view-model";
+import { buildExchangeRateLine } from "~/utils/currency-conversion";
 
 function makeInvoice(overrides: Partial<Invoice> = {}): Invoice {
   return {
@@ -13,6 +17,7 @@ function makeInvoice(overrides: Partial<Invoice> = {}): Invoice {
     invoiceDate: "2026-01-01",
     dueDate: "2026-01-31",
     servicePeriod: "",
+    supplyDate: "",
     seller: { label: "From", content: "", placeholder: "" },
     client: { label: "To", content: "", placeholder: "" },
     shipping: { label: "Ship to", content: "", placeholder: "" },
@@ -34,6 +39,7 @@ function makeInvoice(overrides: Partial<Invoice> = {}): Invoice {
       paymentDue: "Due date",
       poNumber: "PO number",
       servicePeriod: "Service period",
+      supplyDate: "Date of supply",
       subtotal: "Subtotal",
       tax: "Tax",
       fees: "Fees",
@@ -47,6 +53,7 @@ function makeInvoice(overrides: Partial<Invoice> = {}): Invoice {
     discounts: 0,
     discountType: "fixed",
     amountPaid: 0,
+    currencyConversion: DEFAULT_CURRENCY_CONVERSION,
     terms: { label: "Terms", content: "" },
     notes: { label: "Notes", content: "" },
     latePayment: { label: "Late payment", content: "" },
@@ -112,6 +119,7 @@ describe("buildInvoiceViewModel", () => {
             paymentDue: "Pay by",
             poNumber: "PO number",
             servicePeriod: "Service period",
+            supplyDate: "Date of supply",
             subtotal: "Subtotal",
             tax: "Tax",
             fees: "Fees",
@@ -426,5 +434,125 @@ describe("buildInvoiceViewModel", () => {
 
       expect(totalRows).toEqual(["total"]);
     });
+  });
+});
+
+describe("buildInvoiceViewModel with a second currency", () => {
+  function makeGbpInvoice(overrides: Partial<Invoice> = {}): Invoice {
+    return makeInvoice({
+      currency: "£",
+      currencyCode: "GBP",
+      items: [makeItem({ quantity: 22, unitPrice: 325 })],
+      sections: { ...DEFAULT_INVOICE_SECTIONS, currencyConversion: true },
+      currencyConversion: {
+        ...DEFAULT_CURRENCY_CONVERSION,
+        rate: 4.912518,
+        date: "2026-10-30"
+      },
+      dateFormat: "d MMM yyyy",
+      ...overrides
+    });
+  }
+
+  it("converts the line, subtotal and total, and shows zero tax at 0%", () => {
+    const { lineItems, summaryRows, conversion } =
+      buildInvoiceViewModel(makeGbpInvoice());
+    const valueById = Object.fromEntries(
+      summaryRows.map(row => [row.id, row.value])
+    );
+
+    expect(conversion).toEqual({
+      rate: 4.912518,
+      fromCode: "GBP",
+      toCurrency: "د.إ",
+      toCode: "AED"
+    });
+    expect(lineItems[0].convertedAmount).toBe("AED 35,124.50");
+    expect(valueById.subtotal).toBe("£7,150.00 / AED 35,124.50");
+    expect(valueById.tax).toBe("£0.00 / AED 0.00");
+    expect(valueById.total).toBe("£7,150.00 GBP / AED 35,124.50");
+  });
+
+  it("converts to any currency, a custom one included", () => {
+    const { lineItems, conversion } = buildInvoiceViewModel(
+      makeGbpInvoice({
+        currencyConversion: {
+          ...DEFAULT_CURRENCY_CONVERSION,
+          currency: "€",
+          currencyCode: "EUR",
+          rate: 1.2
+        }
+      })
+    );
+    const custom = buildInvoiceViewModel(
+      makeGbpInvoice({
+        currencyConversion: {
+          ...DEFAULT_CURRENCY_CONVERSION,
+          currency: "Rs",
+          currencyCode: "INR",
+          rate: 110
+        }
+      })
+    );
+
+    expect(conversion?.toCode).toBe("EUR");
+    expect(lineItems[0].convertedAmount).toBe("€8,580.00");
+    expect(custom.lineItems[0].convertedAmount).toBe("Rs 786,500.00");
+  });
+
+  it("writes the rate line with its source and date", () => {
+    const invoice = makeGbpInvoice();
+    const { conversion } = buildInvoiceViewModel(invoice);
+
+    expect(
+      conversion &&
+        buildExchangeRateLine({
+          conversion,
+          currencyConversion: invoice.currencyConversion,
+          dateFormat: invoice.dateFormat
+        })
+    ).toBe(
+      "Exchange rate: 1 GBP = 4.912518 AED (Central Bank of the UAE rate, 30 Oct 2026)"
+    );
+  });
+
+  it("leaves out the conversion when off, without a rate, or into the invoice's own currency", () => {
+    const off = buildInvoiceViewModel(
+      makeGbpInvoice({ sections: { ...DEFAULT_INVOICE_SECTIONS } })
+    );
+    const noRate = buildInvoiceViewModel(
+      makeGbpInvoice({
+        currencyConversion: { ...DEFAULT_CURRENCY_CONVERSION, rate: 0 }
+      })
+    );
+    const sameCurrency = buildInvoiceViewModel(
+      makeGbpInvoice({ currency: "د.إ", currencyCode: "AED" })
+    );
+
+    for (const viewModel of [off, noRate, sameCurrency]) {
+      expect(viewModel.conversion).toBeNull();
+      expect(viewModel.lineItems[0].convertedAmount).toBeUndefined();
+      expect(viewModel.summaryRows[0].value).not.toContain("/");
+    }
+  });
+
+  it("adds the date of supply after the issue date once its section is on", () => {
+    const { detailRows } = buildInvoiceViewModel(
+      makeInvoice({
+        supplyDate: "2026-10-31",
+        dateFormat: "d MMM yyyy",
+        sections: { ...DEFAULT_INVOICE_SECTIONS, supplyDate: true }
+      })
+    );
+
+    expect(detailRows.map(row => row.id)).toEqual([
+      "number",
+      "poNumber",
+      "invoiceDate",
+      "supplyDate",
+      "dueDate",
+      "servicePeriod"
+    ]);
+    expect(detailRows[3].value).toBe("31 Oct 2026");
   });
 });

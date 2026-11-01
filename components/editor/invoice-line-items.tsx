@@ -4,11 +4,13 @@ import { useEffect, useState } from "react";
 import { InvoiceInput } from "~/components/editor/invoice-input";
 import { Button } from "~/components/ui/button";
 import { getCurrencyMarker } from "~/consts/currencies";
+import { useCurrencyConversion } from "~/hooks/use-currency-conversion";
 import { useIsPreview } from "~/hooks/use-shown-sections";
 import { cn } from "~/lib/utils";
 import { useLineItemsSlice, useTheme } from "~/stores/invoice-selectors";
 import { useInvoiceStore } from "~/stores/invoice-store";
 import type {
+  CurrencyConversion,
   InvoiceItem,
   InvoiceLineItemRow,
   InvoiceTheme,
@@ -21,10 +23,13 @@ import { getTextStyles } from "~/utils/get-text-styles";
 
 type LineItemFieldKey = "description" | "quantity" | "unit" | "unitPrice";
 
-type LineItemColumnKind = "text" | "integer" | "currency" | "amount";
+type LineItemColumnKind =
+  "text" | "integer" | "currency" | "amount" | "convertedAmount";
 
 interface LineItemColumnConfig {
-  id: keyof TableSettings["columnLabels"];
+  // The converted amount has no label of its own: it reads as the Amount
+  // label in the second currency.
+  id: keyof TableSettings["columnLabels"] | "convertedAmount";
   headerRole: TextRole;
   rowRole: TextRole;
   headerPlaceholder: string;
@@ -154,8 +159,42 @@ const LINE_ITEM_COLUMNS: LineItemColumnConfig[] = [
       wrapperClassName: "col-span-1 pr-2",
       displayClassName: "inline-block h-full w-full font-medium"
     }
+  },
+  {
+    id: "convertedAmount",
+    headerRole: "tableHeaderRight",
+    rowRole: "tableRowRight",
+    headerPlaceholder: "Converted amount",
+    headerInputClassName: "block py-2 pr-2",
+    cell: {
+      kind: "convertedAmount",
+      wrapperClassName: "col-span-1 pr-2",
+      displayClassName: "inline-block h-full w-full font-medium"
+    }
   }
 ];
+
+// An invoice shown in a second currency names its own on the price columns,
+// "Unit Price (GBP)", beside the amount in the other, "Amount (AED)".
+function getColumnLabel(
+  column: LineItemColumnConfig,
+  columnLabels: TableSettings["columnLabels"],
+  conversion: CurrencyConversion | null
+) {
+  return column.id === "convertedAmount"
+    ? `${columnLabels.amount || "Amount"} (${conversion?.toCode ?? ""})`
+    : columnLabels[column.id];
+}
+
+function columnCurrencySuffix(
+  column: LineItemColumnConfig,
+  conversion: CurrencyConversion | null
+) {
+  if (!conversion) return "";
+  if (column.id !== "unitPrice" && column.id !== "amount") return "";
+
+  return `(${conversion.fromCode})`;
+}
 
 /**
  * Displays the line items for the invoice. Subscribes to the line-items slice
@@ -164,17 +203,32 @@ const LINE_ITEM_COLUMNS: LineItemColumnConfig[] = [
  */
 // The PDF leaves out the Unit column when no line has a unit, so Preview does
 // too. While editing it always shows, so there's somewhere to type one.
+// The converted amount takes its room from the other columns, so the table
+// keeps the page's width.
 function useVisibleColumns() {
   const isPreview = useIsPreview();
   const hasUnits = useInvoiceStore(state =>
     state.items.some(item => item.unit.trim())
   );
+  const hasConversion = useCurrencyConversion() !== null;
   const hideUnit = isPreview && !hasUnits;
+  const columns = LINE_ITEM_COLUMNS.filter(
+    column =>
+      (column.id !== "unit" || !hideUnit) &&
+      (column.id !== "convertedAmount" || hasConversion)
+  );
+
+  if (hasConversion) {
+    return {
+      columns,
+      gridClassName: hideUnit
+        ? "grid-cols-[1fr_64px_120px_130px_130px]"
+        : "grid-cols-[1fr_64px_64px_120px_130px_130px]"
+    };
+  }
 
   return {
-    columns: hideUnit
-      ? LINE_ITEM_COLUMNS.filter(column => column.id !== "unit")
-      : LINE_ITEM_COLUMNS,
+    columns,
     gridClassName: hideUnit
       ? "grid-cols-[1fr_80px_120px_150px]"
       : "grid-cols-[1fr_80px_80px_120px_150px]"
@@ -241,6 +295,7 @@ function TableHeader({
   setTableSettings: SetTableSettings;
 }) {
   const { columns, gridClassName } = useVisibleColumns();
+  const conversion = useCurrencyConversion();
 
   return (
     <div
@@ -255,7 +310,8 @@ function TableHeader({
         <TableHeaderCell
           key={column.id}
           column={column}
-          label={tableSettings.columnLabels[column.id]}
+          label={getColumnLabel(column, tableSettings.columnLabels, conversion)}
+          suffix={columnCurrencySuffix(column, conversion)}
           theme={theme}
           setTableSettings={setTableSettings}
         />
@@ -267,23 +323,65 @@ function TableHeader({
 function TableHeaderCell({
   column,
   label,
+  suffix,
   theme,
   setTableSettings
 }: {
   column: LineItemColumnConfig;
   label: string;
+  suffix: string;
   theme: InvoiceTheme;
   setTableSettings: SetTableSettings;
 }) {
-  const style = getTextStyles({
-    settings: getRoleSettings(theme, column.headerRole)
-  });
+  const settings = getRoleSettings(theme, column.headerRole);
+  const style = getTextStyles({ settings });
 
   function handleChange(value: string) {
     setTableSettings(prev => ({
       ...prev,
       columnLabels: { ...prev.columnLabels, [column.id]: value }
     }));
+  }
+
+  if (column.id === "convertedAmount") {
+    return (
+      <div
+        role="columnheader"
+        className="col-span-1 text-sm font-medium"
+        style={style}
+      >
+        <span className={column.headerInputClassName} style={style}>
+          {label}
+        </span>
+      </div>
+    );
+  }
+
+  // The currency sits beside the label, so the label stays editable on its own.
+  if (suffix) {
+    return (
+      <div
+        role="columnheader"
+        className="col-span-1 flex h-full items-center text-sm font-medium"
+        style={{ ...style, justifyContent: settings.align }}
+      >
+        <InvoiceInput
+          aria-label={`${column.headerPlaceholder} column label`}
+          data-field={`tableSettings.columnLabels.${column.id}`}
+          value={label}
+          onChange={handleChange}
+          className={cn(
+            column.headerInputClassName,
+            "field-sizing-content w-auto min-w-fit pr-1"
+          )}
+          placeholder={column.headerPlaceholder}
+          style={getTextStyles({ settings, remove: ["align"] })}
+        />
+        <span className={column.id === "amount" ? "shrink-0 pr-2" : "shrink-0"}>
+          {suffix}
+        </span>
+      </div>
+    );
   }
 
   return (
@@ -363,7 +461,8 @@ function LineItem({
   updateItem: UpdateItem;
   removeItem: RemoveItem;
 }) {
-  const viewRow = buildLineItemRow(item, currency);
+  const conversion = useCurrencyConversion();
+  const viewRow = buildLineItemRow(item, currency, conversion);
   const isPreview = useIsPreview();
   const { columns, gridClassName } = useVisibleColumns();
 
@@ -380,7 +479,11 @@ function LineItem({
         <TableCell
           key={`${item.id}-${column.id}`}
           column={column}
-          columnLabel={tableSettings.columnLabels[column.id]}
+          columnLabel={getColumnLabel(
+            column,
+            tableSettings.columnLabels,
+            conversion
+          )}
           item={item}
           index={index}
           viewRow={viewRow}
@@ -505,7 +608,7 @@ function TableCell({
 
   const cellLabel = columnLabel || column.headerPlaceholder;
 
-  if (column.cell.kind === "amount") {
+  if (column.cell.kind === "amount" || column.cell.kind === "convertedAmount") {
     return (
       <div role="cell" className={column.cell.wrapperClassName}>
         <span
@@ -513,7 +616,9 @@ function TableCell({
           style={rowStyle}
           aria-label={`${cellLabel}, item ${index + 1}`}
         >
-          {viewRow.amount}
+          {column.cell.kind === "amount"
+            ? viewRow.amount
+            : viewRow.convertedAmount}
         </span>
       </div>
     );

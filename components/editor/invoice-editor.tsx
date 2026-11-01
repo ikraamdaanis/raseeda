@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { InvoiceCanvas } from "~/components/editor/invoice-canvas";
 import { InvoiceClientDetails } from "~/components/editor/invoice-client-details";
 import { InvoiceDetails } from "~/components/editor/invoice-details";
+import { InvoiceExchangeRate } from "~/components/editor/invoice-exchange-rate";
 import { InvoiceFooterSections } from "~/components/editor/invoice-footer-sections";
 import { InvoiceImage } from "~/components/editor/invoice-image";
 import { InvoiceLineItems } from "~/components/editor/invoice-line-items";
@@ -136,6 +137,7 @@ function Bottom() {
       <div className="mt-6 max-w-full">
         <InvoiceLineItems />
         <InvoicePricing />
+        <InvoiceExchangeRate />
       </div>
       <InvoicePaymentDetails />
       <InvoiceFooterSections />
