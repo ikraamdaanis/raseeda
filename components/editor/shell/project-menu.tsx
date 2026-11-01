@@ -11,11 +11,11 @@ import {
   IconFilePlus,
   IconFolderOpen,
   IconHistory,
-  IconMoon,
-  IconSun,
+  IconPalette,
   IconUpload
 } from "@tabler/icons-react";
 import { useNavigate } from "@tanstack/react-router";
+import { EditorThemeRadioGroup } from "~/components/editor/editor-theme-menu";
 import {
   redoLabel,
   undoLabel
@@ -26,12 +26,14 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuShortcut,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger
 } from "~/components/ui/dropdown-menu";
 import { useEditorUi } from "~/context/editor-ui-context";
 import { useFileActions } from "~/context/file-actions-context";
 import { useInvoiceDocument } from "~/context/invoice-document-context";
-import { useEditorTheme } from "~/hooks/use-editor-theme";
 import {
   redoInvoiceChange,
   undoInvoiceChange,
@@ -41,17 +43,15 @@ import { shortcutLabel } from "~/utils/shortcut-label";
 
 // The logo opens one menu with everything the old File menu had, plus undo
 // and redo and the way back to the homepage, like the project menu in Framer.
-// It also carries the light/dark switch, which phones have no canvas pill for.
+// It also carries the theme choice, which phones have no canvas pill for.
 // Invoices save themselves, so there's no Save: Duplicate takes Save As's
 // place, as in Apple's autosaving apps.
 export function ProjectMenu() {
   const actions = useFileActions();
   const { setPaletteOpen } = useEditorUi();
-  const { theme, toggleTheme } = useEditorTheme();
   const { isRecord, status } = useInvoiceDocument();
   const history = useInvoiceHistory();
   const navigate = useNavigate();
-  const isDark = theme === "dark";
 
   return (
     <DropdownMenu>
@@ -145,14 +145,15 @@ export function ProjectMenu() {
           Import Data
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={toggleTheme}>
-          {isDark ? (
-            <IconSun aria-hidden="true" />
-          ) : (
-            <IconMoon aria-hidden="true" />
-          )}
-          {isDark ? "Light mode" : "Dark mode"}
-        </DropdownMenuItem>
+        <DropdownMenuSub>
+          <DropdownMenuSubTrigger>
+            <IconPalette aria-hidden="true" />
+            Theme
+          </DropdownMenuSubTrigger>
+          <DropdownMenuSubContent className="w-36">
+            <EditorThemeRadioGroup />
+          </DropdownMenuSubContent>
+        </DropdownMenuSub>
         <DropdownMenuItem onClick={() => setPaletteOpen(true)}>
           <IconCommand aria-hidden="true" />
           Quick actions

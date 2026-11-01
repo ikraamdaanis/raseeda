@@ -11,7 +11,7 @@ import {
   writeEditorThemePreference
 } from "~/utils/editor-theme";
 
-// Components reading the theme re-render when it changes: from a toggle here,
+// Components reading the theme re-render when it changes: from a menu here,
 // another tab (the storage event) or the operating system's scheme.
 const listeners = new Set<() => void>();
 
@@ -66,9 +66,7 @@ export function useEditorTheme() {
   return {
     preference,
     theme,
-    setPreference: setEditorThemePreference,
-    toggleTheme: () =>
-      setEditorThemePreference(theme === "dark" ? "light" : "dark")
+    setPreference: setEditorThemePreference
   };
 }
 

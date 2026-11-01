@@ -12,8 +12,6 @@ import {
   IconHistory,
   IconLayoutSidebar,
   IconLayoutSidebarRight,
-  IconMoon,
-  IconSun,
   IconTypography,
   IconUpload,
   IconZoomScan
@@ -40,6 +38,7 @@ import {
   getCurrencyMarker,
   normalizeCurrency
 } from "~/consts/currencies";
+import { EDITOR_THEME_OPTIONS } from "~/consts/editor-theme-options";
 import { INVOICE_FONTS } from "~/consts/invoice-fonts";
 import { useCanvasView } from "~/context/canvas-view-context";
 import { useEditorUi } from "~/context/editor-ui-context";
@@ -110,7 +109,7 @@ function PaletteCommands() {
   const actions = useFileActions();
   const { openPdf } = useInvoicePdf();
   const { setView } = useCanvasView();
-  const { theme: editorTheme, toggleTheme } = useEditorTheme();
+  const { preference, setPreference } = useEditorTheme();
   const { theme, setTheme } = useThemeSlice();
   const { currency, setCurrency, setCurrencyCode } = useCurrencySlice();
   const { sections, setSection } = useSectionsSlice();
@@ -255,15 +254,18 @@ function PaletteCommands() {
         >
           {leftPanelOpen || rightPanelOpen ? "Hide panels" : "Show panels"}
         </PaletteItem>
-        <PaletteItem
-          icon={editorTheme === "dark" ? <IconSun /> : <IconMoon />}
-          onSelect={run(toggleTheme)}
-          keywords={["theme", "appearance"]}
-        >
-          {editorTheme === "dark"
-            ? "Switch to light mode"
-            : "Switch to dark mode"}
-        </PaletteItem>
+        {EDITOR_THEME_OPTIONS.filter(option => option.value !== preference).map(
+          option => (
+            <PaletteItem
+              key={option.value}
+              icon={<option.icon />}
+              onSelect={run(() => setPreference(option.value))}
+              keywords={["theme", "appearance", option.label]}
+            >
+              {option.command}
+            </PaletteItem>
+          )
+        )}
       </CommandGroup>
       {canEdit && (
         <CommandGroup heading="Sections">

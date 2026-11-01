@@ -8,7 +8,7 @@ import {
   IconPlus
 } from "@tabler/icons-react";
 import type { ReactNode } from "react";
-import { EditorThemeToggle } from "~/components/editor/editor-theme-toggle";
+import { EditorThemeMenu } from "~/components/editor/editor-theme-menu";
 import { Button } from "~/components/ui/button";
 import {
   DropdownMenu,
@@ -29,7 +29,7 @@ import { useDocumentStore } from "~/stores/document-store";
 import { shortcutLabel } from "~/utils/shortcut-label";
 
 // The floating toolbar under the page, as in Framer: edit or preview, zoom,
-// and the light/dark switch. Extra controls (quick actions) slot in at the end.
+// and the theme menu. Extra controls (quick actions) slot in at the end.
 // Phones use the tab bar along the bottom instead.
 export function CanvasPill({ children }: { children?: ReactNode }) {
   return (
@@ -42,7 +42,7 @@ export function CanvasPill({ children }: { children?: ReactNode }) {
       <PillDivider />
       <ZoomControls />
       <PillDivider />
-      <EditorThemeToggle size="icon-sm" className="pointer-coarse:size-11" />
+      <EditorThemeMenu />
       <QuickActionsButton />
       {children}
     </div>
