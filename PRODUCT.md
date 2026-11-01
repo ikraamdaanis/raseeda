@@ -41,7 +41,7 @@ Truly local-first. There are no accounts and no server-side data; all invoice da
 
 ## Brand Commitments
 
-- Name: raseeda (lowercase), served at billsend.io.
+- Name: raseeda (lowercase), served at raseeda.com.
 - Voice: plain and direct, with no sign-up or marketing pressure ("There is nothing to sign up for", "Files are written to your machine, not someone else's").
 - Privacy claims on the site (no third-party analytics, no third-party requests, no cookies, anonymous usage counts only) are binding and must stay true.
 

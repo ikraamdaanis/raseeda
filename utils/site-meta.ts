@@ -1,6 +1,9 @@
 import { APP_NAME } from "~/consts/app";
 
-export const SITE_URL = "https://billsend.io";
+export const SITE_URL = "https://raseeda.com";
+
+// The bare domain, the form copy names the site by.
+export const SITE_HOST = new URL(SITE_URL).host;
 
 export const SITE_TITLE = `${APP_NAME}: Free, Private Invoice Generator`;
 

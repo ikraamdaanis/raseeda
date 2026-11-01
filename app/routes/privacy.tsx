@@ -9,7 +9,12 @@ import {
 import { APP_NAME } from "~/consts/app";
 import { typeClass } from "~/lib/type-scale";
 import { cn } from "~/lib/utils";
-import { canonicalLink, siteMeta, SOURCE_URL } from "~/utils/site-meta";
+import {
+  canonicalLink,
+  SITE_HOST,
+  siteMeta,
+  SOURCE_URL
+} from "~/utils/site-meta";
 
 export const Route = createFileRoute("/privacy")({
   component: PrivacyPage,
@@ -24,7 +29,7 @@ export const Route = createFileRoute("/privacy")({
 });
 
 // The date the policy last changed in substance; update it with the copy.
-const LAST_UPDATED = "22 October 2026";
+const LAST_UPDATED = "1 November 2026";
 
 const HEADING = "font-medium tracking-[-0.035em] text-balance";
 
@@ -67,7 +72,7 @@ function PrivacyPage() {
             </p>
             <p className={PROSE}>
               Other browsers and devices can’t see your invoices. Clearing this
-              browser’s site data for billsend.io deletes them.
+              browser’s site data for {SITE_HOST} deletes them.
             </p>
           </PolicySection>
           <PolicySection title="What leaves your device">
@@ -83,8 +88,8 @@ function PrivacyPage() {
           </PolicySection>
           <PolicySection title="Anonymous usage counts">
             <p className={PROSE}>
-              To see roughly how {APP_NAME} is used, your browser tells
-              billsend.io when one of these happens: a page is viewed, the
+              To see roughly how {APP_NAME} is used, your browser tells{" "}
+              {SITE_HOST} when one of these happens: a page is viewed, the
               editor opens, a PDF is made, an invoice or template is first
               saved, or data is exported or imported. With the event, {APP_NAME}{" "}
               keeps the country the request came from and the browser family,
@@ -110,7 +115,7 @@ function PrivacyPage() {
             </p>
             <p className={PROSE}>
               Every page is sent with a Content Security Policy that only lets
-              it connect to billsend.io itself, so your browser blocks any
+              it connect to {SITE_HOST} itself, so your browser blocks any
               attempt to send data anywhere else, including from {APP_NAME}’s
               own code. You can read the policy in your browser’s developer
               tools, or in the{" "}
@@ -128,7 +133,7 @@ function PrivacyPage() {
           </PolicySection>
           <PolicySection title="Hosting">
             <p className={PROSE}>
-              billsend.io is served by Cloudflare. Like any web host, Cloudflare
+              {SITE_HOST} is served by Cloudflare. Like any web host, Cloudflare
               receives the technical details of each request your browser makes
               to load the site, such as your IP address and browser type, in
               order to deliver it and protect it from abuse, and it may set a

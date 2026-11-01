@@ -2,7 +2,7 @@
 
 A free, local-first invoice generator that runs entirely in your browser. Fill in the details, pick a font and download a PDF. No account needed, no tracking cookies, and your invoices never leave your device. The site counts anonymous usage (event names, country, browser family, OS and device type) and nothing else.
 
-**Live app:** [billsend.io](https://billsend.io)
+**Live app:** [raseeda.com](https://raseeda.com)
 
 ## Features
 

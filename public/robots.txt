@@ -3,4 +3,4 @@
 User-agent: *
 Disallow:
 
-Sitemap: https://billsend.io/sitemap.xml
+Sitemap: https://raseeda.com/sitemap.xml

@@ -66,7 +66,7 @@ describe("siteMeta", () => {
     );
     const pageTitle = pageMeta.find(entry => "title" in entry);
 
-    expect(ogUrl?.content).toBe("https://billsend.io/create");
+    expect(ogUrl?.content).toBe("https://raseeda.com/create");
     expect(pageTitle).toEqual({ title: "Create" });
   });
 });
@@ -75,8 +75,8 @@ describe("canonicalLink", () => {
   it("gives an absolute address with no query string", () => {
     expect(canonicalLink("/")).toEqual({
       rel: "canonical",
-      href: "https://billsend.io/"
+      href: "https://raseeda.com/"
     });
-    expect(canonicalLink("/create").href).toBe("https://billsend.io/create");
+    expect(canonicalLink("/create").href).toBe("https://raseeda.com/create");
   });
 });

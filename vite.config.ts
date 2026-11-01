@@ -72,7 +72,7 @@ export default defineConfig({
         crawlLinks: false
       },
       sitemap: {
-        host: "https://billsend.io"
+        host: "https://raseeda.com"
       },
       pages: [
         { path: "/", prerender: { enabled: true } },

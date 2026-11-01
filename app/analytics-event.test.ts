@@ -18,7 +18,7 @@ function eventRequest({
   headers?: Record<string, string>;
   cf?: Record<string, unknown> | null;
 } = {}) {
-  const request = new Request("https://billsend.io/api/event", {
+  const request = new Request("https://raseeda.com/api/event", {
     method,
     body: method === "POST" ? body : undefined,
     headers: {
