@@ -18,9 +18,11 @@ const styles = StyleSheet.create({
   },
   // Labels share a column as wide as the shortest fits, and a longer one
   // ("VAT (zero-rated export of services)") widens to the left rather than
-  // wrapping, like the editor's. It wraps only past the rest of the width
-  // (react-pdf won't shrink text to fit, so the cap is set here).
+  // wrapping, like the editor's. It wraps only past the rest of the width.
+  // react-pdf sizes text to its content, so textAlign can't push a short
+  // label to the right of this column; alignItems does.
   totalLabel: {
+    alignItems: "flex-end",
     minWidth: "16%",
     maxWidth: "75%"
   },
@@ -42,14 +44,16 @@ function InvoicePdfTotalRow({
 }) {
   return (
     <View style={styles.totalRow}>
-      <Text
-        style={{
-          ...styles.totalLabel,
-          ...pdfRoleStyle(theme, isTotal ? "grandTotalLabel" : "totalsLabel")
-        }}
-      >
-        {label}
-      </Text>
+      <View style={styles.totalLabel}>
+        <Text
+          style={pdfRoleStyle(
+            theme,
+            isTotal ? "grandTotalLabel" : "totalsLabel"
+          )}
+        >
+          {label}
+        </Text>
+      </View>
       <Text
         style={{
           ...styles.totalValue,
