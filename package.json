@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite dev",
-    "build": "vite build && bun scripts/hash-prerendered-csp.ts",
+    "build": "vite build && bun scripts/hash-prerendered-csp.ts && bun scripts/remove-pages-json.ts",
     "serve": "vite preview",
     "test": "vitest run",
     "test:e2e": "playwright test",
