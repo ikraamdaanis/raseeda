@@ -44,27 +44,31 @@ function serviceWorker(): Plugin {
   };
 }
 
+function git(args: string[]) {
+  return execFileSync("git", args, { encoding: "utf8" }).trim();
+}
+
+// A shallow clone's history stops at its latest commit, which would date every
+// page to it. Workers Builds, which deploys the site, clones shallow
+// (WORKERS_CI is set there), so it fetches the rest of the history first.
+// Anywhere else a shallow clone is left as it is.
+function makeHistoryComplete() {
+  if (git(["rev-parse", "--is-shallow-repository"]) !== "true") return;
+  if (process.env.WORKERS_CI !== "1") throw new Error("the clone is shallow");
+
+  git(["fetch", "--quiet", "--unshallow"]);
+}
+
 // When any of a page's files last changed, from the last commit that touched
 // them, for its sitemap lastmod. Google uses lastmod only while it matches the
 // page's real changes, and TanStack writes the build date when it's unset, so
-// every page would claim a change on every deploy. A shallow clone's history
-// stops at its latest commit, which would date every page to it, so then (or
-// without git) this warns and leaves lastmod unset.
+// every page would claim a change on every deploy. Without the history (no
+// git, or a shallow clone) this warns and leaves lastmod unset.
 function lastChanged(paths: string[]) {
   try {
-    const isShallow = execFileSync(
-      "git",
-      ["rev-parse", "--is-shallow-repository"],
-      { encoding: "utf8" }
-    ).trim();
+    makeHistoryComplete();
 
-    if (isShallow === "true") throw new Error("the clone is shallow");
-
-    const date = execFileSync(
-      "git",
-      ["log", "-1", "--format=%cI", "--", ...paths],
-      { encoding: "utf8" }
-    ).trim();
+    const date = git(["log", "-1", "--format=%cI", "--", ...paths]);
 
     if (!date) throw new Error(`no commit touches ${paths.join(", ")}`);
 
