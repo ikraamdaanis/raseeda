@@ -73,14 +73,16 @@ export function hashInlineScripts(
 
 /**
  * The build's `_headers` with each listed path's Content-Security-Policy
- * replaced by `policies[path]`. Throws if a path has no policy line, so a
- * changed `_headers` can't silently ship the unhashed policy.
+ * replaced by `policies[path]`. Throws if a listed path has no policy line, or
+ * a policy line's path isn't listed, so neither a changed `_headers` nor a new
+ * pre-rendered page can silently ship the unhashed policy.
  */
 export function replaceHeaderPolicies(
   headers: string,
   policies: Record<string, string>
 ) {
   const replaced = new Set<string>();
+  const unlisted = new Set<string>();
   let currentPath: string | undefined;
 
   const lines = headers.split("\n").map(line => {
@@ -90,17 +92,19 @@ export function replaceHeaderPolicies(
       return line;
     }
 
-    const policy =
-      currentPath === undefined ? undefined : policies[currentPath];
     const match = /^(\s+)Content-Security-Policy:/i.exec(line);
 
-    if (!match || policy === undefined || currentPath === undefined) {
+    if (!match || currentPath === undefined) return line;
+
+    if (!Object.hasOwn(policies, currentPath)) {
+      unlisted.add(currentPath);
+
       return line;
     }
 
     replaced.add(currentPath);
 
-    return `${match[1]}Content-Security-Policy: ${policy}`;
+    return `${match[1]}Content-Security-Policy: ${policies[currentPath]}`;
   });
 
   const missing = Object.keys(policies).filter(path => !replaced.has(path));
@@ -108,6 +112,12 @@ export function replaceHeaderPolicies(
   if (missing.length > 0) {
     throw new Error(
       `_headers has no Content-Security-Policy for ${missing.join(", ")}.`
+    );
+  }
+
+  if (unlisted.size > 0) {
+    throw new Error(
+      `No hashed Content-Security-Policy for ${[...unlisted].join(", ")}.`
     );
   }
 

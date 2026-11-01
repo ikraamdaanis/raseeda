@@ -7,11 +7,12 @@ import {
   replaceHeaderPolicies
 } from "~/utils/prerendered-csp";
 
-// Runs after `vite build` (the build script). The homepage and the privacy
-// page are rendered at build time, so their inline scripts are known: this
-// writes their hashes into the built _headers in place of 'unsafe-inline',
-// so those pages run their own inline scripts and no others. public/_headers
-// keeps the base policy, which the Worker's pages still use.
+// Runs after `vite build` (the build script). The homepage, the template
+// gallery and the privacy page are rendered at build time, so their inline
+// scripts are known: this writes their hashes into the built _headers in place
+// of 'unsafe-inline', so those pages run their own inline scripts and no
+// others. public/_headers keeps the base policy, which the Worker's pages
+// still use.
 
 const CLIENT_DIR = join(import.meta.dir, "..", "dist", "client");
 
@@ -23,6 +24,10 @@ const NAVIGATION_SCRIPTS = [EDITOR_THEME_SCRIPT];
 // Each pre-rendered page's file, and the paths it is served at.
 const PAGES = [
   { file: "index.html", paths: ["/", "/index.html"] },
+  {
+    file: "invoice-template.html",
+    paths: ["/invoice-template", "/invoice-template.html"]
+  },
   { file: "privacy.html", paths: ["/privacy", "/privacy.html"] }
 ];
 

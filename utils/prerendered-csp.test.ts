@@ -69,19 +69,37 @@ describe("replaceHeaderPolicies", () => {
   ].join("\n");
 
   it("replaces each listed path's policy and nothing else", () => {
-    const result = replaceHeaderPolicies(headers, { "/": "new" });
+    const result = replaceHeaderPolicies(headers, {
+      "/": "home",
+      "/privacy": "privacy"
+    });
 
     expect(result).toBe(
-      headers.replace(
-        "/\n  Content-Security-Policy: old",
-        "/\n  Content-Security-Policy: new"
-      )
+      headers
+        .replace(
+          "/\n  Content-Security-Policy: old",
+          "/\n  Content-Security-Policy: home"
+        )
+        .replace(
+          "/privacy\n  Content-Security-Policy: old",
+          "/privacy\n  Content-Security-Policy: privacy"
+        )
     );
   });
 
   it("throws when a listed path has no policy line", () => {
-    expect(() => replaceHeaderPolicies(headers, { "/missing": "new" })).toThrow(
-      "/missing"
+    expect(() =>
+      replaceHeaderPolicies(headers, {
+        "/": "new",
+        "/privacy": "new",
+        "/missing": "new"
+      })
+    ).toThrow("/missing");
+  });
+
+  it("throws when a path's policy line isn't listed", () => {
+    expect(() => replaceHeaderPolicies(headers, { "/": "new" })).toThrow(
+      "/privacy"
     );
   });
 });
