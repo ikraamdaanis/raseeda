@@ -17,9 +17,14 @@ export const TEMPLATE_RENDER_SIZE = { width: 800, height: 1132 };
 // name.
 const TEMPLATE_SMALL_WIDTHS = [400, 600];
 
-// A template's render at one of its widths.
+// A template's render at one of its widths. The narrower names hang off the
+// .webp, so a render in another format throws rather than name its full-size
+// file at every width.
 export function templateSrc(template: { src: string }, width: number) {
   if (width === TEMPLATE_RENDER_SIZE.width) return template.src;
+  if (!template.src.endsWith(".webp")) {
+    throw new Error(`${template.src} isn't a WebP.`);
+  }
 
   return template.src.replace(/\.webp$/, `-${width}.webp`);
 }
