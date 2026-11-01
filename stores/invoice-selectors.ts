@@ -194,7 +194,8 @@ export function useCurrencyConversionSlice() {
     useShallow(state => ({
       currencyConversion: state.currencyConversion,
       dateFormat: state.dateFormat,
-      setCurrencyConversion: state.setCurrencyConversion
+      setCurrencyConversion: state.setCurrencyConversion,
+      setSecondCurrency: state.setSecondCurrency
     }))
   );
 }
@@ -289,8 +290,7 @@ export function useCurrencySlice() {
     useShallow(state => ({
       currency: state.currency,
       currencyCode: state.currencyCode,
-      setCurrency: state.setCurrency,
-      setCurrencyCode: state.setCurrencyCode
+      setCurrency: state.setCurrency
     }))
   );
 }

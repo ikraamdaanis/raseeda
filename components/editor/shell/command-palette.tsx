@@ -114,7 +114,7 @@ function PaletteCommands() {
   const { setView } = useCanvasView();
   const { preference, setPreference } = useEditorTheme();
   const { theme, setTheme } = useThemeSlice();
-  const { currency, setCurrency, setCurrencyCode } = useCurrencySlice();
+  const { currency, setCurrency } = useCurrencySlice();
   const { sections, setSection } = useSectionsSlice();
   const secondCurrency = useSecondCurrency();
   const { libraryDocumentId, isRecord, status } = useInvoiceDocument();
@@ -336,10 +336,12 @@ function PaletteCommands() {
               key={option.symbol}
               icon={<IconCurrencyDollar />}
               checked={selectedCurrency === option.symbol}
-              onSelect={run(() => {
-                setCurrency(option.symbol);
-                setCurrencyCode(getCurrencyCodeForSymbol(option.symbol));
-              })}
+              onSelect={run(() =>
+                setCurrency(
+                  option.symbol,
+                  getCurrencyCodeForSymbol(option.symbol)
+                )
+              )}
             >
               {`Currency: ${getCurrencyMarker(option.symbol)} ${option.label} (${option.code})`}
             </PaletteItem>

@@ -22,6 +22,10 @@ import type {
   PdfSettings,
   TableSettings
 } from "~/types";
+import {
+  isSameCurrency,
+  pickSecondCurrency
+} from "~/utils/currency-conversion";
 
 export const invoiceDefault: Invoice = {
   id: "1",
@@ -185,8 +189,10 @@ interface InvoiceActions {
   setImage: (image: string) => void;
 
   // Currency
-  setCurrency: (currency: Invoice["currency"]) => void;
-  setCurrencyCode: (currencyCode: Invoice["currencyCode"]) => void;
+  setCurrency: (
+    currency: Invoice["currency"],
+    currencyCode: Invoice["currencyCode"]
+  ) => void;
 
   // Seller
   setSeller: (
@@ -237,6 +243,10 @@ interface InvoiceActions {
   setDiscounts: (discounts: number) => void;
   setDiscountType: (discountType: Invoice["discountType"]) => void;
   setAmountPaid: (amountPaid: number) => void;
+  setSecondCurrency: (
+    currency: Invoice["currency"],
+    currencyCode: Invoice["currencyCode"]
+  ) => void;
   setCurrencyConversion: (
     currencyConversion:
       | Invoice["currencyConversion"]
@@ -323,14 +333,25 @@ export const useInvoiceStore = create<InvoiceStore>()(
           state.image = image;
         }),
 
-      // Currency
-      setCurrency: currency =>
+      // Currency. A rate quoted for the old currency would be wrong for the
+      // new one, so it's cleared with its date, and a second currency the
+      // invoice now matches moves to another.
+      setCurrency: (currency, currencyCode) =>
         set(state => {
-          state.currency = currency;
-        }),
+          const next = { currency, currencyCode };
+          const conversion = state.currencyConversion;
+          const matchesSecond = isSameCurrency(next, conversion);
 
-      setCurrencyCode: currencyCode =>
-        set(state => {
+          if (!isSameCurrency(state, next) || matchesSecond) {
+            conversion.rate = 0;
+            conversion.date = "";
+          }
+
+          if (matchesSecond) {
+            Object.assign(conversion, pickSecondCurrency(next));
+          }
+
+          state.currency = currency;
           state.currencyCode = currencyCode;
         }),
 
@@ -456,6 +477,21 @@ export const useInvoiceStore = create<InvoiceStore>()(
       setAmountPaid: amountPaid =>
         set(state => {
           state.amountPaid = amountPaid;
+        }),
+
+      // Like the invoice currency, a new second currency clears the old rate.
+      setSecondCurrency: (currency, currencyCode) =>
+        set(state => {
+          const conversion = state.currencyConversion;
+          const next = { currency, currencyCode };
+
+          if (!isSameCurrency(conversion, next)) {
+            conversion.rate = 0;
+            conversion.date = "";
+          }
+
+          conversion.currency = currency;
+          conversion.currencyCode = currencyCode;
         }),
 
       setCurrencyConversion: currencyConversion =>

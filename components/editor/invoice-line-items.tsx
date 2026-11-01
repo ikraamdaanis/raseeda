@@ -362,7 +362,7 @@ function TableHeaderCell({
     return (
       <div
         role="columnheader"
-        className="col-span-1 flex h-full items-center text-sm font-medium"
+        className="col-span-1 flex h-full items-center gap-1 text-sm font-medium"
         style={{ ...style, justifyContent: settings.align }}
       >
         <InvoiceInput
@@ -372,7 +372,7 @@ function TableHeaderCell({
           onChange={handleChange}
           className={cn(
             column.headerInputClassName,
-            "field-sizing-content w-auto min-w-fit pr-1"
+            "field-sizing-content w-auto min-w-fit pr-0 focus-visible:pr-0"
           )}
           placeholder={column.headerPlaceholder}
           style={getTextStyles({ settings, remove: ["align"] })}

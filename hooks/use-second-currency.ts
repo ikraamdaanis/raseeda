@@ -16,7 +16,7 @@ export function useSecondCurrency() {
         currencyCode: state.currencyCode,
         target: state.currencyConversion,
         setSection: state.setSection,
-        setTarget: state.setCurrencyConversion
+        setTarget: state.setSecondCurrency
       }))
     );
 
@@ -24,7 +24,9 @@ export function useSecondCurrency() {
     const invoice = { currency, currencyCode };
 
     if (isSameCurrency(invoice, target)) {
-      setTarget(prev => ({ ...prev, ...pickSecondCurrency(invoice) }));
+      const second = pickSecondCurrency(invoice);
+
+      setTarget(second.currency, second.currencyCode);
     }
 
     setSection("currencyConversion", true);

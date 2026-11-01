@@ -122,7 +122,7 @@ export function buildExchangeRateLine({
   const date = currencyConversion.date
     ? formatInvoiceDate(currencyConversion.date, dateFormat)
     : "";
-  const details = [source && `${source} rate`, date].filter(Boolean);
+  const details = [source, date].filter(Boolean);
   const rate = `Exchange rate: 1 ${conversion.fromCode} = ${formatExchangeRate(conversion.rate)} ${conversion.toCode}`;
 
   return details.length > 0 ? `${rate} (${details.join(", ")})` : rate;

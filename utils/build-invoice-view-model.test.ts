@@ -448,7 +448,7 @@ describe("buildInvoiceViewModel with a second currency", () => {
         ...DEFAULT_CURRENCY_CONVERSION,
         rate: 1.2875,
         date: "2026-10-30",
-        source: "Bank of England"
+        source: "Bank of England rate"
       },
       dateFormat: "d MMM yyyy",
       ...overrides

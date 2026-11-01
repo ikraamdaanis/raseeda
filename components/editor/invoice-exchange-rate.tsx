@@ -1,3 +1,4 @@
+import { round } from "lodash-es";
 import { useEffect, useState } from "react";
 import { InvoiceDateField } from "~/components/editor/invoice-date-field";
 import { InvoiceInput } from "~/components/editor/invoice-input";
@@ -11,15 +12,21 @@ import { buildExchangeRateLine } from "~/utils/currency-conversion";
 import { getRoleSettings } from "~/utils/get-role-settings";
 import { getTextStyles } from "~/utils/get-text-styles";
 
-// Digits and one dot, up to six decimal places, as central banks quote rates.
+// Digits and one dot. Past six decimal places, as central banks quote rates,
+// the rate is rounded to six, so a pasted 0.7834129 reads 0.783413.
 function normalizeRateInput(value: string): string {
   const [whole = "", ...rest] = value.replace(/[^0-9.]/g, "").split(".");
+  const decimals = rest.join("");
 
-  return rest.length > 0 ? `${whole}.${rest.join("").slice(0, 6)}` : whole;
+  if (rest.length === 0) return whole;
+  if (decimals.length <= 6) return `${whole}.${decimals}`;
+
+  return String(round(Number(`${whole}.${decimals}`), 6));
 }
 
 // The rate under the totals, typed into the line as it prints: "Exchange
-// rate: 1 GBP = 1.2875 USD (Bank of England rate, 30 Oct 2026)".
+// rate: 1 GBP = 1.2875 USD (Bank of England rate, 30 Oct 2026)". The brackets
+// and comma hug the fields beside them, as they do in print.
 export function InvoiceExchangeRate() {
   const conversion = useCurrencyConversion();
   const { currencyConversion, dateFormat, setCurrencyConversion } =
@@ -75,24 +82,27 @@ export function InvoiceExchangeRate() {
           setRateInput(rate);
           setCurrencyConversion(prev => ({ ...prev, rate: Number(rate) }));
         }}
-        className="field-sizing-content w-auto min-w-16 text-right"
+        className="field-sizing-content w-auto min-w-4 text-right"
         style={style}
         placeholder="0.000000"
       />
-      <span>{`${conversion.toCode} (`}</span>
-      <InvoiceInput
-        aria-label="Exchange rate source"
-        data-field="currencyConversion.source"
-        value={currencyConversion.source}
-        onChange={value =>
-          setCurrencyConversion(prev => ({ ...prev, source: value }))
-        }
-        className="field-sizing-content w-auto min-w-24"
-        style={style}
-        placeholder="Source"
-      />
-      <span>rate,</span>
-      <span className="whitespace-nowrap">
+      <span>{conversion.toCode}</span>
+      <span className="flex items-center">
+        (
+        <InvoiceInput
+          aria-label="Exchange rate source"
+          data-field="currencyConversion.source"
+          value={currencyConversion.source}
+          onChange={value =>
+            setCurrencyConversion(prev => ({ ...prev, source: value }))
+          }
+          className="field-sizing-content w-auto min-w-4"
+          style={style}
+          placeholder="e.g. Central bank rate"
+        />
+        ,
+      </span>
+      <span className="flex items-center whitespace-nowrap">
         <InvoiceDateField
           value={currencyConversion.date}
           label="Exchange rate date"
@@ -100,8 +110,8 @@ export function InvoiceExchangeRate() {
           style={style}
           onSelect={date => setCurrencyConversion(prev => ({ ...prev, date }))}
         />
+        )
       </span>
-      <span>)</span>
     </div>
   );
 }

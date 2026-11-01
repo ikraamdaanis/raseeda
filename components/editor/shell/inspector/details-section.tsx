@@ -30,6 +30,7 @@ import {
   useCurrencySlice,
   useDetailsSlice
 } from "~/stores/invoice-selectors";
+import { isSameCurrency } from "~/utils/currency-conversion";
 import { formatInvoiceDate } from "~/utils/format-invoice-date";
 import { parseIsoDate } from "~/utils/parse-iso-date";
 import {
@@ -53,13 +54,12 @@ export function DetailsSection() {
   );
 }
 
-// The currency, and a second one the amounts are also shown in: a quiet link
+// The currency, and a second one, never the same as it, the amounts are also shown in: a quiet link
 // under the currency until one is added, then its own picker with a way to
 // remove it. Focus follows, to the new picker or back to the link.
 function CurrencyRows() {
-  const { currency, currencyCode, setCurrency, setCurrencyCode } =
-    useCurrencySlice();
-  const { currencyConversion, setCurrencyConversion } =
+  const { currency, currencyCode, setCurrency } = useCurrencySlice();
+  const { currencyConversion, setSecondCurrency } =
     useCurrencyConversionSlice();
   const secondCurrency = useSecondCurrency();
   const addButtonRef = useRef<HTMLButtonElement>(null);
@@ -83,10 +83,7 @@ function CurrencyRows() {
         label="Currency"
         currency={currency}
         currencyCode={currencyCode}
-        onChange={(symbol, code) => {
-          setCurrency(symbol);
-          setCurrencyCode(code);
-        }}
+        onChange={setCurrency}
       />
       {secondCurrency.isOn ? (
         <CurrencyPicker
@@ -94,13 +91,9 @@ function CurrencyRows() {
           label="Also show in"
           currency={currencyConversion.currency}
           currencyCode={currencyConversion.currencyCode}
-          onChange={(symbol, code) =>
-            setCurrencyConversion(prev => ({
-              ...prev,
-              currency: symbol,
-              currencyCode: code
-            }))
-          }
+          exclude={{ currency, currencyCode }}
+          customTitle="Custom second currency"
+          onChange={setSecondCurrency}
           action={
             <button
               type="button"
@@ -142,6 +135,8 @@ function CurrencyPicker({
   label,
   currency,
   currencyCode,
+  exclude,
+  customTitle,
   action,
   onChange
 }: {
@@ -149,12 +144,25 @@ function CurrencyPicker({
   label: string;
   currency: string;
   currencyCode: string;
+  exclude?: { currency: string; currencyCode: string };
+  customTitle?: string;
   action?: ReactNode;
   onChange: (symbol: string, code: string) => void;
 }) {
   const [customOpen, setCustomOpen] = useState(false);
   const selected = normalizeCurrency(currency);
   const isCustom = !currencyOptions.some(option => option.symbol === selected);
+  // The selected preset stays listed even when excluded, so the select never
+  // shows a currency the invoice doesn't have.
+  const options = currencyOptions.filter(
+    option =>
+      option.symbol === selected ||
+      !exclude ||
+      !isSameCurrency(exclude, {
+        currency: option.symbol,
+        currencyCode: option.code
+      })
+  );
 
   // A preset stores its symbol and its default ISO code together, so a bare
   // "$" still carries an explicit code the user can override.
@@ -178,7 +186,7 @@ function CurrencyPicker({
             onChange={event => handleChange(event.target.value)}
             className={cn(inspectorFieldClassName, "pr-7")}
           >
-            {currencyOptions.map(({ symbol, code, label: name }) => (
+            {options.map(({ symbol, code, label: name }) => (
               <option key={symbol} value={symbol}>
                 {`${getCurrencyMarker(symbol)} ${name} · ${code}`}
               </option>
@@ -195,6 +203,11 @@ function CurrencyPicker({
         onOpenChange={setCustomOpen}
         currentSymbol={selected}
         currentCode={isCustom ? currencyCode : ""}
+        title={customTitle}
+        isTaken={(symbol, code) =>
+          exclude !== undefined &&
+          isSameCurrency(exclude, { currency: symbol, currencyCode: code })
+        }
         onSubmit={onChange}
       />
     </>

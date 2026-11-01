@@ -74,7 +74,7 @@ function PricingRowToggle({
       aria-pressed={active}
       onClick={onClick}
       className={cn(
-        "hover:bg-paper-muted focus-visible:ring-ring shrink-0 rounded px-1.5 py-0.5 text-xs transition-[color,opacity] outline-none focus-visible:ring-1",
+        "hover:bg-paper-muted focus-visible:ring-ring absolute top-1/2 right-full mr-1 shrink-0 -translate-y-1/2 rounded px-1.5 py-0.5 text-xs whitespace-nowrap transition-[color,opacity] outline-none focus-visible:ring-1",
         active
           ? "text-paper-foreground"
           : "text-paper-muted-foreground opacity-0 group-focus-within/pricing-row:opacity-100 group-hover/pricing-row:opacity-100 pointer-coarse:opacity-100"
@@ -209,26 +209,31 @@ function TaxRow() {
 
   return (
     <div className="group/pricing-row ml-auto flex w-1/3 items-center justify-end gap-1 text-sm group-data-converted/pricing:w-1/2">
-      <PricingRowToggle
-        label="Toggle tax exempt"
-        active={tax.exempt}
-        onClick={() => setTax(prev => ({ ...prev, exempt: !prev.exempt }))}
-      >
-        {tax.exempt ? "Exempt" : "%"}
-      </PricingRowToggle>
       <div
         className="flex w-full items-center"
         style={{ justifyContent: labelSettings.align }}
       >
-        <InvoiceInput
-          aria-label="Tax label"
-          data-field="labels.tax"
-          value={labels.tax}
-          onChange={value => setLabels(prev => ({ ...prev, tax: value }))}
-          className="field-sizing-content w-auto min-w-fit pr-0.5"
-          style={getTextStyles({ settings: labelSettings, remove: ["align"] })}
-          placeholder="Tax"
-        />
+        <span className="relative flex items-center">
+          <PricingRowToggle
+            label="Toggle tax exempt"
+            active={tax.exempt}
+            onClick={() => setTax(prev => ({ ...prev, exempt: !prev.exempt }))}
+          >
+            {tax.exempt ? "Exempt" : "%"}
+          </PricingRowToggle>
+          <InvoiceInput
+            aria-label="Tax label"
+            data-field="labels.tax"
+            value={labels.tax}
+            onChange={value => setLabels(prev => ({ ...prev, tax: value }))}
+            className="field-sizing-content w-auto min-w-fit pr-0.5"
+            style={getTextStyles({
+              settings: labelSettings,
+              remove: ["align"]
+            })}
+            placeholder="Tax"
+          />
+        </span>
         {!tax.exempt && (
           <span className="flex items-center">
             <InvoiceInput
@@ -347,26 +352,35 @@ function DiscountsRow() {
 
   return (
     <div className="group/pricing-row ml-auto flex w-1/3 items-center justify-end gap-1 text-sm group-data-converted/pricing:w-1/2">
-      <PricingRowToggle
-        label="Toggle discount type"
-        active={isPercentage}
-        onClick={() => setDiscountType(isPercentage ? "fixed" : "percentage")}
-      >
-        {isPercentage ? "%" : currencySymbol}
-      </PricingRowToggle>
       <div
         className="flex w-full items-center"
         style={{ justifyContent: labelSettings.align }}
       >
-        <InvoiceInput
-          aria-label="Discounts label"
-          data-field="labels.discounts"
-          value={labels.discounts}
-          onChange={value => setLabels(prev => ({ ...prev, discounts: value }))}
-          className="field-sizing-content w-auto min-w-fit pr-0.5"
-          style={getTextStyles({ settings: labelSettings, remove: ["align"] })}
-          placeholder="Discounts"
-        />
+        <span className="relative flex items-center">
+          <PricingRowToggle
+            label="Toggle discount type"
+            active={isPercentage}
+            onClick={() =>
+              setDiscountType(isPercentage ? "fixed" : "percentage")
+            }
+          >
+            {isPercentage ? "%" : currencySymbol}
+          </PricingRowToggle>
+          <InvoiceInput
+            aria-label="Discounts label"
+            data-field="labels.discounts"
+            value={labels.discounts}
+            onChange={value =>
+              setLabels(prev => ({ ...prev, discounts: value }))
+            }
+            className="field-sizing-content w-auto min-w-fit pr-0.5"
+            style={getTextStyles({
+              settings: labelSettings,
+              remove: ["align"]
+            })}
+            placeholder="Discounts"
+          />
+        </span>
         {isPercentage && (
           <span className="flex items-center">
             <InvoiceInput

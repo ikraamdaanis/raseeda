@@ -20,12 +20,16 @@ export function CustomCurrencyDialog({
   onOpenChange,
   currentSymbol,
   currentCode,
+  title = "Custom currency",
+  isTaken,
   onSubmit
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   currentSymbol: string;
   currentCode: string;
+  title?: string;
+  isTaken?: (symbol: string, code: string) => boolean;
   onSubmit: (symbol: string, code: string) => void;
 }) {
   const [value, setValue] = useState(currentSymbol);
@@ -39,11 +43,12 @@ export function CustomCurrencyDialog({
   }, [open, currentSymbol, currentCode]);
 
   const trimmed = value.trim();
+  const taken = isTaken?.(trimmed, code.trim().toUpperCase()) ?? false;
 
   function handleSubmit(event: FormEvent) {
     event.preventDefault();
 
-    if (!trimmed) return;
+    if (!trimmed || taken) return;
 
     onSubmit(trimmed, code.trim().toUpperCase());
     onOpenChange(false);
@@ -53,7 +58,7 @@ export function CustomCurrencyDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Custom currency</DialogTitle>
+          <DialogTitle>{title}</DialogTitle>
           <DialogDescription>
             Enter a symbol (up to 4 characters) and an optional ISO code to show
             on this invoice.
@@ -88,6 +93,11 @@ export function CustomCurrencyDialog({
               placeholder="ISO code, e.g. BTC (optional)"
               className="uppercase max-sm:text-base"
             />
+            {taken && (
+              <p className="text-destructive text-xs">
+                That’s already the invoice’s currency.
+              </p>
+            )}
           </div>
           <DialogFooter>
             <Button
@@ -97,7 +107,7 @@ export function CustomCurrencyDialog({
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={!trimmed}>
+            <Button type="submit" disabled={!trimmed || taken}>
               Save
             </Button>
           </DialogFooter>
