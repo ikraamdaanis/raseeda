@@ -482,7 +482,9 @@ Homepage (roles from `lib/type-scale.ts`, set at marketing values by
 `.home-type`):
 
 - **Display** (`homeDisplay`, the `display` role): the hero h1 and the closing
-  h2, two lines, both `ink`, growing fluidly from 32px to 60px.
+  h2, two lines, both `ink`, growing fluidly from 32px to 60px. The hero h1
+  opens with "Free invoice generator" in the Body compact step, Medium,
+  `brand-700`, 12px over the headline, so the heading names what the page is.
 - **Headline** (`homeHeadline`, the `title` role): section h2s, capped at 35ch,
   growing from 28px on phones to 36px by 672px so they stay a clear step below
   the hero's headline.
@@ -945,8 +947,8 @@ and `--ease-in-out-strong` (`cubic-bezier(0.77, 0, 0.175, 1)`) for movement
 inside the demos. Only transforms, opacity and filter animate.
 
 - **Hero entrance**, only when the homepage loads as a page: the two headline
-  lines, the lead and the pill row rise 8px into place as they fade in, over
-  600ms, 60ms apart; the editor window fades in over 700ms at 240ms, so the
+  lines (the line over them with the first), the lead and the pill row rise
+  8px into place as they fade in, over 600ms, 60ms apart; the editor window fades in over 700ms at 240ms, so the
   whole entrance is done inside a second. Opacity and translate only, never
   a blur, which repaints the big headline every frame and stutters while the
   page hydrates. Under reduced motion they only fade.

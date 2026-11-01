@@ -58,8 +58,13 @@ import { useOnScreen } from "~/hooks/use-on-screen";
 import { typeClass } from "~/lib/type-scale";
 import { cn } from "~/lib/utils";
 import { canUseStorage } from "~/utils/can-use-storage";
-import { canonicalLink, siteMeta, SOURCE_URL } from "~/utils/site-meta";
-import { HOME_STRUCTURED_DATA } from "~/utils/structured-data";
+import {
+  canonicalLink,
+  PAGE_META,
+  siteMeta,
+  SOURCE_URL
+} from "~/utils/site-meta";
+import { HOME_STRUCTURED_DATA, jsonLdScript } from "~/utils/structured-data";
 
 export const Route = createFileRoute("/")({
   component: HomePage,
@@ -70,9 +75,9 @@ export const Route = createFileRoute("/")({
   // for high priority: an image preload otherwise starts low and waits behind
   // the fonts.
   head: () => ({
-    meta: siteMeta({ path: "/" }),
+    meta: siteMeta(PAGE_META.home),
     links: [
-      canonicalLink("/"),
+      canonicalLink(PAGE_META.home.path),
       {
         rel: "preload",
         as: "image",
@@ -83,14 +88,7 @@ export const Route = createFileRoute("/")({
         fetchPriority: "high"
       }
     ],
-    // JSON-LD is data, never run. Escaping "<" keeps any text in it from
-    // closing the script tag early.
-    scripts: [
-      {
-        type: "application/ld+json",
-        children: JSON.stringify(HOME_STRUCTURED_DATA).replace(/</g, "\\u003c")
-      }
-    ]
+    scripts: [jsonLdScript(HOME_STRUCTURED_DATA)]
   })
 });
 
@@ -356,8 +354,10 @@ function SectionHeading({
 // The hero is a sky from behind the header (the section pulls up under it) to
 // the editor window's cut: inset from the viewport with rounded corners from
 // `lg`, and running to the screen's edges below it. The copy sits centred on
-// it and the window rises from its foot. The copy rises into place line by
-// line, 60ms apart, then the editor window fades in. On phones the copy and
+// it and the window rises from its foot. The h1 opens with what the page is,
+// a small line over the headline, so the heading search engines read names
+// the topic. The copy rises into place line by line, 60ms apart (that line
+// with the first), then the editor window fades in. On phones the copy and
 // buttons sit on the left, in line with the editor window's crop below them;
 // from `sm` they are centred over the whole window.
 function Hero() {
@@ -371,6 +371,14 @@ function Hero() {
       >
         <div className="flex flex-col items-start gap-5 sm:items-center">
           <h1 className={cn(HEADING, typeClass("display"))}>
+            <span
+              className={cn(
+                CONTROL_TEXT,
+                "hero-focus text-brand-700 mb-3 block tracking-normal"
+              )}
+            >
+              Free invoice generator
+            </span>
             <span className="hero-focus block">Make the invoice.</span>
             <span className="hero-focus block [animation-delay:60ms]">
               Keep your data.
@@ -396,8 +404,8 @@ function Hero() {
                 aria-hidden="true"
               />
             </a>{" "}
-            invoice maker that runs in your browser. No account, and nothing you
-            type is uploaded.
+            invoice maker for freelancers that runs in your browser. No sign-up,
+            and nothing you type is uploaded.
           </p>
         </div>
         <div
@@ -496,17 +504,34 @@ function PdfPaper({ render }: { render: typeof PDF_RENDERS.hero }) {
   );
 }
 
+// The width the hero's page is drawn at on each screen, as `sizes`. The
+// window is laid out at HERO_WINDOW's width and scaled into its frame, so the
+// page shows at PAGE_WIDTH times that scale. Phones fit 834px of the window
+// (HERO_FRAME) into the column: the viewport less 48px of gutters and 12px of
+// bezel. Tablets draw the window at a fixed zoom, 0.65 from `sm` and 0.75 from
+// `md`. From `lg` the whole window fits the column: the sky's width (the
+// viewport less its 24px inset, HeroSky) up to 1152px, less 64px of gutters
+// and 16px of bezel.
+const HERO_PAGE_SIZES = [
+  `(min-width: 1176px) ${Math.ceil((PAGE_WIDTH * (1152 - 80)) / HERO_WINDOW.width)}px`,
+  `(min-width: 1024px) calc((100vw - 104px) * ${(PAGE_WIDTH / HERO_WINDOW.width).toFixed(4)})`,
+  `(min-width: 768px) ${Math.ceil(PAGE_WIDTH * 0.75)}px`,
+  `(min-width: 640px) ${Math.ceil(PAGE_WIDTH * 0.65)}px`,
+  `calc((100vw - 60px) * ${(PAGE_WIDTH / 834).toFixed(4)})`
+].join(", ");
+
 // A render's <img> attributes. It is laid out at the page's CSS width before
-// the frame scales it, so `sizes` is that width, and the browser picks the
-// file for its pixel density from there: the narrower one on a standard
-// screen, the wider on a dense one.
+// the frame scales it down, so `sizes` gives the width it is drawn at instead,
+// and the browser picks the file for that width and the screen's pixel
+// density: the narrower one on most phones and standard screens, the wider on
+// dense ones.
 function pdfPicture(render: typeof PDF_RENDERS.hero) {
   const width = Math.max(...render.widths);
 
   return {
     src: renderSrc(render, width),
     srcSet: renderSrcSet(render),
-    sizes: `${PAGE_WIDTH}px`,
+    sizes: HERO_PAGE_SIZES,
     width
   };
 }

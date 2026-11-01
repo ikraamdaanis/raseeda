@@ -61,7 +61,10 @@ function roleStyle(
  * tan(atan2(a, b)) turns the ratio of two lengths into a number. Once
  * hydrated the frame measures itself into `--measured-width` instead: iOS
  * Safari resolves that 100cqw before a flex item grows and never updates it,
- * which left grown frames drawn tiny.
+ * which left grown frames drawn tiny. What it shows is a picture of the editor
+ * full of sample invoices, so it is hidden from assistive tech and kept out
+ * of search snippets (data-nosnippet, which Google reads from the server's
+ * HTML on a div).
  */
 export function ScaledFrame({
   frame,
@@ -99,6 +102,7 @@ export function ScaledFrame({
       ref={frameRef}
       aria-hidden="true"
       inert
+      data-nosnippet
       className={cn("@container relative w-full overflow-hidden", className)}
       style={
         {
@@ -507,7 +511,9 @@ function SegmentedReplica({
   );
 }
 
-// Mirrors components/editor/shell/editor-top-bar.tsx.
+// Mirrors components/editor/shell/editor-top-bar.tsx. The logo is marked low
+// priority, which also stops React's server render adding a preload for it
+// ahead of the hero's invoice.
 function EditorTopBar({ documentName }: { documentName: string }) {
   return (
     <div
@@ -516,7 +522,12 @@ function EditorTopBar({ documentName }: { documentName: string }) {
     >
       <div className="flex min-w-0 items-center gap-1">
         <span className="text-muted-foreground flex h-8 items-center gap-0.5 rounded-md pr-1 pl-0.5">
-          <img src="/favicon.svg" alt="" className="size-6 rounded-[6px]" />
+          <img
+            src="/favicon.svg"
+            alt=""
+            fetchPriority="low"
+            className="size-6 rounded-[6px]"
+          />
           <IconChevronDown aria-hidden="true" className="size-3.5" />
         </span>
         <span className="text-foreground flex size-7 items-center justify-center">
