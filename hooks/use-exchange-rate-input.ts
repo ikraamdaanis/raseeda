@@ -15,6 +15,12 @@ function normalizeRateInput(value: string): string {
   return String(round(Number(`${whole}.${decimals}`), 6));
 }
 
+// The rate a draft stands for. A lone "." on the way to ".78" is none yet,
+// not NaN.
+function parseRate(draft: string) {
+  return Number(draft) || 0;
+}
+
 // A set rate written as it prints, "1.20"; none is an empty field.
 function formatRateInput(rate: number) {
   return rate ? formatExchangeRate(rate) : "";
@@ -31,7 +37,7 @@ export function useExchangeRateInput() {
 
   useEffect(() => {
     setDraft(current =>
-      Number(current || 0) === currencyConversion.rate
+      parseRate(current) === currencyConversion.rate
         ? current
         : formatRateInput(currencyConversion.rate)
     );
@@ -41,7 +47,7 @@ export function useExchangeRateInput() {
     const rate = normalizeRateInput(value);
 
     setDraft(rate);
-    setCurrencyConversion(prev => ({ ...prev, rate: Number(rate) }));
+    setCurrencyConversion(prev => ({ ...prev, rate: parseRate(rate) }));
   }
 
   function onBlur() {
