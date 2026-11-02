@@ -1,4 +1,4 @@
-import { formatCurrency, formatCurrencyWithCode } from "~/consts/currencies";
+import { formatCurrency } from "~/consts/currencies";
 import type {
   CurrencyConversion,
   Invoice,
@@ -16,6 +16,7 @@ import {
 } from "~/utils/calculate-invoice-totals";
 import {
   formatConvertedAmount,
+  formatDeduction,
   formatInvoiceTotal,
   getCurrencyConversion,
   withConvertedAmount
@@ -154,7 +155,11 @@ function buildSummaryRows(input: {
     {
       id: "discounts",
       label: labels.discounts,
-      value: `-${formatCurrency(input.discountAmount, currency)}`,
+      value: formatDeduction({
+        amount: input.discountAmount,
+        currency,
+        conversion
+      }),
       percentage:
         input.discountType === "percentage" ? input.discountValue : undefined,
       isVisible: sections.discounts && input.discountValue > 0,
@@ -178,7 +183,11 @@ function buildSummaryRows(input: {
     {
       id: "fees",
       label: labels.fees,
-      value: formatCurrency(input.fees, currency),
+      value: withConvertedAmount(
+        formatCurrency(input.fees, currency),
+        input.fees,
+        conversion
+      ),
       isVisible: sections.fees && input.fees > 0,
       isTotal: false
     },
@@ -199,18 +208,23 @@ function buildSummaryRows(input: {
     {
       id: "amountPaid",
       label: labels.amountPaid,
-      value: `-${formatCurrency(input.amountPaid, currency)}`,
+      value: formatDeduction({
+        amount: input.amountPaid,
+        currency,
+        conversion
+      }),
       isVisible: hasPayment,
       isTotal: false
     },
     {
       id: "balanceDue",
       label: labels.balanceDue,
-      value: formatCurrencyWithCode(
-        input.balanceDue,
+      value: formatInvoiceTotal({
+        amount: input.balanceDue,
         currency,
-        input.currencyCode
-      ),
+        currencyCode: input.currencyCode,
+        conversion
+      }),
       isVisible: hasPayment,
       isTotal: hasPayment
     }

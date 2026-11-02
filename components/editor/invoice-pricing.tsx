@@ -1,7 +1,7 @@
 import type { CSSProperties, ReactNode } from "react";
 import { useEffect, useState } from "react";
 import { InvoiceInput } from "~/components/editor/invoice-input";
-import { formatCurrency, formatCurrencyWithCode } from "~/consts/currencies";
+import { formatCurrency } from "~/consts/currencies";
 import { useCurrencyConversion } from "~/hooks/use-currency-conversion";
 import { useIsPreview, useShownSections } from "~/hooks/use-shown-sections";
 import { cn } from "~/lib/utils";
@@ -12,6 +12,7 @@ import {
   useTheme
 } from "~/stores/invoice-selectors";
 import {
+  formatDeduction,
   formatInvoiceTotal,
   withConvertedAmount
 } from "~/utils/currency-conversion";
@@ -297,6 +298,7 @@ function FeesRow() {
   const labelSettings = getRoleSettings(theme, "totalsLabel");
   const valueSettings = getRoleSettings(theme, "totalsValue");
 
+  const conversion = useCurrencyConversion();
   const [feesInput, setFeesInput] = usePricingInput(fees);
 
   return (
@@ -319,6 +321,11 @@ function FeesRow() {
           field="fees"
           input={feesInput}
           amount={fees}
+          display={withConvertedAmount(
+            formatCurrency(fees, currency),
+            fees,
+            conversion
+          )}
           currency={currency}
           currencySymbol={currencySymbol}
           style={getTextStyles({ settings: valueSettings })}
@@ -349,6 +356,7 @@ function DiscountsRow() {
   const labelSettings = getRoleSettings(theme, "totalsLabel");
   const valueSettings = getRoleSettings(theme, "totalsValue");
 
+  const conversion = useCurrencyConversion();
   const [discountsInput, setDiscountsInput] = usePricingInput(discounts);
   const isPercentage = discountType === "percentage";
 
@@ -412,7 +420,7 @@ function DiscountsRow() {
           className="whitespace-nowrap"
           style={getTextStyles({ settings: valueSettings })}
         >
-          {`-${formatCurrency(discountAmount, currency)}`}
+          {formatDeduction({ amount: discountAmount, currency, conversion })}
         </span>
       ) : (
         <span
@@ -426,8 +434,16 @@ function DiscountsRow() {
             amount={discounts}
             display={
               discountAmount > 0
-                ? `-${formatCurrency(discountAmount, currency)}`
-                : undefined
+                ? formatDeduction({
+                    amount: discountAmount,
+                    currency,
+                    conversion
+                  })
+                : withConvertedAmount(
+                    formatCurrency(discounts, currency),
+                    discounts,
+                    conversion
+                  )
             }
             currency={currency}
             currencySymbol={currencySymbol}
@@ -502,6 +518,7 @@ function AmountPaidRow() {
   const labelSettings = getRoleSettings(theme, "totalsLabel");
   const valueSettings = getRoleSettings(theme, "totalsValue");
 
+  const conversion = useCurrencyConversion();
   const [amountPaidInput, setAmountPaidInput] = usePricingInput(amountPaid);
 
   return (
@@ -526,8 +543,12 @@ function AmountPaidRow() {
           amount={amountPaid}
           display={
             amountPaid > 0
-              ? `-${formatCurrency(amountPaid, currency)}`
-              : undefined
+              ? formatDeduction({ amount: amountPaid, currency, conversion })
+              : withConvertedAmount(
+                  formatCurrency(amountPaid, currency),
+                  amountPaid,
+                  conversion
+                )
           }
           currency={currency}
           currencySymbol={currencySymbol}
@@ -549,6 +570,7 @@ function BalanceDueRow() {
   const { amountPaid, currency, currencyCode, labels, setLabels } =
     usePricingSlice();
   const { balanceDue } = useInvoiceTotals();
+  const conversion = useCurrencyConversion();
   const theme = useTheme();
   const labelSettings = getRoleSettings(theme, "grandTotalLabel");
   const valueSettings = getRoleSettings(theme, "grandTotalValue");
@@ -573,7 +595,12 @@ function BalanceDueRow() {
         className="text-right font-bold whitespace-nowrap"
         style={getTextStyles({ settings: valueSettings })}
       >
-        {formatCurrencyWithCode(balanceDue, currency, currencyCode)}
+        {formatInvoiceTotal({
+          amount: balanceDue,
+          currency,
+          currencyCode,
+          conversion
+        })}
       </span>
     </div>
   );

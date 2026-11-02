@@ -112,7 +112,26 @@ export function withConvertedAmount(
   return `${value} / ${formatConvertedAmount(amount, conversion)}`;
 }
 
-// The grand total. On its own it carries its code, "£7,150.00 GBP", since a
+// A deduction (a discount, a payment), in both currencies beside a second
+// one: "-£500.00 / -$643.75".
+export function formatDeduction({
+  amount,
+  currency,
+  conversion
+}: {
+  amount: number;
+  currency: string;
+  conversion: CurrencyConversion | null;
+}): string {
+  const value = `-${formatCurrency(amount, currency)}`;
+
+  if (!conversion) return value;
+
+  return `${value} / -${formatConvertedAmount(amount, conversion)}`;
+}
+
+// The grand total, and the balance due that takes its place once a payment is
+// recorded. On its own it carries its code, "£7,150.00 GBP", since a
 // symbol like "$" can stand for several currencies. Beside a second currency
 // it doesn't, "£7,150.00 / $9,205.63": the column headers and the rate line
 // already name both.
