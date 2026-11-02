@@ -405,7 +405,7 @@ function Hero() {
               />
             </a>{" "}
             invoice maker for freelancers that runs in your browser. No sign-up,
-            and nothing you type is uploaded.
+            and your invoices are never uploaded.
           </p>
         </div>
         <div

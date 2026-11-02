@@ -182,6 +182,19 @@ describe("track", () => {
     ]);
   });
 
+  it("reads utm_source when ref is empty", async () => {
+    const sendBeacon = stubPage({
+      url: "https://raseeda.com/?ref=&utm_source=chatgpt.com"
+    });
+    const { trackPageView } = await loadTrack();
+
+    trackPageView("/");
+
+    expect(sentBodies(sendBeacon)).toEqual([
+      "page_view / r=direct s=chatgpt l=en d=browser"
+    ]);
+  });
+
   it("reads the source from utm_source when there's no ref", async () => {
     const sendBeacon = stubPage({
       url: "https://raseeda.com/?utm_source=chatgpt.com"

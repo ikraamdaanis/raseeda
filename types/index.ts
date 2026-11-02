@@ -1,9 +1,5 @@
 import type {
   ANALYTICS_EVENTS,
-  CURRENCIES,
-  DISPLAY_MODES,
-  LANGUAGES,
-  LIBRARY_SIZES,
   PAGE_VIEW_PATHS,
   REFERRERS,
   SOURCES
@@ -367,19 +363,10 @@ export type AnalyticsEvent = (typeof ANALYTICS_EVENTS)[number];
 
 export type PageViewPath = (typeof PAGE_VIEW_PATHS)[number];
 
-// The buckets the browser reduces a visit's origin, language, display mode and
-// library to before an event is sent (utils/track.ts).
+// The kinds of site a visit is counted as coming from (utils/traffic-source.ts).
 export type Referrer = (typeof REFERRERS)[number];
 
 export type TrafficSource = (typeof SOURCES)[number];
-
-export type BrowserLanguage = (typeof LANGUAGES)[number];
-
-export type CountedCurrency = (typeof CURRENCIES)[number];
-
-export type DisplayMode = (typeof DISPLAY_MODES)[number];
-
-export type LibrarySize = (typeof LIBRARY_SIZES)[number];
 
 // The buckets a User-Agent is reduced to; the User-Agent itself is never kept.
 export type BrowserFamily =

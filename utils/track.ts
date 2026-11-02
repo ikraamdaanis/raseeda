@@ -1,14 +1,6 @@
+import type { DISPLAY_MODES, LIBRARY_SIZES } from "~/consts/analytics-events";
 import { CURRENCIES, LANGUAGES, SECTION_BITS } from "~/consts/analytics-events";
-import type {
-  BrowserLanguage,
-  CountedCurrency,
-  DisplayMode,
-  Invoice,
-  LibrarySize,
-  PageViewPath,
-  Referrer,
-  TrafficSource
-} from "~/types";
+import type { Invoice, PageViewPath, Referrer, TrafficSource } from "~/types";
 import { getPrintedSections } from "~/utils/section-visibility";
 import { bucketReferrer, bucketSource } from "~/utils/traffic-source";
 
@@ -112,7 +104,9 @@ function getChannel() {
 function landingSource() {
   const params = new URLSearchParams(location.search);
 
-  return bucketSource(params.get("ref") ?? params.get("utm_source"));
+  return (
+    bucketSource(params.get("ref")) ?? bucketSource(params.get("utm_source"))
+  );
 }
 
 // A load reached by following a link or typing the address, rather than by
@@ -129,7 +123,7 @@ function deviceFields() {
   return { l: browserLanguage(), d: displayMode() };
 }
 
-function browserLanguage(): BrowserLanguage {
+function browserLanguage(): (typeof LANGUAGES)[number] {
   const [subtag] = navigator.language.toLowerCase().split("-");
 
   return LANGUAGES.find(known => known === subtag) ?? "other";
@@ -137,7 +131,7 @@ function browserLanguage(): BrowserLanguage {
 
 // iOS before 16.4 doesn't support the display-mode query, but says whether
 // the page was opened from the home screen.
-function displayMode(): DisplayMode {
+function displayMode(): (typeof DISPLAY_MODES)[number] {
   const isStandalone =
     (typeof matchMedia === "function" &&
       matchMedia("(display-mode: standalone)").matches) ||
@@ -146,7 +140,7 @@ function displayMode(): DisplayMode {
   return isStandalone ? "standalone" : "browser";
 }
 
-function countedCurrency(code: string): CountedCurrency {
+function countedCurrency(code: string): (typeof CURRENCIES)[number] {
   const upper = code.trim().toUpperCase();
 
   return CURRENCIES.find(known => known === upper) ?? "other";
@@ -165,7 +159,7 @@ function sectionMask(invoice: Invoice) {
 // Roughly how many invoices are saved here. Only the editor's events read it,
 // where the database is open already; importing it here keeps the database
 // code off the other pages, which must never open it just to count.
-async function librarySize(): Promise<LibrarySize> {
+async function librarySize(): Promise<(typeof LIBRARY_SIZES)[number]> {
   try {
     const { countInvoices } = await import("~/db");
     const count = await countInvoices();

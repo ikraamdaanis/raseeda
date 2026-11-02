@@ -14,9 +14,9 @@ import {
 import type { AnalyticsEvent } from "~/types";
 import { bucketUserAgent, isBotUserAgent } from "~/utils/user-agent";
 
-// The longest body an event can have is 82 bytes ("pdf_opened r=producthunt
-// s=producthunt l=other d=browser c=other n=unknown x=16383"). A
-// longer one isn't an event, so it's dropped without being read in full.
+// The longest body an event can have is 89 bytes ("pdf_downloaded
+// r=producthunt s=producthunt l=other d=standalone c=other n=unknown
+// x=32767"). A longer one isn't an event, so it's dropped without being read in full.
 const MAX_BODY_BYTES = 128;
 
 // The values each field may take. Anything else drops the event, so nothing
