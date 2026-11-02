@@ -8,10 +8,10 @@ import { pdfRoleStyle } from "~/utils/pdf-styles";
 // value share a size, so the rows of the two columns line up. A label stays on
 // one line, as it is in the editor, so the rows can't drift apart: one wider
 // than half the page ends in an ellipsis rather than running off its edge.
+// The table's bottom margin spaces the totals, the same 20pt the details
+// leave above the table.
 const styles = StyleSheet.create({
   totalSection: {
-    marginTop: 20,
-    paddingTop: 10,
     alignItems: "flex-end"
   },
   columns: {
