@@ -41,7 +41,7 @@ import {
   parseLibraryView,
   sortInvoices
 } from "~/utils/invoice-library";
-import { parseIsoDate } from "~/utils/parse-iso-date";
+import { readInvoiceDate } from "~/utils/read-invoice-date";
 
 type LibraryTab = "invoices" | "templates";
 
@@ -315,7 +315,7 @@ function InvoiceList({
 // it's due for a due-date sort, when it was edited for the default sort).
 function invoiceMeta(document: InvoiceDocument, view: InvoiceLibraryView) {
   const { number, dueDate } = document.invoiceData;
-  const due = formatLibraryDate(parseIsoDate(dueDate));
+  const due = formatLibraryDate(readInvoiceDate(dueDate));
   const edited = formatLibraryDate(document.updatedAt);
   const date =
     view.sort === "dueDate" && due

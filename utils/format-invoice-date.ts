@@ -1,15 +1,15 @@
 import { format, isSameDay, isSameMonth, isSameYear } from "date-fns";
 import type { Invoice } from "~/types";
-import { parseIsoDateRange } from "~/utils/parse-iso-date";
+import { readInvoiceDateRange } from "~/utils/read-invoice-date";
 
-// Writes a stored yyyy-MM-dd date, or a yyyy-MM-dd/yyyy-MM-dd range, the way
-// the invoice asks. Anything that isn't a valid date (a half-typed or legacy
-// value) is shown as it is.
+// Writes a date or range the way the invoice asks, whether it was picked or
+// typed by hand before the field had a calendar. Anything that doesn't read as
+// a date is shown as it is.
 export function formatInvoiceDate(
   value: string,
   dateFormat: Invoice["dateFormat"]
 ): string {
-  const range = parseIsoDateRange(value);
+  const range = readInvoiceDateRange(value);
 
   if (!range) return value;
 
@@ -30,7 +30,7 @@ export function formatServicePeriod(
   value: string,
   dateFormat: Invoice["dateFormat"]
 ): string {
-  const range = parseIsoDateRange(value);
+  const range = readInvoiceDateRange(value);
 
   if (!range) return value;
 

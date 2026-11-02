@@ -14,7 +14,10 @@ import { cn } from "~/lib/utils";
 import { useInvoiceStore } from "~/stores/invoice-store";
 import type { Invoice } from "~/types";
 import { formatInvoiceDate } from "~/utils/format-invoice-date";
-import { parseIsoDate, parseIsoDateRange } from "~/utils/parse-iso-date";
+import {
+  readInvoiceDate,
+  readInvoiceDateRange
+} from "~/utils/read-invoice-date";
 
 // A date on the page: written in the invoice's date format, and picked from a
 // calendar rather than typed, so it's always a real date. A field that allows
@@ -46,8 +49,8 @@ export function InvoiceDateField({
   const [rangeStart, setRangeStart] = useState<Date | null>(null);
   const textId = useId();
   const isPreview = useIsPreview();
-  const selected = parseIsoDate(value) ?? undefined;
-  const selectedRange = parseIsoDateRange(value) ?? undefined;
+  const selected = readInvoiceDate(value) ?? undefined;
+  const selectedRange = readInvoiceDateRange(value) ?? undefined;
   const text = value ? formatValue(value, dateFormat) : "";
 
   function handleOpenChange(nextOpen: boolean) {

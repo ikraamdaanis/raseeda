@@ -57,8 +57,18 @@ describe("invoice dates", () => {
     expect(formatInvoiceDate("2026-10-31/2026-10-01", "d MMM yyyy")).toBe(
       "2026-10-31/2026-10-01"
     );
+    expect(formatInvoiceDate("2026-10-07T00:00:00.000Z", "d MMM yyyy")).toBe(
+      "2026-10-07T00:00:00.000Z"
+    );
+  });
+
+  it("rewrites a date typed by hand in the invoice's format", () => {
+    expect(formatInvoiceDate("31 October 2026", "d MMM yyyy")).toBe(
+      "31 Oct 2026"
+    );
+    expect(formatInvoiceDate("Oct 31, 2026", "dd/MM/yyyy")).toBe("31/10/2026");
     expect(formatInvoiceDate("1–31 October 2026", "d MMM yyyy")).toBe(
-      "1–31 October 2026"
+      "1–31 Oct 2026"
     );
   });
 
@@ -101,6 +111,15 @@ describe("invoice dates", () => {
 
   it("leaves a typed service period as it is", () => {
     expect(formatServicePeriod("Q3 2026", "d MMM yyyy")).toBe("Q3 2026");
+  });
+
+  it("rewrites a service period typed as a range in full months", () => {
+    expect(formatServicePeriod("1-30 Sep 2026", "d MMM yyyy")).toBe(
+      "1–30 September 2026"
+    );
+    expect(formatServicePeriod("Oct 1–31, 2026", "MMMM d, yyyy")).toBe(
+      "October 1–31, 2026"
+    );
   });
 
   it("prints the service period in full months on the PDF", () => {

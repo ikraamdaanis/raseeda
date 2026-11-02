@@ -27,6 +27,11 @@ describe("payment terms", () => {
   it("returns null for a date it can't read", () => {
     expect(addDaysToIsoDate("", 7)).toBeNull();
   });
+
+  it("reads dates typed by hand before the fields had calendars", () => {
+    expect(getPaymentTermsDays("1 July 2026", "31 Jul 2026")).toBe(30);
+    expect(addDaysToIsoDate("1 July 2026", 7)).toBe("2026-07-08");
+  });
 });
 
 describe("moving the invoice date", () => {

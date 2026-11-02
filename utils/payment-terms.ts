@@ -1,5 +1,5 @@
 import { addDays, differenceInCalendarDays, format } from "date-fns";
-import { parseIsoDate } from "~/utils/parse-iso-date";
+import { readInvoiceDate } from "~/utils/read-invoice-date";
 
 // Payment terms aren't stored: they're read off the gap between the invoice
 // date and the due date, and choosing one writes the due date. Any other gap
@@ -15,13 +15,13 @@ export const PAYMENT_TERMS: { days: number; label: string }[] = [
 const ISO_DATE_FORMAT = "yyyy-MM-dd";
 
 // The preset matching the two dates, or null when they match none of them (or
-// either date isn't a valid yyyy-MM-dd).
+// either isn't a date).
 export function getPaymentTermsDays(
   invoiceDate: string,
   dueDate: string
 ): number | null {
-  const start = parseIsoDate(invoiceDate);
-  const end = parseIsoDate(dueDate);
+  const start = readInvoiceDate(invoiceDate);
+  const end = readInvoiceDate(dueDate);
 
   if (!start || !end) return null;
 
@@ -50,7 +50,7 @@ export function dueDateForNewInvoiceDate({
 
 // The yyyy-MM-dd date `days` after `isoDate`, or null if it isn't a date.
 export function addDaysToIsoDate(isoDate: string, days: number): string | null {
-  const date = parseIsoDate(isoDate);
+  const date = readInvoiceDate(isoDate);
 
   return date ? format(addDays(date, days), ISO_DATE_FORMAT) : null;
 }

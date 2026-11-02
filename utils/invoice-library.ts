@@ -21,7 +21,7 @@ import type {
   SortDirection
 } from "~/types";
 import { calculateInvoiceTotals } from "~/utils/calculate-invoice-totals";
-import { parseIsoDate } from "~/utils/parse-iso-date";
+import { readInvoiceDate } from "~/utils/read-invoice-date";
 
 // Sorting, filtering and grouping for the saved-invoice lists (the invoices
 // panel and the Open Invoice dialog), kept pure so both lists agree and the
@@ -92,13 +92,13 @@ export function getInvoiceDate(document: InvoiceDocument): Date | null {
   const fallback = new Date(document.updatedAt);
 
   return (
-    parseIsoDate(document.invoiceData.invoiceDate) ??
+    readInvoiceDate(document.invoiceData.invoiceDate) ??
     (isValid(fallback) ? fallback : null)
   );
 }
 
 function getDueDate(document: InvoiceDocument): Date | null {
-  return parseIsoDate(document.invoiceData.dueDate);
+  return readInvoiceDate(document.invoiceData.dueDate);
 }
 
 // A stored timestamp, or null when it isn't a real date.

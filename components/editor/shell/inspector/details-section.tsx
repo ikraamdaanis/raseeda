@@ -35,13 +35,13 @@ import {
 } from "~/stores/invoice-selectors";
 import { isSameCurrency } from "~/utils/currency-conversion";
 import { formatInvoiceDate } from "~/utils/format-invoice-date";
-import { parseIsoDate } from "~/utils/parse-iso-date";
 import {
   addDaysToIsoDate,
   dueDateForNewInvoiceDate,
   getPaymentTermsDays,
   PAYMENT_TERMS
 } from "~/utils/payment-terms";
+import { readInvoiceDate } from "~/utils/read-invoice-date";
 
 const CUSTOM_CURRENCY = "__custom";
 const CUSTOM_TERMS = "custom";
@@ -345,7 +345,7 @@ function InspectorDatePicker({
 }) {
   const { dateFormat } = useDetailsSlice();
   const [open, setOpen] = useState(false);
-  const selected = parseIsoDate(value) ?? undefined;
+  const selected = readInvoiceDate(value) ?? undefined;
   const text = value ? formatInvoiceDate(value, dateFormat) : "";
   const textId = useId();
 
@@ -406,7 +406,7 @@ function DatesRows() {
     useDetailsSlice();
   const termsDays = getPaymentTermsDays(invoiceDate, dueDate);
   // Terms count from the issue date, so they wait until there is one.
-  const hasIssueDate = parseIsoDate(invoiceDate) !== null;
+  const hasIssueDate = readInvoiceDate(invoiceDate) !== null;
 
   // Moving the invoice date keeps a preset's gap, so Net 30 stays Net 30.
   function handleInvoiceDateChange(value: string) {
