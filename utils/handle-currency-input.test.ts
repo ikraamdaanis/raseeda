@@ -28,8 +28,11 @@ describe("handleCurrencyInput", () => {
     expect(handleCurrencyInput("0.42")).toBe("0.42");
   });
 
-  it("returns '0' for empty or dot-only input", () => {
-    expect(handleCurrencyInput("")).toBe("0");
+  it("returns '' for a cleared field", () => {
+    expect(handleCurrencyInput("")).toBe("");
+  });
+
+  it("returns '0' for dot-only input", () => {
     expect(handleCurrencyInput(".")).toBe("0");
   });
 
@@ -55,8 +58,8 @@ describe("handleCurrencyInput", () => {
       expect(handleCurrencyInput("د.إ0.42", "د.إ")).toBe("0.42");
     });
 
-    it("returns '0' when only the symbol is present", () => {
-      expect(handleCurrencyInput("د.إ", "د.إ")).toBe("0");
+    it("returns '' when only the symbol is present", () => {
+      expect(handleCurrencyInput("د.إ", "د.إ")).toBe("");
     });
   });
 });

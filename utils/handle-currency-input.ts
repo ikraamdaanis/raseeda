@@ -1,7 +1,8 @@
 /**
  * Takes a string value and returns a formatted currency string.
  * Handles inputs like $124.34, 002343, etc.
- * Returns a valid number string 0 or greater without leading zeros.
+ * Returns a valid number string 0 or greater without leading zeros, or "" for
+ * a cleared field, which reads 0 once it loses focus.
  *
  * Pass `currencySymbol` when the value is prefixed with the symbol so it can be
  * stripped before sanitising. This matters for symbols that contain a literal
@@ -32,8 +33,10 @@ export function handleCurrencyInput(value: string, currencySymbol?: string) {
     numericValue = `${whole}.${decimal.slice(0, 2)}`;
   }
 
+  if (!numericValue) return "";
+
   // Handle leading zeros and edge cases
-  if (!numericValue || numericValue === "." || /^0+$/.test(numericValue)) {
+  if (numericValue === "." || /^0+$/.test(numericValue)) {
     return "0";
   }
 
