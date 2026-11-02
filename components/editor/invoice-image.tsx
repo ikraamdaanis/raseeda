@@ -140,7 +140,7 @@ export function InvoiceImage() {
               variant="outline"
               size="xs"
               aria-label="Remove invoice logo"
-              className="text-destructive hover:bg-destructive/10 hover:text-destructive shadow-menu absolute right-1.5 bottom-1.5 opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100 focus-visible:opacity-100 pointer-coarse:h-8 [@media(hover:none)]:opacity-100"
+              className="text-destructive hover:text-destructive shadow-menu absolute right-1.5 bottom-1.5 opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100 hover:bg-[color-mix(in_oklch,var(--background),var(--destructive)_10%)] focus-visible:opacity-100 pointer-coarse:h-8 [@media(hover:none)]:opacity-100"
               onClick={handleRemoveImage}
             >
               Remove
