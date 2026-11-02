@@ -47,6 +47,7 @@ import type {
 import { ensureItemIds } from "~/utils/ensure-item-ids";
 import { downloadBackupFile } from "~/utils/export-data";
 import { isBlankInvoice, isLargeRemoval } from "~/utils/invoice-content";
+import { describeCopyReview, prepareInvoiceCopy } from "~/utils/invoice-copy";
 import { deriveInvoiceName } from "~/utils/invoice-name";
 import { track } from "~/utils/track";
 
@@ -365,6 +366,11 @@ async function requestPersistentStorage() {
 }
 
 // The backup suggestion was dismissed or acted on: it doesn't come back.
+// Puts away the banner a duplicated invoice opens with.
+function dismissCopyReview() {
+  useDocumentStore.setState({ copyReview: null });
+}
+
 function dismissBackupReminder() {
   writeStorage("localStorage", BACKUP_REMINDER_KEY, new Date().toISOString());
   useDocumentStore.setState({ backupReminder: false });
@@ -934,24 +940,31 @@ function nextCopyName(name: string, takenNames: string[]) {
   return candidate;
 }
 
-// Copies a library invoice as a new one. A copy of an invoice with an
+// Copies a library invoice as the next one: the next number in its series,
+// dated today and unpaid (utils/invoice-copy.ts). A copy of an invoice with an
 // automatic name keeps an automatic name; a named one becomes "Name copy".
 async function copyInvoice(
   document: InvoiceDocument
 ): Promise<InvoiceDocument> {
   const now = new Date();
+  const library = await getAllInvoices();
+  const invoiceData = prepareInvoiceCopy({
+    invoice: ensureItemIds(structuredClone(document.invoiceData)),
+    takenNumbers: library.map(invoice => invoice.invoiceData.number),
+    today: now
+  });
   const name =
     document.nameSource === "user"
       ? nextCopyName(
           document.name,
-          (await getAllInvoices()).map(invoice => invoice.name)
+          library.map(invoice => invoice.name)
         )
-      : deriveInvoiceName(document.invoiceData);
+      : deriveInvoiceName(invoiceData);
   const copy: InvoiceDocument = {
     id: crypto.randomUUID(),
     name,
     nameSource: document.nameSource,
-    invoiceData: ensureItemIds(structuredClone(document.invoiceData)),
+    invoiceData,
     templateId: document.templateId,
     rev: 1,
     createdAt: now,
@@ -1010,6 +1023,18 @@ function duplicateCurrent(): Promise<InvoiceDocument | null> {
     if (!(await leaveCurrent())) return copy;
 
     await switchTo(sessionFromDocument(copy), copy.invoiceData);
+
+    const original = document.invoiceData.number.trim() || document.name;
+    const review = describeCopyReview(copy.invoiceData);
+
+    useDocumentStore.setState({
+      copyReview: {
+        documentId: copy.id,
+        message: review
+          ? `Copied from ${original}. Check ${review}.`
+          : `Copied from ${original} and dated today.`
+      }
+    });
 
     return copy;
   });
@@ -1675,6 +1700,7 @@ export const documentActions = {
   restoreVersion,
   downloadBackup,
   dismissBackupReminder,
+  dismissCopyReview,
   applyStartingFont,
   startInFont
 } as const;

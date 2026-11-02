@@ -419,6 +419,22 @@ describe("autosave", () => {
     expect(page.invoice().title).toBe("Copied content");
     expect(await page.getAllInvoices()).toHaveLength(2);
   });
+
+  it("numbers the copy as the next invoice and says what to check", async () => {
+    const page = await loadPage();
+
+    page.edit().setNumber("FRL-0014");
+    page.edit().setServicePeriod("October 2026");
+    await page.flushNow();
+
+    const copy = await page.duplicateCurrent();
+
+    expect(copy?.invoiceData.number).toBe("FRL-0015");
+    expect(page.documentState().copyReview).toEqual({
+      documentId: copy?.id,
+      message: "Copied from FRL-0014. Check the service period."
+    });
+  });
 });
 
 describe("save failures", () => {

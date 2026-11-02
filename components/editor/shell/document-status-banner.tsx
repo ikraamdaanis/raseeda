@@ -25,6 +25,8 @@ export function DocumentStatusBanner() {
     retrySave,
     downloadBackup,
     dismissBackupReminder,
+    copyReview,
+    dismissCopyReview,
     takeOver,
     keepDeletedCopy
   } = useInvoiceDocument();
@@ -94,6 +96,14 @@ export function DocumentStatusBanner() {
           download a backup
         </Action>
         .
+      </Banner>
+    );
+  }
+
+  if (copyReview) {
+    return (
+      <Banner tone="info" onDismiss={dismissCopyReview}>
+        {copyReview}
       </Banner>
     );
   }

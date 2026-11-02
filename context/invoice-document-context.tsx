@@ -73,16 +73,23 @@ export function useInvoiceDocument() {
     );
   }
 
-  const { documentId, isRecord, status, saveFailure, backupReminder } =
-    useDocumentStore(
-      useShallow(state => ({
-        documentId: state.documentId,
-        isRecord: state.isRecord,
-        status: state.status,
-        saveFailure: state.saveFailure,
-        backupReminder: state.backupReminder
-      }))
-    );
+  const {
+    documentId,
+    isRecord,
+    status,
+    saveFailure,
+    backupReminder,
+    copyReview
+  } = useDocumentStore(
+    useShallow(state => ({
+      documentId: state.documentId,
+      isRecord: state.isRecord,
+      status: state.status,
+      saveFailure: state.saveFailure,
+      backupReminder: state.backupReminder,
+      copyReview: state.copyReview
+    }))
+  );
 
   return {
     currentDocumentId: documentId,
@@ -93,6 +100,11 @@ export function useInvoiceDocument() {
     status,
     saveFailure,
     backupReminder,
+    // Shown only while the copy it was made for is open.
+    copyReview:
+      copyReview && copyReview.documentId === documentId
+        ? copyReview.message
+        : null,
     ...documentActions
   };
 }

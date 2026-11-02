@@ -34,6 +34,8 @@ type DocumentState = {
   // week unused, it refused to keep the app's storage, and nobody has
   // dismissed the suggestion yet.
   backupReminder: boolean;
+  // What to check on an invoice just duplicated, shown while it's open.
+  copyReview: { documentId: string; message: string } | null;
 };
 
 const documentDefault: DocumentState = {
@@ -43,7 +45,8 @@ const documentDefault: DocumentState = {
   nameSource: "auto",
   status: "editing",
   saveFailure: null,
-  backupReminder: false
+  backupReminder: false,
+  copyReview: null
 };
 
 export const useDocumentStore = create<DocumentState>()(
