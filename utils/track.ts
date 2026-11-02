@@ -22,6 +22,10 @@ let channel: Channel | undefined;
 // Whether this page load's first page view has been counted.
 let landingCounted = false;
 
+// Read as soon as the page starts, so a landing on a page that isn't counted
+// (one not found) still keeps its referrer and `?ref=` for the next page.
+if (typeof document !== "undefined") getChannel();
+
 // Counts one anonymous usage event (app/analytics-event.ts). Opening the
 // editor also says roughly how many invoices are saved, so first visits can be
 // told from returning ones.
@@ -90,11 +94,17 @@ function fields(values: Record<string, string>) {
     .join(" ");
 }
 
+// The installed app opens at the address it was installed from, `?ref=`
+// included, so its launches would each credit that source again; they count
+// as direct.
 function getChannel() {
-  channel ??= {
-    referrer: bucketReferrer(document.referrer, location.host),
-    source: landingSource()
-  };
+  channel ??=
+    displayMode() === "standalone"
+      ? { referrer: "direct", source: null }
+      : {
+          referrer: bucketReferrer(document.referrer, location.host),
+          source: landingSource()
+        };
 
   return channel;
 }

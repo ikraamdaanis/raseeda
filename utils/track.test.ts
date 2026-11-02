@@ -1,3 +1,4 @@
+import { mapValues } from "lodash-es";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { SECTION_BITS } from "~/consts/analytics-events";
 import { DEFAULT_INVOICE_SECTIONS } from "~/schema/invoice";
@@ -38,6 +39,7 @@ function stubPage({
   vi.stubGlobal("document", { referrer });
   vi.stubGlobal("location", location);
   vi.stubGlobal("matchMedia", () => ({ matches: standalone }));
+  // Only the navigation entry's type is read, so the stub has nothing else.
   vi.spyOn(performance, "getEntriesByType").mockReturnValue(
     navigationType
       ? [{ type: navigationType } as unknown as PerformanceEntry]
@@ -49,6 +51,11 @@ function stubPage({
 
 function sentBodies(sendBeacon: ReturnType<typeof stubPage>) {
   return sendBeacon.mock.calls.map(call => String(call.at(1)));
+}
+
+// Every invoice section switched on, or every one off.
+function allSections(isOn: boolean): Invoice["sections"] {
+  return mapValues(DEFAULT_INVOICE_SECTIONS, () => isOn);
 }
 
 function invoiceWith(changes: Partial<Invoice> = {}): Invoice {
@@ -136,6 +143,42 @@ describe("track", () => {
 
     expect(sentBodies(sendBeacon)).toEqual([
       "page_view / r=x s=- l=en d=browser"
+    ]);
+  });
+
+  it("keeps the landing's source when the first page isn't counted", async () => {
+    const sendBeacon = stubPage({
+      referrer: "https://www.google.com/",
+      url: "https://raseeda.com/old-link?ref=newsletter"
+    });
+    const { trackPageView } = await loadTrack();
+
+    // The address was a page not found, which sends no page view; the visitor
+    // then follows a link home.
+    vi.stubGlobal("location", new URL("https://raseeda.com/"));
+    trackPageView("/");
+
+    expect(sentBodies(sendBeacon)).toEqual([
+      "page_view / r=google s=newsletter l=en d=browser"
+    ]);
+  });
+
+  it("doesn't credit the install page's source to every app launch", async () => {
+    const sendBeacon = stubPage({
+      referrer: "https://chatgpt.com/",
+      url: "https://raseeda.com/?utm_source=chatgpt.com",
+      standalone: true
+    });
+    const { trackInvoice, trackPageView } = await loadTrack();
+
+    trackPageView("/");
+    trackInvoice("invoice_saved", invoiceWith());
+
+    await vi.waitFor(() => expect(sendBeacon).toHaveBeenCalledTimes(2));
+
+    expect(sentBodies(sendBeacon)).toEqual([
+      "page_view / r=direct s=- l=en d=standalone",
+      "invoice_saved r=direct s=- l=en d=standalone c=USD n=0"
     ]);
   });
 
@@ -255,13 +298,7 @@ describe("track", () => {
     const sendBeacon = stubPage();
     const { trackInvoice } = await loadTrack();
     const invoice = invoiceWith({
-      sections: {
-        ...Object.fromEntries(
-          Object.keys(DEFAULT_INVOICE_SECTIONS).map(key => [key, false])
-        ),
-        tax: true,
-        notes: true
-      } as Invoice["sections"],
+      sections: { ...allSections(false), tax: true, notes: true },
       notes: { ...createBlankInvoice().notes, content: "Thanks" }
     });
 
@@ -295,12 +332,7 @@ describe("track", () => {
     const sendBeacon = stubPage();
     const { trackInvoice } = await loadTrack();
     const invoice = invoiceWith({
-      sections: {
-        ...Object.fromEntries(
-          Object.keys(DEFAULT_INVOICE_SECTIONS).map(key => [key, false])
-        ),
-        currencyConversion: true
-      } as Invoice["sections"]
+      sections: { ...allSections(false), currencyConversion: true }
     });
 
     trackInvoice("pdf_opened", invoice);
@@ -351,18 +383,15 @@ describe("track", () => {
   });
 
   it("keeps every body inside the server's limit", async () => {
-    countInvoices.mockResolvedValue(3);
+    countInvoices.mockRejectedValue(new Error("Storage blocked"));
     const sendBeacon = stubPage({
       referrer: "https://www.producthunt.com/",
       url: "https://raseeda.com/?ref=producthunt",
-      navigator: { language: "zh" },
-      standalone: true
+      navigator: { language: "zh" }
     });
     const { trackInvoice } = await loadTrack();
     const invoice = invoiceWith({
-      sections: Object.fromEntries(
-        Object.keys(DEFAULT_INVOICE_SECTIONS).map(key => [key, true])
-      ) as Invoice["sections"]
+      sections: allSections(true)
     });
 
     trackInvoice("pdf_downloaded", invoice);
