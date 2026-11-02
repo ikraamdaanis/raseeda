@@ -117,6 +117,10 @@ export function describeCopyReview(invoice: Invoice): string | null {
     fields.push("the date of supply");
   }
 
+  if (sections.currencyConversion && invoice.currencyConversion.date) {
+    fields.push("the exchange rate");
+  }
+
   const mentions = new Set<string>();
   const itemCount = invoice.items.filter(item => {
     const mention = findDateMention(item.description);
