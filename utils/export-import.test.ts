@@ -15,7 +15,8 @@ import { buildExportData } from "~/utils/export-data";
 import {
   analyzeImport,
   executeImport,
-  parseExportFile
+  parseExportFile,
+  parseExportText
 } from "~/utils/import-data";
 
 // Clears every table through an independent connection so each test starts from
@@ -261,6 +262,41 @@ describe("data backup/restore", () => {
 
     await expect(parseExportFile(toFile(future))).rejects.toThrow(
       /newer version/i
+    );
+  });
+
+  it("reads pasted text the same way as a file", async () => {
+    const exported = buildImageExport("aGVsbG8=");
+
+    const fromText = parseExportText(JSON.stringify(exported));
+    const fromFile = await parseExportFile(toFile(exported));
+
+    expect(fromText).toEqual(fromFile);
+  });
+
+  it("rejects pasted text that isn't JSON or isn't an export", () => {
+    expect(() => parseExportText("{ not json")).toThrow(/not valid JSON/);
+    expect(() => parseExportText(JSON.stringify({ hello: "world" }))).toThrow(
+      new RegExp(`not a valid ${APP_NAME} export`)
+    );
+  });
+
+  it("takes a dropped .json file that has no type", async () => {
+    const exported = buildImageExport("aGVsbG8=");
+    const untyped = new File([JSON.stringify(exported)], "backup.JSON");
+
+    const parsed = await parseExportFile(untyped);
+
+    expect(parsed.invoices).toHaveLength(1);
+  });
+
+  it("rejects a file that isn't JSON before reading it", async () => {
+    const pdf = new File(["%PDF-1.7"], "invoice.pdf", {
+      type: "application/pdf"
+    });
+
+    await expect(parseExportFile(pdf)).rejects.toThrow(
+      '"invoice.pdf" is not a .json export file.'
     );
   });
 });

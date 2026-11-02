@@ -159,3 +159,115 @@ test("a corrupt import leaves the database untouched", async ({ page }) => {
   await expect(dialog.getByText("Import Data")).toBeVisible();
   expect(await storeContains(page, "invoices", "Safe doc")).toBe(true);
 });
+
+test("pasting an export's JSON imports it like a chosen file", async ({
+  page,
+  resetDb
+}) => {
+  await gotoEditorReady(page, "Pasted title");
+  await nameInvoice(page, "Pasted doc");
+
+  const { json } = await exportData(page);
+
+  await resetDb();
+  await page.reload();
+  await expect(page.getByLabel("Date", { exact: true })).toHaveAttribute(
+    "data-date",
+    /\d{4}-\d{2}-\d{2}/
+  );
+  await clickFileMenuItem(page, "Import Data");
+
+  const dialog = page.getByRole("dialog", { name: "Import Data" });
+  const pasteField = dialog.getByLabel("Or paste the export's JSON");
+
+  // A real paste event, as Cmd+V sends it, goes straight to the preview.
+  await pasteField.evaluate((field, text) => {
+    const clipboardData = new DataTransfer();
+
+    clipboardData.setData("text/plain", text);
+    field.dispatchEvent(
+      new ClipboardEvent("paste", { clipboardData, bubbles: true })
+    );
+  }, JSON.stringify(json));
+
+  await expect(dialog.getByText("Invoices", { exact: true })).toBeVisible();
+  await dialog.getByRole("button", { name: "Import", exact: true }).click();
+  await expect(dialog.getByText(/Successfully imported/)).toBeVisible();
+  await dialog.getByRole("button", { name: "Done" }).click();
+
+  await clickFileMenuItem(page, "Open Invoice");
+  await expect(
+    page
+      .getByRole("dialog", { name: "Open Invoice" })
+      .getByRole("row", { name: /Pasted doc/ })
+  ).toBeVisible();
+});
+
+test("typed JSON that isn't an export shows the error and keeps the text", async ({
+  page
+}) => {
+  await gotoEditorReady(page, "Typed title");
+  await clickFileMenuItem(page, "Import Data");
+
+  const dialog = page.getByRole("dialog", { name: "Import Data" });
+  const pasteField = dialog.getByLabel("Or paste the export's JSON");
+
+  await pasteField.fill('{ "hello": "world" }');
+  await dialog.getByRole("button", { name: "Use pasted JSON" }).click();
+
+  await expect(dialog.getByRole("alert")).toContainText(/not a valid/);
+  await expect(pasteField).toHaveValue('{ "hello": "world" }');
+});
+
+test("dropping an export file on the dialog imports it", async ({ page }) => {
+  await gotoEditorReady(page, "Dropped title");
+  await nameInvoice(page, "Dropped doc");
+
+  const { json } = await exportData(page);
+
+  await clickFileMenuItem(page, "Import Data");
+
+  const dialog = page.getByRole("dialog", { name: "Import Data" });
+  const dropZone = dialog.getByRole("region", {
+    name: "Drop an export file here"
+  });
+  const dataTransfer = await page.evaluateHandle(text => {
+    const transfer = new DataTransfer();
+
+    transfer.items.add(new File([text], "backup.json"));
+
+    return transfer;
+  }, JSON.stringify(json));
+
+  await dropZone.dispatchEvent("dragenter", { dataTransfer });
+  await expect(dropZone).toHaveAttribute("data-dragging", "true");
+  await dropZone.dispatchEvent("drop", { dataTransfer });
+
+  await expect(dialog.getByText(/to rename/)).toBeVisible();
+  await dialog.getByRole("button", { name: "Import", exact: true }).click();
+  await expect(dialog.getByText(/Successfully imported/)).toBeVisible();
+});
+
+test("dropping a file that isn't JSON is rejected", async ({ page }) => {
+  await gotoEditorReady(page, "Wrong file title");
+  await clickFileMenuItem(page, "Import Data");
+
+  const dialog = page.getByRole("dialog", { name: "Import Data" });
+  const dataTransfer = await page.evaluateHandle(() => {
+    const transfer = new DataTransfer();
+
+    transfer.items.add(
+      new File(["%PDF-1.7"], "invoice.pdf", { type: "application/pdf" })
+    );
+
+    return transfer;
+  });
+
+  await dialog
+    .getByRole("region", { name: "Drop an export file here" })
+    .dispatchEvent("drop", { dataTransfer });
+
+  await expect(dialog.getByRole("alert")).toHaveText(
+    '"invoice.pdf" is not a .json export file.'
+  );
+});

@@ -66,7 +66,20 @@ const exportFileSchema = z.object({
   )
 });
 
+// A browser often leaves a dropped file's type empty, so the extension counts
+// as much as the type does.
+function isJsonFile(file: File): boolean {
+  return (
+    file.type === "application/json" ||
+    file.name.toLowerCase().endsWith(".json")
+  );
+}
+
 export async function parseExportFile(file: File): Promise<ExportFile> {
+  if (!isJsonFile(file)) {
+    throw new Error(`"${file.name}" is not a .json export file.`);
+  }
+
   let text: string;
   try {
     text = await file.text();
@@ -74,11 +87,17 @@ export async function parseExportFile(file: File): Promise<ExportFile> {
     throw new Error("Failed to read the selected file.");
   }
 
+  return parseExportText(text);
+}
+
+// Parses and validates an export from its text, whether it was read from a
+// file or pasted in.
+export function parseExportText(text: string): ExportFile {
   let json: unknown;
   try {
     json = JSON.parse(text);
   } catch {
-    throw new Error("The selected file is not valid JSON.");
+    throw new Error("This is not valid JSON.");
   }
 
   // Check the version stamp before validating the whole body. A newer export may
@@ -93,7 +112,7 @@ export async function parseExportFile(file: File): Promise<ExportFile> {
 
   if (meta.success && meta.data.version > CURRENT_EXPORT_VERSION) {
     throw new Error(
-      `This file was created by a newer version of ${APP_NAME} and can't be imported. Please update ${APP_NAME} and try again.`
+      `This export was made by a newer version of ${APP_NAME} and can't be imported. Please update ${APP_NAME} and try again.`
     );
   }
 
@@ -101,9 +120,7 @@ export async function parseExportFile(file: File): Promise<ExportFile> {
   if (!result.success) {
     const firstError = result.error.issues[0]?.message ?? "Unknown error";
 
-    throw new Error(
-      `The file is not a valid ${APP_NAME} export: ${firstError}`
-    );
+    throw new Error(`This is not a valid ${APP_NAME} export: ${firstError}`);
   }
 
   return result.data as unknown as ExportFile;
