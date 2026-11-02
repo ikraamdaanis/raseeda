@@ -1,8 +1,7 @@
 import { IconPlayerPlay } from "@tabler/icons-react";
 import type { ReactNode } from "react";
-import { lazy, Suspense, useState } from "react";
+import { lazy, Suspense, useRef, useState } from "react";
 import { toast } from "sonner";
-import { RenameInvoiceDialog } from "~/components/dialogs/rename-invoice-dialog";
 import { DownloadPopover } from "~/components/editor/shell/download-popover";
 import { HistoryButtons } from "~/components/editor/shell/history-buttons";
 import { ProjectMenu } from "~/components/editor/shell/project-menu";
@@ -75,38 +74,65 @@ export function EditorTopBar({
   );
 }
 
-// The name is a heading button that renames the invoice. Naming a new invoice
-// that isn't in the library yet adds it under that name.
+// The name is edited where it sits: click it, type, and it's saved on Enter or
+// when you click away; Escape keeps the old name. An empty or unchanged name
+// isn't saved. Naming a new invoice that isn't in the library yet adds it under
+// that name.
 function InvoiceName() {
   const { renameCurrent } = useInvoiceDocument();
   const displayName = useDocumentName();
-  const [renameOpen, setRenameOpen] = useState(false);
+  // The text being typed; null while the name isn't being edited, so a rename
+  // from elsewhere shows straight away.
+  const [draft, setDraft] = useState<string | null>(null);
+  // The name being saved, shown until the save lands so the old name doesn't
+  // flash back in between.
+  const [savingName, setSavingName] = useState<string | null>(null);
+  const isCancellingRef = useRef(false);
 
-  async function handleRename(newName: string) {
-    await renameCurrent(newName);
-    toast.success("Invoice renamed");
+  async function handleBlur() {
+    const newName = draft?.trim() ?? "";
+    const isCancelled = isCancellingRef.current;
+
+    isCancellingRef.current = false;
+    setDraft(null);
+
+    if (isCancelled || !newName || newName === displayName) return;
+
+    setSavingName(newName);
+
+    try {
+      await renameCurrent(newName);
+    } catch {
+      toast.error("Couldn't rename the invoice. Please try again.");
+    } finally {
+      setSavingName(null);
+    }
   }
 
   return (
-    <div className="flex min-w-0 items-center gap-2 max-md:flex-1 max-md:justify-center">
-      <h1 className="flex min-w-0">
-        <button
-          type="button"
-          title="Rename"
-          onClick={() => setRenameOpen(true)}
-          className="hover:bg-muted focus-visible:ring-ring flex h-7 min-w-0 items-center rounded-md px-2 outline-none focus-visible:ring-1 pointer-coarse:h-10"
-        >
-          <span className="text-foreground max-w-[min(18rem,36vw)] truncate text-sm font-medium max-md:max-w-none">
-            {displayName}
-          </span>
-        </button>
-      </h1>
-      <RenameInvoiceDialog
-        open={renameOpen}
-        onOpenChange={setRenameOpen}
-        currentName={displayName}
-        onRename={handleRename}
+    <h1 className="flex min-w-0 max-md:flex-1 max-md:justify-center">
+      <input
+        aria-label="Invoice name"
+        title="Rename"
+        value={draft ?? savingName ?? displayName}
+        maxLength={100}
+        spellCheck={false}
+        onFocus={event => {
+          setDraft(savingName ?? displayName);
+          event.currentTarget.select();
+        }}
+        onChange={event => setDraft(event.target.value)}
+        onKeyDown={event => {
+          if (event.key === "Enter") event.currentTarget.blur();
+
+          if (event.key === "Escape") {
+            isCancellingRef.current = true;
+            event.currentTarget.blur();
+          }
+        }}
+        onBlur={handleBlur}
+        className="text-foreground hover:bg-muted focus:bg-muted focus-visible:ring-ring field-sizing-content h-7 max-w-[min(18rem,36vw)] min-w-12 truncate rounded-md px-2 text-center text-sm font-medium outline-none focus-visible:ring-1 max-md:max-w-full pointer-coarse:h-10"
       />
-    </div>
+    </h1>
   );
 }
