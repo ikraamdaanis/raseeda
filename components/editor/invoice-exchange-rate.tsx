@@ -40,51 +40,68 @@ export function InvoiceExchangeRate() {
     );
   }
 
+  // Only while editing, never in print: a rate with no source or date.
+  const missing =
+    currencyConversion.rate > 0
+      ? [
+          !currencyConversion.source.trim() && "source",
+          !currencyConversion.date && "date"
+        ].filter(Boolean)
+      : [];
+
   return (
-    <div
-      data-field-area="pricing"
-      className="text-paper-foreground mt-3 flex flex-wrap items-center justify-end gap-x-1 text-sm"
-      style={style}
-    >
-      <span>{`Exchange rate: 1 ${conversion.fromCode} =`}</span>
-      <InvoiceInput
-        aria-label={`Exchange rate, ${conversion.toCode} per ${conversion.fromCode}`}
-        data-field="currencyConversion.rate"
-        inputMode="decimal"
-        value={rateInput.value}
-        onChange={rateInput.onChange}
-        onBlur={rateInput.onBlur}
-        className="field-sizing-content w-auto min-w-4 text-right"
+    <div data-field-area="pricing" className="mt-3 flex flex-col gap-1">
+      <div
+        className="text-paper-foreground flex flex-wrap items-center justify-end gap-x-1 text-sm"
         style={style}
-        placeholder="0.000000"
-      />
-      <span>{conversion.toCode}</span>
-      <span className="flex items-center">
-        (
+      >
+        <span>{`Exchange rate: 1 ${conversion.fromCode} =`}</span>
         <InvoiceInput
-          aria-label="Exchange rate source"
-          data-field="currencyConversion.source"
-          value={currencyConversion.source}
-          onChange={value =>
-            setCurrencyConversion(prev => ({ ...prev, source: value }))
-          }
-          className="field-sizing-content w-auto min-w-4"
+          aria-label={`Exchange rate, ${conversion.toCode} per ${conversion.fromCode}`}
+          data-field="currencyConversion.rate"
+          inputMode="decimal"
+          value={rateInput.value}
+          onChange={rateInput.onChange}
+          onBlur={rateInput.onBlur}
+          className="field-sizing-content w-auto min-w-4 text-right"
           style={style}
-          placeholder="e.g. Central bank rate"
+          placeholder="0.000000"
         />
-        ,
-      </span>
-      <span className="flex items-center whitespace-nowrap">
-        <InvoiceDateField
-          value={currencyConversion.date}
-          label="Exchange rate date"
-          placeholder="Pick the rate date"
-          style={style}
-          canClear
-          onSelect={date => setCurrencyConversion(prev => ({ ...prev, date }))}
-        />
-        )
-      </span>
+        <span>{conversion.toCode}</span>
+        <span className="flex items-center">
+          (
+          <InvoiceInput
+            aria-label="Exchange rate source"
+            data-field="currencyConversion.source"
+            value={currencyConversion.source}
+            onChange={value =>
+              setCurrencyConversion(prev => ({ ...prev, source: value }))
+            }
+            className="field-sizing-content w-auto min-w-4"
+            style={style}
+            placeholder="e.g. Central bank rate"
+          />
+          ,
+        </span>
+        <span className="flex items-center whitespace-nowrap">
+          <InvoiceDateField
+            value={currencyConversion.date}
+            label="Exchange rate date"
+            placeholder="Pick the rate date"
+            style={style}
+            canClear
+            onSelect={date =>
+              setCurrencyConversion(prev => ({ ...prev, date }))
+            }
+          />
+          )
+        </span>
+      </div>
+      {missing.length > 0 && (
+        <p className="text-right text-xs text-pretty text-amber-700">
+          {`Add the rate’s ${missing.join(" and ")}: tax invoices that show a converted amount usually have to say whose rate it is and from when.`}
+        </p>
+      )}
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import { round } from "lodash-es";
 import { useEffect, useState } from "react";
 import { useCurrencyConversionSlice } from "~/stores/invoice-selectors";
+import { useInvoiceStore } from "~/stores/invoice-store";
 import { formatExchangeRate } from "~/utils/currency-conversion";
 
 // Digits and one dot. Past six decimal places, as central banks quote rates,
@@ -45,9 +46,18 @@ export function useExchangeRateInput() {
 
   function onChange(value: string) {
     const rate = normalizeRateInput(value);
+    const { invoiceDate, supplyDate, sections } = useInvoiceStore.getState();
+    // A rate typed in with no date is dated to the supply, or failing that
+    // the invoice, since that's the day its rate should be from.
+    const fallbackDate = (sections.supplyDate && supplyDate) || invoiceDate;
 
     setDraft(rate);
-    setCurrencyConversion(prev => ({ ...prev, rate: parseRate(rate) }));
+    setCurrencyConversion(prev => ({
+      ...prev,
+      rate: parseRate(rate),
+      date:
+        !prev.date && !prev.rate && parseRate(rate) ? fallbackDate : prev.date
+    }));
   }
 
   function onBlur() {
