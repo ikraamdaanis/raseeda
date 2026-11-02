@@ -1,6 +1,5 @@
 import { IconCalendar, IconPlus, IconX } from "@tabler/icons-react";
 import { format } from "date-fns";
-import type { ReactNode } from "react";
 import { useId, useRef, useState } from "react";
 import { flushSync } from "react-dom";
 import { CustomCurrencyDialog } from "~/components/dialogs/custom-currency-dialog";
@@ -16,12 +15,15 @@ import {
   PopoverTrigger
 } from "~/components/ui/popover";
 import { NativeSelect } from "~/components/ui/select";
+import { Switch } from "~/components/ui/switch";
 import {
   currencyOptions,
   getCurrencyCodeForSymbol,
   getCurrencyMarker,
   normalizeCurrency
 } from "~/consts/currencies";
+import { useCurrencyConversion } from "~/hooks/use-currency-conversion";
+import { useExchangeRateInput } from "~/hooks/use-exchange-rate-input";
 import { useSecondCurrency } from "~/hooks/use-second-currency";
 import { cn } from "~/lib/utils";
 import { INVOICE_DATE_FORMATS } from "~/schema/invoice";
@@ -86,29 +88,32 @@ function CurrencyRows() {
         onChange={setCurrency}
       />
       {secondCurrency.isOn ? (
-        <CurrencyPicker
-          id={SECOND_CURRENCY_ID}
-          label="Also show in"
-          currency={currencyConversion.currency}
-          currencyCode={currencyConversion.currencyCode}
-          exclude={{ currency, currencyCode }}
-          customTitle="Custom second currency"
-          onChange={setSecondCurrency}
-          action={
+        <>
+          <CurrencyPicker
+            id={SECOND_CURRENCY_ID}
+            label="Also show in"
+            currency={currencyConversion.currency}
+            currencyCode={currencyConversion.currencyCode}
+            exclude={{ currency, currencyCode }}
+            customTitle="Custom second currency"
+            onChange={setSecondCurrency}
+          />
+          <div className="before:bg-border relative flex flex-col gap-3 before:absolute before:inset-y-0.5 before:left-0 before:w-px">
+            <ExchangeRateRows />
             <button
               type="button"
-              aria-label="Remove second currency"
               onClick={handleRemove}
-              className="text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:ring-ring relative -mr-1 flex h-8 w-6 shrink-0 items-center justify-center rounded-md outline-none focus-visible:ring-1"
+              className="text-muted-foreground hover:text-foreground focus-visible:ring-ring relative ml-2 flex h-6 w-fit items-center gap-1 rounded-md px-1 text-xs outline-none focus-visible:ring-1"
             >
               <IconX aria-hidden="true" className="size-3.5 shrink-0" />
+              Remove second currency
               <span
                 aria-hidden="true"
                 className="absolute top-1/2 left-1/2 size-[max(100%,3rem)] -translate-1/2 pointer-fine:hidden"
               />
             </button>
-          }
-        />
+          </div>
+        </>
       ) : (
         <div className="grid grid-cols-[6rem_minmax(0,1fr)] gap-2">
           <button
@@ -130,6 +135,87 @@ function CurrencyRows() {
   );
 }
 
+// The rate the second currency is worked out at, with where it's from, its
+// date and whether the line under the totals prints: the same fields as that
+// line, so either can be used. They sit indented under the second currency,
+// a rule down their left, so they read as part of it.
+function ExchangeRateRows() {
+  const conversion = useCurrencyConversion();
+  const { currencyConversion, setCurrencyConversion } =
+    useCurrencyConversionSlice();
+  const rateInput = useExchangeRateInput();
+
+  if (!conversion) return null;
+
+  return (
+    <>
+      <InspectorRow
+        label={`1 ${conversion.fromCode} =`}
+        htmlFor="inspector-exchange-rate"
+        nested
+      >
+        <div
+          className={cn(
+            inspectorFieldClassName,
+            "focus-within:border-ring flex items-center gap-1"
+          )}
+        >
+          <input
+            id="inspector-exchange-rate"
+            aria-label={`Exchange rate, ${conversion.toCode} per ${conversion.fromCode}`}
+            data-field="currencyConversion.rate"
+            inputMode="decimal"
+            value={rateInput.value}
+            onChange={event => rateInput.onChange(event.target.value)}
+            onBlur={rateInput.onBlur}
+            placeholder="0.000000"
+            className="placeholder:text-muted-foreground min-w-0 flex-1 bg-transparent outline-none"
+          />
+          <span className="text-muted-foreground shrink-0">
+            {conversion.toCode}
+          </span>
+        </div>
+      </InspectorRow>
+      <InspectorRow label="Source" htmlFor="inspector-exchange-source" nested>
+        <input
+          id="inspector-exchange-source"
+          data-field="currencyConversion.source"
+          value={currencyConversion.source}
+          onChange={event =>
+            setCurrencyConversion(prev => ({
+              ...prev,
+              source: event.target.value
+            }))
+          }
+          placeholder="e.g. Central bank rate"
+          className={cn(
+            inspectorFieldClassName,
+            "placeholder:text-muted-foreground"
+          )}
+        />
+      </InspectorRow>
+      <InspectorRow label="Date" htmlFor="inspector-exchange-date" nested>
+        <InspectorDatePicker
+          id="inspector-exchange-date"
+          value={currencyConversion.date}
+          onChange={date => setCurrencyConversion(prev => ({ ...prev, date }))}
+        />
+      </InspectorRow>
+      <InspectorRow label="Show rate" htmlFor="inspector-exchange-show" nested>
+        <Switch
+          id="inspector-exchange-show"
+          size="sm"
+          checked={currencyConversion.showRate}
+          onCheckedChange={showRate =>
+            setCurrencyConversion(prev => ({ ...prev, showRate }))
+          }
+          className="justify-self-end"
+        />
+      </InspectorRow>
+    </>
+  );
+}
+
 function CurrencyPicker({
   id,
   label,
@@ -137,7 +223,6 @@ function CurrencyPicker({
   currencyCode,
   exclude,
   customTitle,
-  action,
   onChange
 }: {
   id: string;
@@ -146,7 +231,6 @@ function CurrencyPicker({
   currencyCode: string;
   exclude?: { currency: string; currencyCode: string };
   customTitle?: string;
-  action?: ReactNode;
   onChange: (symbol: string, code: string) => void;
 }) {
   const [customOpen, setCustomOpen] = useState(false);
@@ -195,7 +279,6 @@ function CurrencyPicker({
               {isCustom ? `Custom (${selected})` : "Custom…"}
             </option>
           </NativeSelect>
-          {action}
         </div>
       </InspectorRow>
       <CustomCurrencyDialog
@@ -246,10 +329,12 @@ function DateFormatRow() {
 
 // The same calendar as the page's date fields, with the date written in the
 // invoice's format.
-function IssueDatePicker({
+function InspectorDatePicker({
+  id,
   value,
   onChange
 }: {
+  id: string;
   value: string;
   onChange: (isoDate: string) => void;
 }) {
@@ -262,7 +347,7 @@ function IssueDatePicker({
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger
-        id="inspector-issue-date"
+        id={id}
         aria-describedby={textId}
         className={cn(
           inspectorFieldClassName,
@@ -325,7 +410,8 @@ function DatesRows() {
   return (
     <>
       <InspectorRow label="Issue date" htmlFor="inspector-issue-date">
-        <IssueDatePicker
+        <InspectorDatePicker
+          id="inspector-issue-date"
           value={invoiceDate}
           onChange={handleInvoiceDateChange}
         />

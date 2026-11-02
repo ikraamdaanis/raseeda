@@ -129,7 +129,8 @@ export const DEFAULT_CURRENCY_CONVERSION = {
   currencyCode: "USD",
   rate: 0,
   date: "",
-  source: ""
+  source: "",
+  showRate: true
 } as const;
 
 const DEFAULT_COLUMN_LABELS = {
@@ -321,7 +322,9 @@ export const invoiceSchema = z.object({
       currencyCode: z.string().catch(DEFAULT_CURRENCY_CONVERSION.currencyCode),
       rate: z.coerce.number().catch(DEFAULT_CURRENCY_CONVERSION.rate),
       date: z.string().catch(DEFAULT_CURRENCY_CONVERSION.date),
-      source: z.string().catch(DEFAULT_CURRENCY_CONVERSION.source)
+      source: z.string().catch(DEFAULT_CURRENCY_CONVERSION.source),
+      // Whether the exchange rate line prints under the totals.
+      showRate: z.boolean().catch(DEFAULT_CURRENCY_CONVERSION.showRate)
     })
     .catch(DEFAULT_CURRENCY_CONVERSION),
   terms: z

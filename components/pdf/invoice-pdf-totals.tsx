@@ -82,7 +82,7 @@ export function InvoicePdfTotals({
           ))}
         </View>
       </View>
-      {conversion && (
+      {conversion && invoice.currencyConversion.showRate && (
         <Text
           style={{
             ...pdfRoleStyle(theme, "totalsLabel"),

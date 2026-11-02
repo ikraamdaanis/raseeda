@@ -1,8 +1,7 @@
-import { round } from "lodash-es";
-import { useEffect, useState } from "react";
 import { InvoiceDateField } from "~/components/editor/invoice-date-field";
 import { InvoiceInput } from "~/components/editor/invoice-input";
 import { useCurrencyConversion } from "~/hooks/use-currency-conversion";
+import { useExchangeRateInput } from "~/hooks/use-exchange-rate-input";
 import { useIsPreview } from "~/hooks/use-shown-sections";
 import {
   useCurrencyConversionSlice,
@@ -11,18 +10,6 @@ import {
 import { buildExchangeRateLine } from "~/utils/currency-conversion";
 import { getRoleSettings } from "~/utils/get-role-settings";
 import { getTextStyles } from "~/utils/get-text-styles";
-
-// Digits and one dot. Past six decimal places, as central banks quote rates,
-// the rate is rounded to six, so a pasted 0.7834129 reads 0.783413.
-function normalizeRateInput(value: string): string {
-  const [whole = "", ...rest] = value.replace(/[^0-9.]/g, "").split(".");
-  const decimals = rest.join("");
-
-  if (rest.length === 0) return whole;
-  if (decimals.length <= 6) return `${whole}.${decimals}`;
-
-  return String(round(Number(`${whole}.${decimals}`), 6));
-}
 
 // The rate under the totals, typed into the line as it prints: "Exchange
 // rate: 1 GBP = 1.2875 USD (Bank of England rate, 30 Oct 2026)". The brackets
@@ -37,20 +24,9 @@ export function InvoiceExchangeRate() {
     settings: getRoleSettings(theme, "totalsLabel"),
     remove: ["align"]
   });
-  const [rateInput, setRateInput] = useState(
-    currencyConversion.rate ? String(currencyConversion.rate) : ""
-  );
+  const rateInput = useExchangeRateInput();
 
-  // Undo, redo or another tab can change the rate under the field.
-  useEffect(() => {
-    setRateInput(draft =>
-      Number(draft || 0) === currencyConversion.rate
-        ? draft
-        : String(currencyConversion.rate || "")
-    );
-  }, [currencyConversion.rate]);
-
-  if (!conversion) return null;
+  if (!conversion || !currencyConversion.showRate) return null;
 
   if (isPreview) {
     return (
@@ -75,13 +51,9 @@ export function InvoiceExchangeRate() {
         aria-label={`Exchange rate, ${conversion.toCode} per ${conversion.fromCode}`}
         data-field="currencyConversion.rate"
         inputMode="decimal"
-        value={rateInput}
-        onChange={value => {
-          const rate = normalizeRateInput(value);
-
-          setRateInput(rate);
-          setCurrencyConversion(prev => ({ ...prev, rate: Number(rate) }));
-        }}
+        value={rateInput.value}
+        onChange={rateInput.onChange}
+        onBlur={rateInput.onBlur}
         className="field-sizing-content w-auto min-w-4 text-right"
         style={style}
         placeholder="0.000000"

@@ -16,7 +16,8 @@ beforeEach(() => {
       currencyCode: "USD",
       rate: 1.2875,
       date: "2026-10-30",
-      source: "Bank of England rate"
+      source: "Bank of England rate",
+      showRate: true
     }
   });
 });
@@ -30,7 +31,8 @@ describe("setCurrency", () => {
       currencyCode: "USD",
       rate: 0,
       date: "",
-      source: "Bank of England rate"
+      source: "Bank of England rate",
+      showRate: true
     });
   });
 
@@ -61,7 +63,8 @@ describe("setSecondCurrency", () => {
       currencyCode: "INR",
       rate: 0,
       date: "",
-      source: "Bank of England rate"
+      source: "Bank of England rate",
+      showRate: true
     });
   });
 
