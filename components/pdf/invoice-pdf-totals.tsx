@@ -5,7 +5,9 @@ import { pdfRoleStyle } from "~/utils/pdf-styles";
 
 // Two columns, as in the editor: the labels right-aligned, 36pt (the
 // editor's 3rem) left of values as wide as the widest one. A label and its
-// value share a size, so the rows of the two columns line up.
+// value share a size, so the rows of the two columns line up. A label stays on
+// one line, as it is in the editor, so the rows can't drift apart: one wider
+// than half the page ends in an ellipsis rather than running off its edge.
 const styles = StyleSheet.create({
   totalSection: {
     marginTop: 20,
@@ -16,8 +18,15 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: 36
   },
+  // react-pdf sizes text to its content, so the cap is a percentage rather
+  // than whatever room the values leave.
   labels: {
-    alignItems: "flex-end"
+    alignItems: "flex-end",
+    maxWidth: "50%"
+  },
+  label: {
+    maxLines: 1,
+    textOverflow: "ellipsis"
   },
   values: {
     flexShrink: 0,
@@ -56,6 +65,7 @@ export function InvoicePdfTotals({
                   theme,
                   row.isTotal ? "grandTotalLabel" : "totalsLabel"
                 ),
+                ...styles.label,
                 ...styles.cell
               }}
             >
