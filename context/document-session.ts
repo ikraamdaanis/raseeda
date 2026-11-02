@@ -49,7 +49,7 @@ import { downloadBackupFile } from "~/utils/export-data";
 import { isBlankInvoice, isLargeRemoval } from "~/utils/invoice-content";
 import { describeCopyReview, prepareInvoiceCopy } from "~/utils/invoice-copy";
 import { deriveInvoiceName } from "~/utils/invoice-name";
-import { track } from "~/utils/track";
+import { trackInvoice } from "~/utils/track";
 
 // The editor session: which invoice is open, saving it as it's edited, and
 // keeping it in step with other tabs. Every invoice saves itself; there is no
@@ -412,7 +412,7 @@ async function writeContent(session: Session, content: Invoice): Promise<void> {
     clearStash(session.id);
     void setLastOpenedInvoiceId(session.id);
     void requestPersistentStorage();
-    track("invoice_saved");
+    trackInvoice("invoice_saved", content);
 
     return;
   }
@@ -972,7 +972,7 @@ async function copyInvoice(
   };
 
   await createInvoice(copy);
-  track("invoice_saved");
+  trackInvoice("invoice_saved", copy.invoiceData);
 
   return copy;
 }
@@ -1060,6 +1060,8 @@ function renameCurrent(name: string): Promise<void> {
     } else if (session.status === "editing") {
       const now = new Date();
 
+      const content = liveContent();
+
       session.writingRev = 1;
 
       try {
@@ -1067,7 +1069,7 @@ function renameCurrent(name: string): Promise<void> {
           id: session.id,
           name: trimmed,
           nameSource: "user",
-          invoiceData: liveContent(),
+          invoiceData: content,
           templateId: session.templateId,
           rev: 1,
           createdAt: now,
@@ -1081,7 +1083,7 @@ function renameCurrent(name: string): Promise<void> {
       session.rev = 1;
       void setLastOpenedInvoiceId(session.id);
       void requestPersistentStorage();
-      track("invoice_saved");
+      trackInvoice("invoice_saved", content);
     } else if (session.status !== "unavailable") {
       throw new Error("This invoice can't be renamed in this tab.");
     }
@@ -1544,7 +1546,7 @@ async function recoverOtherStashes(openId: string) {
           createdAt: now,
           updatedAt: now
         });
-        track("invoice_saved");
+        trackInvoice("invoice_saved", stash.invoiceData);
       }
     );
   }

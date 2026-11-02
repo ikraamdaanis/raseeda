@@ -4,7 +4,7 @@ import { useDocumentName } from "~/context/invoice-document-context";
 import { useInvoiceData } from "~/stores/invoice-selectors";
 import { buildPdf, prefetchPdfBuilder } from "~/utils/build-pdf";
 import { saveFile, toPdfFileName } from "~/utils/save-file";
-import { track } from "~/utils/track";
+import { trackInvoice } from "~/utils/track";
 
 function reportFailure(error: unknown) {
   toast.error(
@@ -40,7 +40,7 @@ export function useInvoicePdf() {
     startTransition(async () => {
       try {
         saveFile(await buildPdf(invoice), toPdfFileName(documentName));
-        track("pdf_downloaded");
+        trackInvoice("pdf_downloaded", invoice);
       } catch (error) {
         reportFailure(error);
       }
@@ -61,7 +61,7 @@ export function useInvoicePdf() {
 
         newWindow.location.href = url;
 
-        if (!newWindow.closed) track("pdf_opened");
+        if (!newWindow.closed) trackInvoice("pdf_opened", invoice);
 
         // Don't revoke the URL - Chrome's PDF viewer needs it to persist
         // The browser will automatically clean it up when the tab is closed

@@ -23,7 +23,7 @@ import {
 } from "~/utils/invoice-library";
 import { deriveInvoiceName } from "~/utils/invoice-name";
 import { saveFile, toPdfFileName } from "~/utils/save-file";
-import { track } from "~/utils/track";
+import { track, trackInvoice } from "~/utils/track";
 
 // Bumped when a call changes in a way existing scripts would notice.
 const API_VERSION = 1;
@@ -125,7 +125,7 @@ const api = {
     };
 
     await createInvoice(document);
-    track("invoice_saved");
+    trackInvoice("invoice_saved", invoiceData);
     await documentActions.openInvoice(document.id);
 
     return document.id;
@@ -145,7 +145,7 @@ const api = {
     const { invoice, name } = await invoiceForPdf(id);
 
     saveFile(await buildPdf(invoice), toPdfFileName(name));
-    track("pdf_downloaded");
+    trackInvoice("pdf_downloaded", invoice);
   },
   // Imports a whole export file (its JSON text, or the parsed object), as the
   // Import dialog does.

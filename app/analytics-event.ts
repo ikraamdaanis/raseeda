@@ -1,19 +1,50 @@
 import type { env } from "cloudflare:workers";
-import { ANALYTICS_EVENTS, PAGE_VIEW_PATHS } from "~/consts/analytics-events";
+import {
+  ANALYTICS_EVENTS,
+  CURRENCIES,
+  DISPLAY_MODES,
+  EVENT_FIELDS,
+  LANGUAGES,
+  LIBRARY_SIZES,
+  PAGE_VIEW_PATHS,
+  REFERRERS,
+  SECTION_BITS,
+  SOURCES
+} from "~/consts/analytics-events";
+import type { AnalyticsEvent } from "~/types";
 import { bucketUserAgent, isBotUserAgent } from "~/utils/user-agent";
 
-// The longest body an event can have ("page_view /privacy" and the like). A
+// The longest body an event can have is about 81 bytes ("pdf_opened
+// r=producthunt s=producthunt l=other d=standalone c=other n=2-5 x=16383"). A
 // longer one isn't an event, so it's dropped without being read in full.
 const MAX_BODY_BYTES = 128;
 
+// The values each field may take. Anything else drops the event, so nothing
+// typed (a URL, a custom currency code) can reach the dataset.
+const FIELD_VALUES: Partial<Record<string, readonly string[]>> = {
+  r: REFERRERS,
+  s: [...SOURCES, "-"],
+  l: LANGUAGES,
+  d: DISPLAY_MODES,
+  c: CURRENCIES,
+  n: LIBRARY_SIZES
+};
+
+// The printed sections arrive as a bitmask, one bit per SECTION_BITS entry.
+const MAX_SECTION_MASK = 2 ** SECTION_BITS.length - 1;
+
 // POST /api/event: one anonymous count. The body is an event name from
-// consts/analytics-events.ts, or "page_view" and a route pattern. It answers
-// 204 whatever happens, so a dropped event looks the same as a counted one,
-// and nothing here is logged: not the IP, the User-Agent or the body.
+// consts/analytics-events.ts (a page view adds its route pattern), then the
+// event's fields as `key=value` words (EVENT_FIELDS), each from a fixed list.
+// It answers 204 whatever happens, so a dropped event looks the same as a
+// counted one, and nothing here is logged: not the IP, the User-Agent or the
+// body.
 //
-// The data point's fields are positional, so their order is fixed: the index
-// and blob1 are the event, then country, browser, OS, device and the page
-// view's path.
+// The data point's fields are positional, so their order is fixed and only
+// ever appended to: the index and blob1 are the event, then country, browser,
+// OS, device, the page view's path, referrer, source, language, currency,
+// display mode and library size. double1 is the count; a PDF's printed
+// sections follow as double2 onwards, 1 when printed, in SECTION_BITS order.
 export async function handleAnalyticsEvent(
   request: Request,
   dataset: typeof env.ANALYTICS | undefined
@@ -38,9 +69,15 @@ export async function handleAnalyticsEvent(
           browser,
           os,
           device,
-          event.path
+          event.path,
+          event.fields.r ?? "",
+          event.fields.s === "-" ? "" : (event.fields.s ?? ""),
+          event.fields.l ?? "",
+          event.fields.c ?? "",
+          event.fields.d ?? "",
+          event.fields.n ?? ""
         ],
-        doubles: [1]
+        doubles: [1, ...sectionDoubles(event.fields.x)]
       });
     } catch {
       // A count that can't be written is skipped; the page never hears of it.
@@ -53,7 +90,11 @@ export async function handleAnalyticsEvent(
 // The event the request carries, or null when it isn't one to count: sent
 // from another site, by a bot, under Global Privacy Control, or with a body
 // that isn't a known event.
-async function readEvent(request: Request) {
+async function readEvent(request: Request): Promise<{
+  name: AnalyticsEvent;
+  path: string;
+  fields: Partial<Record<string, string>>;
+} | null> {
   const userAgent = request.headers.get("User-Agent") ?? "";
 
   if (request.headers.get("Sec-Fetch-Site") !== "same-origin") return null;
@@ -74,14 +115,62 @@ async function readEvent(request: Request) {
   const name = ANALYTICS_EVENTS.find(known => known === eventName);
 
   if (!name) return null;
-  if (name !== "page_view") return rest.length ? null : { name, path: "" };
 
-  const path =
-    rest.length === 1
-      ? PAGE_VIEW_PATHS.find(known => known === rest[0])
-      : undefined;
+  let path = "";
 
-  return path ? { name, path } : null;
+  if (name === "page_view") {
+    const known = PAGE_VIEW_PATHS.find(pagePath => pagePath === rest[0]);
+
+    if (!known) return null;
+
+    path = known;
+    rest.shift();
+  }
+
+  // A tab still running the page from before the fields were added sends the
+  // bare event; it's counted with the new columns empty.
+  if (rest.length === 0) return { name, path, fields: {} };
+
+  const fields = readFields(rest, EVENT_FIELDS[name]);
+
+  return fields ? { name, path, fields } : null;
+}
+
+// The words as fields, or null unless there is exactly one of each expected
+// key and every value is one the key allows.
+function readFields(words: string[], expected: readonly string[]) {
+  if (words.length !== expected.length) return null;
+
+  const fields: Record<string, string> = {};
+
+  for (const word of words) {
+    const [key = "", value = "", ...extra] = word.split("=");
+
+    if (extra.length || !expected.includes(key) || key in fields) return null;
+    if (!isAllowedValue(key, value)) return null;
+
+    fields[key] = value;
+  }
+
+  return fields;
+}
+
+function isAllowedValue(key: string, value: string) {
+  if (key === "x") {
+    return /^\d{1,5}$/.test(value) && Number(value) <= MAX_SECTION_MASK;
+  }
+
+  return FIELD_VALUES[key]?.includes(value) ?? false;
+}
+
+// The printed sections as one double each, or none when the event has no
+// sections field.
+function sectionDoubles(mask: string | undefined) {
+  if (mask === undefined) return [];
+
+  const bits = Number(mask);
+
+  return SECTION_BITS.map((_section, bit) => (bits >> bit) & 1);
 }
 
 // The body as text, or null when it's longer than an event can be. A declared
