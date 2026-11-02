@@ -984,6 +984,10 @@ function duplicateInvoice(document: InvoiceDocument): Promise<InvoiceDocument> {
     const session = current;
 
     if (session?.id !== document.id || session.status !== "editing") {
+      // The open invoice's number may still be in the save delay; written
+      // first, the copy's number counts it.
+      if (session?.status === "editing") await session.controller.flush();
+
       return copyInvoice(document);
     }
 
@@ -1313,6 +1317,7 @@ function scheduleIdleVersion(session: Session) {
     session.idleVersionTimer = null;
 
     if (session !== current || session.status !== "editing") return;
+    if (session.deleting) return;
     if (Date.now() - session.lastVersionAt < VERSION_MIN_INTERVAL_MS) return;
 
     keepVersionQuietly(session, liveContent(), "idle");

@@ -175,6 +175,8 @@ function describeAction(
         label: next.labels.amountPaid || "Amount paid",
         area: "pricing"
       };
+    case "paidDate":
+      return { label: "Payment date", area: "pricing" };
     default:
       return { label: "Invoice", area: "page" };
   }

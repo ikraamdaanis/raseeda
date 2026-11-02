@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useCurrencyConversionSlice } from "~/stores/invoice-selectors";
 import { useInvoiceStore } from "~/stores/invoice-store";
 import { formatExchangeRate } from "~/utils/currency-conversion";
+import { readInvoiceDate } from "~/utils/read-invoice-date";
 
 // Digits and one dot. Past six decimal places, as central banks quote rates,
 // the rate is rounded to six, so a pasted 0.7834129 reads 0.783413.
@@ -47,9 +48,13 @@ export function useExchangeRateInput() {
   function onChange(value: string) {
     const rate = normalizeRateInput(value);
     const { invoiceDate, supplyDate, sections } = useInvoiceStore.getState();
-    // A rate typed in with no date is dated to the supply, or failing that
-    // the invoice, since that's the day its rate should be from.
-    const fallbackDate = (sections.supplyDate && supplyDate) || invoiceDate;
+    // A rate typed in with no date is dated to the supply (its first day,
+    // for a period), or failing that the invoice, since that's the day its
+    // rate should be from. Anything that isn't a date is left out.
+    const fallbackDate =
+      [sections.supplyDate ? supplyDate.split("/")[0] : "", invoiceDate].find(
+        candidate => readInvoiceDate(candidate) !== null
+      ) ?? "";
 
     setDraft(rate);
     setCurrencyConversion(prev => ({

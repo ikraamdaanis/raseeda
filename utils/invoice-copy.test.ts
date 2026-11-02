@@ -81,17 +81,24 @@ describe("findDateMention", () => {
     ["Work done 3 March", "3 March"],
     ["Hosting Q4 2026", "Q4 2026"],
     ["Delivered 2026-10-01", "2026-10-01"],
-    ["Visit on 01/10/2026", "01/10/2026"]
+    ["Visit on 01/10/2026", "01/10/2026"],
+    ["Delivered 1 May 2026", "1 May 2026"],
+    ["Due March 3, 2027", "March 3"]
   ])("finds the date in %j", (text, mention) => {
     expect(findDateMention(text)).toBe(mention);
   });
 
-  it.each(["Design work", "May include travel", "Version 2.1"])(
-    "finds nothing in %j",
-    text => {
-      expect(findDateMention(text)).toBeNull();
-    }
-  );
+  it.each([
+    "Design work",
+    "May include travel",
+    "Version 2.1",
+    "Phase 2 may change",
+    "Item 3 may vary",
+    "Prices may 10% rise",
+    "Jan 5 hours of support"
+  ])("finds nothing in %j", text => {
+    expect(findDateMention(text)).toBeNull();
+  });
 });
 
 describe("describeCopyReview", () => {

@@ -7,16 +7,21 @@ import { readInvoiceDate } from "~/utils/read-invoice-date";
 // "FRL-0014" is "FRL-", "0014" and "".
 const NUMBER_PARTS = /^(.*?)(\d+)(\D*)$/;
 
-const MONTH_NAMES =
-  "jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|june?|july?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?";
+// May is left out of the patterns without a year, where "item 3 may vary"
+// would read as a date.
+const MONTHS_EXCEPT_MAY =
+  "jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|june?|july?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?";
+const MONTH_NAMES = `${MONTHS_EXCEPT_MAY}|may`;
+const DAY = "(?:3[01]|[12]\\d|0?[1-9])(?:st|nd|rd|th)?";
 
-// Text that names a date or a period: a month (with a day or a year beside
-// it, so "may" alone doesn't count), a quarter, or a written-out date.
+// Text that names a date or a period: a month with a year ("October 2026"),
+// a day and a month either way round ("3 March", "March 3", but not "Jan 5
+// hours"), a quarter, or a written-out date.
 const DATE_MENTION = new RegExp(
   [
-    `\\b(?:\\d{1,2}(?:st|nd|rd|th)?\\s+)?(?:${MONTH_NAMES})\\.?\\s+\\d{4}\\b`,
-    `\\b\\d{1,2}(?:st|nd|rd|th)?\\s+(?:${MONTH_NAMES})\\b`,
-    `\\b(?:${MONTH_NAMES})\\.?\\s+\\d{1,2}(?:st|nd|rd|th)?\\b`,
+    `\\b(?:${DAY}\\s+)?(?:${MONTH_NAMES})\\.?\\s+\\d{4}\\b`,
+    `\\b${DAY}\\s+(?:${MONTHS_EXCEPT_MAY})\\b`,
+    `\\b(?:${MONTHS_EXCEPT_MAY})\\.?\\s+${DAY}\\b(?!\\s+[a-z])`,
     "\\bQ[1-4]\\s+\\d{4}\\b",
     "\\b\\d{4}-\\d{2}-\\d{2}\\b",
     "\\b\\d{1,2}[/.]\\d{1,2}[/.]\\d{2,4}\\b"
