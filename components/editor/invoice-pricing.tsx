@@ -213,7 +213,7 @@ function TaxRow() {
   return (
     <div className="group/pricing-row col-span-2 grid grid-cols-subgrid items-center text-sm">
       <div
-        className="flex w-full items-center"
+        className="flex w-full items-center gap-2"
         style={{ justifyContent: labelSettings.align }}
       >
         <span className="relative flex items-center">
@@ -254,7 +254,7 @@ function TaxRow() {
                   setTax(prev => ({ ...prev, percentage: val }))
                 )
               }
-              className="w-10 p-0 text-right focus-visible:w-14"
+              className="field-sizing-content w-auto min-w-[1ch] text-right"
               style={getTextStyles({
                 settings: labelSettings,
                 remove: ["align"]
@@ -363,7 +363,7 @@ function DiscountsRow() {
   return (
     <div className="group/pricing-row col-span-2 grid grid-cols-subgrid items-center text-sm">
       <div
-        className="flex w-full items-center"
+        className="flex w-full items-center gap-2"
         style={{ justifyContent: labelSettings.align }}
       >
         <span className="relative flex items-center">
@@ -405,7 +405,7 @@ function DiscountsRow() {
               onBlur={() =>
                 handleInputBlur(discountsInput, setDiscountsInput, setDiscounts)
               }
-              className="w-10 p-0 text-right focus-visible:w-14"
+              className="field-sizing-content w-auto min-w-[1ch] text-right"
               style={getTextStyles({
                 settings: labelSettings,
                 remove: ["align"]
