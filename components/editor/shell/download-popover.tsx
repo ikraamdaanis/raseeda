@@ -85,9 +85,7 @@ export function DownloadPopover() {
             <span className="text-foreground truncate font-medium">
               {fileName}
             </span>
-            <span className="text-muted-foreground text-xs">
-              PDF · A4
-            </span>
+            <span className="text-muted-foreground text-xs">PDF · A4</span>
           </div>
         </div>
         <dl className="border-border flex flex-col gap-1.5 border-y py-2.5 text-[13px]">

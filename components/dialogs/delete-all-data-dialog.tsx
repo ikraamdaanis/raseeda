@@ -61,9 +61,9 @@ export function DeleteAllDataDialog({
         >
           <DialogTitle>Delete all data?</DialogTitle>
           <DialogDescription className="text-pretty">
-            Every invoice, template, logo and saved version in this browser
-            will be deleted. This can’t be undone, so export your data first if
-            you might want it back.
+            Every invoice, template, logo and saved version in this browser will
+            be deleted. This can’t be undone, so export your data first if you
+            might want it back.
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>

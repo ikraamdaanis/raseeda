@@ -13,6 +13,7 @@ import {
   IconHistory,
   IconLayoutSidebar,
   IconLayoutSidebarRight,
+  IconTrash,
   IconTypography,
   IconUpload,
   IconZoomScan
@@ -206,6 +207,13 @@ function PaletteCommands() {
           keywords={["restore", "json"]}
         >
           Import data…
+        </PaletteItem>
+        <PaletteItem
+          icon={<IconTrash />}
+          onSelect={run(actions.deleteAllData)}
+          keywords={["clear", "wipe", "reset", "erase"]}
+        >
+          Delete all data…
         </PaletteItem>
       </CommandGroup>
       {(history.canUndo || history.canRedo) && (

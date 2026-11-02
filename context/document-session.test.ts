@@ -336,6 +336,26 @@ describe("autosave", () => {
     expect(page.invoice().title).toBe("Invoice");
   });
 
+  it("deletes all data and starts a new blank", async () => {
+    const page = await loadPage();
+
+    page.edit().setTitle("Everything goes");
+    await settle();
+    await page.renameCurrent("Kept by name");
+
+    const id = page.documentState().documentId ?? "";
+
+    page.edit().setTitle("Typed a moment ago");
+    await page.deleteEverything();
+    await settle();
+
+    expect(await page.getAllInvoices()).toHaveLength(0);
+    expect(await page.getAllTemplates()).toHaveLength(0);
+    expect(page.documentState().documentId).not.toBe(id);
+    expect(page.documentState().isRecord).toBe(false);
+    expect(page.invoice().title).toBe("Invoice");
+  });
+
   it("stops writing an invoice deleted elsewhere instead of re-creating it", async () => {
     const page = await loadPage();
 
