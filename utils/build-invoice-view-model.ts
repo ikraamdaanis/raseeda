@@ -21,7 +21,10 @@ import {
   getCurrencyConversion,
   withConvertedAmount
 } from "~/utils/currency-conversion";
-import { formatInvoiceDate } from "~/utils/format-invoice-date";
+import {
+  formatInvoiceDate,
+  formatServicePeriod
+} from "~/utils/format-invoice-date";
 import { getPrintedSections } from "~/utils/section-visibility";
 
 // Maps an invoice to an ordered, fully-formatted view-model so the HTML canvas
@@ -84,7 +87,7 @@ export function buildDetailRows(input: {
       id: "servicePeriod",
       labelKey: "servicePeriod",
       label: input.labels.servicePeriod,
-      value: formatInvoiceDate(input.servicePeriod, input.dateFormat),
+      value: formatServicePeriod(input.servicePeriod, input.dateFormat),
       isOptional: true
     }
   ];

@@ -4,6 +4,7 @@ import { useShownSections } from "~/hooks/use-shown-sections";
 import { useDetailsSlice, useTheme } from "~/stores/invoice-selectors";
 import type { InvoiceDetailRow } from "~/types";
 import { buildDetailRows } from "~/utils/build-invoice-view-model";
+import { formatServicePeriod } from "~/utils/format-invoice-date";
 import { getRoleSettings } from "~/utils/get-role-settings";
 import { getTextStyles } from "~/utils/get-text-styles";
 import { dueDateForNewInvoiceDate } from "~/utils/payment-terms";
@@ -139,6 +140,9 @@ function DetailRow({
           placeholder={placeholders.value}
           style={valueStyle}
           allowsRange={row.id === "supplyDate" || row.id === "servicePeriod"}
+          formatValue={
+            row.id === "servicePeriod" ? formatServicePeriod : undefined
+          }
           onSelect={handleDateSelect}
         />
       ) : (

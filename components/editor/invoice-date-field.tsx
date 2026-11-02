@@ -12,6 +12,7 @@ import {
 import { useIsPreview } from "~/hooks/use-shown-sections";
 import { cn } from "~/lib/utils";
 import { useInvoiceStore } from "~/stores/invoice-store";
+import type { Invoice } from "~/types";
 import { formatInvoiceDate } from "~/utils/format-invoice-date";
 import { parseIsoDate, parseIsoDateRange } from "~/utils/parse-iso-date";
 
@@ -19,7 +20,8 @@ import { parseIsoDate, parseIsoDateRange } from "~/utils/parse-iso-date";
 // calendar rather than typed, so it's always a real date. A field that allows
 // a range takes the first click as the date, and a second click as the other
 // end of a range, stored as yyyy-MM-dd/yyyy-MM-dd. An optional date can be
-// cleared from under the calendar.
+// cleared from under the calendar. formatValue writes the stored value, for a
+// field that doesn't follow the invoice's date format to the letter.
 export function InvoiceDateField({
   value,
   label,
@@ -27,6 +29,7 @@ export function InvoiceDateField({
   style,
   allowsRange = false,
   canClear = false,
+  formatValue = formatInvoiceDate,
   onSelect
 }: {
   value: string;
@@ -35,6 +38,7 @@ export function InvoiceDateField({
   style: CSSProperties;
   allowsRange?: boolean;
   canClear?: boolean;
+  formatValue?: (value: string, dateFormat: Invoice["dateFormat"]) => string;
   onSelect: (isoDate: string) => void;
 }) {
   const dateFormat = useInvoiceStore(state => state.dateFormat);
@@ -44,7 +48,7 @@ export function InvoiceDateField({
   const isPreview = useIsPreview();
   const selected = parseIsoDate(value) ?? undefined;
   const selectedRange = parseIsoDateRange(value) ?? undefined;
-  const text = value ? formatInvoiceDate(value, dateFormat) : "";
+  const text = value ? formatValue(value, dateFormat) : "";
 
   function handleOpenChange(nextOpen: boolean) {
     setOpen(nextOpen);
