@@ -10,6 +10,7 @@ import {
 } from "react";
 import { toast } from "sonner";
 import { ConfirmDeleteDialog } from "~/components/dialogs/confirm-delete-dialog";
+import { DeleteAllDataDialog } from "~/components/dialogs/delete-all-data-dialog";
 import { ImportDataDialog } from "~/components/dialogs/import-data-dialog";
 import { OpenInvoiceDialog } from "~/components/dialogs/open-invoice-dialog";
 import { OpenTemplateDialog } from "~/components/dialogs/open-template-dialog";
@@ -35,7 +36,7 @@ import { hasPrimaryModifier } from "~/utils/shortcut-label";
 import { track } from "~/utils/track";
 
 // Everything the editor can do with files: new, open, duplicate, templates,
-// version history, import and export. The project menu, the invoices panel
+// version history, import, export and deleting it all. The project menu, the invoices panel
 // and the command palette all call these, so the dialogs behave the same
 // whichever one started the action. Every invoice saves itself, so nothing
 // here asks about unsaved changes: switching invoice writes the open one
@@ -54,6 +55,7 @@ const FileActionsContext = createContext<{
   saveAsTemplate: () => void;
   exportData: () => void;
   importData: () => void;
+  deleteAllData: () => void;
   renameInvoice: (document: InvoiceDocument) => void;
   duplicateInvoice: (document: InvoiceDocument) => void;
   deleteInvoice: (document: InvoiceDocument) => void;
@@ -89,6 +91,7 @@ export function FileActionsProvider({ children }: { children: ReactNode }) {
     duplicateInvoice,
     duplicateCurrent,
     deleteFromLibrary,
+    deleteEverything,
     flushNow
   } = useInvoiceDocument();
   const { open: openRequest } = useSearch({ from: "/create" });
@@ -98,6 +101,7 @@ export function FileActionsProvider({ children }: { children: ReactNode }) {
   const [saveTemplateDialogOpen, setSaveTemplateDialogOpen] = useState(false);
   const [importDialogOpen, setImportDialogOpen] = useState(false);
   const [versionsOpen, setVersionsOpen] = useState(false);
+  const [deleteAllOpen, setDeleteAllOpen] = useState(false);
   const [templates, setTemplates] = useState<InvoiceTemplate[]>([]);
   const [pending, startTransition] = useTransition();
   // The rename and delete dialogs keep their target after closing, so their
@@ -191,6 +195,18 @@ export function FileActionsProvider({ children }: { children: ReactNode }) {
       track("data_exported");
       toast.success("Data exported successfully");
     }, "Failed to export data");
+  }
+
+  async function handleDeleteAll() {
+    try {
+      await deleteEverything();
+      setTemplates([]);
+      toast.success("All data deleted");
+    } catch (error) {
+      toast.error(errorMessage(error, "Failed to delete the data"));
+
+      throw error;
+    }
   }
 
   useEffect(() => {
@@ -291,6 +307,7 @@ export function FileActionsProvider({ children }: { children: ReactNode }) {
     saveAsTemplate: () => setSaveTemplateDialogOpen(true),
     exportData: handleExport,
     importData: () => setImportDialogOpen(true),
+    deleteAllData: () => setDeleteAllOpen(true),
     renameInvoice: (document: InvoiceDocument) =>
       setRenameDialog({ target: { kind: "invoice", document }, open: true }),
     duplicateInvoice: handleDuplicateInvoice,
@@ -349,6 +366,12 @@ export function FileActionsProvider({ children }: { children: ReactNode }) {
       <ImportDataDialog
         open={importDialogOpen}
         onOpenChange={setImportDialogOpen}
+      />
+      <DeleteAllDataDialog
+        open={deleteAllOpen}
+        onOpenChange={setDeleteAllOpen}
+        onExport={handleExport}
+        onConfirm={handleDeleteAll}
       />
     </FileActionsContext.Provider>
   );

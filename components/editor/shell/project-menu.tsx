@@ -12,6 +12,7 @@ import {
   IconFolderOpen,
   IconHistory,
   IconPalette,
+  IconTrash,
   IconUpload
 } from "@tabler/icons-react";
 import { useNavigate } from "@tanstack/react-router";
@@ -143,6 +144,14 @@ export function ProjectMenu() {
         >
           <IconUpload aria-hidden="true" />
           Import Data
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          variant="destructive"
+          onClick={actions.deleteAllData}
+          disabled={actions.pending}
+        >
+          <IconTrash aria-hidden="true" />
+          Delete All Data…
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuSub>

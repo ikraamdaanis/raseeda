@@ -900,6 +900,31 @@ export async function importDataAtomically(records: {
   }
 }
 
+// Empties every table: invoices and their versions, templates, logos, the old
+// working draft and the last-opened marker. One transaction, so a failure
+// leaves everything as it was.
+export async function deleteAllData(): Promise<void> {
+  try {
+    await ensureDbReady();
+    await db.transaction(
+      "rw",
+      [db.invoices, db.versions, db.templates, db.images, db.drafts, db.meta],
+      async () => {
+        await Promise.all([
+          db.invoices.clear(),
+          db.versions.clear(),
+          db.templates.clear(),
+          db.images.clear(),
+          db.drafts.clear(),
+          db.meta.clear()
+        ]);
+      }
+    );
+  } catch (error) {
+    throw createStorageError(error, "Failed to delete the stored data.");
+  }
+}
+
 export async function getAllImages(): Promise<StoredImage[]> {
   try {
     await ensureDbReady();

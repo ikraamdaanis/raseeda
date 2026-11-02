@@ -6,6 +6,7 @@ import {
   addInvoiceVersion,
   cleanupOrphanedImages,
   createInvoice,
+  deleteAllData,
   deleteInvoices,
   getAllInvoices,
   getInvoice,
@@ -1094,6 +1095,41 @@ function deleteFromLibrary(ids: string[]): Promise<void> {
   });
 }
 
+// Deletes everything this browser stores (Project menu → Delete all data) and
+// starts a blank invoice. The open invoice's pending edits are written first,
+// as deleting it alone does, so no write lands after the delete.
+function deleteEverything(): Promise<void> {
+  return enqueue(async () => {
+    const session = current;
+
+    if (session) {
+      if (session.status === "editing") await session.controller.flush();
+
+      session.deleting = true;
+    }
+
+    try {
+      await deleteAllData();
+    } catch (error) {
+      if (session) session.deleting = false;
+
+      throw error;
+    }
+
+    for (const id of storedKeys(UNSAVED_KEY_PREFIX)) clearStash(id);
+
+    for (const id of storedKeys(BLANK_KEY_PREFIX)) {
+      writeStorage("localStorage", `${BLANK_KEY_PREFIX}${id}`, null);
+    }
+
+    if (session) dispose(session);
+
+    const blank = createBlankInvoice();
+
+    await switchTo(newSession(blank), blank);
+  });
+}
+
 // "Edit here": takes the invoice over from the tab editing it.
 function takeOver(): Promise<void> {
   return enqueue(async () => {
@@ -1631,6 +1667,7 @@ export const documentActions = {
   duplicateCurrent,
   renameCurrent,
   deleteFromLibrary,
+  deleteEverything,
   takeOver,
   keepDeletedCopy,
   flushNow,
