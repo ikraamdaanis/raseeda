@@ -3,14 +3,13 @@ import { useTheme, useTitleSlice } from "~/stores/invoice-selectors";
 import { useInvoiceStore } from "~/stores/invoice-store";
 import { getRoleSettings } from "~/utils/get-role-settings";
 import { getTextStyles } from "~/utils/get-text-styles";
-import { getPaymentStatus } from "~/utils/payment-status";
+import { isPaidInFull } from "~/utils/is-paid-in-full";
 
 export function InvoiceTitle() {
   const { title, setTitle } = useTitleSlice();
   const theme = useTheme();
   const showsPaidStamp = useInvoiceStore(
-    state =>
-      state.sections.paidStamp && getPaymentStatus(state, new Date()) === "paid"
+    state => state.sections.paidStamp && isPaidInFull(state)
   );
 
   return (

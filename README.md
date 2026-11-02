@@ -15,7 +15,7 @@ A free, local-first invoice generator that runs entirely in your browser. Fill i
 - Any currency, with custom symbols when you need them
 - Export to PDF in one click
 - Import and export all data (invoices, templates, images) as a backup, or delete it all
-- Mark an invoice paid with a payment date and an optional PAID stamp; the invoice lists show what's paid, part paid and overdue
+- Show a payment on the invoice with its date, and an optional PAID stamp
 - A small on-device API for scripts and assistants (see below)
 - Works offline: no network needed once the editor has loaded
 - No sign-up, no accounts, no tracking cookies; only anonymous usage counts, off under Global Privacy Control
@@ -27,7 +27,7 @@ While the editor (`/create`) is open, `window.raseeda` lets a script or an AI as
 | Call | What it does |
 | --- | --- |
 | `version` | The API version, currently `1` |
-| `listInvoices()` | Every invoice: `id`, `name`, `number`, `client`, `total`, `currency`, `currencyCode`, `status` (`paid`, `partPaid`, `overdue` or `unpaid`), `invoiceDate`, `dueDate`, `updatedAt` |
+| `listInvoices()` | Every invoice: `id`, `name`, `number`, `client`, `total`, `currency`, `currencyCode`, `invoiceDate`, `dueDate`, `updatedAt` |
 | `getInvoice(id)` | An invoice's data, in the shape an export's `invoiceData` has |
 | `createInvoice(data)` | Adds an invoice and opens it, returning its id. Takes the same shape; anything left out takes a new invoice's value |
 | `openInvoice(id)` | Opens an invoice in the editor |

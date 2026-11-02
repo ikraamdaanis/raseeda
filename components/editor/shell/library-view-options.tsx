@@ -22,7 +22,6 @@ import {
   LIBRARY_DATE_RANGES,
   LIBRARY_GROUPS,
   LIBRARY_SORTS,
-  LIBRARY_STATUS_FILTERS,
   listClients,
   listCurrencies
 } from "~/utils/invoice-library";
@@ -160,26 +159,6 @@ export function LibraryViewOptions({
             className={fieldClassName}
           >
             {LIBRARY_DATE_RANGES.map(option => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </NativeSelect>
-        </OptionGroup>
-        <OptionGroup label="Status" htmlFor="library-status">
-          <NativeSelect
-            id="library-status"
-            value={view.status}
-            onChange={event => {
-              const status = LIBRARY_STATUS_FILTERS.find(
-                option => option.value === event.target.value
-              );
-
-              if (status) update({ status: status.value });
-            }}
-            className={fieldClassName}
-          >
-            {LIBRARY_STATUS_FILTERS.map(option => (
               <option key={option.value} value={option.value}>
                 {option.label}
               </option>

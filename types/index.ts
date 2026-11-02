@@ -84,17 +84,11 @@ export type InvoiceLibraryGroup = "client" | "month" | "none";
 export type InvoiceLibraryDateRange =
   "all" | "thisMonth" | "last30" | "thisQuarter" | "thisYear" | "lastYear";
 
-// Where an invoice stands with its payment (utils/payment-status.ts).
-export type InvoicePaymentStatus = "paid" | "partPaid" | "overdue" | "unpaid";
-
-export type InvoiceLibraryStatusFilter = "all" | "unpaid" | "overdue" | "paid";
-
 export type InvoiceLibraryView = {
   sort: InvoiceLibrarySort;
   direction: SortDirection;
   group: InvoiceLibraryGroup;
   dateRange: InvoiceLibraryDateRange;
-  status: InvoiceLibraryStatusFilter;
   client: string | null;
   currency: string | null;
 };

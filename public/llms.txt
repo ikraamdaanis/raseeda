@@ -14,7 +14,7 @@
 - Free, with no paid plan, no ads and no watermark on the PDF.
 - No account and no sign-up.
 - Any currency, VAT or sales tax, fees, discounts, payment details (bank, account and routing numbers, IBAN, BIC / SWIFT, sort code), templates for repeat clients, and import / export backups.
-- raseeda makes the PDF and records what was paid and when; it does not email invoices or take payments.
+- raseeda makes the PDF; it does not email invoices or track payments.
 - No server API and no server-side storage. In the editor, `window.raseeda` offers an on-device API for scripts and assistants driving the browser: `listInvoices()`, `getInvoice(id)`, `createInvoice(data)`, `openInvoice(id)`, `getPdf(id?)`, `downloadPdf(id?)` and `importData(json)`. Documented in the README.
 
 ## Source

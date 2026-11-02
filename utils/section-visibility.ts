@@ -1,6 +1,6 @@
 import type { Invoice, InvoiceSectionKey } from "~/types";
 import { getCurrencyConversion } from "~/utils/currency-conversion";
-import { getPaymentStatus } from "~/utils/payment-status";
+import { isPaidInFull } from "~/utils/is-paid-in-full";
 
 export function hasText(value: string): boolean {
   return value.trim().length > 0;
@@ -36,7 +36,6 @@ export function getPrintedSections(
     | "amountPaid"
     | "items"
     | "discountType"
-    | "dueDate"
     | "currency"
     | "currencyCode"
     | "currencyConversion"
@@ -60,8 +59,7 @@ export function getPrintedSections(
     fees: sections.fees && invoice.fees > 0,
     amountPaid: sections.amountPaid && invoice.amountPaid > 0,
     // The stamp only says PAID when nothing is left to pay.
-    paidStamp:
-      sections.paidStamp && getPaymentStatus(invoice, new Date()) === "paid",
+    paidStamp: sections.paidStamp && isPaidInFull(invoice),
     // Not in that currency already, and with a rate to convert at.
     currencyConversion: conversion !== null && conversion.rate > 0,
     paymentDetails:

@@ -22,7 +22,6 @@ import {
   getInvoiceTotal
 } from "~/utils/invoice-library";
 import { deriveInvoiceName } from "~/utils/invoice-name";
-import { getPaymentStatus } from "~/utils/payment-status";
 import { saveFile, toPdfFileName } from "~/utils/save-file";
 import { track } from "~/utils/track";
 
@@ -44,7 +43,6 @@ function summarize(document: InvoiceDocument) {
     total: getInvoiceTotal(document),
     currency: invoiceData.currency,
     currencyCode: invoiceData.currencyCode,
-    status: getPaymentStatus(invoiceData, new Date()),
     invoiceDate: getInvoiceDate(document) ? invoiceData.invoiceDate : null,
     dueDate: invoiceData.dueDate || null,
     updatedAt: new Date(document.updatedAt).toISOString()
