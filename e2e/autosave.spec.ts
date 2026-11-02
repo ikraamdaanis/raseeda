@@ -7,7 +7,7 @@ import {
   gotoEditorReady,
   gotoEditorSettled,
   hidePage,
-  invoiceNameButton,
+  invoiceNameField,
   nameInvoice,
   pressShortcut,
   savedContains
@@ -23,13 +23,13 @@ test("a new invoice joins the library on its first edit, not before", async ({
   await page.waitForTimeout(1000);
 
   expect(await countSavedInvoices(page)).toBe(0);
-  await expect(invoiceNameButton(page)).toHaveText("INV-0001");
+  await expect(invoiceNameField(page)).toHaveValue("INV-0001");
 
   await page.getByLabel("Invoice No.", { exact: true }).fill("INV-0042");
   await page.getByLabel("To details").fill("Acme Ltd\n1 High Street");
 
   await expect.poll(() => countSavedInvoices(page)).toBe(1);
-  await expect(invoiceNameButton(page)).toHaveText("INV-0042 · Acme Ltd");
+  await expect(invoiceNameField(page)).toHaveValue("INV-0042 · Acme Ltd");
   await expect
     .poll(() => savedContains(page, "INV-0042 · Acme Ltd"))
     .toBe(true);
@@ -217,9 +217,7 @@ test("⇧⌘S duplicates the open invoice and opens the copy", async ({ page }) 
 
   await pressShortcut(page, "Mod+Shift+s");
 
-  await expect(
-    page.getByRole("heading", { name: "Quarterly retainer copy" })
-  ).toBeVisible();
+  await expect(invoiceNameField(page)).toHaveValue("Quarterly retainer copy");
   await expect(page.getByLabel("Invoice title")).toHaveValue(
     "Original content"
   );
@@ -274,16 +272,30 @@ test("naming a new invoice adds it to the library under that name", async ({
   expect(await savedContains(page, "Named before editing")).toBe(true);
 });
 
-test("whitespace-only names are rejected on Rename", async ({ page }) => {
+test("a blank name leaves the invoice's name as it was", async ({ page }) => {
   await gotoEditorReady(page, "Named doc");
-  await invoiceNameButton(page).click();
+  await nameInvoice(page, "Kept name");
 
-  const dialog = page.getByRole("dialog", { name: "Rename Invoice" });
+  const field = invoiceNameField(page);
 
-  await dialog.getByRole("textbox").fill("   ");
-  await dialog.getByRole("button", { name: /Rename|Save/ }).click();
+  await field.fill("   ");
+  await field.press("Enter");
 
-  await expect(dialog.getByText("Invoice name is required")).toBeVisible();
+  await expect(field).toHaveValue("Kept name");
+});
+
+test("Escape leaves the invoice's name as it was", async ({ page }) => {
+  await gotoEditorReady(page, "Named doc");
+  await nameInvoice(page, "Kept name");
+
+  const field = invoiceNameField(page);
+
+  await field.fill("Discarded name");
+  await field.press("Escape");
+
+  await expect(field).toHaveValue("Kept name");
+  await page.waitForTimeout(1000);
+  expect(await savedContains(page, "Discarded name")).toBe(false);
 });
 
 test("whitespace-only names are rejected on Save As Template", async ({

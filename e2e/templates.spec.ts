@@ -3,6 +3,7 @@ import {
   clickFileMenuItem,
   countSavedInvoices,
   gotoEditorReady,
+  invoiceNameField,
   nameInvoice,
   savedContains
 } from "./helpers";
@@ -43,7 +44,7 @@ test("opening a template starts a new invoice from it [R]", async ({
   // The template's content starts a new invoice with an automatic name; "Base
   // doc" stays as it was, and the new one joins the library once it's edited.
   await expect(page.getByLabel("From details")).toHaveValue("Template seller");
-  await expect(page.getByRole("heading", { name: "INV-0001" })).toBeVisible();
+  await expect(invoiceNameField(page)).toHaveValue("INV-0001");
   expect(await countSavedInvoices(page)).toBe(1);
 
   await page.getByLabel("Invoice title").fill("From the template");

@@ -3,6 +3,7 @@ import {
   addLineItem,
   clickFileMenuItem,
   gotoEditorReady,
+  invoiceNameField,
   nameInvoice
 } from "./helpers";
 
@@ -29,9 +30,7 @@ test("create, edit, name, leave, return, and download an invoice", async ({
 
   await nameInvoice(page, "Acme Invoice");
 
-  await expect(
-    page.getByRole("heading", { name: "Acme Invoice" })
-  ).toBeVisible();
+  await expect(invoiceNameField(page)).toHaveValue("Acme Invoice");
 
   // Every edit saves itself, so leaving goes straight home without asking.
   await clickFileMenuItem(page, "Back to homepage");
@@ -43,9 +42,7 @@ test("create, edit, name, leave, return, and download an invoice", async ({
     .click();
 
   await expect(page).toHaveURL("/create");
-  await expect(
-    page.getByRole("heading", { name: "Acme Invoice" })
-  ).toBeVisible();
+  await expect(invoiceNameField(page)).toHaveValue("Acme Invoice");
   await expect(page.getByLabel("Invoice title")).toHaveValue("Acme Consulting");
   await expect(description).toHaveValue("Consulting work");
 

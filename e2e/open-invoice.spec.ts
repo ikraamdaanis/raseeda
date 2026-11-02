@@ -5,6 +5,7 @@ import {
   clickFileMenuItem,
   gotoEditorReady,
   gotoEditorSettled,
+  invoiceNameField,
   nameInvoice
 } from "./helpers";
 
@@ -34,7 +35,7 @@ test("lists a saved invoice and opens it into the editor", async ({ page }) => {
   await dialog.getByRole("row", { name: /Alpha/ }).dblclick();
   await expect(dialog).toBeHidden();
 
-  await expect(page.getByRole("heading", { name: "Alpha" })).toBeVisible();
+  await expect(invoiceNameField(page)).toHaveValue("Alpha");
   await expect(page.getByLabel("Invoice title")).toHaveValue("Alpha title");
 });
 
@@ -55,7 +56,7 @@ test("deleting the current invoice starts a new one [R]", async ({ page }) => {
 
   await page.keyboard.press("Escape");
   await expect(dialog).toBeHidden();
-  await expect(page.getByRole("heading", { name: "INV-0001" })).toBeVisible();
+  await expect(invoiceNameField(page)).toHaveValue("INV-0001");
   await expect(page.getByLabel("Invoice title")).toHaveValue("Invoice");
 });
 
@@ -125,7 +126,7 @@ test("renaming from the dialog updates the toolbar title", async ({ page }) => {
   await expect(dialog.getByRole("row", { name: /New name/ })).toBeVisible();
 
   await page.keyboard.press("Escape");
-  await expect(page.getByRole("heading", { name: "New name" })).toBeVisible();
+  await expect(invoiceNameField(page)).toHaveValue("New name");
 });
 
 // Saves three invoices and opens the Open Invoice dialog on them.

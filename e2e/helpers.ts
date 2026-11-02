@@ -142,22 +142,20 @@ export async function clickFileMenuItem(page: Page, name: string | RegExp) {
     .click();
 }
 
-// The open invoice's name in the top bar, which renames it.
-export function invoiceNameButton(page: Page) {
-  return page.getByRole("heading", { level: 1 }).getByRole("button");
+// The open invoice's name in the top bar, edited where it sits.
+export function invoiceNameField(page: Page) {
+  return page.getByRole("heading", { level: 1 }).getByRole("textbox");
 }
 
 // Names the open invoice from the top bar (a new one joins the library under
 // that name) and waits until the name is saved.
 export async function nameInvoice(page: Page, name: string) {
-  await invoiceNameButton(page).click();
+  const field = invoiceNameField(page);
 
-  const dialog = page.getByRole("dialog", { name: "Rename Invoice" });
-
-  await dialog.getByRole("textbox").fill(name);
-  await dialog.getByRole("button", { name: /Rename|Save/ }).click();
-  await expect(dialog).toBeHidden();
-  await expect(page.getByRole("heading", { name })).toBeVisible();
+  await field.fill(name);
+  await field.press("Enter");
+  await expect(field).not.toBeFocused();
+  await expect(field).toHaveValue(name);
   await expect.poll(() => savedContains(page, name)).toBe(true);
 }
 
