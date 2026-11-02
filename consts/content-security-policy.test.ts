@@ -45,6 +45,13 @@ describe("Content-Security-Policy", () => {
     );
   });
 
+  // Other sites get no Referer; the site's own pages keep it, so a page loaded
+  // from another of its pages counts as a move within the site (utils/track.ts)
+  // rather than a new visit.
+  it("sends a Referer only within the site", () => {
+    expect(SECURITY_HEADERS["Referrer-Policy"]).toBe("same-origin");
+  });
+
   it.each(Object.entries(SECURITY_HEADERS))(
     "public/_headers sends the Worker's %s on every static file",
     (name, value) => {
