@@ -5,6 +5,7 @@ import {
   IconCurrencyDollar,
   IconDeviceFloppy,
   IconDownload,
+  IconExternalLink,
   IconEye,
   IconFile,
   IconFilePlus,
@@ -110,7 +111,7 @@ function PaletteCommands() {
     useEditorUi();
   const { togglePanel, toggleAllPanels } = useEditorUi();
   const actions = useFileActions();
-  const { openPdf } = useInvoicePdf();
+  const { downloadPdf, openPdf } = useInvoicePdf();
   const { setView } = useCanvasView();
   const { preference, setPreference } = useEditorTheme();
   const { theme, setTheme } = useThemeSlice();
@@ -138,10 +139,17 @@ function PaletteCommands() {
       <CommandGroup heading="Invoice">
         <PaletteItem
           icon={<IconDownload />}
-          onSelect={run(openPdf)}
-          keywords={["pdf", "export", "print"]}
+          onSelect={run(downloadPdf)}
+          keywords={["pdf", "export", "save"]}
         >
           Download PDF
+        </PaletteItem>
+        <PaletteItem
+          icon={<IconExternalLink />}
+          onSelect={run(openPdf)}
+          keywords={["pdf", "print", "view", "tab"]}
+        >
+          Open PDF in a new tab
         </PaletteItem>
         <PaletteItem icon={<IconFilePlus />} onSelect={run(actions.newInvoice)}>
           New invoice

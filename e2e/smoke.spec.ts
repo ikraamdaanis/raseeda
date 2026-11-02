@@ -46,8 +46,8 @@ test("create, edit, name, leave, return, and download an invoice", async ({
   await expect(page.getByLabel("Invoice title")).toHaveValue("Acme Consulting");
   await expect(description).toHaveValue("Consulting work");
 
-  // Download opens a summary popover; its Download PDF button opens the PDF in
-  // a new viewer tab. Asserting that the tab opens is
+  // Download opens a summary popover; its Open in a new tab button opens the
+  // PDF in a new viewer tab. Asserting that the tab opens is
   // the stable P0 signal (the issue's "assert ... the new viewer tab" option):
   // @react-pdf's blob generation does not complete under the headless dev server,
   // so the deeper /Title-filename and blob-content checks live in the later
@@ -55,7 +55,7 @@ test("create, edit, name, leave, return, and download an invoice", async ({
   const pdfPagePromise = context.waitForEvent("page");
 
   await page.getByRole("button", { name: "Download", exact: true }).click();
-  await page.getByRole("button", { name: "Download PDF" }).click();
+  await page.getByRole("button", { name: "Open in a new tab" }).click();
 
   const pdfPage = await pdfPagePromise;
 

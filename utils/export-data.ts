@@ -4,6 +4,7 @@ import { CURRENT_EXPORT_VERSION } from "~/consts/export";
 import { getAllImages, getAllInvoices, getAllTemplates } from "~/db";
 import { CURRENT_INVOICE_SCHEMA_VERSION } from "~/schema/migrations";
 import type { ExportFile, Invoice, InvoiceNameSource } from "~/types";
+import { saveFile } from "~/utils/save-file";
 
 function arrayBufferToBase64(buffer: ArrayBuffer): string {
   const bytes = new Uint8Array(buffer);
@@ -51,18 +52,8 @@ export async function buildExportData(): Promise<ExportFile> {
 
 function saveJsonFile(data: ExportFile, fileName: string) {
   const json = JSON.stringify(data, null, 2);
-  const blob = new Blob([json], { type: "application/json" });
-  const url = URL.createObjectURL(blob);
 
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = fileName;
-  a.click();
-
-  // Defer the revoke: Safari has historically aborted the download when the
-  // object URL is revoked synchronously in the same tick as the click, so let
-  // the download start before releasing the blob.
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  saveFile(new Blob([json], { type: "application/json" }), fileName);
 }
 
 export async function exportAllData(): Promise<void> {

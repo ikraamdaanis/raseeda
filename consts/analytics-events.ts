@@ -5,6 +5,7 @@ export const ANALYTICS_EVENTS = [
   "page_view",
   "editor_opened",
   "pdf_opened",
+  "pdf_downloaded",
   "invoice_saved",
   "template_saved",
   "data_exported",

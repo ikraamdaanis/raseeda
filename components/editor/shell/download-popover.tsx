@@ -1,4 +1,8 @@
-import { IconDownload, IconFileTypePdf } from "@tabler/icons-react";
+import {
+  IconDownload,
+  IconExternalLink,
+  IconFileTypePdf
+} from "@tabler/icons-react";
 import { formatDistanceToNow } from "date-fns";
 import { useState } from "react";
 import { Button } from "~/components/ui/button";
@@ -17,6 +21,7 @@ import {
 import { getInvoice } from "~/db";
 import { useInvoicePdf } from "~/hooks/use-invoice-pdf";
 import { useCurrencySlice, useInvoiceTotals } from "~/stores/invoice-selectors";
+import { toPdfFileName } from "~/utils/save-file";
 
 // Download opens a small summary first, like Framer's Publish: what file you
 // get, its total and when it was last saved, then the PDF itself. On a phone
@@ -25,13 +30,13 @@ export function DownloadPopover() {
   const { isNarrow } = useEditorUi();
   const [open, setOpen] = useState(false);
   const [savedAt, setSavedAt] = useState<Date | null>(null);
-  const { pending, openPdf, prefetch } = useInvoicePdf();
+  const { pending, downloadPdf, openPdf, prefetch } = useInvoicePdf();
   const { exportData } = useFileActions();
   const { libraryDocumentId } = useInvoiceDocument();
   const documentName = useDocumentName();
   const { total } = useInvoiceTotals();
   const { currency, currencyCode } = useCurrencySlice();
-  const fileName = `${documentName}.pdf`;
+  const fileName = toPdfFileName(documentName);
 
   function handleOpenChange(next: boolean) {
     setOpen(next);
@@ -81,7 +86,7 @@ export function DownloadPopover() {
               {fileName}
             </span>
             <span className="text-muted-foreground text-xs">
-              PDF · A4 · opens in a new tab
+              PDF · A4
             </span>
           </div>
         </div>
@@ -108,12 +113,23 @@ export function DownloadPopover() {
             variant="primary"
             disabled={pending}
             onClick={() => {
-              openPdf();
+              downloadPdf();
               setOpen(false);
             }}
           >
             <IconDownload aria-hidden="true" />
             Download PDF
+          </Button>
+          <Button
+            variant="secondary"
+            disabled={pending}
+            onClick={() => {
+              openPdf();
+              setOpen(false);
+            }}
+          >
+            <IconExternalLink aria-hidden="true" />
+            Open in a new tab
           </Button>
           <Button
             variant="secondary"

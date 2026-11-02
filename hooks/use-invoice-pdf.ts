@@ -1,8 +1,11 @@
 import { useEffect, useTransition } from "react";
 import { toast } from "sonner";
+import { useDocumentName } from "~/context/invoice-document-context";
 import { getImageBlob } from "~/db";
 import { useInvoiceData } from "~/stores/invoice-selectors";
+import type { Invoice } from "~/types";
 import { isDirectImageUrl } from "~/utils/is-direct-image-url";
+import { saveFile, toPdfFileName } from "~/utils/save-file";
 import { track } from "~/utils/track";
 
 // react-pdf can only decode PNG and JPEG. Any other logo format the uploader
@@ -43,10 +46,49 @@ function prefetchPdfBuilder() {
   });
 }
 
-// Builds the invoice PDF and opens it in a new tab. `prefetch` warms the PDF
-// engine early (call it on hover or focus of whatever leads to a download).
+// Builds an invoice's PDF. The logo is read from IndexedDB here rather than
+// taken from the reactive image loader, which can still be an empty string
+// right after opening a saved invoice.
+export async function buildPdf(invoice: Invoice): Promise<Blob> {
+  let logoUrl = "";
+  let logoUrlIsOwned = false;
+
+  try {
+    if (isDirectImageUrl(invoice.image)) {
+      logoUrl = invoice.image;
+    } else if (invoice.image) {
+      const blob = await getImageBlob(invoice.image);
+
+      if (blob) {
+        logoUrl = URL.createObjectURL(await toPdfSafeImageBlob(blob));
+        logoUrlIsOwned = true;
+      }
+    }
+
+    const { buildInvoicePdfBlob } = await loadPdfBuilder();
+
+    return await buildInvoicePdfBlob({ ...invoice, image: logoUrl });
+  } finally {
+    // toBlob() has already embedded the logo, so the source URL we minted for
+    // it can be released regardless of success.
+    if (logoUrlIsOwned) URL.revokeObjectURL(logoUrl);
+  }
+}
+
+function reportFailure(error: unknown) {
+  toast.error(
+    error instanceof Error
+      ? `Failed to generate PDF: ${error.message}`
+      : "Failed to generate PDF"
+  );
+}
+
+// Builds the open invoice's PDF and saves it (downloadPdf) or opens it in a
+// new tab (openPdf). `prefetch` warms the PDF engine early (call it on hover
+// or focus of whatever leads to a download).
 export function useInvoicePdf() {
   const invoice = useInvoiceData();
+  const documentName = useDocumentName();
   const [pending, startTransition] = useTransition();
 
   useEffect(() => {
@@ -63,6 +105,17 @@ export function useInvoicePdf() {
     return () => cancelIdleCallback(idleCallback);
   }, []);
 
+  function downloadPdf() {
+    startTransition(async () => {
+      try {
+        saveFile(await buildPdf(invoice), toPdfFileName(documentName));
+        track("pdf_downloaded");
+      } catch (error) {
+        reportFailure(error);
+      }
+    });
+  }
+
   function openPdf() {
     // Open window immediately while we still have user interaction context
     const newWindow = window.open("", "_blank");
@@ -72,30 +125,9 @@ export function useInvoicePdf() {
     }
 
     startTransition(async () => {
-      let logoUrl = "";
-      let logoUrlIsOwned = false;
-
       try {
-        // Resolve the logo from IndexedDB up front. The reactive image loader
-        // can still be an empty string right after opening a saved invoice, so
-        // reading the blob here guarantees the PDF is built with the logo.
-        if (isDirectImageUrl(invoice.image)) {
-          logoUrl = invoice.image;
-        } else if (invoice.image) {
-          const blob = await getImageBlob(invoice.image);
+        const url = URL.createObjectURL(await buildPdf(invoice));
 
-          if (blob) {
-            logoUrl = URL.createObjectURL(await toPdfSafeImageBlob(blob));
-            logoUrlIsOwned = true;
-          }
-        }
-
-        const stableInvoice = { ...invoice, image: logoUrl };
-        const { buildInvoicePdfBlob } = await loadPdfBuilder();
-        const blob = await buildInvoicePdfBlob(stableInvoice);
-        const url = URL.createObjectURL(blob);
-
-        // Update the window location with the blob URL
         newWindow.location.href = url;
 
         if (!newWindow.closed) track("pdf_opened");
@@ -103,20 +135,11 @@ export function useInvoicePdf() {
         // Don't revoke the URL - Chrome's PDF viewer needs it to persist
         // The browser will automatically clean it up when the tab is closed
       } catch (error) {
-        toast.error(
-          error instanceof Error
-            ? `Failed to generate PDF: ${error.message}`
-            : "Failed to generate PDF"
-        );
-
+        reportFailure(error);
         newWindow.close();
-      } finally {
-        // toBlob() has already embedded the logo, so the source URL we minted
-        // for it can be released regardless of success.
-        if (logoUrlIsOwned) URL.revokeObjectURL(logoUrl);
       }
     });
   }
 
-  return { pending, openPdf, prefetch: prefetchPdfBuilder };
+  return { pending, downloadPdf, openPdf, prefetch: prefetchPdfBuilder };
 }
