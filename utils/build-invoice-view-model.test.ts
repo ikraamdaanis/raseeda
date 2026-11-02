@@ -471,7 +471,7 @@ describe("buildInvoiceViewModel with a second currency", () => {
     expect(lineItems[0].convertedAmount).toBe("$9,205.63");
     expect(valueById.subtotal).toBe("£7,150.00 / $9,205.63");
     expect(valueById.tax).toBe("£0.00 / $0.00");
-    expect(valueById.total).toBe("£7,150.00 GBP / $9,205.63");
+    expect(valueById.total).toBe("£7,150.00 / $9,205.63");
   });
 
   it("converts to any currency, a custom one included", () => {

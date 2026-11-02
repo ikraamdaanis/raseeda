@@ -1,5 +1,7 @@
 import {
   currencyOptions,
+  formatCurrency,
+  formatCurrencyWithCode,
   getCurrencyCodeForSymbol,
   getCurrencyMarker,
   normalizeCurrency
@@ -13,7 +15,7 @@ type CurrencyPair = { currency: string; currencyCode: string };
 // A currency's code: the one stored, or a preset's own when none is (an
 // invoice saved before codes were, or imported without one, still has "£"
 // as GBP, as the currency picker shows it). A custom symbol may have none.
-function currencyCode({ currency, currencyCode: code }: CurrencyPair) {
+function resolveCurrencyCode({ currency, currencyCode: code }: CurrencyPair) {
   return (
     code.trim().toUpperCase() ||
     getCurrencyCodeForSymbol(normalizeCurrency(currency))
@@ -23,14 +25,14 @@ function currencyCode({ currency, currencyCode: code }: CurrencyPair) {
 // The code that names a currency on the page ("GBP"), or its marker when it
 // has no code.
 function currencyLabel(pair: CurrencyPair) {
-  return currencyCode(pair) || getCurrencyMarker(pair.currency);
+  return resolveCurrencyCode(pair) || getCurrencyMarker(pair.currency);
 }
 
 // Two currencies are the same when their codes match. A "$" in USD and a "$"
 // in CAD differ; without codes, the symbols decide.
 export function isSameCurrency(first: CurrencyPair, second: CurrencyPair) {
-  const firstCode = currencyCode(first);
-  const secondCode = currencyCode(second);
+  const firstCode = resolveCurrencyCode(first);
+  const secondCode = resolveCurrencyCode(second);
 
   if (firstCode && secondCode) return firstCode === secondCode;
 
@@ -108,6 +110,31 @@ export function withConvertedAmount(
   if (!conversion) return value;
 
   return `${value} / ${formatConvertedAmount(amount, conversion)}`;
+}
+
+// The grand total. On its own it carries its code, "£7,150.00 GBP", since a
+// symbol like "$" can stand for several currencies. Beside a second currency
+// it doesn't, "£7,150.00 / $9,205.63": the column headers and the rate line
+// already name both.
+export function formatInvoiceTotal({
+  amount,
+  currency,
+  currencyCode,
+  conversion
+}: {
+  amount: number;
+  currency: string;
+  currencyCode: string;
+  conversion: CurrencyConversion | null;
+}): string {
+  if (!conversion)
+    return formatCurrencyWithCode(amount, currency, currencyCode);
+
+  return withConvertedAmount(
+    formatCurrency(amount, currency),
+    amount,
+    conversion
+  );
 }
 
 export function formatExchangeRate(rate: number): string {

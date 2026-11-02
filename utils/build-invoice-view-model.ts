@@ -16,6 +16,7 @@ import {
 } from "~/utils/calculate-invoice-totals";
 import {
   formatConvertedAmount,
+  formatInvoiceTotal,
   getCurrencyConversion,
   withConvertedAmount
 } from "~/utils/currency-conversion";
@@ -184,11 +185,12 @@ function buildSummaryRows(input: {
     {
       id: "total",
       label: labels.total,
-      value: withConvertedAmount(
-        formatCurrencyWithCode(input.total, currency, input.currencyCode),
-        input.total,
+      value: formatInvoiceTotal({
+        amount: input.total,
+        currency,
+        currencyCode: input.currencyCode,
         conversion
-      ),
+      }),
       // Without a recorded payment the grand total is the final figure; with a
       // payment the balance-due row below becomes the emphasised total instead.
       isVisible: true,

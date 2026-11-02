@@ -11,7 +11,10 @@ import {
   usePricingSlice,
   useTheme
 } from "~/stores/invoice-selectors";
-import { withConvertedAmount } from "~/utils/currency-conversion";
+import {
+  formatInvoiceTotal,
+  withConvertedAmount
+} from "~/utils/currency-conversion";
 import { getRoleSettings } from "~/utils/get-role-settings";
 import { getTextStyles } from "~/utils/get-text-styles";
 import { handleCurrencyInput } from "~/utils/handle-currency-input";
@@ -481,11 +484,12 @@ function TotalRow() {
         )}
         style={getTextStyles({ settings: valueSettings })}
       >
-        {withConvertedAmount(
-          formatCurrencyWithCode(total, currency, currencyCode),
-          total,
+        {formatInvoiceTotal({
+          amount: total,
+          currency,
+          currencyCode,
           conversion
-        )}
+        })}
       </span>
     </div>
   );
