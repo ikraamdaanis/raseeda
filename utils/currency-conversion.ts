@@ -1,5 +1,6 @@
 import {
   currencyOptions,
+  getCurrencyCodeForSymbol,
   getCurrencyMarker,
   normalizeCurrency
 } from "~/consts/currencies";
@@ -9,17 +10,27 @@ import { formatInvoiceDate } from "~/utils/format-invoice-date";
 
 type CurrencyPair = { currency: string; currencyCode: string };
 
-// The code that names a currency on the page ("GBP"), or its marker when no
-// code is set.
-function currencyLabel({ currency, currencyCode }: CurrencyPair) {
-  return currencyCode.trim().toUpperCase() || getCurrencyMarker(currency);
+// A currency's code: the one stored, or a preset's own when none is (an
+// invoice saved before codes were, or imported without one, still has "£"
+// as GBP, as the currency picker shows it). A custom symbol may have none.
+function currencyCode({ currency, currencyCode: code }: CurrencyPair) {
+  return (
+    code.trim().toUpperCase() ||
+    getCurrencyCodeForSymbol(normalizeCurrency(currency))
+  );
+}
+
+// The code that names a currency on the page ("GBP"), or its marker when it
+// has no code.
+function currencyLabel(pair: CurrencyPair) {
+  return currencyCode(pair) || getCurrencyMarker(pair.currency);
 }
 
 // Two currencies are the same when their codes match. A "$" in USD and a "$"
 // in CAD differ; without codes, the symbols decide.
 export function isSameCurrency(first: CurrencyPair, second: CurrencyPair) {
-  const firstCode = first.currencyCode.trim().toUpperCase();
-  const secondCode = second.currencyCode.trim().toUpperCase();
+  const firstCode = currencyCode(first);
+  const secondCode = currencyCode(second);
 
   if (firstCode && secondCode) return firstCode === secondCode;
 
