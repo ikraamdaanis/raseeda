@@ -7,6 +7,7 @@ export function hasText(value: string): boolean {
 
 const PAYMENT_DETAIL_FIELDS = [
   "bankName",
+  "accountName",
   "accountNumber",
   "routingNumber",
   "iban",

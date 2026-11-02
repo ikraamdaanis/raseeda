@@ -15,6 +15,11 @@ import { getTextStyles } from "~/utils/get-text-styles";
 
 const PAYMENT_FIELDS = [
   { key: "bankName", label: "Bank name", placeholder: "Acme Bank" },
+  {
+    key: "accountName",
+    label: "Account name",
+    placeholder: "Acme Studio Ltd"
+  },
   { key: "accountNumber", label: "Account number", placeholder: "12345678" },
   { key: "routingNumber", label: "Routing number", placeholder: "021000021" },
   {

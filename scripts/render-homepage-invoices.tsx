@@ -108,6 +108,7 @@ const HERO_INVOICE = sampleInvoice({
   paymentDetails: {
     label: "Payment details",
     bankName: "JPMorgan Chase Bank, N.A.",
+    accountName: "",
     accountNumber: "483920175",
     routingNumber: "021000021",
     iban: "",
@@ -149,6 +150,7 @@ const TEMPLATE_INVOICES: Record<
     paymentDetails: {
       label: "Payment details",
       bankName: "BMO Bank N.A.",
+      accountName: "",
       accountNumber: "4417 2093 8851",
       routingNumber: "071000288",
       iban: "",
@@ -189,6 +191,7 @@ const TEMPLATE_INVOICES: Record<
     paymentDetails: {
       label: "Payment details",
       bankName: "Citizens Bank, N.A.",
+      accountName: "",
       accountNumber: "1308 4472 9915",
       routingNumber: "211070175",
       iban: "",
@@ -230,6 +233,7 @@ const TEMPLATE_INVOICES: Record<
     paymentDetails: {
       label: "Payment details",
       bankName: "Frost Bank",
+      accountName: "",
       accountNumber: "6620 3817 4459",
       routingNumber: "114000093",
       iban: "",
@@ -277,6 +281,7 @@ const TEMPLATE_INVOICES: Record<
     paymentDetails: {
       label: "Payment details",
       bankName: "Wells Fargo Bank, N.A.",
+      accountName: "",
       accountNumber: "8104 6629 3375",
       routingNumber: "102000076",
       iban: "",
@@ -314,6 +319,7 @@ const TEMPLATE_INVOICES: Record<
     paymentDetails: {
       label: "Payment details",
       bankName: "Truist Bank",
+      accountName: "",
       accountNumber: "1150 7738 2046",
       routingNumber: "053201607",
       iban: "",
@@ -353,6 +359,7 @@ const TEMPLATE_INVOICES: Record<
     paymentDetails: {
       label: "Payment details",
       bankName: "PNC Bank, N.A.",
+      accountName: "",
       accountNumber: "5302 1186 7740",
       routingNumber: "043000096",
       iban: "",

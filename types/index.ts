@@ -154,6 +154,7 @@ export type InvoiceTerms = {
 export type InvoicePaymentDetails = {
   label: string;
   bankName: string;
+  accountName: string;
   accountNumber: string;
   routingNumber: string;
   iban: string;

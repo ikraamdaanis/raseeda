@@ -60,6 +60,7 @@ function makeInvoice(overrides: Partial<Invoice> = {}): Invoice {
     paymentDetails: {
       label: "Payment details",
       bankName: "",
+      accountName: "",
       accountNumber: "",
       routingNumber: "",
       iban: "",

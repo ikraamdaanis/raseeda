@@ -30,6 +30,7 @@ const styles = StyleSheet.create({
 
 const FIELDS = [
   { key: "bankName", label: "Bank name" },
+  { key: "accountName", label: "Account name" },
   { key: "accountNumber", label: "Account number" },
   { key: "routingNumber", label: "Routing number" },
   { key: "iban", label: "IBAN" },

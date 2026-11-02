@@ -65,6 +65,7 @@ export function measureInvoiceContent(invoice: Invoice): number {
       invoice.latePayment.content,
       invoice.tax.note,
       paymentDetails.bankName,
+      paymentDetails.accountName,
       paymentDetails.accountNumber,
       paymentDetails.routingNumber,
       paymentDetails.iban,

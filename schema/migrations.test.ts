@@ -190,6 +190,7 @@ describe("migrateInvoiceData", () => {
     expect(normalized.paymentDetails).toEqual({
       label: "Payment details",
       bankName: "",
+      accountName: "",
       accountNumber: "",
       routingNumber: "",
       iban: "",
