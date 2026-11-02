@@ -10,7 +10,7 @@ export const SITE_HOST = new URL(SITE_URL).host;
 export const SITE_TITLE = `Free Invoice Generator: No Sign-Up, Private PDF | ${APP_NAME}`;
 
 export const SITE_DESCRIPTION =
-  "Free invoice generator that runs in your browser. Add your details, download a PDF, send it. No account, and your invoices never leave your device.";
+  "Free invoice generator that runs in your browser. Download a PDF with no account; your invoices never leave your device.";
 
 export const SITE_OG_IMAGE = `${SITE_URL}/og-image.jpg`;
 
@@ -24,7 +24,7 @@ export const MAKER_PERSON_NAME = "Ikraam";
 
 export const MAKER_URL = "https://github.com/ikraamdaanis";
 
-const SITE_OG_IMAGE_ALT = `${APP_NAME}: Make the invoice. Keep your data. A finished invoice on a pale blue sky.`;
+const SITE_OG_IMAGE_ALT = `${APP_NAME}: Make the invoice. Keep your data. A "Create an invoice" button beside a finished invoice on a pale blue sky.`;
 
 // The language and region the copy is written in: English, with British
 // spelling.
@@ -37,7 +37,8 @@ const INDEXABLE_ROBOTS = "max-image-preview:large";
 // Each page's title, description and share card. The editor is left out of
 // search results: the homepage is the page for making an invoice, and the
 // editor's HTML is a loading screen until it runs. Every share image is
-// 1200 x 630.
+// 1200 x 630, and every description fits in the 125 characters a share
+// preview shows before cutting it off.
 export const PAGE_META = {
   home: {
     path: "/",
@@ -48,7 +49,7 @@ export const PAGE_META = {
     path: "/invoice-template",
     title: `Free Invoice Templates: Fill In Online, Download PDF | ${APP_NAME}`,
     description:
-      "Free invoice templates for freelancers, consultants, contractors, photographers and small businesses. Pick a style, fill it in online, download a PDF.",
+      "Free invoice templates for freelancers, consultants, contractors and small businesses. Fill one in online, download a PDF.",
     image: `${SITE_URL}/og-invoice-template.jpg`,
     imageAlt: `Six ${APP_NAME} invoice templates: freelance, consulting, small business, contractor, photography and web development`
   },
@@ -56,13 +57,13 @@ export const PAGE_META = {
     path: "/create",
     title: `Create an Invoice Online, Free PDF | ${APP_NAME}`,
     description:
-      "Fill in your details, your client and the line items, then download the invoice as a PDF. Free, with no account, and it all stays in this browser.",
+      "Fill in your details, your client and the line items, then download a PDF. Free, no account, and it stays in this browser.",
     robots: "noindex"
   },
   privacy: {
     path: "/privacy",
     title: `Privacy: Your Invoices Stay on Your Device | ${APP_NAME}`,
-    description: `${APP_NAME} keeps your invoices in your browser, on your device, and never uploads them. What is stored, where, and what the site's host can see.`
+    description: `${APP_NAME} keeps your invoices on your device and never uploads them. What is stored, where, and what the site's host can see.`
   }
 };
 

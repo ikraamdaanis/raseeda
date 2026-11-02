@@ -79,8 +79,8 @@ describe("siteMeta", () => {
     expect(findByName("twitter:image")?.content).toMatch(/^https:\/\//);
   });
 
-  it("keeps the description short enough not to be cut off in results", () => {
-    expect(SITE_DESCRIPTION.length).toBeLessThanOrEqual(160);
+  it("keeps the description short enough not to be cut off in previews", () => {
+    expect(SITE_DESCRIPTION.length).toBeLessThanOrEqual(125);
   });
 
   it("points og:url at the page it describes", () => {
@@ -127,7 +127,7 @@ describe("PAGE_META", () => {
 
   it("keeps every description short enough not to be cut off", () => {
     for (const page of pages) {
-      expect(page.description.length).toBeLessThanOrEqual(155);
+      expect(page.description.length).toBeLessThanOrEqual(125);
     }
   });
 
