@@ -1,6 +1,7 @@
-import { useSyncExternalStore } from "react";
+import { useEffect, useSyncExternalStore } from "react";
 import { Toaster } from "sonner";
 import type { EditorTheme } from "~/types";
+import { watchForNewVersion } from "~/utils/new-version-prompt";
 
 // Toasts follow the editor's scheme while it's open (the editor sets
 // data-editor-theme on <html>); everywhere else the site is light.
@@ -36,6 +37,9 @@ export function AppToaster() {
     getEditorTheme,
     getServerEditorTheme
   );
+
+  // Mounted once on every page, so any open tab hears of a new version.
+  useEffect(() => watchForNewVersion(), []);
 
   return (
     <Toaster
