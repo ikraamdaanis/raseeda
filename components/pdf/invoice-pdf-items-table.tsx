@@ -8,38 +8,51 @@ import { pdfRoleStyle } from "~/utils/pdf-styles";
 // figures and the description keeps the rest.
 const COLUMN_WIDTHS = {
   units: {
-    description: "34%",
+    description: "42%",
+    quantity: "12%",
+    unit: "10%",
+    unitPrice: "18%",
+    amount: "18%",
+    convertedAmount: "0%"
+  },
+  noUnits: {
+    description: "48%",
     quantity: "14%",
-    unit: "14%",
+    unit: "0%",
     unitPrice: "19%",
     amount: "19%",
     convertedAmount: "0%"
   },
-  noUnits: {
-    description: "40%",
-    quantity: "20%",
-    unit: "0%",
-    unitPrice: "20%",
-    amount: "20%",
-    convertedAmount: "0%"
-  },
   convertedUnits: {
-    description: "30%",
-    quantity: "12%",
+    description: "33%",
+    quantity: "11%",
     unit: "9%",
-    unitPrice: "14%",
+    unitPrice: "13%",
     amount: "15%",
-    convertedAmount: "20%"
+    convertedAmount: "19%"
   },
   convertedNoUnits: {
-    description: "39%",
-    quantity: "12%",
+    description: "42%",
+    quantity: "11%",
     unit: "0%",
-    unitPrice: "14%",
+    unitPrice: "13%",
     amount: "15%",
-    convertedAmount: "20%"
+    convertedAmount: "19%"
   }
 };
+
+// Cells sit 10pt apart, and the row's own padding keeps the outer ones 8pt in
+// from the border.
+const CELL_PADDING_X = 5;
+const ROW_PADDING_X = 3;
+
+// A description wraps between words rather than hyphenating them. A word too
+// long to fit the column (a URL, say) may still break anywhere.
+const UNBREAKABLE_WORD_MAX_LENGTH = 20;
+
+function keepWordsWhole(word: string) {
+  return word.length > UNBREAKABLE_WORD_MAX_LENGTH ? Array.from(word) : [word];
+}
 
 export function InvoicePdfItemsTable({
   invoice,
@@ -76,20 +89,24 @@ export function InvoicePdfItemsTable({
     },
     tableHeader: {
       flexDirection: "row",
+      paddingHorizontal: ROW_PADDING_X,
       backgroundColor: invoice.tableSettings.backgroundColor,
       borderBottomWidth: 1,
       borderBottomColor: invoice.tableSettings.borderColor
     },
     tableRow: {
       flexDirection: "row",
+      paddingHorizontal: ROW_PADDING_X,
       borderBottomWidth: 1,
       borderBottomColor: invoice.tableSettings.borderColor
     },
     tableLastRow: {
-      flexDirection: "row"
+      flexDirection: "row",
+      paddingHorizontal: ROW_PADDING_X
     },
     tableCell: {
-      padding: 8
+      paddingVertical: 8,
+      paddingHorizontal: CELL_PADDING_X
     }
   });
 
@@ -162,7 +179,10 @@ export function InvoicePdfItemsTable({
             <View
               style={[styles.tableCell, { width: columnWidths.description }]}
             >
-              <Text style={pdfRoleStyle(theme, "tableRowLeft")}>
+              <Text
+                style={pdfRoleStyle(theme, "tableRowLeft")}
+                hyphenationCallback={keepWordsWhole}
+              >
                 {row.description}
               </Text>
             </View>
