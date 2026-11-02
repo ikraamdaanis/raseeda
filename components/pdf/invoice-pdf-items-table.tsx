@@ -3,7 +3,9 @@ import type { CurrencyConversion, Invoice, InvoiceLineItemRow } from "~/types";
 import { pdfRoleStyle } from "~/utils/pdf-styles";
 
 // Column widths in percent of the table, with and without the unit column,
-// and with the converted amount taking its room from the others.
+// and with the converted amount taking its room from the others. A money
+// column names its currency under its label, so it's only as wide as its
+// figures and the description keeps the rest.
 const COLUMN_WIDTHS = {
   units: {
     description: "34%",
@@ -22,20 +24,20 @@ const COLUMN_WIDTHS = {
     convertedAmount: "0%"
   },
   convertedUnits: {
-    description: "21%",
-    quantity: "13%",
+    description: "30%",
+    quantity: "12%",
     unit: "9%",
-    unitPrice: "18%",
-    amount: "18%",
-    convertedAmount: "21%"
+    unitPrice: "14%",
+    amount: "15%",
+    convertedAmount: "20%"
   },
   convertedNoUnits: {
-    description: "28%",
-    quantity: "13%",
+    description: "39%",
+    quantity: "12%",
     unit: "0%",
-    unitPrice: "18%",
-    amount: "19%",
-    convertedAmount: "22%"
+    unitPrice: "14%",
+    amount: "15%",
+    convertedAmount: "20%"
   }
 };
 
@@ -50,8 +52,6 @@ export function InvoicePdfItemsTable({
 }) {
   const theme = invoice.theme;
   const labels = invoice.tableSettings.columnLabels;
-  // An invoice shown in a second currency names its own on the price columns.
-  const currencySuffix = conversion ? ` (${conversion.fromCode})` : "";
 
   // The unit column only prints when at least one item has a unit, so invoices
   // that never use units (including all previously saved ones) keep the
@@ -120,20 +120,33 @@ export function InvoicePdfItemsTable({
         )}
         <View style={[styles.tableCell, { width: columnWidths.unitPrice }]}>
           <Text style={pdfRoleStyle(theme, "tableHeaderCenter")}>
-            {`${labels.unitPrice}${currencySuffix}`}
+            {labels.unitPrice}
           </Text>
+          {conversion && (
+            <Text style={pdfRoleStyle(theme, "tableHeaderCenter")}>
+              {conversion.fromCode}
+            </Text>
+          )}
         </View>
         <View style={[styles.tableCell, { width: columnWidths.amount }]}>
           <Text style={pdfRoleStyle(theme, "tableHeaderRight")}>
-            {`${labels.amount}${currencySuffix}`}
+            {labels.amount}
           </Text>
+          {conversion && (
+            <Text style={pdfRoleStyle(theme, "tableHeaderRight")}>
+              {conversion.fromCode}
+            </Text>
+          )}
         </View>
         {conversion && (
           <View
             style={[styles.tableCell, { width: columnWidths.convertedAmount }]}
           >
             <Text style={pdfRoleStyle(theme, "tableHeaderRight")}>
-              {`${labels.amount || "Amount"} (${conversion.toCode})`}
+              {labels.amount || "Amount"}
+            </Text>
+            <Text style={pdfRoleStyle(theme, "tableHeaderRight")}>
+              {conversion.toCode}
             </Text>
           </View>
         )}

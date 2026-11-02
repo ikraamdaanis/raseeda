@@ -174,8 +174,8 @@ const LINE_ITEM_COLUMNS: LineItemColumnConfig[] = [
   }
 ];
 
-// An invoice shown in a second currency names its own on the price columns,
-// "Unit Price (GBP)", beside the amount in the other, "Amount (USD)".
+// The converted amount reads as the Amount label in the second currency,
+// "Amount (USD)", wherever a cell needs its column named.
 function getColumnLabel(
   column: LineItemColumnConfig,
   columnLabels: TableSettings["columnLabels"],
@@ -186,14 +186,18 @@ function getColumnLabel(
     : columnLabels[column.id];
 }
 
-function columnCurrencySuffix(
+// An invoice shown in a second currency names the currency of each money
+// column under its label: the price columns in its own, the converted amount
+// in the other.
+function getColumnCurrency(
   column: LineItemColumnConfig,
   conversion: CurrencyConversion | null
 ) {
   if (!conversion) return "";
+  if (column.id === "convertedAmount") return conversion.toCode;
   if (column.id !== "unitPrice" && column.id !== "amount") return "";
 
-  return `(${conversion.fromCode})`;
+  return conversion.fromCode;
 }
 
 /**
@@ -222,8 +226,8 @@ function useVisibleColumns() {
     return {
       columns,
       gridClassName: hideUnit
-        ? "grid-cols-[1fr_64px_120px_130px_130px]"
-        : "grid-cols-[1fr_64px_64px_120px_130px_130px]"
+        ? "grid-cols-[1fr_64px_96px_104px_120px]"
+        : "grid-cols-[1fr_64px_64px_96px_104px_120px]"
     };
   }
 
@@ -300,7 +304,10 @@ function TableHeader({
   return (
     <div
       role="row"
-      className={cn("grid gap-2 rounded-t-sm font-medium", gridClassName)}
+      className={cn(
+        "grid items-start gap-2 rounded-t-sm font-medium",
+        gridClassName
+      )}
       style={{
         backgroundColor: tableSettings.backgroundColor,
         borderColor: tableSettings.borderColor
@@ -310,8 +317,12 @@ function TableHeader({
         <TableHeaderCell
           key={column.id}
           column={column}
-          label={getColumnLabel(column, tableSettings.columnLabels, conversion)}
-          suffix={columnCurrencySuffix(column, conversion)}
+          label={
+            column.id === "convertedAmount"
+              ? tableSettings.columnLabels.amount || "Amount"
+              : tableSettings.columnLabels[column.id]
+          }
+          currencyCode={getColumnCurrency(column, conversion)}
           theme={theme}
           setTableSettings={setTableSettings}
         />
@@ -320,16 +331,18 @@ function TableHeader({
   );
 }
 
+// The labels share the top line; a money column's currency sits under its
+// label, so the column stays as narrow as its figures.
 function TableHeaderCell({
   column,
   label,
-  suffix,
+  currencyCode,
   theme,
   setTableSettings
 }: {
   column: LineItemColumnConfig;
   label: string;
-  suffix: string;
+  currencyCode: string;
   theme: InvoiceTheme;
   setTableSettings: SetTableSettings;
 }) {
@@ -343,62 +356,41 @@ function TableHeaderCell({
     }));
   }
 
-  if (column.id === "convertedAmount") {
-    return (
-      <div
-        role="columnheader"
-        className="col-span-1 text-sm font-medium"
-        style={style}
-      >
-        <span className={column.headerInputClassName} style={style}>
+  return (
+    <div
+      role="columnheader"
+      className="col-span-1 flex flex-col text-sm font-medium"
+      style={style}
+    >
+      {column.id === "convertedAmount" ? (
+        <span
+          className={cn(column.headerInputClassName, currencyCode && "pb-0")}
+          style={style}
+        >
           {label}
         </span>
-      </div>
-    );
-  }
-
-  // The currency sits beside the label, so the label stays editable on its own.
-  if (suffix) {
-    return (
-      <div
-        role="columnheader"
-        className="col-span-1 flex h-full items-center gap-1 text-sm font-medium"
-        style={{ ...style, justifyContent: settings.align }}
-      >
+      ) : (
         <InvoiceInput
           aria-label={`${column.headerPlaceholder} column label`}
           data-field={`tableSettings.columnLabels.${column.id}`}
           value={label}
           onChange={handleChange}
-          className={cn(
-            column.headerInputClassName,
-            "field-sizing-content w-auto min-w-fit pr-0 focus-visible:pr-0"
-          )}
+          className={cn(column.headerInputClassName, currencyCode && "pb-0")}
           placeholder={column.headerPlaceholder}
-          style={getTextStyles({ settings, remove: ["align"] })}
+          style={style}
         />
-        <span className={column.id === "amount" ? "shrink-0 pr-2" : "shrink-0"}>
-          {suffix}
+      )}
+      {currencyCode && (
+        <span
+          className={cn(
+            "pb-2",
+            column.headerRole === "tableHeaderRight" && "pr-2"
+          )}
+          style={style}
+        >
+          {currencyCode}
         </span>
-      </div>
-    );
-  }
-
-  return (
-    <div
-      role="columnheader"
-      className="col-span-1 text-sm font-medium"
-      style={style}
-    >
-      <InvoiceInput
-        aria-label={`${column.headerPlaceholder} column label`}
-        data-field={`tableSettings.columnLabels.${column.id}`}
-        value={label}
-        onChange={handleChange}
-        className={column.headerInputClassName}
-        placeholder={column.headerPlaceholder}
-        style={style}
-      />
+      )}
     </div>
   );
 }
