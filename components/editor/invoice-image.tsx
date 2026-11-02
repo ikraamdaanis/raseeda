@@ -131,9 +131,7 @@ export function InvoiceImage() {
             ) : (
               <div className="text-paper-muted-foreground flex flex-col items-center justify-center gap-2 p-2">
                 <IconUpload className="size-6 opacity-60" aria-hidden="true" />
-                <span className="text-center text-xs opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100 pointer-coarse:opacity-100">
-                  Upload logo
-                </span>
+                <span className="text-center text-xs">Upload logo</span>
               </div>
             )}
           </div>
