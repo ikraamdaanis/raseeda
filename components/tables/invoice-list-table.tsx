@@ -7,6 +7,7 @@ import {
 } from "@tabler/icons-react";
 import type { KeyboardEvent, MouseEvent } from "react";
 import { useEffect, useRef, useState } from "react";
+import { PaymentStatusBadge } from "~/components/payment-status-badge";
 import { RowActionsCell } from "~/components/tables/row-actions-cell";
 import { RowMenuItems } from "~/components/tables/row-menu-items";
 import { SortHeaderCell } from "~/components/tables/sort-header-cell";
@@ -522,6 +523,7 @@ export function InvoiceListTable({
                         <span className="min-w-0 truncate font-medium">
                           {invoice.name}
                         </span>
+                        <PaymentStatusBadge invoice={invoice.invoiceData} />
                         {isCurrent && (
                           <span
                             className={cn(

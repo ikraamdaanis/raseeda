@@ -17,10 +17,12 @@ import type {
   InvoiceLibraryDateRange,
   InvoiceLibraryGroup,
   InvoiceLibrarySort,
+  InvoiceLibraryStatusFilter,
   InvoiceLibraryView,
   SortDirection
 } from "~/types";
 import { calculateInvoiceTotals } from "~/utils/calculate-invoice-totals";
+import { getPaymentStatus } from "~/utils/payment-status";
 import { readInvoiceDate } from "~/utils/read-invoice-date";
 
 // Sorting, filtering and grouping for the saved-invoice lists (the invoices
@@ -34,6 +36,7 @@ export const DEFAULT_LIBRARY_VIEW: InvoiceLibraryView = {
   direction: "desc",
   group: "client",
   dateRange: "all",
+  status: "all",
   client: null,
   currency: null
 };
@@ -70,6 +73,30 @@ export const LIBRARY_DATE_RANGES: {
   { value: "thisYear", label: "This year" },
   { value: "lastYear", label: "Last year" }
 ];
+
+export const LIBRARY_STATUS_FILTERS: {
+  value: InvoiceLibraryStatusFilter;
+  label: string;
+}[] = [
+  { value: "all", label: "Any status" },
+  { value: "unpaid", label: "Unpaid" },
+  { value: "overdue", label: "Overdue" },
+  { value: "paid", label: "Paid" }
+];
+
+// Whether an invoice's payment status passes the filter. Unpaid takes in
+// everything with something left to pay: overdue and part paid too.
+function matchesStatus(
+  document: InvoiceDocument,
+  filter: InvoiceLibraryStatusFilter,
+  now: Date
+): boolean {
+  if (filter === "all") return true;
+
+  const status = getPaymentStatus(document.invoiceData, now);
+
+  return filter === "unpaid" ? status !== "paid" : status === filter;
+}
 
 // The client an invoice is filed under: the first line of its "To" block.
 export function getClientName(document: InvoiceDocument): string {
@@ -189,6 +216,7 @@ export function filterInvoices(
     document =>
       matchesSearch(document, query) &&
       inDateRange(getInvoiceDate(document), view.dateRange, now) &&
+      matchesStatus(document, view.status, now) &&
       (view.client === null || getClientName(document) === view.client) &&
       (view.currency === null ||
         normalizeCurrency(document.invoiceData.currency) === view.currency)
@@ -325,6 +353,7 @@ export function listCurrencies(documents: InvoiceDocument[]): string[] {
 export function countActiveFilters(view: InvoiceLibraryView): number {
   return [
     view.dateRange !== "all",
+    view.status !== "all",
     view.client !== null,
     view.currency !== null
   ].filter(Boolean).length;
@@ -333,6 +362,9 @@ export function countActiveFilters(view: InvoiceLibraryView): number {
 const SORTS = new Set(LIBRARY_SORTS.map(sort => sort.value));
 const GROUPS = new Set(LIBRARY_GROUPS.map(group => group.value));
 const DATE_RANGES = new Set(LIBRARY_DATE_RANGES.map(range => range.value));
+const STATUS_FILTERS = new Set(
+  LIBRARY_STATUS_FILTERS.map(filter => filter.value)
+);
 
 // Vets a stored view (storage can hold anything), keeping each valid choice
 // and falling back to the default for the rest.
@@ -360,6 +392,7 @@ export function parseLibraryView(
       DATE_RANGES,
       DEFAULT_LIBRARY_VIEW.dateRange
     ),
+    status: pick(record.status, STATUS_FILTERS, DEFAULT_LIBRARY_VIEW.status),
     client: typeof record.client === "string" ? record.client : null,
     currency: typeof record.currency === "string" ? record.currency : null
   };

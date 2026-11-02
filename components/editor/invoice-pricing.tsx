@@ -1,5 +1,6 @@
 import type { CSSProperties, ReactNode } from "react";
 import { useEffect, useState } from "react";
+import { InvoiceDateField } from "~/components/editor/invoice-date-field";
 import { InvoiceInput } from "~/components/editor/invoice-input";
 import { formatCurrency } from "~/consts/currencies";
 import { useCurrencyConversion } from "~/hooks/use-currency-conversion";
@@ -510,28 +511,59 @@ function TotalRow() {
   );
 }
 
+// The payment's date sits in brackets after the label, as it prints:
+// "Amount paid (1 Oct 2026)".
 function AmountPaidRow() {
-  const { amountPaid, setAmountPaid, currency, labels, setLabels } =
-    usePricingSlice();
+  const {
+    amountPaid,
+    paidDate,
+    setAmountPaid,
+    setPaidDate,
+    currency,
+    labels,
+    setLabels
+  } = usePricingSlice();
   const currencySymbol = useCurrencySymbol();
   const theme = useTheme();
+  const isPreview = useIsPreview();
   const labelSettings = getRoleSettings(theme, "totalsLabel");
   const valueSettings = getRoleSettings(theme, "totalsValue");
-
+  const labelStyle = getTextStyles({ settings: labelSettings });
   const conversion = useCurrencyConversion();
   const [amountPaidInput, setAmountPaidInput] = usePricingInput(amountPaid);
 
   return (
     <div className="col-span-2 grid grid-cols-subgrid items-center text-sm">
-      <InvoiceInput
-        aria-label="Amount paid label"
-        data-field="labels.amountPaid"
-        value={labels.amountPaid}
-        onChange={value => setLabels(prev => ({ ...prev, amountPaid: value }))}
-        className="field-sizing-content w-full"
-        style={getTextStyles({ settings: labelSettings })}
-        placeholder="Amount paid"
-      />
+      <span className="flex min-w-0 items-center gap-1">
+        <InvoiceInput
+          aria-label="Amount paid label"
+          data-field="labels.amountPaid"
+          value={labels.amountPaid}
+          onChange={value =>
+            setLabels(prev => ({ ...prev, amountPaid: value }))
+          }
+          className="field-sizing-content min-w-0"
+          style={labelStyle}
+          placeholder="Amount paid"
+        />
+        {(paidDate || !isPreview) && (
+          <span
+            className="text-paper-foreground flex shrink-0 items-center whitespace-nowrap"
+            style={labelStyle}
+          >
+            (
+            <InvoiceDateField
+              value={paidDate}
+              label="Payment date"
+              placeholder="date paid"
+              style={labelStyle}
+              canClear
+              onSelect={setPaidDate}
+            />
+            )
+          </span>
+        )}
+      </span>
       <span
         className="flex items-center"
         style={{ justifyContent: valueSettings.align }}

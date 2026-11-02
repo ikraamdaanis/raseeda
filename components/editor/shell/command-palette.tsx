@@ -72,6 +72,7 @@ const SECTION_LABELS: Record<InvoiceSectionKey, string> = {
   tax: "tax",
   fees: "fees",
   amountPaid: "amount paid",
+  paidStamp: "paid stamp",
   currencyConversion: "second currency",
   paymentDetails: "payment details",
   notes: "notes",

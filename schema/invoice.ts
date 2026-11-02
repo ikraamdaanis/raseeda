@@ -86,6 +86,7 @@ export const INVOICE_SECTION_KEYS = [
   "tax",
   "fees",
   "amountPaid",
+  "paidStamp",
   "currencyConversion",
   "paymentDetails",
   "notes",
@@ -103,6 +104,7 @@ export const DEFAULT_INVOICE_SECTIONS = {
   tax: true,
   fees: true,
   amountPaid: true,
+  paidStamp: false,
   currencyConversion: false,
   paymentDetails: true,
   notes: false,
@@ -200,6 +202,7 @@ const invoiceSectionsSchema = z
     tax: z.boolean().catch(DEFAULT_INVOICE_SECTIONS.tax),
     fees: z.boolean().catch(DEFAULT_INVOICE_SECTIONS.fees),
     amountPaid: z.boolean().catch(DEFAULT_INVOICE_SECTIONS.amountPaid),
+    paidStamp: z.boolean().catch(DEFAULT_INVOICE_SECTIONS.paidStamp),
     currencyConversion: z
       .boolean()
       .catch(DEFAULT_INVOICE_SECTIONS.currencyConversion),
@@ -318,6 +321,8 @@ export const invoiceSchema = z.object({
   // the subtotal. The numeric value lives in `discounts` either way.
   discountType: z.enum(["fixed", "percentage"]).catch("fixed"),
   amountPaid: z.coerce.number().catch(0),
+  // The day the amount paid came in (yyyy-MM-dd), or empty.
+  paidDate: z.string().catch(""),
   currencyConversion: z
     .object({
       currency: z.string().catch(DEFAULT_CURRENCY_CONVERSION.currency),

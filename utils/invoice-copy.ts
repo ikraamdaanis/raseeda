@@ -82,7 +82,8 @@ export function prepareInvoiceCopy({
     number: nextInvoiceNumber(invoice.number, takenNumbers),
     invoiceDate,
     dueDate,
-    amountPaid: 0
+    amountPaid: 0,
+    paidDate: ""
   };
 }
 

@@ -103,6 +103,7 @@ export const invoiceDefault: Invoice = {
   discounts: 0,
   discountType: "fixed",
   amountPaid: 0,
+  paidDate: "",
   currencyConversion: DEFAULT_CURRENCY_CONVERSION,
   terms: {
     label: "Terms and conditions",
@@ -244,6 +245,7 @@ interface InvoiceActions {
   setDiscounts: (discounts: number) => void;
   setDiscountType: (discountType: Invoice["discountType"]) => void;
   setAmountPaid: (amountPaid: number) => void;
+  setPaidDate: (paidDate: string) => void;
   setSecondCurrency: (
     currency: Invoice["currency"],
     currencyCode: Invoice["currencyCode"]
@@ -478,6 +480,11 @@ export const useInvoiceStore = create<InvoiceStore>()(
       setAmountPaid: amountPaid =>
         set(state => {
           state.amountPaid = amountPaid;
+        }),
+
+      setPaidDate: paidDate =>
+        set(state => {
+          state.paidDate = paidDate;
         }),
 
       // Like the invoice currency, a new second currency clears the old rate.

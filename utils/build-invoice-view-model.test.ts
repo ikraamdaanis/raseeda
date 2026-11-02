@@ -53,6 +53,7 @@ function makeInvoice(overrides: Partial<Invoice> = {}): Invoice {
     discounts: 0,
     discountType: "fixed",
     amountPaid: 0,
+    paidDate: "",
     currencyConversion: DEFAULT_CURRENCY_CONVERSION,
     terms: { label: "Terms", content: "" },
     notes: { label: "Notes", content: "" },

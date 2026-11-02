@@ -12,6 +12,7 @@ import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
 import { SegmentedControl } from "~/components/editor/shell/inspector/inspector-controls";
 import { LibraryViewOptions } from "~/components/editor/shell/library-view-options";
+import { PaymentStatusBadge } from "~/components/payment-status-badge";
 import { Button } from "~/components/ui/button";
 import {
   DropdownMenu,
@@ -271,6 +272,7 @@ function InvoiceList({
                   document.invoiceData.currency
                 )}
                 meta={invoiceMeta(document, view)}
+                status={<PaymentStatusBadge invoice={document.invoiceData} />}
                 onSelect={() => actions.openInvoice(document.id)}
                 menu={
                   <>
@@ -445,6 +447,7 @@ function LibraryItem({
   title,
   aside,
   meta,
+  status,
   onSelect,
   menu
 }: {
@@ -452,6 +455,7 @@ function LibraryItem({
   title: string;
   aside?: string;
   meta: string;
+  status?: ReactNode;
   onSelect: () => void;
   menu: ReactNode;
 }) {
@@ -476,9 +480,10 @@ function LibraryItem({
             {aside}
           </span>
         )}
-        {meta && (
-          <span className="text-muted-foreground col-span-2 truncate text-xs">
-            {meta}
+        {(meta || status) && (
+          <span className="text-muted-foreground col-span-2 flex min-w-0 items-center gap-1.5 text-xs">
+            {status}
+            <span className="truncate">{meta}</span>
           </span>
         )}
       </button>

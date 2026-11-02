@@ -2,6 +2,7 @@ import { Image as PDFImage, StyleSheet, Text, View } from "@react-pdf/renderer";
 import { PdfMultilineText } from "~/components/pdf/invoice-pdf-text";
 import type { Invoice } from "~/types";
 import { PDF_ROW_LINE_HEIGHT, pdfRoleStyle } from "~/utils/pdf-styles";
+import { getPrintedSections } from "~/utils/section-visibility";
 
 const styles = StyleSheet.create({
   header: {
@@ -25,6 +26,19 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFF3E8",
     marginLeft: 24
   },
+  titleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12
+  },
+  // The editor's stamp at the PDF's 0.75 scale.
+  paidStamp: {
+    borderWidth: 1.5,
+    borderRadius: 4.5,
+    paddingHorizontal: 7.5,
+    paddingVertical: 1.5,
+    transform: "rotate(-6deg)"
+  },
   sellerLabel: {
     fontWeight: "medium",
     fontSize: 12,
@@ -44,7 +58,22 @@ export function InvoicePdfHeader({
   return (
     <View style={styles.header}>
       <View style={styles.headerContent}>
-        <Text style={pdfRoleStyle(theme, "title")}>{invoice.title}</Text>
+        <View style={styles.titleRow}>
+          <Text style={pdfRoleStyle(theme, "title")}>{invoice.title}</Text>
+          {getPrintedSections(invoice).paidStamp && (
+            <View style={{ ...styles.paidStamp, borderColor: theme.accent }}>
+              <Text
+                style={pdfRoleStyle(theme, "title", {
+                  fontSize: 13.5,
+                  letterSpacing: 2.7,
+                  color: theme.accent
+                })}
+              >
+                PAID
+              </Text>
+            </View>
+          )}
+        </View>
         <View>
           {invoice.seller.label && (
             <Text

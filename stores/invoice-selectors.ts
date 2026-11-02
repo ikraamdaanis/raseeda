@@ -29,6 +29,7 @@ export const INVOICE_DATA_KEYS = [
   "discounts",
   "discountType",
   "amountPaid",
+  "paidDate",
   "currencyConversion",
   "terms",
   "notes",
@@ -175,6 +176,7 @@ export function usePricingSlice() {
       discounts: state.discounts,
       discountType: state.discountType,
       amountPaid: state.amountPaid,
+      paidDate: state.paidDate,
       currency: state.currency,
       currencyCode: state.currencyCode,
       labels: state.labels,
@@ -183,6 +185,7 @@ export function usePricingSlice() {
       setDiscounts: state.setDiscounts,
       setDiscountType: state.setDiscountType,
       setAmountPaid: state.setAmountPaid,
+      setPaidDate: state.setPaidDate,
       setLabels: state.setLabels
     }))
   );

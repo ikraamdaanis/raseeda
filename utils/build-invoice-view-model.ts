@@ -132,6 +132,8 @@ function buildSummaryRows(input: {
   discountValue: number;
   total: number;
   amountPaid: number;
+  paidDate: string;
+  dateFormat: Invoice["dateFormat"];
   balanceDue: number;
   currency: string;
   currencyCode: string;
@@ -210,7 +212,9 @@ function buildSummaryRows(input: {
     },
     {
       id: "amountPaid",
-      label: labels.amountPaid,
+      label: input.paidDate
+        ? `${labels.amountPaid} (${formatInvoiceDate(input.paidDate, input.dateFormat)})`
+        : labels.amountPaid,
       value: formatDeduction({
         amount: input.amountPaid,
         currency,
@@ -260,6 +264,8 @@ export function buildInvoiceViewModel(invoice: Invoice): InvoiceViewModel {
       discountValue: invoice.discounts,
       total: totals.total,
       amountPaid: invoice.amountPaid,
+      paidDate: invoice.paidDate,
+      dateFormat: invoice.dateFormat,
       balanceDue: totals.balanceDue,
       currency: invoice.currency,
       currencyCode: invoice.currencyCode,
