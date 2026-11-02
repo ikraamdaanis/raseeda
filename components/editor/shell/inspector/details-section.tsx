@@ -8,6 +8,7 @@ import {
   InspectorRow,
   InspectorSection
 } from "~/components/editor/shell/inspector/inspector-controls";
+import { Button } from "~/components/ui/button";
 import { Calendar } from "~/components/ui/calendar";
 import {
   Popover,
@@ -200,6 +201,7 @@ function ExchangeRateRows() {
           id="inspector-exchange-date"
           value={currencyConversion.date}
           onChange={date => setCurrencyConversion(prev => ({ ...prev, date }))}
+          canClear
         />
       </InspectorRow>
       <InspectorRow label="Show rate" htmlFor="inspector-exchange-show" nested>
@@ -329,14 +331,16 @@ function DateFormatRow() {
 }
 
 // The same calendar as the page's date fields, with the date written in the
-// invoice's format.
+// invoice's format. An optional date can be cleared from under the calendar.
 function InspectorDatePicker({
   id,
   value,
+  canClear = false,
   onChange
 }: {
   id: string;
   value: string;
+  canClear?: boolean;
   onChange: (isoDate: string) => void;
 }) {
   const { dateFormat } = useDetailsSlice();
@@ -376,6 +380,22 @@ function InspectorDatePicker({
           autoFocus
           className="pointer-coarse:[--cell-size:--spacing(10)]"
         />
+        {canClear && value && (
+          <div className="px-3 pb-3">
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full"
+              onClick={() => {
+                onChange("");
+                setOpen(false);
+              }}
+            >
+              <IconX aria-hidden="true" />
+              Clear date
+            </Button>
+          </div>
+        )}
       </PopoverContent>
     </Popover>
   );

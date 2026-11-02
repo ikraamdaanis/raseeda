@@ -1,6 +1,8 @@
+import { IconX } from "@tabler/icons-react";
 import { format } from "date-fns";
 import type { CSSProperties } from "react";
 import { useId, useState } from "react";
+import { Button } from "~/components/ui/button";
 import { Calendar } from "~/components/ui/calendar";
 import {
   Popover,
@@ -16,13 +18,15 @@ import { parseIsoDate, parseIsoDateRange } from "~/utils/parse-iso-date";
 // A date on the page: written in the invoice's date format, and picked from a
 // calendar rather than typed, so it's always a real date. A field that allows
 // a range takes the first click as the date, and a second click as the other
-// end of a range, stored as yyyy-MM-dd/yyyy-MM-dd.
+// end of a range, stored as yyyy-MM-dd/yyyy-MM-dd. An optional date can be
+// cleared from under the calendar.
 export function InvoiceDateField({
   value,
   label,
   placeholder,
   style,
   allowsRange = false,
+  canClear = false,
   onSelect
 }: {
   value: string;
@@ -30,6 +34,7 @@ export function InvoiceDateField({
   placeholder: string;
   style: CSSProperties;
   allowsRange?: boolean;
+  canClear?: boolean;
   onSelect: (isoDate: string) => void;
 }) {
   const dateFormat = useInvoiceStore(state => state.dateFormat);
@@ -66,6 +71,11 @@ export function InvoiceDateField({
     const toValue = format(to, "yyyy-MM-dd");
 
     onSelect(fromValue === toValue ? fromValue : `${fromValue}/${toValue}`);
+    handleOpenChange(false);
+  }
+
+  function handleClear() {
+    onSelect("");
     handleOpenChange(false);
   }
 
@@ -116,6 +126,19 @@ export function InvoiceDateField({
             autoFocus
             className="pointer-coarse:[--cell-size:--spacing(10)]"
           />
+        )}
+        {canClear && value && (
+          <div className="px-3 pb-3">
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full"
+              onClick={handleClear}
+            >
+              <IconX aria-hidden="true" />
+              Clear date
+            </Button>
+          </div>
         )}
       </PopoverContent>
     </Popover>

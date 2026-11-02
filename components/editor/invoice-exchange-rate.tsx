@@ -80,6 +80,7 @@ export function InvoiceExchangeRate() {
           label="Exchange rate date"
           placeholder="Pick the rate date"
           style={style}
+          canClear
           onSelect={date => setCurrencyConversion(prev => ({ ...prev, date }))}
         />
         )
