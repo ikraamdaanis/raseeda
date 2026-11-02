@@ -7,7 +7,10 @@ import { StyleSection } from "~/components/editor/shell/inspector/style-section"
 // out of the page so the page only holds the invoice itself.
 export function InspectorPanel({ children }: { children?: ReactNode }) {
   return (
-    <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+    <div
+      data-inspector-scroll
+      className="min-h-0 flex-1 overflow-y-auto overscroll-contain"
+    >
       <StyleSection />
       <DetailsSection />
       <SectionsSection />

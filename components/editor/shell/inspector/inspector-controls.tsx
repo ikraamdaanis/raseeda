@@ -1,6 +1,6 @@
 import { IconChevronDown } from "@tabler/icons-react";
 import type { ReactNode } from "react";
-import { useId } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { parseBoolean, usePersistentState } from "~/hooks/use-persistent-state";
 import { cn } from "~/lib/utils";
 
@@ -11,7 +11,11 @@ export const inspectorFieldClassName =
   "bg-muted dark:bg-muted dark:hover:bg-muted hover:border-input focus-visible:border-ring text-foreground h-8 w-full min-w-0 rounded-md border border-transparent px-2 text-[13px] outline-none";
 
 // Open or collapsed is remembered per section across reloads. Collapsed, the
-// section is just its 44px header row, centred between the dividers.
+// section is just its 44px header row, centred between the dividers. The
+// header sticks to the top of the panel until its section scrolls past, and
+// while it's stuck a fade below it softens the rows sliding underneath. The
+// fade is its own element, not ::after: Chrome can leave a pseudo-element's
+// reversed opacity transition painted after scrolling back to the top.
 export function InspectorSection({
   id,
   title,
@@ -27,15 +31,39 @@ export function InspectorSection({
     parseBoolean
   );
   const contentId = useId();
+  const sectionRef = useRef<HTMLElement>(null);
+  const [isStuck, setIsStuck] = useState(false);
+
+  // The header is pinned once its section's top has scrolled above the
+  // panel's; resting at the top it isn't, so the first rows stay unfaded.
+  useEffect(() => {
+    const section = sectionRef.current;
+    const panel = section?.closest("[data-inspector-scroll]");
+    if (!section || !panel) return;
+
+    function updateStuck() {
+      if (!section || !panel) return;
+
+      const sectionTop = section.getBoundingClientRect().top;
+      const panelTop = panel.getBoundingClientRect().top;
+      setIsStuck(sectionTop < panelTop - 0.5);
+    }
+
+    updateStuck();
+    panel.addEventListener("scroll", updateStuck, { passive: true });
+
+    return () => panel.removeEventListener("scroll", updateStuck);
+  }, []);
 
   return (
     <section
+      ref={sectionRef}
       className={cn(
         "border-border flex flex-col border-b px-4 last:border-b-0",
         open && "pb-4"
       )}
     >
-      <h2>
+      <h2 className="bg-background sticky top-0 z-10 -mx-4 px-4">
         <button
           type="button"
           aria-expanded={open}
@@ -52,6 +80,13 @@ export function InspectorSection({
             )}
           />
         </button>
+        <span
+          aria-hidden="true"
+          className={cn(
+            "from-background pointer-events-none absolute inset-x-0 top-full h-4 bg-linear-to-b to-transparent transition-opacity motion-reduce:transition-none",
+            isStuck ? "opacity-100" : "opacity-0"
+          )}
+        />
       </h2>
       {open && (
         <div id={contentId} className="flex flex-col gap-3">
