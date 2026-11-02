@@ -201,7 +201,7 @@ function CurrencyPicker({
       <CustomCurrencyDialog
         open={customOpen}
         onOpenChange={setCustomOpen}
-        currentSymbol={selected}
+        currentSymbol={isCustom ? selected : ""}
         currentCode={isCustom ? currencyCode : ""}
         title={customTitle}
         isTaken={(symbol, code) =>
