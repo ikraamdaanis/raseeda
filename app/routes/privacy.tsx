@@ -71,9 +71,9 @@ function PrivacyPage() {
               stored in this browser’s storage (IndexedDB), on this device.
             </p>
             <p className={PROSE}>
-              The PDF is made in your browser too. Nothing you type is uploaded;
-              besides loading the site, the only thing your browser sends{" "}
-              {APP_NAME} is the anonymous usage count described below.
+              The PDF is made in your browser too. Your invoices aren’t
+              uploaded; besides loading the site, the only thing your browser
+              sends {APP_NAME} is the anonymous usage counts described below.
             </p>
             <p className={PROSE}>
               Other browsers and devices can’t see your invoices. Clearing this
@@ -88,7 +88,7 @@ function PrivacyPage() {
             </p>
             <p className={PROSE}>
               And the anonymous usage counts below, which never include your
-              names, amounts or anything you write on an invoice.
+              names, amounts or the text of your invoices.
             </p>
           </PolicySection>
           <PolicySection title="Anonymous usage counts">
@@ -120,11 +120,11 @@ function PrivacyPage() {
             </p>
             <p className={PROSE}>
               That is all. The counts never include your names, amounts, the
-              text of your invoices or anything else you write. {APP_NAME}{" "}
-              doesn’t keep your IP address, your city, your full browser
-              details, the address of the site you came from or any identifier,
-              and saves nothing on your device for the counts, so visits can’t
-              be linked together.
+              text of your invoices or anything about them not listed here.{" "}
+              {APP_NAME} doesn’t keep your IP address, your city, your full
+              browser details, the address of the site you came from or any
+              identifier, and saves nothing on your device for the counts, so
+              visits can’t be linked together.
             </p>
             <p className={PROSE}>
               If your browser sends Global Privacy Control, nothing is counted.

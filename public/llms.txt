@@ -1,6 +1,6 @@
 # raseeda
 
-> raseeda is a free, private invoice generator that runs entirely in the browser. There is no account and nothing is uploaded: invoices are saved in the browser on the user's device (IndexedDB), the PDF is made on the device, and invoice data leaves it only in files the user saves. The site counts anonymous usage (event names, country, browser family, OS, device type, language, the kind of site a visit came from, and a few bucketed invoice details such as the currency code, never names or amounts) with no cookies or identifiers. It is open source under the MIT licence.
+> raseeda is a free, private invoice generator that runs entirely in the browser. There is no account and nothing is uploaded: invoices are saved in the browser on the user's device (IndexedDB), the PDF is made on the device, and invoice content leaves it only in files the user saves. The site counts anonymous usage (event names, country, browser family, OS, device type, language, the kind of site a visit came from, and a few bucketed invoice details such as the currency code, never names or amounts) with no cookies or identifiers. It is open source under the MIT licence.
 
 ## Pages
 
