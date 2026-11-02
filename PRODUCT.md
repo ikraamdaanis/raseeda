@@ -16,7 +16,7 @@ raseeda is a free invoice generator that runs entirely in the browser. It lets s
 
 ## Positioning
 
-Truly local-first. There are no accounts and no server-side data; all invoice data lives in the browser's IndexedDB. The only analytics are anonymous first-party counts (event name, country, browser family, OS, device type), with no identifiers or cookies. A hosted invoicing tool cannot truthfully make that claim.
+Truly local-first. There are no accounts and no server-side data; all invoice data lives in the browser's IndexedDB. The only analytics are anonymous first-party counts (event name, country, browser family, OS, device type, language, the kind of site a visit came from, and bucketed invoice details such as the currency code, never names or amounts), with no identifiers or cookies. A hosted invoicing tool cannot truthfully make that claim.
 
 ## Operating Context
 

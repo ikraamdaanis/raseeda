@@ -1,6 +1,6 @@
 // The browser enforces this on every page. Nothing may be fetched
 // from, sent to, or embedded from any origin but the app's own, and the only
-// thing pages send that origin is an anonymous usage event name (/api/event).
+// thing pages send that origin is an anonymous usage event (/api/event).
 // `data:` and `blob:` are in-memory URLs (logos, generated PDFs) that never
 // leave the device. Inline scripts and styles carry the server-rendered
 // hydration state, and `wasm-unsafe-eval` lets the PDF layout engine (Yoga)

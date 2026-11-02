@@ -31,7 +31,7 @@ export const Route = createFileRoute("/privacy")({
 // The date the policy last changed in substance (YYYY-MM-DD); update it with
 // the copy. The page shows it written out, and the structured data carries it
 // as is.
-const LAST_UPDATED = "2026-11-01";
+const LAST_UPDATED = "2026-11-02";
 
 const HEADING = "font-medium tracking-[-0.035em] text-balance";
 
@@ -87,8 +87,8 @@ function PrivacyPage() {
               includes your bank details, so keep it somewhere safe.
             </p>
             <p className={PROSE}>
-              And the anonymous usage counts below, which never include anything
-              you type.
+              And the anonymous usage counts below, which never include your
+              names, amounts or anything you write on an invoice.
             </p>
           </PolicySection>
           <PolicySection title="Anonymous usage counts">
@@ -97,16 +97,34 @@ function PrivacyPage() {
               {SITE_HOST} when one of these happens: a page is viewed, the
               editor opens, a PDF is made, an invoice or template is first
               saved, or data is exported or imported. With the event, {APP_NAME}{" "}
-              keeps the country the request came from and the browser family,
-              operating system and type of device (such as Safari, iOS, mobile).
-              A page view also says which page.
+              keeps the country the request came from, the browser family,
+              operating system and type of device (such as Safari, iOS, mobile),
+              your browser’s language (such as English), and whether {APP_NAME}{" "}
+              is open in a browser tab or installed as an app.
             </p>
             <p className={PROSE}>
-              That is all. The counts never include your invoices, names,
-              amounts, currencies or anything else you type. {APP_NAME} doesn’t
-              keep your IP address, your city, your full browser details or any
-              identifier, and saves nothing on your device for the counts, so
-              visits can’t be linked together.
+              A page view also says which page. The first page you open says
+              what kind of site you came from (such as a search engine, an AI
+              assistant or a social network, never its address), or the name in
+              a link {APP_NAME} shared (such as ?ref=newsletter). A PDF or a
+              first save says the same, to show which of them lead to invoices.
+            </p>
+            <p className={PROSE}>
+              Opening the editor, making a PDF and first saving an invoice also
+              say roughly how many invoices this browser has saved (none, one,
+              two to five, or more), so first visits can be told from returning
+              ones. A PDF and a first save say the invoice’s currency code when
+              it’s one of a fixed list of common currencies (such as GBP or
+              AED), and a PDF says which optional parts it includes (such as tax
+              or notes).
+            </p>
+            <p className={PROSE}>
+              That is all. The counts never include your names, amounts, the
+              text of your invoices or anything else you write. {APP_NAME}{" "}
+              doesn’t keep your IP address, your city, your full browser
+              details, the address of the site you came from or any identifier,
+              and saves nothing on your device for the counts, so visits can’t
+              be linked together.
             </p>
             <p className={PROSE}>
               If your browser sends Global Privacy Control, nothing is counted.
