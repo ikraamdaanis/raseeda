@@ -84,7 +84,7 @@ export function buildDetailRows(input: {
       id: "servicePeriod",
       labelKey: "servicePeriod",
       label: input.labels.servicePeriod,
-      value: input.servicePeriod,
+      value: formatInvoiceDate(input.servicePeriod, input.dateFormat),
       isOptional: true
     }
   ];

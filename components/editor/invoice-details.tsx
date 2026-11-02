@@ -1,4 +1,3 @@
-import { endOfMonth, format, subMonths } from "date-fns";
 import { InvoiceDateField } from "~/components/editor/invoice-date-field";
 import { InvoiceInput } from "~/components/editor/invoice-input";
 import { useShownSections } from "~/hooks/use-shown-sections";
@@ -8,16 +7,6 @@ import { buildDetailRows } from "~/utils/build-invoice-view-model";
 import { getRoleSettings } from "~/utils/get-role-settings";
 import { getTextStyles } from "~/utils/get-text-styles";
 import { dueDateForNewInvoiceDate } from "~/utils/payment-terms";
-
-// The previous whole calendar month as a realistic Service period example, e.g.
-// "1–30 Jun 2026" (and "1–31 Dec 2025" when run in January, since the year rolls
-// back with the month). The editor is client-only, so reading the clock here
-// can't cause a server/client hydration mismatch.
-function getServicePeriodExample(): string {
-  const lastMonthEnd = endOfMonth(subMonths(new Date(), 1));
-
-  return `e.g. 1–${format(lastMonthEnd, "d MMM yyyy")}`;
-}
 
 function buildDetailPlaceholders(): Record<
   InvoiceDetailRow["id"],
@@ -29,10 +18,7 @@ function buildDetailPlaceholders(): Record<
     invoiceDate: { label: "Date", value: "Pick a date" },
     supplyDate: { label: "Date of supply", value: "Pick the supply date" },
     dueDate: { label: "Due date", value: "Pick a due date" },
-    servicePeriod: {
-      label: "Service period",
-      value: getServicePeriodExample()
-    }
+    servicePeriod: { label: "Service period", value: "Pick the period" }
   };
 }
 
@@ -81,6 +67,7 @@ function DetailRow({
     invoiceDate,
     supplyDate,
     dueDate,
+    servicePeriod,
     setNumber,
     setPoNumber,
     setInvoiceDate,
@@ -105,7 +92,7 @@ function DetailRow({
     dueDate: setDueDate,
     servicePeriod: setServicePeriod
   }[row.id];
-  const dateValues = { invoiceDate, supplyDate, dueDate };
+  const dateValues = { invoiceDate, supplyDate, dueDate, servicePeriod };
 
   // Moving the invoice date carries a Net 7/14/30/60 due date along with it.
   function handleDateSelect(isoDate: string) {
@@ -144,12 +131,14 @@ function DetailRow({
       </div>
       {row.id === "invoiceDate" ||
       row.id === "supplyDate" ||
-      row.id === "dueDate" ? (
+      row.id === "dueDate" ||
+      row.id === "servicePeriod" ? (
         <InvoiceDateField
           value={dateValues[row.id]}
           label={row.label || placeholders.label}
           placeholder={placeholders.value}
           style={valueStyle}
+          allowsRange={row.id === "supplyDate" || row.id === "servicePeriod"}
           onSelect={handleDateSelect}
         />
       ) : (

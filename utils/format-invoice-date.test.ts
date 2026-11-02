@@ -21,6 +21,44 @@ describe("invoice dates", () => {
     expect(formatInvoiceDate("", "d MMM yyyy")).toBe("");
   });
 
+  it("writes a stored range, sharing what both ends have in common", () => {
+    const sameMonth = "2026-10-01/2026-10-31";
+    const sameYear = "2026-10-15/2026-11-14";
+    const acrossYears = "2026-12-01/2027-01-31";
+
+    expect(formatInvoiceDate(sameMonth, "d MMM yyyy")).toBe("1–31 Oct 2026");
+    expect(formatInvoiceDate(sameYear, "d MMM yyyy")).toBe(
+      "15 Oct – 14 Nov 2026"
+    );
+    expect(formatInvoiceDate(acrossYears, "d MMM yyyy")).toBe(
+      "1 Dec 2026 – 31 Jan 2027"
+    );
+    expect(formatInvoiceDate(sameMonth, "MMMM d, yyyy")).toBe(
+      "October 1–31, 2026"
+    );
+    expect(formatInvoiceDate(sameYear, "MMMM d, yyyy")).toBe(
+      "October 15 – November 14, 2026"
+    );
+    expect(formatInvoiceDate(sameMonth, "dd/MM/yyyy")).toBe(
+      "01/10/2026 – 31/10/2026"
+    );
+  });
+
+  it("writes a one-day range as a single date", () => {
+    expect(formatInvoiceDate("2026-10-31/2026-10-31", "d MMM yyyy")).toBe(
+      "31 Oct 2026"
+    );
+  });
+
+  it("leaves a backwards or malformed range as it is", () => {
+    expect(formatInvoiceDate("2026-10-31/2026-10-01", "d MMM yyyy")).toBe(
+      "2026-10-31/2026-10-01"
+    );
+    expect(formatInvoiceDate("1–31 October 2026", "d MMM yyyy")).toBe(
+      "1–31 October 2026"
+    );
+  });
+
   it("prints the PDF's dates in the invoice's format", () => {
     const viewModel = buildInvoiceViewModel({
       ...createBlankInvoice(),

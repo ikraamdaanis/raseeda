@@ -11,3 +11,21 @@ export function parseIsoDate(value: string): Date | null {
 
   return isValid(date) ? date : null;
 }
+
+// Reads a stored date range, written as an ISO 8601 interval
+// (yyyy-MM-dd/yyyy-MM-dd), or a single date as a one-day range. Anything else
+// is null, so it is shown as typed.
+export function parseIsoDateRange(
+  value: string
+): { from: Date; to: Date } | null {
+  const [fromValue, toValue = fromValue, ...rest] = value.split("/");
+
+  if (rest.length > 0) return null;
+
+  const from = parseIsoDate(fromValue);
+  const to = parseIsoDate(toValue);
+
+  if (!from || !to || to < from) return null;
+
+  return { from, to };
+}
