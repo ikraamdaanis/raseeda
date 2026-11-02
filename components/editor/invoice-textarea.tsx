@@ -1,3 +1,4 @@
+import { isEqual } from "lodash-es";
 import type { ComponentProps } from "react";
 import { useEffect, useLayoutEffect, useRef } from "react";
 import { useIsPreview } from "~/hooks/use-shown-sections";
@@ -14,19 +15,58 @@ export function InvoiceTextArea({
   // Preview reads like the PDF: no placeholders, no editing highlight.
   const isPreview = useIsPreview();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  // The padding it was last fitted with, which focus and blur ease away from.
+  const paddingRef = useRef<Padding | null>(null);
+  const easeRef = useRef<Animation | null>(null);
   // Read so a new font or text size re-renders the field and refits it.
   useTheme();
 
+  function refit() {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+    // Mid-ease the padding reads as an in-between value; it refits on landing.
+    if (easeRef.current?.playState === "running") return;
+
+    paddingRef.current = fitToContent(textarea);
+  }
+
+  // Focus and blur change the padding, and the height with it. Both ease from
+  // where they were, as the inputs' padding does. The padding can't be a CSS
+  // transition here: the fit reads it, and mid-transition it's still the old
+  // value.
+  function refitSmoothly(textarea: HTMLTextAreaElement) {
+    const isEasing = easeRef.current?.playState === "running";
+    const styles = getComputedStyle(textarea);
+    const from = {
+      height: isEasing ? styles.height : `${textarea.offsetHeight}px`,
+      ...(isEasing || !paddingRef.current
+        ? readPadding(styles)
+        : paddingRef.current)
+    };
+
+    easeRef.current?.cancel();
+    const padding = fitToContent(textarea);
+    paddingRef.current = padding;
+    const to = { height: textarea.style.height, ...padding };
+
+    if (isEqual(from, to)) return;
+    if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+    const ease = textarea.animate([from, to], {
+      duration: 150,
+      easing: "cubic-bezier(0.4, 0, 0.2, 1)"
+    });
+
+    easeRef.current = ease;
+    ease.finished.then(refit, () => {});
+  }
+
   useLayoutEffect(() => {
-    if (textareaRef.current) fitToContent(textareaRef.current);
+    refit();
   });
 
   // A web font arriving after the first paint changes the line height.
   useEffect(() => {
-    function refit() {
-      if (textareaRef.current) fitToContent(textareaRef.current);
-    }
-
     document.fonts.addEventListener("loadingdone", refit);
 
     return () => document.fonts.removeEventListener("loadingdone", refit);
@@ -37,11 +77,11 @@ export function InvoiceTextArea({
       {...props}
       ref={textareaRef}
       onFocus={event => {
-        fitToContent(event.currentTarget);
+        refitSmoothly(event.currentTarget);
         props.onFocus?.(event);
       }}
       onBlur={event => {
-        fitToContent(event.currentTarget);
+        refitSmoothly(event.currentTarget);
         props.onBlur?.(event);
       }}
       readOnly={isPreview || props.readOnly}
@@ -65,9 +105,10 @@ export function InvoiceTextArea({
 // also ask for `field-sizing: content`, but Safari leaves out the border and
 // the padding added on focus, which clips the last line. The lines are
 // measured with the padding taken off, since Safari's scrollHeight also skips
-// the bottom padding.
-function fitToContent(textarea: HTMLTextAreaElement) {
+// the bottom padding. Returns the padding it fitted with.
+function fitToContent(textarea: HTMLTextAreaElement): Padding {
   const styles = getComputedStyle(textarea);
+  const padding = readPadding(styles);
   const frameY =
     parseFloat(styles.borderTopWidth) +
     parseFloat(styles.borderBottomWidth) +
@@ -80,4 +121,17 @@ function fitToContent(textarea: HTMLTextAreaElement) {
 
   textarea.style.paddingBlock = "";
   textarea.style.height = `${linesHeight + frameY}px`;
+
+  return padding;
+}
+
+type Padding = ReturnType<typeof readPadding>;
+
+function readPadding(styles: CSSStyleDeclaration) {
+  return {
+    paddingTop: styles.paddingTop,
+    paddingRight: styles.paddingRight,
+    paddingBottom: styles.paddingBottom,
+    paddingLeft: styles.paddingLeft
+  };
 }
