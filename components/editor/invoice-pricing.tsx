@@ -143,16 +143,15 @@ function MoneyInput({
 /**
  * Displays the pricing information for the invoice.
  */
-// Totals in two currencies need half the page rather than a third.
+// Two columns, as in the PDF: the labels right-aligned, 3rem left of values
+// as wide as the widest one, so the labels sit close to every figure.
 export function InvoicePricing() {
   const sections = useShownSections();
-  const conversion = useCurrencyConversion();
 
   return (
     <div
       data-field-area="pricing"
-      data-converted={conversion ? "" : undefined}
-      className="group/pricing flex flex-col gap-1 text-right"
+      className="grid grid-cols-[auto_auto] justify-end gap-x-12 gap-y-1 text-right"
     >
       <SubtotalRow />
       {sections.discounts && <DiscountsRow />}
@@ -174,19 +173,19 @@ function SubtotalRow() {
   const valueSettings = getRoleSettings(theme, "totalsValue");
 
   return (
-    <div className="ml-auto flex w-1/3 items-center justify-end gap-1 text-sm group-data-converted/pricing:w-1/2">
+    <div className="col-span-2 grid grid-cols-subgrid items-center text-sm">
       <InvoiceInput
         aria-label="Subtotal label"
         data-field="labels.subtotal"
         value={labels.subtotal}
         onChange={value => setLabels(prev => ({ ...prev, subtotal: value }))}
-        className="w-full min-w-fit"
+        className="field-sizing-content w-full"
         style={getTextStyles({ settings: labelSettings })}
         placeholder="Subtotal"
       />
       <span
         data-testid="subtotal-value"
-        className="text-paper-foreground inline-block min-w-40 shrink-0 text-right whitespace-nowrap"
+        className="text-paper-foreground text-right whitespace-nowrap"
         style={getTextStyles({ settings: valueSettings })}
       >
         {withConvertedAmount(
@@ -211,7 +210,7 @@ function TaxRow() {
   const [taxInput, setTaxInput] = usePricingInput(tax.percentage);
 
   return (
-    <div className="group/pricing-row ml-auto flex w-1/3 items-center justify-end gap-1 text-sm group-data-converted/pricing:w-1/2">
+    <div className="group/pricing-row col-span-2 grid grid-cols-subgrid items-center text-sm">
       <div
         className="flex w-full items-center"
         style={{ justifyContent: labelSettings.align }}
@@ -270,14 +269,14 @@ function TaxRow() {
           data-field="tax.note"
           value={isPreview ? tax.note.trim() || "Exempt" : tax.note}
           onChange={value => setTax(prev => ({ ...prev, note: value }))}
-          className="ml-auto min-w-40 text-right"
+          className="text-right"
           style={getTextStyles({ settings: valueSettings })}
           placeholder="e.g. Reverse charge"
         />
       ) : (
         <span
           data-testid="tax-amount"
-          className="ml-auto min-w-40 shrink-0 items-center whitespace-nowrap"
+          className="whitespace-nowrap"
           style={getTextStyles({ settings: valueSettings })}
         >
           {withConvertedAmount(
@@ -301,18 +300,18 @@ function FeesRow() {
   const [feesInput, setFeesInput] = usePricingInput(fees);
 
   return (
-    <div className="ml-auto flex w-1/3 items-center justify-end gap-1 text-sm group-data-converted/pricing:w-1/2">
+    <div className="col-span-2 grid grid-cols-subgrid items-center text-sm">
       <InvoiceInput
         aria-label="Fees label"
         data-field="labels.fees"
         value={labels.fees}
         onChange={value => setLabels(prev => ({ ...prev, fees: value }))}
-        className="w-full min-w-fit"
+        className="field-sizing-content w-full"
         style={getTextStyles({ settings: labelSettings })}
         placeholder="Fees"
       />
       <span
-        className="ml-auto flex min-w-40 items-center"
+        className="flex items-center"
         style={{ justifyContent: valueSettings.align }}
       >
         <MoneyInput
@@ -354,7 +353,7 @@ function DiscountsRow() {
   const isPercentage = discountType === "percentage";
 
   return (
-    <div className="group/pricing-row ml-auto flex w-1/3 items-center justify-end gap-1 text-sm group-data-converted/pricing:w-1/2">
+    <div className="group/pricing-row col-span-2 grid grid-cols-subgrid items-center text-sm">
       <div
         className="flex w-full items-center"
         style={{ justifyContent: labelSettings.align }}
@@ -410,14 +409,14 @@ function DiscountsRow() {
       </div>
       {isPercentage ? (
         <span
-          className="ml-auto min-w-40 items-center"
+          className="whitespace-nowrap"
           style={getTextStyles({ settings: valueSettings })}
         >
           {`-${formatCurrency(discountAmount, currency)}`}
         </span>
       ) : (
         <span
-          className="ml-auto flex min-w-40 items-center"
+          className="flex items-center"
           style={{ justifyContent: valueSettings.align }}
         >
           <MoneyInput
@@ -466,20 +465,20 @@ function TotalRow() {
   );
 
   return (
-    <div className="ml-auto flex w-1/3 items-center justify-end gap-1 text-sm group-data-converted/pricing:w-1/2">
+    <div className="col-span-2 grid grid-cols-subgrid items-center text-sm">
       <InvoiceInput
         aria-label="Total label"
         data-field="labels.total"
         value={labels.total}
         onChange={value => setLabels(prev => ({ ...prev, total: value }))}
-        className="w-full min-w-fit"
+        className="field-sizing-content w-full"
         style={getTextStyles({ settings: labelSettings })}
         placeholder="Total"
       />
       <span
         data-testid="total-value"
         className={cn(
-          "inline-block min-w-40 shrink-0 text-right whitespace-nowrap",
+          "text-right whitespace-nowrap",
           hasPayment ? "" : "font-bold"
         )}
         style={getTextStyles({ settings: valueSettings })}
@@ -506,18 +505,18 @@ function AmountPaidRow() {
   const [amountPaidInput, setAmountPaidInput] = usePricingInput(amountPaid);
 
   return (
-    <div className="ml-auto flex w-1/3 items-center justify-end gap-1 text-sm group-data-converted/pricing:w-1/2">
+    <div className="col-span-2 grid grid-cols-subgrid items-center text-sm">
       <InvoiceInput
         aria-label="Amount paid label"
         data-field="labels.amountPaid"
         value={labels.amountPaid}
         onChange={value => setLabels(prev => ({ ...prev, amountPaid: value }))}
-        className="w-full min-w-fit"
+        className="field-sizing-content w-full"
         style={getTextStyles({ settings: labelSettings })}
         placeholder="Amount paid"
       />
       <span
-        className="ml-auto flex min-w-40 items-center"
+        className="flex items-center"
         style={{ justifyContent: valueSettings.align }}
       >
         <MoneyInput
@@ -559,19 +558,19 @@ function BalanceDueRow() {
   }
 
   return (
-    <div className="ml-auto flex w-1/3 items-center justify-end gap-1 text-sm group-data-converted/pricing:w-1/2">
+    <div className="col-span-2 grid grid-cols-subgrid items-center text-sm">
       <InvoiceInput
         aria-label="Balance due label"
         data-field="labels.balanceDue"
         value={labels.balanceDue}
         onChange={value => setLabels(prev => ({ ...prev, balanceDue: value }))}
-        className="w-full min-w-fit"
+        className="field-sizing-content w-full"
         style={getTextStyles({ settings: labelSettings })}
         placeholder="Balance due"
       />
       <span
         data-testid="balance-due-value"
-        className="inline-block min-w-40 text-right font-bold"
+        className="text-right font-bold whitespace-nowrap"
         style={getTextStyles({ settings: valueSettings })}
       >
         {formatCurrencyWithCode(balanceDue, currency, currencyCode)}
