@@ -63,6 +63,12 @@ export const Route = createRootRoute({
         name: "theme-color",
         content: "#11746b"
       },
+      // iOS names a page added to the home screen by its title unless told
+      // otherwise, which cuts the homepage's down to "Free Invoi...".
+      {
+        name: "apple-mobile-web-app-title",
+        content: APP_NAME
+      },
       ...(matches.some(isNotFoundMatch) ? NOT_FOUND_META : siteMeta())
     ],
     links: [
