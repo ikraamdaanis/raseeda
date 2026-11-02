@@ -14,9 +14,37 @@ A free, local-first invoice generator that runs entirely in your browser. Fill i
 - Upload your logo
 - Any currency, with custom symbols when you need them
 - Export to PDF in one click
-- Import and export all data (invoices, templates, images) as a backup
+- Import and export all data (invoices, templates, images) as a backup, or delete it all
+- Mark an invoice paid with a payment date and an optional PAID stamp; the invoice lists show what's paid, part paid and overdue
+- A small on-device API for scripts and assistants (see below)
 - Works offline: no network needed once the editor has loaded
 - No sign-up, no accounts, no tracking cookies; only anonymous usage counts, off under Global Privacy Control
+
+## Scripting the editor
+
+While the editor (`/create`) is open, `window.raseeda` lets a script or an AI assistant driving the browser make and export invoices without clicking. It reads and writes the same browser storage the editor does; nothing is sent anywhere.
+
+| Call | What it does |
+| --- | --- |
+| `version` | The API version, currently `1` |
+| `listInvoices()` | Every invoice: `id`, `name`, `number`, `client`, `total`, `currency`, `currencyCode`, `status` (`paid`, `partPaid`, `overdue` or `unpaid`), `invoiceDate`, `dueDate`, `updatedAt` |
+| `getInvoice(id)` | An invoice's data, in the shape an export's `invoiceData` has |
+| `createInvoice(data)` | Adds an invoice and opens it, returning its id. Takes the same shape; anything left out takes a new invoice's value |
+| `openInvoice(id)` | Opens an invoice in the editor |
+| `getPdf(id?)` | The PDF of that invoice, or the open one, as a `Blob` |
+| `downloadPdf(id?)` | Saves that PDF as a download |
+| `importData(json)` | Imports a whole export file (its text or the parsed object), as Import Data does |
+
+Every call except `version` returns a promise.
+
+```js
+const id = await raseeda.createInvoice({
+  number: "INV-0042",
+  client: { content: "Acme Ltd\n1 High Street" },
+  items: [{ description: "Design work", quantity: 10, unit: "hrs", unitPrice: 80 }]
+});
+await raseeda.downloadPdf(id);
+```
 
 ## Tech Stack
 

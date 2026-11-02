@@ -158,7 +158,7 @@ const MORE_FEATURES = [
   "Notes and terms",
   "Late payment terms",
   "Tax-exempt invoices",
-  "Amount paid and balance due"
+  "Amount paid, payment date and balance due"
 ];
 
 // What a visitor would otherwise reach for. The other columns describe the

@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { createContext, useContext, useEffect, useState } from "react";
 import { useShallow } from "zustand/react/shallow";
+import { exposeAutomationApi } from "~/context/automation-api";
 import {
   attachEditor,
   detachEditor,
@@ -45,6 +46,14 @@ export function InvoiceDocumentProvider({
   // While the editor is on screen it edits the open invoice (or follows it
   // read-only). Leaving the editor writes what's pending and lets other tabs
   // edit it.
+  // Scripts and assistants can drive the editor through window.raseeda while
+  // it's open (context/automation-api.ts).
+  useEffect(() => {
+    if (!isHydrated) return;
+
+    return exposeAutomationApi();
+  }, [isHydrated]);
+
   useEffect(() => {
     if (!isHydrated) return;
 
