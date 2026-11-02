@@ -56,9 +56,10 @@ export function DetailsSection() {
   );
 }
 
-// The currency, and a second one, never the same as it, the amounts are also shown in: a quiet link
-// under the currency until one is added, then its own picker with a way to
-// remove it. Focus follows, to the new picker or back to the link.
+// The currency, and a second one (never the same) the amounts are also shown
+// in: a quiet link under the currency until one is added, then its own picker
+// with a way to remove it. Focus follows, to the new picker or back to the
+// link.
 function CurrencyRows() {
   const { currency, currencyCode, setCurrency } = useCurrencySlice();
   const { currencyConversion, setSecondCurrency } =
