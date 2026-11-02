@@ -5,9 +5,13 @@ import type { InvoiceDocument } from "~/types";
 
 // The usage counts, as the session reports them (utils/track.ts). The module
 // is reloaded for every page, so the spy lives outside it.
-const { track } = vi.hoisted(() => ({ track: vi.fn() }));
+const { trackInvoice } = vi.hoisted(() => ({ trackInvoice: vi.fn() }));
 
-vi.mock("~/utils/track", () => ({ track, trackPageView: vi.fn() }));
+vi.mock("~/utils/track", () => ({
+  track: vi.fn(),
+  trackInvoice,
+  trackPageView: vi.fn()
+}));
 
 // Every page, closed after each test so a page from an earlier test (its
 // timers, its live queries, the Web Locks it holds) can't reach the next.
@@ -765,7 +769,7 @@ describe("usage counts", () => {
   beforeEach(async () => {
     vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout", "Date"] });
     await Dexie.delete("InvoiceDatabase");
-    track.mockClear();
+    trackInvoice.mockClear();
   });
 
   afterEach(async () => {
@@ -778,14 +782,17 @@ describe("usage counts", () => {
 
     await settle(5000);
 
-    expect(track).not.toHaveBeenCalled();
+    expect(trackInvoice).not.toHaveBeenCalled();
 
     page.edit().setTitle("Quote");
     await settle();
     page.edit().setTitle("Quote for May");
     await settle(5000);
 
-    expect(track).toHaveBeenCalledExactlyOnceWith("invoice_saved");
+    expect(trackInvoice).toHaveBeenCalledExactlyOnceWith(
+      "invoice_saved",
+      expect.objectContaining({ currencyCode: "USD" })
+    );
   });
 
   it("counts a new invoice named before its first edit", async () => {
@@ -793,7 +800,10 @@ describe("usage counts", () => {
 
     await page.renameCurrent("Named first");
 
-    expect(track).toHaveBeenCalledExactlyOnceWith("invoice_saved");
+    expect(trackInvoice).toHaveBeenCalledExactlyOnceWith(
+      "invoice_saved",
+      expect.objectContaining({ currencyCode: "USD" })
+    );
   });
 
   it("counts a duplicate as a new invoice", async () => {
@@ -802,7 +812,10 @@ describe("usage counts", () => {
     await page.renameCurrent("Original");
     await page.duplicateCurrent();
 
-    expect(track.mock.calls).toEqual([["invoice_saved"], ["invoice_saved"]]);
+    expect(trackInvoice.mock.calls.map(([event]) => event)).toEqual([
+      "invoice_saved",
+      "invoice_saved"
+    ]);
   });
 });
 
