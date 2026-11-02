@@ -107,7 +107,7 @@ const LINE_ITEM_COLUMNS: LineItemColumnConfig[] = [
     rowRole: "tableRowCenter",
     headerPlaceholder: "Quantity",
     headerInputClassName:
-      "relative h-full w-full rounded-none border-none bg-transparent py-2 hover:bg-brand-50 focus-visible:z-10 focus-visible:px-2",
+      "relative h-full w-full rounded-none border-none bg-transparent py-2 hover:bg-brand-50 focus-visible:z-10 focus:px-0",
     cell: {
       kind: "integer",
       itemField: "quantity",
@@ -122,7 +122,7 @@ const LINE_ITEM_COLUMNS: LineItemColumnConfig[] = [
     rowRole: "tableRowCenter",
     headerPlaceholder: "Unit",
     headerInputClassName:
-      "relative h-full w-full rounded-none border-none bg-transparent py-2 hover:bg-brand-50 focus-visible:z-10 focus-visible:px-2",
+      "relative h-full w-full rounded-none border-none bg-transparent py-2 hover:bg-brand-50 focus-visible:z-10 focus:px-0",
     cell: {
       kind: "text",
       itemField: "unit",
@@ -138,7 +138,7 @@ const LINE_ITEM_COLUMNS: LineItemColumnConfig[] = [
     rowRole: "tableRowCenter",
     headerPlaceholder: "Unit Price",
     headerInputClassName:
-      "relative h-full w-full rounded-none border-none bg-transparent py-2 hover:bg-brand-50 focus-visible:z-10 focus-visible:px-2",
+      "relative h-full w-full rounded-none border-none bg-transparent py-2 hover:bg-brand-50 focus-visible:z-10 focus:px-0",
     cell: {
       kind: "currency",
       itemField: "unitPrice",
@@ -153,7 +153,7 @@ const LINE_ITEM_COLUMNS: LineItemColumnConfig[] = [
     rowRole: "tableRowRight",
     headerPlaceholder: "Amount",
     headerInputClassName:
-      "relative h-auto w-full rounded-none rounded-tr-sm border-none bg-transparent py-2 pr-2 hover:bg-brand-50 focus-visible:z-10 focus-visible:p-2",
+      "relative h-auto w-full rounded-none rounded-tr-sm border-none bg-transparent py-2 pr-2 hover:bg-brand-50 focus-visible:z-10 focus:pr-2 focus:pl-0",
     cell: {
       kind: "amount",
       wrapperClassName: "col-span-1 pr-2",
@@ -332,7 +332,12 @@ function TableHeader({
 }
 
 // The labels share the top line; a money column's currency sits under its
-// label, so the column stays as narrow as its figures.
+// label, so the column stays as narrow as its figures. Over a currency the
+// label's highlight hugs its text, 4px clear of the currency, and starts 4px
+// lower so the text still lines up with the other labels. Every label is as
+// tall as its line, since an input centres its text in whatever height it
+// has. A label keeps its padding while it's edited, so it doesn't jump when
+// clicked.
 function TableHeaderCell({
   column,
   label,
@@ -348,6 +353,11 @@ function TableHeaderCell({
 }) {
   const settings = getRoleSettings(theme, column.headerRole);
   const style = getTextStyles({ settings });
+  const labelClassName = cn(
+    column.headerInputClassName,
+    "h-auto",
+    currencyCode ? "mt-1 py-1 focus:py-1" : "focus:pt-2 focus:pb-2"
+  );
 
   function handleChange(value: string) {
     setTableSettings(prev => ({
@@ -363,10 +373,7 @@ function TableHeaderCell({
       style={style}
     >
       {column.id === "convertedAmount" ? (
-        <span
-          className={cn(column.headerInputClassName, currencyCode && "pb-0")}
-          style={style}
-        >
+        <span className={labelClassName} style={style}>
           {label}
         </span>
       ) : (
@@ -375,7 +382,7 @@ function TableHeaderCell({
           data-field={`tableSettings.columnLabels.${column.id}`}
           value={label}
           onChange={handleChange}
-          className={cn(column.headerInputClassName, currencyCode && "pb-0")}
+          className={labelClassName}
           placeholder={column.headerPlaceholder}
           style={style}
         />
