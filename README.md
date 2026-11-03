@@ -59,6 +59,8 @@ await raseeda.createInvoice({
 });
 ```
 
+The line items table is `tableSettings`: `{ columnLabels, columns, backgroundColor, borderColor }`. `columns` is `{ quantityAndPrice, unit }`, both on by default. With `quantityAndPrice: false`, the Quantity, Unit and Unit price columns are hidden and each item is a description and an amount, so give each one `quantity: 1` and the amount as its `unitPrice`. `columnLabels.tax` names the Tax column; left blank, it uses the tax row's label (`labels.tax`).
+
 ## Tech Stack
 
 - **React 19** with the React Compiler
