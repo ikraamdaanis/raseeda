@@ -97,7 +97,8 @@ export const invoiceDefault: Invoice = {
   tax: {
     percentage: 0,
     exempt: false,
-    note: ""
+    note: "",
+    perLine: false
   },
   fees: 0,
   discounts: 0,

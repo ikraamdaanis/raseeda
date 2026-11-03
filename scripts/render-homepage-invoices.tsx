@@ -227,7 +227,7 @@ const TEMPLATE_INVOICES: Record<
       ["Custom celebration cake", 1, "ea", 145],
       ["Coffee service", 3, "gal", 42]
     ]),
-    tax: { percentage: 8.25, exempt: false, note: "" },
+    tax: { percentage: 8.25, exempt: false, note: "", perLine: false },
     fees: 35,
     labels: { ...invoiceDefault.labels, fees: "Delivery" },
     paymentDetails: {

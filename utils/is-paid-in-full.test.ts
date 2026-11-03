@@ -9,7 +9,7 @@ function invoiceWith(overrides: Partial<Invoice>): Invoice {
     items: [
       { id: "a", description: "Work", quantity: 1, unit: "", unitPrice: 100 }
     ],
-    tax: { percentage: 0, exempt: false, note: "" },
+    tax: { percentage: 0, exempt: false, note: "", perLine: false },
     fees: 0,
     discounts: 0,
     ...overrides

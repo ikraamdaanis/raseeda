@@ -218,7 +218,17 @@ const invoiceItemSchema = z.object({
   description: z.string().catch(""),
   quantity: z.coerce.number().catch(0),
   unit: z.string().catch(""),
-  unitPrice: z.coerce.number().catch(0)
+  unitPrice: z.coerce.number().catch(0),
+  // The line's own rate, used while the invoice's tax is per line. Without
+  // one, the line takes the invoice's rate. As on the invoice, an exempt line
+  // keeps its rate but charges none.
+  tax: z
+    .object({
+      percentage: z.coerce.number().catch(0),
+      exempt: z.boolean().catch(false)
+    })
+    .optional()
+    .catch(undefined)
 });
 
 const invoiceThemeSchema = z
@@ -302,19 +312,21 @@ export const invoiceSchema = z.object({
     ),
   tableSettings: tableSettingsSchema,
   labels: invoiceLabelsSchema,
-  // Tax stays a single invoice-level rate, extended with a tax-exempt flag and a
-  // free-text note (e.g. "Reverse charge") so mixed-jurisdiction and zero-rated
-  // invoices are supported without per-line rates. When exempt, the rate is
-  // ignored and no tax is charged.
+  // The invoice's tax rate, with a tax-exempt flag and a free-text note (e.g.
+  // "Reverse charge"). When exempt, the rate is ignored and no tax is charged.
+  // It's every line's rate unless `perLine` is on, when a line with a rate of
+  // its own uses that instead (issue #102). Switched off, the lines' own rates
+  // are kept but ignored. The note covers every exempt line.
   tax: z
     .object({
       percentage: z.coerce.number().catch(0),
       // Not z.coerce.boolean(): Boolean("false") is true, so a hand-edited
       // backup with `"exempt": "false"` would silently flip to exempt.
       exempt: z.boolean().catch(false),
-      note: z.string().catch("")
+      note: z.string().catch(""),
+      perLine: z.boolean().catch(false)
     })
-    .catch({ percentage: 0, exempt: false, note: "" }),
+    .catch({ percentage: 0, exempt: false, note: "", perLine: false }),
   fees: z.coerce.number().catch(0),
   discounts: z.coerce.number().catch(0),
   // A fixed discount is a currency amount; a percentage discount is applied to

@@ -126,12 +126,20 @@ export type TextRole =
   | "grandTotalLabel"
   | "grandTotalValue";
 
+// A line's own tax rate. As on the invoice, an exempt line ignores its
+// percentage.
+export type InvoiceItemTax = {
+  percentage: number;
+  exempt: boolean;
+};
+
 export type InvoiceItem = {
   id: string;
   description: string;
   quantity: number;
   unit: string;
   unitPrice: number;
+  tax?: InvoiceItemTax;
 };
 
 export type InvoiceItemWithAmount = InvoiceItem & { amount: number };
@@ -235,9 +243,19 @@ export type InvoiceViewModel = {
   conversion: CurrencyConversion | null;
 };
 
+// The lines taxed at one rate (or exempt), after their share of the discount.
+export type InvoiceTaxGroup = {
+  percentage: number;
+  exempt: boolean;
+  taxableAmount: number;
+  taxAmount: number;
+};
+
 export type InvoiceTotals = {
   items: InvoiceItemWithAmount[];
   subtotal: number;
+  // Highest rate first, then 0%, then exempt.
+  taxGroups: InvoiceTaxGroup[];
   taxAmount: number;
   discountAmount: number;
   total: number;

@@ -32,7 +32,9 @@ describe("printed sections", () => {
 
   it("prints switched-on tax even at 0%", () => {
     const printed = getPrintedSections(
-      makeInvoice({ tax: { percentage: 0, exempt: false, note: "" } })
+      makeInvoice({
+        tax: { percentage: 0, exempt: false, note: "", perLine: false }
+      })
     );
 
     expect(printed.tax).toBe(true);
@@ -55,7 +57,7 @@ describe("printed sections", () => {
     const printed = getPrintedSections(
       makeInvoice({
         sections: { ...DEFAULT_INVOICE_SECTIONS, tax: false },
-        tax: { percentage: 20, exempt: false, note: "" }
+        tax: { percentage: 20, exempt: false, note: "", perLine: false }
       })
     );
 
@@ -74,7 +76,7 @@ describe("switched-off pricing", () => {
         amountPaid: false
       },
       discounts: 10,
-      tax: { percentage: 20, exempt: false, note: "" },
+      tax: { percentage: 20, exempt: false, note: "", perLine: false },
       fees: 5,
       amountPaid: 30
     });

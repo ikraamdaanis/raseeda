@@ -48,7 +48,7 @@ function makeInvoice(overrides: Partial<Invoice> = {}): Invoice {
       amountPaid: "Amount paid",
       balanceDue: "Balance due"
     },
-    tax: { percentage: 0, exempt: false, note: "" },
+    tax: { percentage: 0, exempt: false, note: "", perLine: false },
     fees: 0,
     discounts: 0,
     discountType: "fixed",
@@ -295,7 +295,7 @@ describe("buildInvoiceViewModel", () => {
       const { summaryRows } = buildInvoiceViewModel(
         makeInvoice({
           items: [makeItem({ quantity: 1, unitPrice: 100 })],
-          tax: { percentage: 0, exempt: false, note: "" }
+          tax: { percentage: 0, exempt: false, note: "", perLine: false }
         })
       );
       const tax = summaryRows.find(row => row.id === "tax");
@@ -309,7 +309,12 @@ describe("buildInvoiceViewModel", () => {
       const { summaryRows } = buildInvoiceViewModel(
         makeInvoice({
           items: [makeItem({ quantity: 1, unitPrice: 100 })],
-          tax: { percentage: 20, exempt: true, note: "Reverse charge" }
+          tax: {
+            percentage: 20,
+            exempt: true,
+            note: "Reverse charge",
+            perLine: false
+          }
         })
       );
       const tax = summaryRows.find(row => row.id === "tax");
@@ -375,7 +380,7 @@ describe("buildInvoiceViewModel", () => {
     it("shows tax, fees, and discounts once they have a value", () => {
       const { summaryRows } = buildInvoiceViewModel(
         makeInvoice({
-          tax: { percentage: 20, exempt: false, note: "" },
+          tax: { percentage: 20, exempt: false, note: "", perLine: false },
           fees: 5,
           discounts: 3
         })
@@ -397,7 +402,7 @@ describe("buildInvoiceViewModel", () => {
       const { summaryRows } = buildInvoiceViewModel(
         makeInvoice({
           items: [makeItem({ quantity: 1, unitPrice: 100 })],
-          tax: { percentage: 7.5, exempt: false, note: "" },
+          tax: { percentage: 7.5, exempt: false, note: "", perLine: false },
           fees: 12,
           discounts: 4
         })
@@ -416,7 +421,7 @@ describe("buildInvoiceViewModel", () => {
       const { summaryRows } = buildInvoiceViewModel(
         makeInvoice({
           items: [makeItem({ quantity: 1, unitPrice: 100 })],
-          tax: { percentage: 10, exempt: false, note: "" },
+          tax: { percentage: 10, exempt: false, note: "", perLine: false },
           fees: 5,
           discounts: 1000
         })

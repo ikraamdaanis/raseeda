@@ -275,7 +275,12 @@ export async function seedDummyInvoice(): Promise<InvoiceDocument> {
       ...invoiceDefault.tableSettings,
       columnLabels: pickRandom(COLUMN_LABEL_SETS)
     },
-    tax: { percentage: pickRandom(TAX_RATES), exempt: false, note: "" },
+    tax: {
+      percentage: pickRandom(TAX_RATES),
+      exempt: false,
+      note: "",
+      perLine: false
+    },
     fees: Math.random() < 0.3 ? randomInt(1, 20) * 5 : 0,
     discounts: Math.random() < 0.25 ? randomInt(1, 20) * 5 : 0,
     terms: {
