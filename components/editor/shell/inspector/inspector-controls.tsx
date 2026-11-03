@@ -123,20 +123,17 @@ export function InspectorRow({
   );
 }
 
-// A setting that's on or off, the whole row its label. A nested one indents,
-// for a setting that belongs to the one above.
+// A setting that's on or off, the whole row its label.
 export function InspectorSwitch({
   label,
   checked,
   onCheckedChange,
-  field,
-  nested = false
+  field
 }: {
   label: string;
   checked: boolean;
   onCheckedChange: (checked: boolean) => void;
   field?: string;
-  nested?: boolean;
 }) {
   const id = useId();
 
@@ -145,7 +142,7 @@ export function InspectorSwitch({
       htmlFor={id}
       className="hover:bg-muted -mx-1.5 flex h-8 cursor-pointer items-center justify-between gap-3 rounded-md px-1.5 text-[13px] pointer-coarse:h-11"
     >
-      <span className={cn("text-foreground", nested && "pl-3")}>{label}</span>
+      <span className="text-foreground">{label}</span>
       <Switch
         id={id}
         size="sm"

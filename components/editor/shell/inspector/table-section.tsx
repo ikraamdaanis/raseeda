@@ -81,7 +81,6 @@ export function TableSection() {
             field="tableSettings.columns.unit"
             checked={columns.unit}
             onCheckedChange={isOn => setColumn("unit", isOn)}
-            nested
           />
         ) : (
           <p className="text-muted-foreground pb-1 text-xs">
