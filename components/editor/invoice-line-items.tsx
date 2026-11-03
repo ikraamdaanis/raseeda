@@ -266,8 +266,8 @@ function getGridClassName({
 }) {
   if (hasConversion && hasTaxColumn) {
     return hideUnit
-      ? "grid-cols-[1fr_64px_96px_72px_104px_120px]"
-      : "grid-cols-[1fr_64px_64px_96px_72px_104px_120px]";
+      ? "grid-cols-[1fr_64px_96px_64px_104px_120px]"
+      : "grid-cols-[1fr_64px_64px_96px_64px_104px_120px]";
   }
 
   if (hasConversion) {
@@ -278,8 +278,8 @@ function getGridClassName({
 
   if (hasTaxColumn) {
     return hideUnit
-      ? "grid-cols-[1fr_80px_120px_72px_150px]"
-      : "grid-cols-[1fr_80px_80px_120px_72px_150px]";
+      ? "grid-cols-[1fr_80px_120px_64px_150px]"
+      : "grid-cols-[1fr_80px_80px_120px_64px_150px]";
   }
 
   return hideUnit
