@@ -1,6 +1,5 @@
 import type { CSSProperties, ReactNode } from "react";
 import { useEffect, useState } from "react";
-import { useShallow } from "zustand/react/shallow";
 import { InvoiceDateField } from "~/components/editor/invoice-date-field";
 import { InvoiceInput } from "~/components/editor/invoice-input";
 import { formatCurrency } from "~/consts/currencies";
@@ -11,12 +10,11 @@ import {
   useCurrencySymbol,
   useInvoiceTotals,
   usePricingSlice,
+  useTaxGroups,
   useTheme
 } from "~/stores/invoice-selectors";
-import { useInvoiceStore } from "~/stores/invoice-store";
 import type { InvoiceSummaryRow } from "~/types";
 import { buildTaxRows } from "~/utils/build-invoice-view-model";
-import { calculateInvoiceTotals } from "~/utils/calculate-invoice-totals";
 import {
   formatDeduction,
   formatInvoiceTotal,
@@ -207,28 +205,16 @@ function SubtotalRow() {
 
 // The tax rows the PDF prints: one per rate when the lines' rates differ.
 function usePrintedTaxRows(): InvoiceSummaryRow[] {
-  const invoice = useInvoiceStore(
-    useShallow(state => ({
-      items: state.items,
-      tax: state.tax,
-      fees: state.fees,
-      discounts: state.discounts,
-      discountType: state.discountType,
-      amountPaid: state.amountPaid,
-      sections: state.sections,
-      labels: state.labels,
-      currency: state.currency
-    }))
-  );
+  const { tax, labels, currency } = usePricingSlice();
+  const { taxGroups, taxAmount } = useTaxGroups();
   const conversion = useCurrencyConversion();
-  const totals = calculateInvoiceTotals(invoice);
 
   return buildTaxRows({
-    label: invoice.labels.tax,
-    tax: invoice.tax,
-    taxGroups: totals.taxGroups,
-    taxAmount: totals.taxAmount,
-    currency: invoice.currency,
+    label: labels.tax,
+    tax,
+    taxGroups,
+    taxAmount,
+    currency,
     conversion,
     isVisible: true
   });
@@ -245,16 +231,15 @@ function isInvoiceTaxRow(
     : row.percentage === tax.percentage;
 }
 
-// Editing, the tax row sets the invoice's rate. In Preview, an invoice whose
-// lines carry rates of their own reads as the PDF does instead: a row per
-// rate, or the one rate they all share.
+// The tax row sets the invoice's rate. An invoice whose lines carry rates of
+// their own reads as the PDF does instead, editing too, so its totals always
+// add up: a row per rate, or the one rate the lines all share. Editing those
+// rates comes with the line items' own controls.
 function TaxRow() {
   const { tax } = usePricingSlice();
-  const isPreview = useIsPreview();
   const printedRows = usePrintedTaxRows();
   const readsAsPrinted =
-    isPreview &&
-    (printedRows.length > 1 || !isInvoiceTaxRow(printedRows[0], tax));
+    printedRows.length > 1 || !isInvoiceTaxRow(printedRows[0], tax);
 
   if (readsAsPrinted) return <PrintedTaxRows rows={printedRows} />;
 

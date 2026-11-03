@@ -577,6 +577,28 @@ describe("calculateInvoiceTotals with a tax rate per line", () => {
     expect(totals.total).toBe(0);
   });
 
+  it("credits back exactly the tax a sale at the same rate charged", () => {
+    const sale = calculateInvoiceTotals(
+      makePerLineInvoice({
+        items: [
+          makeItem({ unitPrice: 100.1, tax: { percentage: 5, exempt: false } })
+        ]
+      })
+    );
+    const credit = calculateInvoiceTotals(
+      makePerLineInvoice({
+        items: [
+          makeItem({ unitPrice: 1000 }),
+          makeItem({ unitPrice: -100.1, tax: { percentage: 5, exempt: false } })
+        ]
+      })
+    );
+
+    // 5.005 rounds up to 5.01, so the credit's -5.005 rounds to -5.01.
+    expect(sale.taxAmount).toBe(5.01);
+    expect(credit.taxGroups[1].taxAmount).toBe(-5.01);
+  });
+
   it("puts every line on the invoice's rate while Per line is off", () => {
     const items = [
       makeItem({ unitPrice: 1000 }),

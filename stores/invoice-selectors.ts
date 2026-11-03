@@ -2,7 +2,7 @@ import { useShallow } from "zustand/react/shallow";
 import { getCurrencyMarker } from "~/consts/currencies";
 import type { InvoiceStore } from "~/stores/invoice-store";
 import { useInvoiceStore } from "~/stores/invoice-store";
-import type { Invoice } from "~/types";
+import type { Invoice, InvoiceTotals } from "~/types";
 import { hasMixedTaxRates } from "~/utils/build-invoice-view-model";
 import { calculateInvoiceTotals } from "~/utils/calculate-invoice-totals";
 
@@ -236,6 +236,25 @@ export function useInvoiceTotals(): {
       };
     })
   );
+}
+
+// The tax groups behind the totals' tax rows, one per rate the lines are
+// taxed at, recomputed from the pricing inputs.
+export function useTaxGroups(): Pick<InvoiceTotals, "taxGroups" | "taxAmount"> {
+  const pricing = useInvoiceStore(
+    useShallow(state => ({
+      items: state.items,
+      tax: state.tax,
+      fees: state.fees,
+      discounts: state.discounts,
+      discountType: state.discountType,
+      amountPaid: state.amountPaid,
+      sections: state.sections
+    }))
+  );
+  const { taxGroups, taxAmount } = calculateInvoiceTotals(pricing);
+
+  return { taxGroups, taxAmount };
 }
 
 // Whether the line items show a Tax column: only while the lines' rates

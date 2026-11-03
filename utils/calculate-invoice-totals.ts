@@ -8,11 +8,15 @@ import type {
   InvoiceTotals
 } from "~/types";
 
-// Rounds to whole cents, half up. The product is first trimmed to 15
-// significant digits, so binary float noise can't round a half cent the wrong
-// way (1.005 * 100 is 100.49999999999999 in floating point).
+// Rounds to whole cents, a half cent away from zero, so a credit rounds the
+// same way as the sale it reverses (-5.005 to -5.01, as 5.005 to 5.01). The
+// product is first trimmed to 15 significant digits, so binary float noise
+// can't round a half cent the wrong way (1.005 * 100 is 100.49999999999999 in
+// floating point).
 export function roundCents(value: number): number {
-  return Math.round(Number((value * 100).toPrecision(15))) / 100;
+  const cents = Number((Math.abs(value) * 100).toPrecision(15));
+
+  return (Math.sign(value) * Math.round(cents)) / 100;
 }
 
 // Rounds a single line amount to two decimal places, coercing non-numeric
