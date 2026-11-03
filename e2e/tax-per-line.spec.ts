@@ -172,3 +172,42 @@ test("undo and redo step through line rates, which autosave", async ({
   await expect(page.getByLabel("Tax, item 2")).toHaveValue("7");
   await expect(page.getByTestId("total-value")).toHaveText("$173.50 USD");
 });
+
+test("on an exempt invoice a line can take a rate, and the note moves to the Exempt row", async ({
+  page
+}) => {
+  await gotoTwoLineInvoice(page);
+  await page.getByRole("button", { name: "Toggle tax per line" }).click();
+  await page.getByRole("button", { name: "Toggle tax exempt" }).click();
+
+  await expect(page.getByLabel("Tax, item 1")).toHaveAttribute(
+    "placeholder",
+    "Exempt"
+  );
+  await expect(
+    page.getByRole("button", { name: "Toggle exempt, item 1" })
+  ).toHaveCount(0);
+
+  await setNumber(page.getByLabel("Tax, item 1"), "20");
+
+  await expect(page.getByText("Exempt by default")).toBeVisible();
+  await expect(page.getByText("Tax 20% on $100.00")).toBeVisible();
+  await expect(page.getByText("Exempt on $50.00")).toBeVisible();
+  await expect(page.getByTestId("total-value")).toHaveText("$170.00 USD");
+
+  await page.getByLabel("Tax exempt note").fill("Reverse charge");
+  await modeButton(page, "Preview").click();
+
+  await expect(page.getByText("Reverse charge")).toBeVisible();
+  await expect(page.getByText("Exempt by default")).toHaveCount(0);
+});
+
+test("a rate typed from a leading dot is a fraction", async ({ page }) => {
+  await gotoTwoLineInvoice(page);
+  await page.getByRole("button", { name: "Toggle tax per line" }).click();
+
+  await setNumber(page.getByLabel("Tax, item 2"), ".5");
+
+  await expect(page.getByLabel("Tax, item 2")).toHaveValue("0.5");
+  await expect(page.getByTestId("total-value")).toHaveText("$170.25 USD");
+});
