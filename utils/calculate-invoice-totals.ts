@@ -47,7 +47,7 @@ export function getLineTax(
 }
 
 // Exempt is a group of its own, apart from 0%, as VAT returns report them.
-export function getTaxKey(lineTax: InvoiceItemTax): string {
+function getTaxKey(lineTax: InvoiceItemTax): string {
   return lineTax.exempt ? "exempt" : String(lineTax.percentage);
 }
 

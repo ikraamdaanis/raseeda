@@ -8,6 +8,7 @@ import { useIsPreview, useShownSections } from "~/hooks/use-shown-sections";
 import { cn } from "~/lib/utils";
 import {
   useCurrencySymbol,
+  useHasOwnLineRates,
   useInvoiceTotals,
   usePricingSlice,
   useTaxGroups,
@@ -232,14 +233,20 @@ function isInvoiceTaxRow(
 }
 
 // The tax row sets the invoice's rate. An invoice whose lines carry rates of
-// their own reads as the PDF does instead, editing too, so its totals always
-// add up: a row per rate, or the one rate the lines all share. Editing those
-// rates comes with the line items' own controls.
+// their own reads as the PDF does instead, so its totals always add up: a row
+// per rate, or the one rate the lines all share. Editing, that goes by whether
+// any line has a rate of its own, which editing the invoice's rate can't
+// change, so the control being used never swaps out mid-edit. Editing the
+// lines' rates comes with the line items' own controls. Preview shows today's
+// row whenever it reads the same as the printed one.
 function TaxRow() {
   const { tax } = usePricingSlice();
+  const isPreview = useIsPreview();
+  const hasLineRates = useHasOwnLineRates();
   const printedRows = usePrintedTaxRows();
-  const readsAsPrinted =
-    printedRows.length > 1 || !isInvoiceTaxRow(printedRows[0], tax);
+  const readsAsPrinted = isPreview
+    ? printedRows.length > 1 || !isInvoiceTaxRow(printedRows[0], tax)
+    : hasLineRates;
 
   if (readsAsPrinted) return <PrintedTaxRows rows={printedRows} />;
 

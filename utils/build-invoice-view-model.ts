@@ -145,6 +145,23 @@ export function hasMixedTaxRates({
   return sections.tax && taxGroups.length > 1;
 }
 
+// Whether any line with an amount is taxed at a rate of its own. Editing the
+// invoice's rate never changes it, so the editor can go by it to decide
+// whether that rate's control stays on the page.
+export function hasOwnLineRates({
+  tax,
+  items
+}: Pick<Invoice, "tax" | "items">): boolean {
+  return (
+    tax.perLine &&
+    items.some(
+      item =>
+        item.tax !== undefined &&
+        calculateLineAmount(item.quantity, item.unitPrice) !== 0
+    )
+  );
+}
+
 // The tax rows: with one rate, the single row it's always been ("VAT 20%",
 // or the exempt note). With several, a row per rate, highest first, then 0%,
 // then exempt, each naming what it's charged on after the discount, in the

@@ -4,7 +4,10 @@ import {
   DEFAULT_INVOICE_SECTIONS
 } from "~/schema/invoice";
 import type { Invoice, InvoiceItem } from "~/types";
-import { buildInvoiceViewModel } from "~/utils/build-invoice-view-model";
+import {
+  buildInvoiceViewModel,
+  hasOwnLineRates
+} from "~/utils/build-invoice-view-model";
 import { buildExchangeRateLine } from "~/utils/currency-conversion";
 
 function makeInvoice(overrides: Partial<Invoice> = {}): Invoice {
@@ -815,5 +818,54 @@ describe("buildInvoiceViewModel with a tax rate per line", () => {
       ["VAT 20% on £1,000.00", "£200.00 / $250.00"],
       ["VAT 5% on £500.00", "£25.00 / $31.25"]
     ]);
+  });
+});
+
+describe("hasOwnLineRates", () => {
+  const perLineTax = { percentage: 20, exempt: false, note: "", perLine: true };
+
+  it("is true once a line with an amount carries a rate of its own", () => {
+    expect(
+      hasOwnLineRates({
+        tax: perLineTax,
+        items: [
+          makeItem({ unitPrice: 100 }),
+          makeItem({ unitPrice: 50, tax: { percentage: 20, exempt: false } })
+        ]
+      })
+    ).toBe(true);
+  });
+
+  it("stays the same whatever the invoice's own rate is set to", () => {
+    const items = [
+      makeItem({ unitPrice: 100 }),
+      makeItem({ unitPrice: 50, tax: { percentage: 20, exempt: false } })
+    ];
+
+    expect(
+      [2, 20, 0].map(percentage =>
+        hasOwnLineRates({ tax: { ...perLineTax, percentage }, items })
+      )
+    ).toEqual([true, true, true]);
+    expect(
+      hasOwnLineRates({ tax: { ...perLineTax, exempt: true }, items })
+    ).toBe(true);
+  });
+
+  it("is false while Per line is off, or only blank lines have a rate", () => {
+    const items = [
+      makeItem({ unitPrice: 100 }),
+      makeItem({ unitPrice: 0, tax: { percentage: 5, exempt: false } })
+    ];
+
+    expect(hasOwnLineRates({ tax: perLineTax, items })).toBe(false);
+    expect(
+      hasOwnLineRates({
+        tax: { ...perLineTax, perLine: false },
+        items: [
+          makeItem({ unitPrice: 100, tax: { percentage: 5, exempt: false } })
+        ]
+      })
+    ).toBe(false);
   });
 });
