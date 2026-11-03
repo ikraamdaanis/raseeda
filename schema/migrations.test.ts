@@ -134,9 +134,21 @@ describe("migrateInvoiceData", () => {
       quantity: "Hours",
       unit: "Unit",
       unitPrice: "Rate",
+      tax: "",
       amount: "Total"
     });
     expect(normalized.tableSettings.backgroundColor).toBe("#fef2f2");
+  });
+
+  it("opens a stored table with every column on and the tax label following", () => {
+    const normalized = migrateInvoiceData(currentRaw());
+
+    expect(normalized.tableSettings.columns).toEqual({
+      quantityAndPrice: true,
+      unit: true
+    });
+    expect(normalized.tableSettings.columnLabels.tax).toBe("");
+    expect(normalized.tableSettings.columnLabels.unitPrice).toBe("Unit Price");
   });
 
   it("supplies default table colours when none are stored", () => {

@@ -40,3 +40,21 @@ describe("setItemTax", () => {
     expect(store().items).toBe(before);
   });
 });
+
+describe("setItemAmount", () => {
+  it("makes a line one at the amount typed", () => {
+    store().updateItem(0, "quantity", 3);
+    store().setItemAmount("a", 250);
+
+    expect(store().items[0]).toMatchObject({ quantity: 1, unitPrice: 250 });
+    expect(store().items[1]).toMatchObject({ quantity: 1, unitPrice: 50 });
+  });
+
+  it("leaves the invoice alone for a line that has gone", () => {
+    const before = store().items;
+
+    store().setItemAmount("gone", 5);
+
+    expect(store().items).toBe(before);
+  });
+});

@@ -75,8 +75,10 @@ export const invoiceDefault: Invoice = {
       quantity: "Quantity",
       unit: "Unit",
       unitPrice: "Unit Price",
+      tax: "",
       amount: "Amount"
     },
+    columns: { quantityAndPrice: true, unit: true },
     backgroundColor: "#f9fafb",
     borderColor: "#e5e7eb"
   },
@@ -240,6 +242,9 @@ interface InvoiceActions {
   ) => void;
   // A line's own tax rate; none puts it back on the invoice's.
   setItemTax: (itemId: string, tax: InvoiceItemTax | undefined) => void;
+  // A line's amount typed straight in, with quantity and price hidden: one
+  // at that price.
+  setItemAmount: (itemId: string, amount: number) => void;
 
   // Pricing
   setTax: (
@@ -464,6 +469,16 @@ export const useInvoiceStore = create<InvoiceStore>()(
           } else {
             delete item.tax;
           }
+        }),
+
+      setItemAmount: (itemId, amount) =>
+        set(state => {
+          const item = state.items.find(candidate => candidate.id === itemId);
+
+          if (!item) return;
+
+          item.quantity = 1;
+          item.unitPrice = amount;
         }),
 
       // Pricing

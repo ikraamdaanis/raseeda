@@ -147,6 +147,7 @@ const COLUMN_LABEL_SETS: TableSettings["columnLabels"][] = [
     quantity: "Quantity",
     unit: "Unit",
     unitPrice: "Unit Price",
+    tax: "",
     amount: "Amount"
   },
   {
@@ -154,6 +155,7 @@ const COLUMN_LABEL_SETS: TableSettings["columnLabels"][] = [
     quantity: "Qty",
     unit: "Unit",
     unitPrice: "Rate",
+    tax: "",
     amount: "Total"
   },
   {
@@ -161,6 +163,7 @@ const COLUMN_LABEL_SETS: TableSettings["columnLabels"][] = [
     quantity: "Hours",
     unit: "Unit",
     unitPrice: "Rate",
+    tax: "",
     amount: "Amount"
   },
   {
@@ -168,6 +171,7 @@ const COLUMN_LABEL_SETS: TableSettings["columnLabels"][] = [
     quantity: "Qty",
     unit: "Unit",
     unitPrice: "Price",
+    tax: "",
     amount: "Subtotal"
   }
 ];

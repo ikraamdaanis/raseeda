@@ -141,11 +141,15 @@ const DEFAULT_COLUMN_LABELS = {
   quantity: "Quantity",
   unit: "Unit",
   unitPrice: "Unit Price",
+  tax: "",
   amount: "Amount"
 } as const;
 
+const DEFAULT_TABLE_COLUMNS = { quantityAndPrice: true, unit: true } as const;
+
 const DEFAULT_TABLE_SETTINGS = {
   columnLabels: DEFAULT_COLUMN_LABELS,
+  columns: DEFAULT_TABLE_COLUMNS,
   backgroundColor: "#f9fafb",
   borderColor: "#e5e7eb"
 } as const;
@@ -257,9 +261,18 @@ const tableSettingsSchema = z
         quantity: z.string().catch(DEFAULT_COLUMN_LABELS.quantity),
         unit: z.string().catch(DEFAULT_COLUMN_LABELS.unit),
         unitPrice: z.string().catch(DEFAULT_COLUMN_LABELS.unitPrice),
+        tax: z.string().catch(DEFAULT_COLUMN_LABELS.tax),
         amount: z.string().catch(DEFAULT_COLUMN_LABELS.amount)
       })
       .catch(DEFAULT_COLUMN_LABELS),
+    columns: z
+      .object({
+        quantityAndPrice: z
+          .boolean()
+          .catch(DEFAULT_TABLE_COLUMNS.quantityAndPrice),
+        unit: z.boolean().catch(DEFAULT_TABLE_COLUMNS.unit)
+      })
+      .catch(DEFAULT_TABLE_COLUMNS),
     backgroundColor: z.string().catch(DEFAULT_TABLE_SETTINGS.backgroundColor),
     borderColor: z.string().catch(DEFAULT_TABLE_SETTINGS.borderColor)
   })

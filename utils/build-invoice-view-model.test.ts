@@ -28,8 +28,10 @@ function makeInvoice(overrides: Partial<Invoice> = {}): Invoice {
         quantity: "Quantity",
         unit: "Unit",
         unitPrice: "Unit Price",
+        tax: "",
         amount: "Amount"
       },
+      columns: { quantityAndPrice: true, unit: true },
       backgroundColor: "#f9fafb",
       borderColor: "#e5e7eb"
     },

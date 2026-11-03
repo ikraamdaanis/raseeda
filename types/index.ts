@@ -27,7 +27,15 @@ export type TableSettings = {
     quantity: string;
     unit: string;
     unitPrice: string;
+    // Blank, the Tax column reads as the tax row's label.
+    tax: string;
     amount: string;
+  };
+  // Which of the optional columns are on. Off, Quantity and price leave each
+  // line a description and an amount, typed in, and take Unit with them.
+  columns: {
+    quantityAndPrice: boolean;
+    unit: boolean;
   };
   backgroundColor: string;
   borderColor: string;
