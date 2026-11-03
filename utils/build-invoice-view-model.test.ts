@@ -575,3 +575,245 @@ describe("buildInvoiceViewModel with a second currency", () => {
     expect(detailRows[3].value).toBe("31 Oct 2026");
   });
 });
+
+describe("buildInvoiceViewModel with a tax rate per line", () => {
+  function makeVatInvoice(overrides: Partial<Invoice> = {}): Invoice {
+    return makeInvoice({
+      labels: { ...makeInvoice().labels, tax: "VAT" },
+      tax: { percentage: 20, exempt: false, note: "", perLine: true },
+      ...overrides
+    });
+  }
+
+  function taxRows(invoice: Invoice) {
+    return buildInvoiceViewModel(invoice).summaryRows.filter(
+      row => row.id === "tax"
+    );
+  }
+
+  it("shows a row per rate naming what it's charged on, and a Tax column", () => {
+    const { summaryRows, lineItems, hasTaxColumn } = buildInvoiceViewModel(
+      makeVatInvoice({
+        items: [
+          makeItem({ unitPrice: 1000 }),
+          makeItem({ unitPrice: 500, tax: { percentage: 0, exempt: false } })
+        ],
+        discounts: 150
+      })
+    );
+    const rows = summaryRows.filter(row => row.isVisible);
+
+    expect(rows.map(row => [row.id, row.label, row.value])).toEqual([
+      ["subtotal", "Subtotal", "£1,500.00"],
+      ["discounts", "Discounts", "-£150.00"],
+      ["tax", "VAT 20% on £900.00", "£180.00"],
+      ["tax", "VAT 0% on £450.00", "£0.00"],
+      ["total", "Total", "£1,530.00"]
+    ]);
+    expect(rows.every(row => row.percentage === undefined)).toBe(true);
+    expect(hasTaxColumn).toBe(true);
+    expect(lineItems.map(row => row.tax)).toEqual(["20%", "0%"]);
+  });
+
+  it("gives exempt lines their own row, with the invoice's note", () => {
+    const rows = taxRows(
+      makeVatInvoice({
+        items: [
+          makeItem({ unitPrice: 300, tax: { percentage: 20, exempt: true } }),
+          makeItem({ unitPrice: 200, tax: { percentage: 0, exempt: false } }),
+          makeItem({ unitPrice: 100, tax: { percentage: 7.5, exempt: false } })
+        ],
+        tax: {
+          percentage: 20,
+          exempt: false,
+          note: " Exempt supply ",
+          perLine: true
+        }
+      })
+    );
+
+    expect(rows.map(row => [row.label, row.value, row.note])).toEqual([
+      ["VAT 7.5% on £100.00", "£7.50", undefined],
+      ["VAT 0% on £200.00", "£0.00", undefined],
+      ["Exempt on £300.00", "Exempt supply", "Exempt supply"]
+    ]);
+  });
+
+  it("reads Exempt on an exempt row with no note", () => {
+    const rows = taxRows(
+      makeVatInvoice({
+        items: [
+          makeItem({ unitPrice: 1000 }),
+          makeItem({ unitPrice: 300, tax: { percentage: 0, exempt: true } })
+        ]
+      })
+    );
+
+    expect(rows[1].label).toBe("Exempt on £300.00");
+    expect(rows[1].value).toBe("Exempt");
+  });
+
+  it("names each line's rate in the Tax column", () => {
+    const { lineItems } = buildInvoiceViewModel(
+      makeVatInvoice({
+        items: [
+          makeItem({ unitPrice: 10 }),
+          makeItem({ unitPrice: 10, tax: { percentage: 5, exempt: false } }),
+          makeItem({ unitPrice: 10, tax: { percentage: 5, exempt: true } })
+        ]
+      })
+    );
+
+    expect(lineItems.map(row => row.tax)).toEqual(["20%", "5%", "Exempt"]);
+  });
+
+  it("keeps today's single row and no column when every line shares a rate", () => {
+    const items = [
+      makeItem({ quantity: 3, unitPrice: 19.99 }),
+      makeItem({ unitPrice: 250, tax: { percentage: 20, exempt: false } })
+    ];
+    const perLine = buildInvoiceViewModel(
+      makeVatInvoice({ items, discounts: 10 })
+    );
+    const single = buildInvoiceViewModel(
+      makeVatInvoice({
+        items,
+        discounts: 10,
+        tax: { percentage: 20, exempt: false, note: "", perLine: false }
+      })
+    );
+    const tax = perLine.summaryRows.find(row => row.id === "tax");
+
+    expect(perLine.summaryRows).toEqual(single.summaryRows);
+    expect(tax).toMatchObject({ label: "VAT", percentage: 20 });
+    expect(tax?.value).toBe("£59.99");
+    expect(perLine.hasTaxColumn).toBe(false);
+    expect(single.hasTaxColumn).toBe(false);
+  });
+
+  it("shows the lines' own rate when they all share one", () => {
+    const rows = taxRows(
+      makeVatInvoice({
+        items: [
+          makeItem({ unitPrice: 100, tax: { percentage: 5, exempt: false } })
+        ]
+      })
+    );
+
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({
+      label: "VAT",
+      percentage: 5,
+      value: "£5.00"
+    });
+  });
+
+  it("shows today's exempt row when the only rate is a line's own exempt", () => {
+    const rows = taxRows(
+      makeVatInvoice({
+        items: [
+          makeItem({ unitPrice: 100, tax: { percentage: 0, exempt: true } })
+        ],
+        tax: { percentage: 20, exempt: false, note: "", perLine: true }
+      })
+    );
+
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({ label: "VAT", value: "Exempt" });
+    expect(rows[0].percentage).toBeUndefined();
+  });
+
+  it("adds no row or column for a line with no amount at another rate", () => {
+    const { summaryRows, hasTaxColumn } = buildInvoiceViewModel(
+      makeVatInvoice({
+        items: [
+          makeItem({ unitPrice: 1000 }),
+          makeItem({ unitPrice: 0, tax: { percentage: 5, exempt: false } })
+        ]
+      })
+    );
+
+    expect(summaryRows.filter(row => row.id === "tax")).toHaveLength(1);
+    expect(hasTaxColumn).toBe(false);
+  });
+
+  it("shows a rate that nets negative with its negative tax", () => {
+    const { summaryRows } = buildInvoiceViewModel(
+      makeVatInvoice({
+        items: [
+          makeItem({ unitPrice: 1000 }),
+          makeItem({ unitPrice: -100, tax: { percentage: 5, exempt: false } })
+        ],
+        discounts: 90
+      })
+    );
+    const rows = summaryRows.filter(row => row.isVisible);
+
+    expect(rows.map(row => [row.label, row.value])).toEqual([
+      ["Subtotal", "£900.00"],
+      ["Discounts", "-£90.00"],
+      ["VAT 20% on £910.00", "£182.00"],
+      ["VAT 5% on -£100.00", "-£5.00"],
+      ["Total", "£987.00"]
+    ]);
+  });
+
+  it("returns to one rate while Per line is off, keeping the line rates", () => {
+    const invoice = makeVatInvoice({
+      items: [
+        makeItem({ unitPrice: 1000 }),
+        makeItem({ unitPrice: 500, tax: { percentage: 0, exempt: false } })
+      ]
+    });
+    const off = buildInvoiceViewModel({
+      ...invoice,
+      tax: { ...invoice.tax, perLine: false }
+    });
+    const backOn = buildInvoiceViewModel({
+      ...invoice,
+      tax: { ...invoice.tax, perLine: true }
+    });
+
+    expect(off.hasTaxColumn).toBe(false);
+    expect(off.summaryRows.filter(row => row.id === "tax")).toHaveLength(1);
+    expect(off.lineItems.map(row => row.tax)).toEqual(["20%", "20%"]);
+    expect(backOn.hasTaxColumn).toBe(true);
+    expect(backOn.summaryRows.filter(row => row.id === "tax")).toHaveLength(2);
+  });
+
+  it("hides the column and every tax row while the tax section is off", () => {
+    const { summaryRows, hasTaxColumn } = buildInvoiceViewModel(
+      makeVatInvoice({
+        items: [
+          makeItem({ unitPrice: 1000 }),
+          makeItem({ unitPrice: 500, tax: { percentage: 0, exempt: false } })
+        ],
+        sections: { ...DEFAULT_INVOICE_SECTIONS, tax: false }
+      })
+    );
+
+    expect(hasTaxColumn).toBe(false);
+    expect(
+      summaryRows.filter(row => row.id === "tax" && row.isVisible)
+    ).toEqual([]);
+  });
+
+  it("shows each rate's tax in both currencies, its base in the invoice's", () => {
+    const rows = taxRows(
+      makeVatInvoice({
+        currencyCode: "GBP",
+        items: [
+          makeItem({ unitPrice: 1000 }),
+          makeItem({ unitPrice: 500, tax: { percentage: 5, exempt: false } })
+        ],
+        sections: { ...DEFAULT_INVOICE_SECTIONS, currencyConversion: true },
+        currencyConversion: { ...DEFAULT_CURRENCY_CONVERSION, rate: 1.25 }
+      })
+    );
+
+    expect(rows.map(row => [row.label, row.value])).toEqual([
+      ["VAT 20% on £1,000.00", "£200.00 / $250.00"],
+      ["VAT 5% on £500.00", "£25.00 / $31.25"]
+    ]);
+  });
+});

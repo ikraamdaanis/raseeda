@@ -7,7 +7,11 @@ import { getCurrencyMarker } from "~/consts/currencies";
 import { useCurrencyConversion } from "~/hooks/use-currency-conversion";
 import { useIsPreview } from "~/hooks/use-shown-sections";
 import { cn } from "~/lib/utils";
-import { useLineItemsSlice, useTheme } from "~/stores/invoice-selectors";
+import {
+  useHasTaxColumn,
+  useLineItemsSlice,
+  useTheme
+} from "~/stores/invoice-selectors";
 import { useInvoiceStore } from "~/stores/invoice-store";
 import type {
   CurrencyConversion,
@@ -24,12 +28,12 @@ import { getTextStyles } from "~/utils/get-text-styles";
 type LineItemFieldKey = "description" | "quantity" | "unit" | "unitPrice";
 
 type LineItemColumnKind =
-  "text" | "integer" | "currency" | "amount" | "convertedAmount";
+  "text" | "integer" | "currency" | "tax" | "amount" | "convertedAmount";
 
 interface LineItemColumnConfig {
   // The converted amount has no label of its own: it reads as the Amount
-  // label in the second currency.
-  id: keyof TableSettings["columnLabels"] | "convertedAmount";
+  // label in the second currency. The Tax column reads as the tax row's.
+  id: keyof TableSettings["columnLabels"] | "tax" | "convertedAmount";
   headerRole: TextRole;
   rowRole: TextRole;
   headerPlaceholder: string;
@@ -148,6 +152,18 @@ const LINE_ITEM_COLUMNS: LineItemColumnConfig[] = [
     }
   },
   {
+    id: "tax",
+    headerRole: "tableHeaderCenter",
+    rowRole: "tableRowCenter",
+    headerPlaceholder: "Tax",
+    headerInputClassName: "block py-2",
+    cell: {
+      kind: "tax",
+      wrapperClassName: "col-span-1 text-center",
+      displayClassName: "inline-block h-full w-full"
+    }
+  },
+  {
     id: "amount",
     headerRole: "tableHeaderRight",
     rowRole: "tableRowRight",
@@ -175,15 +191,23 @@ const LINE_ITEM_COLUMNS: LineItemColumnConfig[] = [
 ];
 
 // The converted amount reads as the Amount label in the second currency,
-// "Amount (USD)", wherever a cell needs its column named.
-function getColumnLabel(
-  column: LineItemColumnConfig,
-  columnLabels: TableSettings["columnLabels"],
-  conversion: CurrencyConversion | null
-) {
-  return column.id === "convertedAmount"
-    ? `${columnLabels.amount || "Amount"} (${conversion?.toCode ?? ""})`
-    : columnLabels[column.id];
+// "Amount (USD)", wherever a cell needs its column named; the Tax column as
+// the tax row's label.
+function getColumnLabel({
+  column,
+  columnLabels,
+  taxLabel,
+  conversion
+}: {
+  column: LineItemColumnConfig;
+  columnLabels: TableSettings["columnLabels"];
+  taxLabel: string;
+  conversion: CurrencyConversion | null;
+}) {
+  if (column.id === "tax") return taxLabel;
+  if (column.id !== "convertedAmount") return columnLabels[column.id];
+
+  return `${columnLabels.amount || "Amount"} (${conversion?.toCode ?? ""})`;
 }
 
 // An invoice shown in a second currency names the currency of each money
@@ -208,35 +232,59 @@ function getColumnCurrency(
 // The PDF leaves out the Unit column when no line has a unit, so Preview does
 // too. While editing it always shows, so there's somewhere to type one.
 // The converted amount takes its room from the other columns, so the table
-// keeps the page's width.
+// keeps the page's width. The Tax column shows, as in the PDF, only while the
+// lines' rates differ, and takes its room from the description.
 function useVisibleColumns() {
   const isPreview = useIsPreview();
   const hasUnits = useInvoiceStore(state =>
     state.items.some(item => item.unit.trim())
   );
   const hasConversion = useCurrencyConversion() !== null;
+  const hasTaxColumn = useHasTaxColumn();
   const hideUnit = isPreview && !hasUnits;
   const columns = LINE_ITEM_COLUMNS.filter(
     column =>
       (column.id !== "unit" || !hideUnit) &&
+      (column.id !== "tax" || hasTaxColumn) &&
       (column.id !== "convertedAmount" || hasConversion)
   );
 
-  if (hasConversion) {
-    return {
-      columns,
-      gridClassName: hideUnit
-        ? "grid-cols-[1fr_64px_96px_104px_120px]"
-        : "grid-cols-[1fr_64px_64px_96px_104px_120px]"
-    };
-  }
-
   return {
     columns,
-    gridClassName: hideUnit
-      ? "grid-cols-[1fr_80px_120px_150px]"
-      : "grid-cols-[1fr_80px_80px_120px_150px]"
+    gridClassName: getGridClassName({ hasConversion, hasTaxColumn, hideUnit })
   };
+}
+
+function getGridClassName({
+  hasConversion,
+  hasTaxColumn,
+  hideUnit
+}: {
+  hasConversion: boolean;
+  hasTaxColumn: boolean;
+  hideUnit: boolean;
+}) {
+  if (hasConversion && hasTaxColumn) {
+    return hideUnit
+      ? "grid-cols-[1fr_64px_96px_72px_104px_120px]"
+      : "grid-cols-[1fr_64px_64px_96px_72px_104px_120px]";
+  }
+
+  if (hasConversion) {
+    return hideUnit
+      ? "grid-cols-[1fr_64px_96px_104px_120px]"
+      : "grid-cols-[1fr_64px_64px_96px_104px_120px]";
+  }
+
+  if (hasTaxColumn) {
+    return hideUnit
+      ? "grid-cols-[1fr_80px_120px_72px_150px]"
+      : "grid-cols-[1fr_80px_80px_120px_72px_150px]";
+  }
+
+  return hideUnit
+    ? "grid-cols-[1fr_80px_120px_150px]"
+    : "grid-cols-[1fr_80px_80px_120px_150px]";
 }
 
 export function InvoiceLineItems() {
@@ -300,6 +348,16 @@ function TableHeader({
 }) {
   const { columns, gridClassName } = useVisibleColumns();
   const conversion = useCurrencyConversion();
+  const taxLabel = useInvoiceStore(state => state.labels.tax);
+
+  function getHeaderLabel(column: LineItemColumnConfig) {
+    const { columnLabels } = tableSettings;
+
+    if (column.id === "tax") return taxLabel;
+    if (column.id !== "convertedAmount") return columnLabels[column.id];
+
+    return columnLabels.amount || "Amount";
+  }
 
   return (
     <div
@@ -317,11 +375,7 @@ function TableHeader({
         <TableHeaderCell
           key={column.id}
           column={column}
-          label={
-            column.id === "convertedAmount"
-              ? tableSettings.columnLabels.amount || "Amount"
-              : tableSettings.columnLabels[column.id]
-          }
+          label={getHeaderLabel(column)}
           currencyCode={getColumnCurrency(column, conversion)}
           theme={theme}
           setTableSettings={setTableSettings}
@@ -372,7 +426,7 @@ function TableHeaderCell({
       className="col-span-1 flex flex-col text-sm font-medium"
       style={style}
     >
-      {column.id === "convertedAmount" ? (
+      {column.id === "convertedAmount" || column.id === "tax" ? (
         <span className={labelClassName} style={style}>
           {label}
         </span>
@@ -461,7 +515,9 @@ function LineItem({
   removeItem: RemoveItem;
 }) {
   const conversion = useCurrencyConversion();
-  const viewRow = buildLineItemRow(item, currency, conversion);
+  const tax = useInvoiceStore(state => state.tax);
+  const taxLabel = useInvoiceStore(state => state.labels.tax);
+  const viewRow = buildLineItemRow({ item, currency, conversion, tax });
   const isPreview = useIsPreview();
   const { columns, gridClassName } = useVisibleColumns();
 
@@ -478,11 +534,12 @@ function LineItem({
         <TableCell
           key={`${item.id}-${column.id}`}
           column={column}
-          columnLabel={getColumnLabel(
+          columnLabel={getColumnLabel({
             column,
-            tableSettings.columnLabels,
+            columnLabels: tableSettings.columnLabels,
+            taxLabel,
             conversion
-          )}
+          })}
           item={item}
           index={index}
           viewRow={viewRow}
@@ -607,7 +664,11 @@ function TableCell({
 
   const cellLabel = columnLabel || column.headerPlaceholder;
 
-  if (column.cell.kind === "amount" || column.cell.kind === "convertedAmount") {
+  if (
+    column.cell.kind === "amount" ||
+    column.cell.kind === "convertedAmount" ||
+    column.cell.kind === "tax"
+  ) {
     return (
       <div role="cell" className={column.cell.wrapperClassName}>
         <span
@@ -617,7 +678,9 @@ function TableCell({
         >
           {column.cell.kind === "amount"
             ? viewRow.amount
-            : viewRow.convertedAmount}
+            : column.cell.kind === "tax"
+              ? viewRow.tax
+              : viewRow.convertedAmount}
         </span>
       </div>
     );

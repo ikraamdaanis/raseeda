@@ -3,6 +3,7 @@ import { getCurrencyMarker } from "~/consts/currencies";
 import type { InvoiceStore } from "~/stores/invoice-store";
 import { useInvoiceStore } from "~/stores/invoice-store";
 import type { Invoice } from "~/types";
+import { hasMixedTaxRates } from "~/utils/build-invoice-view-model";
 import { calculateInvoiceTotals } from "~/utils/calculate-invoice-totals";
 
 // The persisted invoice fields, in one place. `satisfies` rejects typos and
@@ -233,6 +234,17 @@ export function useInvoiceTotals(): {
         total: totals.total,
         balanceDue: totals.balanceDue
       };
+    })
+  );
+}
+
+// Whether the line items show a Tax column: only while the lines' rates
+// differ. A boolean, so it only re-renders when that changes.
+export function useHasTaxColumn(): boolean {
+  return useInvoiceStore(state =>
+    hasMixedTaxRates({
+      taxGroups: calculateInvoiceTotals(state).taxGroups,
+      sections: state.sections
     })
   );
 }

@@ -1,5 +1,6 @@
 import type { CSSProperties, ReactNode } from "react";
 import { useEffect, useState } from "react";
+import { useShallow } from "zustand/react/shallow";
 import { InvoiceDateField } from "~/components/editor/invoice-date-field";
 import { InvoiceInput } from "~/components/editor/invoice-input";
 import { formatCurrency } from "~/consts/currencies";
@@ -12,6 +13,10 @@ import {
   usePricingSlice,
   useTheme
 } from "~/stores/invoice-selectors";
+import { useInvoiceStore } from "~/stores/invoice-store";
+import type { InvoiceSummaryRow } from "~/types";
+import { buildTaxRows } from "~/utils/build-invoice-view-model";
+import { calculateInvoiceTotals } from "~/utils/calculate-invoice-totals";
 import {
   formatDeduction,
   formatInvoiceTotal,
@@ -200,7 +205,100 @@ function SubtotalRow() {
   );
 }
 
+// The tax rows the PDF prints: one per rate when the lines' rates differ.
+function usePrintedTaxRows(): InvoiceSummaryRow[] {
+  const invoice = useInvoiceStore(
+    useShallow(state => ({
+      items: state.items,
+      tax: state.tax,
+      fees: state.fees,
+      discounts: state.discounts,
+      discountType: state.discountType,
+      amountPaid: state.amountPaid,
+      sections: state.sections,
+      labels: state.labels,
+      currency: state.currency
+    }))
+  );
+  const conversion = useCurrencyConversion();
+  const totals = calculateInvoiceTotals(invoice);
+
+  return buildTaxRows({
+    label: invoice.labels.tax,
+    tax: invoice.tax,
+    taxGroups: totals.taxGroups,
+    taxAmount: totals.taxAmount,
+    currency: invoice.currency,
+    conversion,
+    isVisible: true
+  });
+}
+
+// Whether a printed row reads as the tax row below does: the invoice's own
+// rate, or its exempt note.
+function isInvoiceTaxRow(
+  row: InvoiceSummaryRow,
+  tax: { percentage: number; exempt: boolean }
+) {
+  return tax.exempt
+    ? row.percentage === undefined
+    : row.percentage === tax.percentage;
+}
+
+// Editing, the tax row sets the invoice's rate. In Preview, an invoice whose
+// lines carry rates of their own reads as the PDF does instead: a row per
+// rate, or the one rate they all share.
 function TaxRow() {
+  const { tax } = usePricingSlice();
+  const isPreview = useIsPreview();
+  const printedRows = usePrintedTaxRows();
+  const readsAsPrinted =
+    isPreview &&
+    (printedRows.length > 1 || !isInvoiceTaxRow(printedRows[0], tax));
+
+  if (readsAsPrinted) return <PrintedTaxRows rows={printedRows} />;
+
+  return <InvoiceTaxRow />;
+}
+
+function PrintedTaxRows({ rows }: { rows: InvoiceSummaryRow[] }) {
+  const theme = useTheme();
+  const labelStyle = getTextStyles({
+    settings: getRoleSettings(theme, "totalsLabel")
+  });
+  const valueStyle = getTextStyles({
+    settings: getRoleSettings(theme, "totalsValue")
+  });
+
+  return (
+    <>
+      {rows.map(row => (
+        <div
+          key={row.label}
+          className="col-span-2 grid grid-cols-subgrid items-center text-sm"
+        >
+          <span
+            className="border border-transparent whitespace-nowrap"
+            style={labelStyle}
+          >
+            {row.percentage === undefined
+              ? row.label
+              : `${row.label} ${row.percentage}%`}
+          </span>
+          <span
+            data-testid="tax-amount"
+            className="border border-transparent whitespace-nowrap"
+            style={valueStyle}
+          >
+            {row.value}
+          </span>
+        </div>
+      ))}
+    </>
+  );
+}
+
+function InvoiceTaxRow() {
   const { tax, currency, setTax, labels, setLabels } = usePricingSlice();
   const { taxAmount } = useInvoiceTotals();
   const conversion = useCurrencyConversion();

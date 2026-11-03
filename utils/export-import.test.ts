@@ -74,6 +74,51 @@ describe("data backup/restore", () => {
     expect(invoices[0].invoiceData.number).toBe("INV-0007");
   });
 
+  it("carries per-line tax rates through export and import", async () => {
+    const now = new Date();
+    const invoiceData = {
+      ...structuredClone(invoiceDefault),
+      tax: { percentage: 20, exempt: false, note: "", perLine: true },
+      items: [
+        {
+          id: "line-1",
+          description: "Books",
+          quantity: 1,
+          unit: "",
+          unitPrice: 50,
+          tax: { percentage: 0, exempt: false }
+        },
+        {
+          id: "line-2",
+          description: "Design",
+          quantity: 1,
+          unit: "",
+          unitPrice: 500
+        }
+      ]
+    };
+    await saveInvoice({
+      id: "inv-1",
+      name: "Mixed rates",
+      nameSource: "user",
+      rev: 1,
+      invoiceData,
+      templateId: null,
+      createdAt: now,
+      updatedAt: now
+    });
+
+    const exported = await buildExportData();
+
+    await resetDb();
+    await executeImport(exported);
+
+    const [invoice] = await getAllInvoices();
+
+    expect(invoice.invoiceData.tax.perLine).toBe(true);
+    expect(invoice.invoiceData.items).toEqual(invoiceData.items);
+  });
+
   it("keeps an automatic name automatic through export and import", async () => {
     const now = new Date();
     await saveInvoice({

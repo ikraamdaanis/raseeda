@@ -8,11 +8,13 @@ import type {
   InvoiceLineItemRow,
   InvoiceSections,
   InvoiceSummaryRow,
+  InvoiceTaxGroup,
   InvoiceViewModel
 } from "~/types";
 import {
   calculateInvoiceTotals,
-  calculateLineAmount
+  calculateLineAmount,
+  getLineTax
 } from "~/utils/calculate-invoice-totals";
 import {
   formatConvertedAmount,
@@ -102,12 +104,19 @@ export function buildDetailRows(input: {
 
 // With a conversion, the line's converted amount is its own amount times the
 // rate, so each line reads on its own.
-export function buildLineItemRow(
-  item: InvoiceItem,
-  currency: string,
-  conversion: CurrencyConversion | null = null
-): InvoiceLineItemRow {
+export function buildLineItemRow({
+  item,
+  currency,
+  conversion,
+  tax
+}: {
+  item: InvoiceItem;
+  currency: string;
+  conversion: CurrencyConversion | null;
+  tax: Invoice["tax"];
+}): InvoiceLineItemRow {
   const amount = calculateLineAmount(item.quantity, item.unitPrice);
+  const lineTax = getLineTax(item, tax);
 
   return {
     id: item.id,
@@ -118,14 +127,98 @@ export function buildLineItemRow(
     amount: formatCurrency(amount, currency),
     convertedAmount: conversion
       ? formatConvertedAmount(amount, conversion)
-      : undefined
+      : undefined,
+    tax: lineTax.exempt ? "Exempt" : `${lineTax.percentage}%`
   };
+}
+
+// Whether the line items need a Tax column: only when the lines with an
+// amount are taxed at more than one rate, so an invoice with one rate keeps
+// it in the totals alone.
+export function hasMixedTaxRates({
+  taxGroups,
+  sections
+}: {
+  taxGroups: InvoiceTaxGroup[];
+  sections: Pick<InvoiceSections, "tax">;
+}): boolean {
+  return sections.tax && taxGroups.length > 1;
+}
+
+// The tax rows: with one rate, the single row it's always been ("VAT 20%",
+// or the exempt note). With several, a row per rate, highest first, then 0%,
+// then exempt, each naming what it's charged on after the discount, in the
+// invoice's own currency: "VAT 20% on £1,000.00". Exempt lines share the
+// invoice's note.
+export function buildTaxRows({
+  label,
+  tax,
+  taxGroups,
+  taxAmount,
+  currency,
+  conversion,
+  isVisible
+}: {
+  label: string;
+  tax: Invoice["tax"];
+  taxGroups: InvoiceTaxGroup[];
+  taxAmount: number;
+  currency: string;
+  conversion: CurrencyConversion | null;
+  isVisible: boolean;
+}): InvoiceSummaryRow[] {
+  const note = tax.note.trim();
+  const exemptValue = note || "Exempt";
+
+  if (taxGroups.length <= 1) {
+    const group = taxGroups.at(0);
+    const exempt = group ? group.exempt : tax.exempt;
+
+    return [
+      {
+        id: "tax",
+        label,
+        value: exempt
+          ? exemptValue
+          : withConvertedAmount(
+              formatCurrency(taxAmount, currency),
+              taxAmount,
+              conversion
+            ),
+        percentage: exempt ? undefined : (group?.percentage ?? tax.percentage),
+        note: exempt ? note : undefined,
+        isVisible,
+        isTotal: false
+      }
+    ];
+  }
+
+  return taxGroups.map(group => {
+    const base = formatCurrency(group.taxableAmount, currency);
+
+    return {
+      id: "tax",
+      label: group.exempt
+        ? `Exempt on ${base}`
+        : `${label} ${group.percentage}% on ${base}`,
+      value: group.exempt
+        ? exemptValue
+        : withConvertedAmount(
+            formatCurrency(group.taxAmount, currency),
+            group.taxAmount,
+            conversion
+          ),
+      note: group.exempt ? note : undefined,
+      isVisible,
+      isTotal: false
+    };
+  });
 }
 
 function buildSummaryRows(input: {
   labels: InvoiceLabels;
   subtotal: number;
-  tax: { percentage: number; amount: number; exempt: boolean; note: string };
+  taxRows: InvoiceSummaryRow[];
   fees: number;
   discountAmount: number;
   discountType: Invoice["discountType"];
@@ -170,21 +263,7 @@ function buildSummaryRows(input: {
       isVisible: sections.discounts && input.discountValue > 0,
       isTotal: false
     },
-    {
-      id: "tax",
-      label: labels.tax,
-      value: input.tax.exempt
-        ? input.tax.note.trim() || "Exempt"
-        : withConvertedAmount(
-            formatCurrency(input.tax.amount, currency),
-            input.tax.amount,
-            conversion
-          ),
-      percentage: input.tax.exempt ? undefined : input.tax.percentage,
-      note: input.tax.exempt ? input.tax.note.trim() : undefined,
-      isVisible: sections.tax,
-      isTotal: false
-    },
+    ...input.taxRows,
     {
       id: "fees",
       label: labels.fees,
@@ -247,17 +326,25 @@ export function buildInvoiceViewModel(invoice: Invoice): InvoiceViewModel {
   return {
     detailRows: buildDetailRows(invoice),
     lineItems: invoice.items.map(item =>
-      buildLineItemRow(item, invoice.currency, conversion)
+      buildLineItemRow({
+        item,
+        currency: invoice.currency,
+        conversion,
+        tax: invoice.tax
+      })
     ),
     summaryRows: buildSummaryRows({
       labels: invoice.labels,
       subtotal: totals.subtotal,
-      tax: {
-        percentage: invoice.tax.percentage,
-        amount: totals.taxAmount,
-        exempt: invoice.tax.exempt,
-        note: invoice.tax.note
-      },
+      taxRows: buildTaxRows({
+        label: invoice.labels.tax,
+        tax: invoice.tax,
+        taxGroups: totals.taxGroups,
+        taxAmount: totals.taxAmount,
+        currency: invoice.currency,
+        conversion,
+        isVisible: invoice.sections.tax
+      }),
       fees: invoice.fees,
       discountAmount: totals.discountAmount,
       discountType: invoice.discountType,
@@ -272,6 +359,10 @@ export function buildInvoiceViewModel(invoice: Invoice): InvoiceViewModel {
       sections: invoice.sections,
       conversion
     }),
-    conversion
+    conversion,
+    hasTaxColumn: hasMixedTaxRates({
+      taxGroups: totals.taxGroups,
+      sections: invoice.sections
+    })
   };
 }

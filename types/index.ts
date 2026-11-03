@@ -208,6 +208,8 @@ export type InvoiceLineItemRow = {
   amount: string;
   // The amount in the second currency, when the invoice shows one.
   convertedAmount?: string;
+  // The line's tax rate, "20%" or "Exempt", for the Tax column.
+  tax: string;
 };
 
 export type InvoiceSummaryRow = {
@@ -241,6 +243,8 @@ export type InvoiceViewModel = {
   lineItems: InvoiceLineItemRow[];
   summaryRows: InvoiceSummaryRow[];
   conversion: CurrencyConversion | null;
+  // Whether the line items show a Tax column: only when their rates differ.
+  hasTaxColumn: boolean;
 };
 
 // The lines taxed at one rate (or exempt), after their share of the discount.

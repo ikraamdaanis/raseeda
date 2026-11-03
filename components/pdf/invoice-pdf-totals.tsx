@@ -59,7 +59,7 @@ export function InvoicePdfTotals({
         <View style={styles.labels}>
           {rows.map(row => (
             <Text
-              key={row.id}
+              key={`${row.id}-${row.label}`}
               style={{
                 ...pdfRoleStyle(
                   theme,
@@ -78,7 +78,7 @@ export function InvoicePdfTotals({
         <View style={styles.values}>
           {rows.map(row => (
             <Text
-              key={row.id}
+              key={`${row.id}-${row.label}`}
               style={{
                 ...pdfRoleStyle(
                   theme,

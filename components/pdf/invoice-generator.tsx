@@ -25,7 +25,7 @@ export function InvoicePDF({ invoice }: { invoice: Invoice }) {
     ? `Invoice ${invoice.number}`
     : invoice.title || "Invoice";
   const baseFont = getInvoiceFontDefinition(invoice.theme.font);
-  const { detailRows, lineItems, summaryRows, conversion } =
+  const { detailRows, lineItems, summaryRows, conversion, hasTaxColumn } =
     buildInvoiceViewModel(invoice);
   const styles = StyleSheet.create({
     page: {
@@ -45,6 +45,7 @@ export function InvoicePDF({ invoice }: { invoice: Invoice }) {
           invoice={invoice}
           lineItems={lineItems}
           conversion={conversion}
+          hasTaxColumn={hasTaxColumn}
         />
         <InvoicePdfTotals
           invoice={invoice}

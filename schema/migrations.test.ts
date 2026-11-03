@@ -64,7 +64,12 @@ describe("migrateInvoiceData", () => {
     const invoice = migrateInvoiceData({});
 
     expect(invoice.items).toEqual([]);
-    expect(invoice.tax).toEqual({ percentage: 0, exempt: false, note: "" });
+    expect(invoice.tax).toEqual({
+      percentage: 0,
+      exempt: false,
+      note: "",
+      perLine: false
+    });
     expect(invoice.theme).toEqual(STORED_INVOICE_THEME_FALLBACK);
     expect(invoice.currency).toBe("$");
   });
@@ -170,8 +175,56 @@ describe("migrateInvoiceData", () => {
 
     expect(normalized).not.toHaveProperty("subtotal");
     expect(normalized).not.toHaveProperty("total");
-    expect(normalized.tax).toEqual({ percentage: 20, exempt: false, note: "" });
+    expect(normalized.tax).toEqual({
+      percentage: 20,
+      exempt: false,
+      note: "",
+      perLine: false
+    });
     expect(normalized.items[0]).not.toHaveProperty("amount");
+  });
+
+  it("opens a stored invoice without line rates with every line on its rate", () => {
+    const raw = {
+      ...currentRaw(),
+      tax: { percentage: 20, exempt: false, note: "" },
+      items: [{ id: "i1", description: "Work", quantity: 1, unitPrice: 100 }]
+    };
+    const normalized = migrateInvoiceData(raw);
+
+    expect(normalized.tax.perLine).toBe(false);
+    expect(normalized.items[0]).toEqual({
+      id: "i1",
+      description: "Work",
+      quantity: 1,
+      unit: "",
+      unitPrice: 100
+    });
+  });
+
+  it("keeps a line's own tax rate, repairing a broken one", () => {
+    const raw = {
+      ...currentRaw(),
+      tax: { percentage: 20, exempt: false, note: "", perLine: true },
+      items: [
+        { id: "i1", quantity: 1, unitPrice: 100, tax: { percentage: "5" } },
+        { id: "i2", quantity: 1, unitPrice: 100, tax: "zero" },
+        {
+          id: "i3",
+          quantity: 1,
+          unitPrice: 100,
+          tax: { percentage: 20, exempt: true }
+        }
+      ]
+    };
+    const normalized = migrateInvoiceData(raw);
+
+    expect(normalized.tax.perLine).toBe(true);
+    expect(normalized.items.map(item => item.tax)).toEqual([
+      { percentage: 5, exempt: false },
+      undefined,
+      { percentage: 20, exempt: true }
+    ]);
   });
 
   it("coerces a string-typed quantity to a number", () => {
