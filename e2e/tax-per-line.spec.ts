@@ -18,6 +18,13 @@ function modeButton(page: Page, name: "Edit" | "Preview") {
     .getByRole("button", { name });
 }
 
+// The Tax column's header, a field even in Preview, where it reads the label.
+function taxHeader(page: Page) {
+  return page
+    .getByRole("columnheader")
+    .getByRole("textbox", { name: "Tax column label" });
+}
+
 // Two lines at the invoice's 20%: £100 and £50.
 async function gotoTwoLineInvoice(page: Page) {
   await gotoEditorReady(page);
@@ -62,9 +69,7 @@ test("a line's own rate splits the totals into a row per rate", async ({
 
   await modeButton(page, "Preview").click();
 
-  await expect(
-    page.getByRole("columnheader").filter({ hasText: "Tax" })
-  ).toBeVisible();
+  await expect(taxHeader(page)).toHaveValue("Tax");
   await expect(page.getByText("Tax 20% on $100.00")).toBeVisible();
   await expect(page.getByText("Tax 0% on $50.00")).toBeVisible();
 });
@@ -140,9 +145,7 @@ test("Per line off returns to one rate, and back on restores the lines' rates", 
 
   await modeButton(page, "Preview").click();
 
-  await expect(
-    page.getByRole("columnheader").filter({ hasText: "Tax" })
-  ).toHaveCount(0);
+  await expect(taxHeader(page)).toHaveCount(0);
 
   await modeButton(page, "Edit").click();
   await perLine.click();

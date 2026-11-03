@@ -1,11 +1,17 @@
 import { StyleSheet, Text, View } from "@react-pdf/renderer";
-import type { CurrencyConversion, Invoice, InvoiceLineItemRow } from "~/types";
+import type {
+  CurrencyConversion,
+  Invoice,
+  InvoiceLineItemRow,
+  TableSettings
+} from "~/types";
 import { pdfRoleStyle } from "~/utils/pdf-styles";
+import { getShownColumns, getTaxColumnLabel } from "~/utils/table-columns";
 
-// Column widths in percent of the table, with and without the unit column,
-// and with the converted amount taking its room from the others. A money
-// column names its currency under its label, so it's only as wide as its
-// figures and the description keeps the rest.
+// Column widths in percent of the table, with and without the unit column or
+// quantity and price, and with the converted amount taking its room from the
+// others. A money column names its currency under its label, so it's only as
+// wide as its figures and the description keeps the rest.
 const COLUMN_WIDTHS = {
   units: {
     description: 42,
@@ -38,6 +44,22 @@ const COLUMN_WIDTHS = {
     unitPrice: 13,
     amount: 15,
     convertedAmount: 19
+  },
+  amountOnly: {
+    description: 81,
+    quantity: 0,
+    unit: 0,
+    unitPrice: 0,
+    amount: 19,
+    convertedAmount: 0
+  },
+  convertedAmountOnly: {
+    description: 66,
+    quantity: 0,
+    unit: 0,
+    unitPrice: 0,
+    amount: 15,
+    convertedAmount: 19
   }
 };
 
@@ -47,21 +69,25 @@ const COLUMN_WIDTHS = {
 const TAX_COLUMN_WIDTH = 11;
 
 function getColumnWidths({
-  hasUnits,
+  columns,
   hasConversion,
   hasTaxColumn
 }: {
-  hasUnits: boolean;
+  columns: TableSettings["columns"];
   hasConversion: boolean;
   hasTaxColumn: boolean;
 }) {
-  const widths = hasConversion
-    ? hasUnits
-      ? COLUMN_WIDTHS.convertedUnits
-      : COLUMN_WIDTHS.convertedNoUnits
-    : hasUnits
-      ? COLUMN_WIDTHS.units
-      : COLUMN_WIDTHS.noUnits;
+  const widths = !columns.quantityAndPrice
+    ? hasConversion
+      ? COLUMN_WIDTHS.convertedAmountOnly
+      : COLUMN_WIDTHS.amountOnly
+    : hasConversion
+      ? columns.unit
+        ? COLUMN_WIDTHS.convertedUnits
+        : COLUMN_WIDTHS.convertedNoUnits
+      : columns.unit
+        ? COLUMN_WIDTHS.units
+        : COLUMN_WIDTHS.noUnits;
   const taxWidth = hasTaxColumn ? TAX_COLUMN_WIDTH : 0;
 
   return {
@@ -102,12 +128,13 @@ export function InvoicePdfItemsTable({
   const theme = invoice.theme;
   const labels = invoice.tableSettings.columnLabels;
 
-  // The unit column only prints when at least one item has a unit, so invoices
-  // that never use units (including all previously saved ones) keep the
-  // original four-column layout instead of gaining an empty column.
-  const hasUnits = lineItems.some(row => row.unit.trim().length > 0);
+  const columns = getShownColumns({
+    columns: invoice.tableSettings.columns,
+    items: lineItems,
+    isPrinted: true
+  });
   const columnWidths = getColumnWidths({
-    hasUnits,
+    columns,
     hasConversion: conversion !== null,
     hasTaxColumn
   });
@@ -157,32 +184,36 @@ export function InvoicePdfItemsTable({
             {labels.description}
           </Text>
         </View>
-        <View style={[styles.tableCell, { width: columnWidths.quantity }]}>
-          <Text style={pdfRoleStyle(theme, "tableHeaderCenter")}>
-            {labels.quantity}
-          </Text>
-        </View>
-        {hasUnits && (
+        {columns.quantityAndPrice && (
+          <View style={[styles.tableCell, { width: columnWidths.quantity }]}>
+            <Text style={pdfRoleStyle(theme, "tableHeaderCenter")}>
+              {labels.quantity}
+            </Text>
+          </View>
+        )}
+        {columns.unit && (
           <View style={[styles.tableCell, { width: columnWidths.unit }]}>
             <Text style={pdfRoleStyle(theme, "tableHeaderCenter")}>
               {labels.unit}
             </Text>
           </View>
         )}
-        <View style={[styles.tableCell, { width: columnWidths.unitPrice }]}>
-          <Text style={pdfRoleStyle(theme, "tableHeaderCenter")}>
-            {labels.unitPrice}
-          </Text>
-          {conversion && (
+        {columns.quantityAndPrice && (
+          <View style={[styles.tableCell, { width: columnWidths.unitPrice }]}>
             <Text style={pdfRoleStyle(theme, "tableHeaderCenter")}>
-              {conversion.fromCode}
+              {labels.unitPrice}
             </Text>
-          )}
-        </View>
+            {conversion && (
+              <Text style={pdfRoleStyle(theme, "tableHeaderCenter")}>
+                {conversion.fromCode}
+              </Text>
+            )}
+          </View>
+        )}
         {hasTaxColumn && (
           <View style={[styles.tableCell, { width: columnWidths.tax }]}>
             <Text style={pdfRoleStyle(theme, "tableHeaderCenter")}>
-              {invoice.labels.tax}
+              {getTaxColumnLabel(labels, invoice.labels)}
             </Text>
           </View>
         )}
@@ -227,23 +258,31 @@ export function InvoicePdfItemsTable({
                 {row.description}
               </Text>
             </View>
-            <View style={[styles.tableCell, { width: columnWidths.quantity }]}>
-              <Text style={pdfRoleStyle(theme, "tableRowCenter")}>
-                {row.quantity}
-              </Text>
-            </View>
-            {hasUnits && (
+            {columns.quantityAndPrice && (
+              <View
+                style={[styles.tableCell, { width: columnWidths.quantity }]}
+              >
+                <Text style={pdfRoleStyle(theme, "tableRowCenter")}>
+                  {row.quantity}
+                </Text>
+              </View>
+            )}
+            {columns.unit && (
               <View style={[styles.tableCell, { width: columnWidths.unit }]}>
                 <Text style={pdfRoleStyle(theme, "tableRowCenter")}>
                   {row.unit}
                 </Text>
               </View>
             )}
-            <View style={[styles.tableCell, { width: columnWidths.unitPrice }]}>
-              <Text style={pdfRoleStyle(theme, "tableRowCenter")}>
-                {row.unitPrice}
-              </Text>
-            </View>
+            {columns.quantityAndPrice && (
+              <View
+                style={[styles.tableCell, { width: columnWidths.unitPrice }]}
+              >
+                <Text style={pdfRoleStyle(theme, "tableRowCenter")}>
+                  {row.unitPrice}
+                </Text>
+              </View>
+            )}
             {hasTaxColumn && (
               <View style={[styles.tableCell, { width: columnWidths.tax }]}>
                 <Text style={pdfRoleStyle(theme, "tableRowCenter")}>

@@ -1,6 +1,7 @@
 import { IconMinus, IconPlus } from "@tabler/icons-react";
 import type { CSSProperties, FocusEvent } from "react";
 import { useEffect, useState } from "react";
+import { useShallow } from "zustand/react/shallow";
 import { InvoiceInput } from "~/components/editor/invoice-input";
 import { Button } from "~/components/ui/button";
 import { getCurrencyMarker } from "~/consts/currencies";
@@ -23,9 +24,11 @@ import type {
   TextRole
 } from "~/types";
 import { buildLineItemRow } from "~/utils/build-invoice-view-model";
+import { calculateLineAmount } from "~/utils/calculate-invoice-totals";
 import { getRoleSettings } from "~/utils/get-role-settings";
 import { getTextStyles } from "~/utils/get-text-styles";
 import { handlePercentageInput } from "~/utils/handle-percentage-input";
+import { getShownColumns, getTaxColumnLabel } from "~/utils/table-columns";
 
 type LineItemFieldKey = "description" | "quantity" | "unit" | "unitPrice";
 
@@ -40,6 +43,8 @@ interface LineItemColumnConfig {
   rowRole: TextRole;
   headerPlaceholder: string;
   headerInputClassName: string;
+  // Its track in the table's grid, narrower with a second currency's column.
+  width: { single: string; converted: string };
   cell: {
     kind: LineItemColumnKind;
     itemField?: LineItemFieldKey;
@@ -53,6 +58,7 @@ interface LineItemColumnConfig {
 type UpdateItem = ReturnType<typeof useLineItemsSlice>["updateItem"];
 type RemoveItem = ReturnType<typeof useLineItemsSlice>["removeItem"];
 type SetItemTax = ReturnType<typeof useLineItemsSlice>["setItemTax"];
+type SetItemAmount = ReturnType<typeof useLineItemsSlice>["setItemAmount"];
 type SetTableSettings = ReturnType<
   typeof useLineItemsSlice
 >["setTableSettings"];
@@ -99,6 +105,7 @@ const LINE_ITEM_COLUMNS: LineItemColumnConfig[] = [
     headerPlaceholder: "Description",
     headerInputClassName:
       "relative h-full w-full rounded-none rounded-tl-sm border-none bg-transparent py-2 pl-2 hover:bg-brand-50 focus-visible:z-10 focus-visible:px-2",
+    width: { single: "1fr", converted: "1fr" },
     cell: {
       kind: "text",
       itemField: "description",
@@ -115,6 +122,7 @@ const LINE_ITEM_COLUMNS: LineItemColumnConfig[] = [
     headerPlaceholder: "Quantity",
     headerInputClassName:
       "relative h-full w-full rounded-none border-none bg-transparent py-2 hover:bg-brand-50 focus-visible:z-10 focus:px-0",
+    width: { single: "80px", converted: "64px" },
     cell: {
       kind: "integer",
       itemField: "quantity",
@@ -130,6 +138,7 @@ const LINE_ITEM_COLUMNS: LineItemColumnConfig[] = [
     headerPlaceholder: "Unit",
     headerInputClassName:
       "relative h-full w-full rounded-none border-none bg-transparent py-2 hover:bg-brand-50 focus-visible:z-10 focus:px-0",
+    width: { single: "80px", converted: "64px" },
     cell: {
       kind: "text",
       itemField: "unit",
@@ -146,6 +155,7 @@ const LINE_ITEM_COLUMNS: LineItemColumnConfig[] = [
     headerPlaceholder: "Unit Price",
     headerInputClassName:
       "relative h-full w-full rounded-none border-none bg-transparent py-2 hover:bg-brand-50 focus-visible:z-10 focus:px-0",
+    width: { single: "120px", converted: "96px" },
     cell: {
       kind: "currency",
       itemField: "unitPrice",
@@ -159,7 +169,9 @@ const LINE_ITEM_COLUMNS: LineItemColumnConfig[] = [
     headerRole: "tableHeaderCenter",
     rowRole: "tableRowCenter",
     headerPlaceholder: "Tax",
-    headerInputClassName: "block py-2",
+    headerInputClassName:
+      "relative h-full w-full rounded-none border-none bg-transparent py-2 hover:bg-brand-50 focus-visible:z-10 focus:px-0",
+    width: { single: "64px", converted: "64px" },
     cell: {
       kind: "tax",
       wrapperClassName: "col-span-1 text-center",
@@ -173,6 +185,7 @@ const LINE_ITEM_COLUMNS: LineItemColumnConfig[] = [
     headerPlaceholder: "Amount",
     headerInputClassName:
       "relative h-auto w-full rounded-none rounded-tr-sm border-none bg-transparent py-2 pr-2 hover:bg-brand-50 focus-visible:z-10 focus:pr-2 focus:pl-0",
+    width: { single: "150px", converted: "104px" },
     cell: {
       kind: "amount",
       wrapperClassName: "col-span-1 pr-2",
@@ -185,6 +198,7 @@ const LINE_ITEM_COLUMNS: LineItemColumnConfig[] = [
     rowRole: "tableRowRight",
     headerPlaceholder: "Converted amount",
     headerInputClassName: "block py-2 pr-2",
+    width: { single: "120px", converted: "120px" },
     cell: {
       kind: "convertedAmount",
       wrapperClassName: "col-span-1 pr-2",
@@ -195,7 +209,7 @@ const LINE_ITEM_COLUMNS: LineItemColumnConfig[] = [
 
 // The converted amount reads as the Amount label in the second currency,
 // "Amount (USD)", wherever a cell needs its column named; the Tax column as
-// the tax row's label.
+// the tax row's label until it has one of its own.
 function getColumnLabel({
   column,
   columnLabels,
@@ -207,7 +221,10 @@ function getColumnLabel({
   taxLabel: string;
   conversion: CurrencyConversion | null;
 }) {
-  if (column.id === "tax") return taxLabel;
+  if (column.id === "tax") {
+    return getTaxColumnLabel(columnLabels, { tax: taxLabel });
+  }
+
   if (column.id !== "convertedAmount") return columnLabels[column.id];
 
   return `${columnLabels.amount || "Amount"} (${conversion?.toCode ?? ""})`;
@@ -232,16 +249,23 @@ function getColumnCurrency(
  * once here and passes each cell only the value and handlers it needs, so a
  * single item edit does not fan out store subscriptions across every cell.
  */
-// The PDF leaves out the Unit column when no line has a unit, so Preview does
-// too. While editing it always shows, so there's somewhere to type one.
+// Quantity, Unit and Unit price show as the table's settings say, and the PDF
+// leaves out the Unit column when no line has a unit, so Preview does too.
 // The converted amount takes its room from the other columns, so the table
 // keeps the page's width. The Tax column shows, as in the PDF, only while the
 // lines' rates differ, and takes its room from the description. While editing
 // with Per line on it always shows, so there's somewhere to set a line's rate.
+// With quantity and price off, a line's amount is typed in instead.
 function useVisibleColumns() {
   const isPreview = useIsPreview();
-  const hasUnits = useInvoiceStore(state =>
-    state.items.some(item => item.unit.trim())
+  const shown = useInvoiceStore(
+    useShallow(state =>
+      getShownColumns({
+        columns: state.tableSettings.columns,
+        items: state.items,
+        isPrinted: isPreview
+      })
+    )
   );
   const hasConversion = useCurrencyConversion() !== null;
   const hasMixedRates = useHasTaxColumn();
@@ -249,51 +273,32 @@ function useVisibleColumns() {
   const sections = useShownSections();
   const canEditLineRates = !isPreview && sections.tax && isPerLine;
   const hasTaxColumn = hasMixedRates || canEditLineRates;
-  const hideUnit = isPreview && !hasUnits;
-  const columns = LINE_ITEM_COLUMNS.filter(
-    column =>
-      (column.id !== "unit" || !hideUnit) &&
-      (column.id !== "tax" || hasTaxColumn) &&
-      (column.id !== "convertedAmount" || hasConversion)
-  );
+  const columns = LINE_ITEM_COLUMNS.filter(column => {
+    switch (column.id) {
+      case "quantity":
+      case "unitPrice":
+        return shown.quantityAndPrice;
+      case "unit":
+        return shown.unit;
+      case "tax":
+        return hasTaxColumn;
+      case "convertedAmount":
+        return hasConversion;
+      default:
+        return true;
+    }
+  });
 
   return {
     columns,
     canEditLineRates,
-    gridClassName: getGridClassName({ hasConversion, hasTaxColumn, hideUnit })
+    canTypeAmount: !isPreview && !shown.quantityAndPrice,
+    gridTemplateColumns: columns
+      .map(column =>
+        hasConversion ? column.width.converted : column.width.single
+      )
+      .join(" ")
   };
-}
-
-function getGridClassName({
-  hasConversion,
-  hasTaxColumn,
-  hideUnit
-}: {
-  hasConversion: boolean;
-  hasTaxColumn: boolean;
-  hideUnit: boolean;
-}) {
-  if (hasConversion && hasTaxColumn) {
-    return hideUnit
-      ? "grid-cols-[1fr_64px_96px_64px_104px_120px]"
-      : "grid-cols-[1fr_64px_64px_96px_64px_104px_120px]";
-  }
-
-  if (hasConversion) {
-    return hideUnit
-      ? "grid-cols-[1fr_64px_96px_104px_120px]"
-      : "grid-cols-[1fr_64px_64px_96px_104px_120px]";
-  }
-
-  if (hasTaxColumn) {
-    return hideUnit
-      ? "grid-cols-[1fr_80px_120px_64px_150px]"
-      : "grid-cols-[1fr_80px_80px_120px_64px_150px]";
-  }
-
-  return hideUnit
-    ? "grid-cols-[1fr_80px_120px_150px]"
-    : "grid-cols-[1fr_80px_80px_120px_150px]";
 }
 
 export function InvoiceLineItems() {
@@ -305,6 +310,7 @@ export function InvoiceLineItems() {
     removeItem,
     updateItem,
     setItemTax,
+    setItemAmount,
     setTableSettings
   } = useLineItemsSlice();
   const theme = useTheme();
@@ -335,6 +341,7 @@ export function InvoiceLineItems() {
             theme={theme}
             updateItem={updateItem}
             setItemTax={setItemTax}
+            setItemAmount={setItemAmount}
             removeItem={removeItem}
           />
         </div>
@@ -357,14 +364,22 @@ function TableHeader({
   theme: InvoiceTheme;
   setTableSettings: SetTableSettings;
 }) {
-  const { columns, gridClassName } = useVisibleColumns();
+  const { columns, gridTemplateColumns } = useVisibleColumns();
   const conversion = useCurrencyConversion();
   const taxLabel = useInvoiceStore(state => state.labels.tax);
+  const isPreview = useIsPreview();
 
+  // The Tax header is blank while it follows the tax row, which shows as its
+  // placeholder; Preview has no placeholders, so it reads the label itself.
   function getHeaderLabel(column: LineItemColumnConfig) {
     const { columnLabels } = tableSettings;
 
-    if (column.id === "tax") return taxLabel;
+    if (column.id === "tax") {
+      return isPreview
+        ? getTaxColumnLabel(columnLabels, { tax: taxLabel })
+        : columnLabels.tax;
+    }
+
     if (column.id !== "convertedAmount") return columnLabels[column.id];
 
     return columnLabels.amount || "Amount";
@@ -373,13 +388,11 @@ function TableHeader({
   return (
     <div
       role="row"
-      className={cn(
-        "grid items-start gap-2 rounded-t-sm font-medium",
-        gridClassName
-      )}
+      className="grid items-start gap-2 rounded-t-sm font-medium"
       style={{
         backgroundColor: tableSettings.backgroundColor,
-        borderColor: tableSettings.borderColor
+        borderColor: tableSettings.borderColor,
+        gridTemplateColumns
       }}
     >
       {columns.map(column => (
@@ -387,6 +400,9 @@ function TableHeader({
           key={column.id}
           column={column}
           label={getHeaderLabel(column)}
+          placeholder={
+            column.id === "tax" ? taxLabel : column.headerPlaceholder
+          }
           currencyCode={getColumnCurrency(column, conversion)}
           theme={theme}
           setTableSettings={setTableSettings}
@@ -406,12 +422,14 @@ function TableHeader({
 function TableHeaderCell({
   column,
   label,
+  placeholder,
   currencyCode,
   theme,
   setTableSettings
 }: {
   column: LineItemColumnConfig;
   label: string;
+  placeholder: string;
   currencyCode: string;
   theme: InvoiceTheme;
   setTableSettings: SetTableSettings;
@@ -437,7 +455,7 @@ function TableHeaderCell({
       className="col-span-1 flex flex-col text-sm font-medium"
       style={style}
     >
-      {column.id === "convertedAmount" || column.id === "tax" ? (
+      {column.id === "convertedAmount" ? (
         <span className={labelClassName} style={style}>
           {label}
         </span>
@@ -448,7 +466,7 @@ function TableHeaderCell({
           value={label}
           onChange={handleChange}
           className={labelClassName}
-          placeholder={column.headerPlaceholder}
+          placeholder={placeholder}
           style={style}
         />
       )}
@@ -475,6 +493,7 @@ function LineItems({
   theme,
   updateItem,
   setItemTax,
+  setItemAmount,
   removeItem
 }: {
   items: InvoiceItem[];
@@ -484,6 +503,7 @@ function LineItems({
   theme: InvoiceTheme;
   updateItem: UpdateItem;
   setItemTax: SetItemTax;
+  setItemAmount: SetItemAmount;
   removeItem: RemoveItem;
 }) {
   return (
@@ -500,6 +520,7 @@ function LineItems({
           theme={theme}
           updateItem={updateItem}
           setItemTax={setItemTax}
+          setItemAmount={setItemAmount}
           removeItem={removeItem}
         />
       ))}
@@ -517,6 +538,7 @@ function LineItem({
   theme,
   updateItem,
   setItemTax,
+  setItemAmount,
   removeItem
 }: {
   item: InvoiceItem;
@@ -528,6 +550,7 @@ function LineItem({
   theme: InvoiceTheme;
   updateItem: UpdateItem;
   setItemTax: SetItemTax;
+  setItemAmount: SetItemAmount;
   removeItem: RemoveItem;
 }) {
   const conversion = useCurrencyConversion();
@@ -535,16 +558,14 @@ function LineItem({
   const taxLabel = useInvoiceStore(state => state.labels.tax);
   const viewRow = buildLineItemRow({ item, currency, conversion, tax });
   const isPreview = useIsPreview();
-  const { columns, canEditLineRates, gridClassName } = useVisibleColumns();
+  const { columns, canEditLineRates, canTypeAmount, gridTemplateColumns } =
+    useVisibleColumns();
 
   return (
     <div
       role="row"
-      className={cn(
-        "group/row relative grid items-center gap-2 border-t",
-        gridClassName
-      )}
-      style={{ borderColor: tableSettings.borderColor }}
+      className="group/row relative grid items-center gap-2 border-t"
+      style={{ borderColor: tableSettings.borderColor, gridTemplateColumns }}
     >
       {columns.map(column => (
         <TableCell
@@ -563,8 +584,10 @@ function LineItem({
           theme={theme}
           invoiceTax={tax}
           canEditLineRates={canEditLineRates}
+          canTypeAmount={canTypeAmount}
           updateItem={updateItem}
           setItemTax={setItemTax}
+          setItemAmount={setItemAmount}
         />
       ))}
       {itemCount > 1 && !isPreview && (
@@ -588,8 +611,10 @@ function TableCell({
   theme,
   invoiceTax,
   canEditLineRates,
+  canTypeAmount,
   updateItem,
-  setItemTax
+  setItemTax,
+  setItemAmount
 }: {
   column: LineItemColumnConfig;
   columnLabel: string;
@@ -600,8 +625,10 @@ function TableCell({
   theme: InvoiceTheme;
   invoiceTax: Invoice["tax"];
   canEditLineRates: boolean;
+  canTypeAmount: boolean;
   updateItem: UpdateItem;
   setItemTax: SetItemTax;
+  setItemAmount: SetItemAmount;
 }) {
   const [isEditingNumeric, setIsEditingNumeric] = useState(false);
   const [numericDraft, setNumericDraft] = useState("");
@@ -704,6 +731,21 @@ function TableCell({
     );
   }
 
+  if (column.cell.kind === "amount" && canTypeAmount) {
+    return (
+      <div role="cell" className={column.cell.wrapperClassName}>
+        <AmountCell
+          item={item}
+          label={`${cellLabel}, item ${index + 1}`}
+          formattedAmount={viewRow.amount}
+          currencySymbol={currencySymbol}
+          style={rowStyle}
+          setItemAmount={setItemAmount}
+        />
+      </div>
+    );
+  }
+
   if (
     column.cell.kind === "amount" ||
     column.cell.kind === "convertedAmount" ||
@@ -761,6 +803,59 @@ function TableCell({
         style={rowStyle}
       />
     </div>
+  );
+}
+
+// A line's amount, typed straight in while quantity and price are hidden. It
+// reads as the amount until focused, then as the bare figure; typing makes
+// the line one at that price, so the hidden columns always add up to it.
+function AmountCell({
+  item,
+  label,
+  formattedAmount,
+  currencySymbol,
+  style,
+  setItemAmount
+}: {
+  item: InvoiceItem;
+  label: string;
+  formattedAmount: string;
+  currencySymbol: string;
+  style: CSSProperties;
+  setItemAmount: SetItemAmount;
+}) {
+  const [draft, setDraft] = useState<string | null>(null);
+  const amount = calculateLineAmount(item.quantity, item.unitPrice);
+
+  // An outside change (undo, another tab) while focused shows the new figure.
+  useEffect(() => {
+    setDraft(previous =>
+      previous === null || parseDecimalDraft(previous) === amount
+        ? previous
+        : String(amount)
+    );
+  }, [amount]);
+
+  function handleChange(value: string) {
+    const numericValue = normalizeDecimalInput(
+      value.replace(currencySymbol, "")
+    );
+
+    setDraft(numericValue);
+    setItemAmount(item.id, parseDecimalDraft(numericValue));
+  }
+
+  return (
+    <InvoiceInput
+      aria-label={label}
+      data-field={`items.${item.id}.amount`}
+      value={draft === null ? formattedAmount : `${currencySymbol}${draft}`}
+      onChange={handleChange}
+      onFocus={() => setDraft(String(amount))}
+      onBlur={() => setDraft(null)}
+      className="w-full rounded-none border-none py-2 font-medium ring-0 outline-none focus-visible:py-2"
+      style={style}
+    />
   );
 }
 

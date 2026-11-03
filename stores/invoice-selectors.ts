@@ -164,7 +164,24 @@ export function useLineItemsSlice() {
       removeItem: state.removeItem,
       updateItem: state.updateItem,
       setItemTax: state.setItemTax,
+      setItemAmount: state.setItemAmount,
       setTableSettings: state.setTableSettings
+    }))
+  );
+}
+
+// Table settings slice - the line items' columns, their labels and colours,
+// with the tax row's label (the Tax column's until it has its own) and the
+// Per line switch
+export function useTableSettingsSlice() {
+  return useInvoiceStore(
+    useShallow(state => ({
+      tableSettings: state.tableSettings,
+      taxLabel: state.labels.tax,
+      hasTax: state.sections.tax,
+      isPerLine: state.tax.perLine,
+      setTableSettings: state.setTableSettings,
+      setTax: state.setTax
     }))
   );
 }
