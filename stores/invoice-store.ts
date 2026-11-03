@@ -13,6 +13,7 @@ import type {
   Invoice,
   InvoiceClient,
   InvoiceItem,
+  InvoiceItemTax,
   InvoiceLabels,
   InvoicePaymentDetails,
   InvoiceSectionKey,
@@ -237,6 +238,8 @@ interface InvoiceActions {
     field: keyof InvoiceItem,
     value: string | number
   ) => void;
+  // A line's own tax rate; none puts it back on the invoice's.
+  setItemTax: (itemId: string, tax: InvoiceItemTax | undefined) => void;
 
   // Pricing
   setTax: (
@@ -447,6 +450,19 @@ export const useInvoiceStore = create<InvoiceStore>()(
             case "unitPrice":
               item[field] = Number(value);
               break;
+          }
+        }),
+
+      setItemTax: (itemId, tax) =>
+        set(state => {
+          const item = state.items.find(candidate => candidate.id === itemId);
+
+          if (!item) return;
+
+          if (tax) {
+            item.tax = tax;
+          } else {
+            delete item.tax;
           }
         }),
 

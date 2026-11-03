@@ -8,7 +8,6 @@ import { useIsPreview, useShownSections } from "~/hooks/use-shown-sections";
 import { cn } from "~/lib/utils";
 import {
   useCurrencySymbol,
-  useHasOwnLineRates,
   useInvoiceTotals,
   usePricingSlice,
   useTaxGroups,
@@ -56,34 +55,47 @@ function usePricingInput(storeValue: number) {
   return [input, setInput] as const;
 }
 
-// A small editor-only toggle shown to the left of a pricing row (e.g. switch a
+// Small editor-only toggles shown to the left of a pricing row (e.g. switch a
 // discount between fixed and percentage, or mark tax exempt). Like the add /
-// remove item buttons, it is an editing affordance that never appears in the
-// rendered PDF. It stays out of sight until the row is hovered or focused,
-// unless it's showing a non-default choice (a % discount, exempt tax).
-function PricingRowToggle({
-  label,
-  active,
-  onClick,
-  children
-}: {
-  label: string;
-  active: boolean;
-  onClick: () => void;
-  children: ReactNode;
-}) {
+// remove item buttons, they are editing affordances that never appear in the
+// rendered PDF.
+function PricingRowToggles({ children }: { children: ReactNode }) {
   const isPreview = useIsPreview();
 
   if (isPreview) return null;
 
   return (
+    <span className="absolute top-1/2 right-full mr-1 flex -translate-y-1/2 items-center">
+      {children}
+    </span>
+  );
+}
+
+// A toggle stays out of sight until the row is hovered or focused, unless
+// it's showing a non-default choice (a % discount, exempt tax).
+function PricingRowToggle({
+  label,
+  field,
+  active,
+  onClick,
+  children
+}: {
+  label: string;
+  // The data-field path, for undo to find the toggle again.
+  field?: string;
+  active: boolean;
+  onClick: () => void;
+  children: ReactNode;
+}) {
+  return (
     <button
       type="button"
       aria-label={label}
       aria-pressed={active}
+      data-field={field}
       onClick={onClick}
       className={cn(
-        "hover:bg-paper-muted focus-visible:ring-ring absolute top-1/2 right-full mr-1 shrink-0 -translate-y-1/2 rounded px-1.5 py-0.5 text-xs whitespace-nowrap transition-[color,opacity] outline-none focus-visible:ring-1",
+        "hover:bg-paper-muted focus-visible:ring-ring shrink-0 rounded px-1.5 py-0.5 text-xs whitespace-nowrap transition-[color,opacity] outline-none focus-visible:ring-1",
         active
           ? "text-paper-foreground"
           : "text-paper-muted-foreground opacity-0 group-focus-within/pricing-row:opacity-100 group-hover/pricing-row:opacity-100 pointer-coarse:opacity-100"
@@ -232,28 +244,40 @@ function isInvoiceTaxRow(
     : row.percentage === tax.percentage;
 }
 
-// The tax row sets the invoice's rate. An invoice whose lines carry rates of
-// their own reads as the PDF does instead, so its totals always add up: a row
-// per rate, or the one rate the lines all share. Editing, that goes by whether
-// any line has a rate of its own, which editing the invoice's rate can't
-// change, so the control being used never swaps out mid-edit. Editing the
-// lines' rates comes with the line items' own controls. Preview shows today's
-// row whenever it reads the same as the printed one.
+// The tax row sets the invoice's rate. When the lines' own rates make the
+// PDF print something else (a row per rate, or the one rate the lines all
+// share), the printed rows show too, so the totals always add up. Preview
+// shows only those; editing keeps the invoice's rate as the first row, which
+// stays put whatever the rates do, so the control being used never swaps out
+// mid-edit.
 function TaxRow() {
   const { tax } = usePricingSlice();
   const isPreview = useIsPreview();
-  const hasLineRates = useHasOwnLineRates();
   const printedRows = usePrintedTaxRows();
-  const readsAsPrinted = isPreview
-    ? printedRows.length > 1 || !isInvoiceTaxRow(printedRows[0], tax)
-    : hasLineRates;
+  const readsAsPrinted =
+    printedRows.length > 1 || !isInvoiceTaxRow(printedRows[0], tax);
 
-  if (readsAsPrinted) return <PrintedTaxRows rows={printedRows} />;
+  if (isPreview) {
+    return readsAsPrinted ? (
+      <PrintedTaxRows rows={printedRows} />
+    ) : (
+      <InvoiceTaxRow isDefault={false} />
+    );
+  }
 
-  return <InvoiceTaxRow />;
+  return (
+    <>
+      <InvoiceTaxRow isDefault={readsAsPrinted} />
+      {readsAsPrinted && <PrintedTaxRows rows={printedRows} />}
+    </>
+  );
 }
 
+// An exempt row's value is the invoice's note, which editing can change
+// there, as on the invoice's own row.
 function PrintedTaxRows({ rows }: { rows: InvoiceSummaryRow[] }) {
+  const { tax, setTax } = usePricingSlice();
+  const isPreview = useIsPreview();
   const theme = useTheme();
   const labelStyle = getTextStyles({
     settings: getRoleSettings(theme, "totalsLabel")
@@ -277,20 +301,35 @@ function PrintedTaxRows({ rows }: { rows: InvoiceSummaryRow[] }) {
               ? row.label
               : `${row.label} ${row.percentage}%`}
           </span>
-          <span
-            data-testid="tax-amount"
-            className="border border-transparent whitespace-nowrap"
-            style={valueStyle}
-          >
-            {row.value}
-          </span>
+          {row.note !== undefined && !isPreview ? (
+            <InvoiceInput
+              aria-label="Tax exempt note"
+              data-field="tax.note"
+              value={tax.note}
+              onChange={value => setTax(prev => ({ ...prev, note: value }))}
+              className="text-right"
+              style={valueStyle}
+              placeholder="e.g. Reverse charge"
+            />
+          ) : (
+            <span
+              data-testid="tax-amount"
+              className="border border-transparent whitespace-nowrap"
+              style={valueStyle}
+            >
+              {row.value}
+            </span>
+          )}
         </div>
       ))}
     </>
   );
 }
 
-function InvoiceTaxRow() {
+// The invoice's own rate: its label, rate, Exempt and Per line toggles, and
+// what it comes to. While the lines' rates are printed in rows of their own
+// below it, it's the default the lines without one follow, and says so.
+function InvoiceTaxRow({ isDefault }: { isDefault: boolean }) {
   const { tax, currency, setTax, labels, setLabels } = usePricingSlice();
   const { taxAmount } = useInvoiceTotals();
   const conversion = useCurrencyConversion();
@@ -308,13 +347,27 @@ function InvoiceTaxRow() {
         style={{ justifyContent: labelSettings.align }}
       >
         <span className="relative flex items-center">
-          <PricingRowToggle
-            label="Toggle tax exempt"
-            active={tax.exempt}
-            onClick={() => setTax(prev => ({ ...prev, exempt: !prev.exempt }))}
-          >
-            {tax.exempt ? "Exempt" : "%"}
-          </PricingRowToggle>
+          <PricingRowToggles>
+            <PricingRowToggle
+              label="Toggle tax per line"
+              field="tax.perLine"
+              active={tax.perLine}
+              onClick={() =>
+                setTax(prev => ({ ...prev, perLine: !prev.perLine }))
+              }
+            >
+              Per line
+            </PricingRowToggle>
+            <PricingRowToggle
+              label="Toggle tax exempt"
+              active={tax.exempt}
+              onClick={() =>
+                setTax(prev => ({ ...prev, exempt: !prev.exempt }))
+              }
+            >
+              {tax.exempt ? "Exempt" : "%"}
+            </PricingRowToggle>
+          </PricingRowToggles>
           <InvoiceInput
             aria-label="Tax label"
             data-field="labels.tax"
@@ -355,7 +408,11 @@ function InvoiceTaxRow() {
           </span>
         )}
       </div>
-      {tax.exempt ? (
+      {isDefault ? (
+        <span className="text-paper-muted-foreground border border-transparent text-xs whitespace-nowrap">
+          {tax.exempt ? "Exempt by default" : "Default rate"}
+        </span>
+      ) : tax.exempt ? (
         <InvoiceInput
           aria-label="Tax exempt note"
           data-field="tax.note"
@@ -458,15 +515,17 @@ function DiscountsRow() {
         style={{ justifyContent: labelSettings.align }}
       >
         <span className="relative flex items-center">
-          <PricingRowToggle
-            label="Toggle discount type"
-            active={isPercentage}
-            onClick={() =>
-              setDiscountType(isPercentage ? "fixed" : "percentage")
-            }
-          >
-            {isPercentage ? "%" : currencySymbol}
-          </PricingRowToggle>
+          <PricingRowToggles>
+            <PricingRowToggle
+              label="Toggle discount type"
+              active={isPercentage}
+              onClick={() =>
+                setDiscountType(isPercentage ? "fixed" : "percentage")
+              }
+            >
+              {isPercentage ? "%" : currencySymbol}
+            </PricingRowToggle>
+          </PricingRowToggles>
           <InvoiceInput
             aria-label="Discounts label"
             data-field="labels.discounts"

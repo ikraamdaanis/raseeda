@@ -3,10 +3,7 @@ import { getCurrencyMarker } from "~/consts/currencies";
 import type { InvoiceStore } from "~/stores/invoice-store";
 import { useInvoiceStore } from "~/stores/invoice-store";
 import type { Invoice, InvoiceTotals } from "~/types";
-import {
-  hasMixedTaxRates,
-  hasOwnLineRates
-} from "~/utils/build-invoice-view-model";
+import { hasMixedTaxRates } from "~/utils/build-invoice-view-model";
 import { calculateInvoiceTotals } from "~/utils/calculate-invoice-totals";
 
 // The persisted invoice fields, in one place. `satisfies` rejects typos and
@@ -166,6 +163,7 @@ export function useLineItemsSlice() {
       addItem: state.addItem,
       removeItem: state.removeItem,
       updateItem: state.updateItem,
+      setItemTax: state.setItemTax,
       setTableSettings: state.setTableSettings
     }))
   );
@@ -258,12 +256,6 @@ export function useTaxGroups(): Pick<InvoiceTotals, "taxGroups" | "taxAmount"> {
   const { taxGroups, taxAmount } = calculateInvoiceTotals(pricing);
 
   return { taxGroups, taxAmount };
-}
-
-// Whether any line with an amount has a tax rate of its own. A boolean, so it
-// only re-renders when that changes.
-export function useHasOwnLineRates(): boolean {
-  return useInvoiceStore(hasOwnLineRates);
 }
 
 // Whether the line items show a Tax column: only while the lines' rates
