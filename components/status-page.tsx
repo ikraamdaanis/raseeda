@@ -26,6 +26,10 @@ const TONES = {
  * page's tone, filling the screen, with the copy and buttons set like the
  * hero's. On phones the copy sits on the left and the sky runs edge to edge;
  * from `sm` the copy is centred, and from `lg` the sky is inset and rounded.
+ * The copy sits between two growing spacers, the lower one taking twice the
+ * room, which lifts it to the frame's optical centre a little above the
+ * middle. `children` sit in the lower spacer: they push the page down only
+ * once they outgrow it, and never pull the copy up.
  * `isNoIndex` asks search engines not to index the page (React moves the tag
  * into the head): an error can show in place of a real page's content, under
  * that page's address.
@@ -57,12 +61,12 @@ export function StatusPage({
       <main id="main" className="overflow-x-clip">
         <HeroSky
           hue={TONES[tone].hue}
-          className="flex min-h-svh flex-col justify-center lg:min-h-[calc(100svh-1.5rem)]"
+          className="flex min-h-svh flex-col pb-24 before:grow before:basis-0 before:content-[''] sm:pb-32 lg:min-h-[calc(100svh-1.5rem)]"
         >
           <div
             className={cn(
               CONTAINER,
-              "flex w-full flex-col items-start gap-8 pt-14 pb-24 sm:items-center sm:pt-20 sm:pb-32 sm:text-center"
+              "flex w-full flex-col items-start gap-8 pt-14 sm:items-center sm:pt-20 sm:text-center"
             )}
           >
             <div className="flex flex-col items-start gap-5 sm:items-center">
@@ -93,8 +97,15 @@ export function StatusPage({
             >
               {actions}
             </div>
+          </div>
+          <div
+            className={cn(
+              CONTAINER,
+              "flex w-full grow-2 basis-0 flex-col items-start sm:items-center"
+            )}
+          >
             {children && (
-              <div className="hero-fade w-full max-w-md [animation-delay:240ms]">
+              <div className="hero-fade w-full max-w-md pt-8 [animation-delay:240ms]">
                 {children}
               </div>
             )}
