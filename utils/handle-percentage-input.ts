@@ -10,8 +10,6 @@ export function handlePercentageInput(value: string) {
   let numericValue = value.replace(/[^0-9.]/g, "");
 
   if (numericValue === "") return "";
-  // A leading dot starts a fraction, so the next digit makes "0.5", not "5".
-  if (numericValue === ".") return "0.";
 
   // Collapse multiple decimal points down to the first one.
   const firstDotIndex = numericValue.indexOf(".");
@@ -21,6 +19,9 @@ export function handlePercentageInput(value: string) {
       numericValue.slice(0, firstDotIndex + 1) +
       numericValue.slice(firstDotIndex + 1).replace(/\./g, "");
   }
+
+  // A leading dot starts a fraction, so the next digit makes "0.5", not "5".
+  if (numericValue === ".") return "0.";
 
   const hasDecimal = numericValue.includes(".");
   let [wholePart, decimalPart = ""] = numericValue.split(".");

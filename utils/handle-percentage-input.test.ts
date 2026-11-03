@@ -11,6 +11,12 @@ describe("handlePercentageInput", () => {
     expect(typeKeys([".", "5"])).toBe("0.5");
   });
 
+  it("reads repeated or stray dots as the start of a fraction", () => {
+    expect(
+      ["..", "...", "e.g.", "a.b."].map(value => handlePercentageInput(value))
+    ).toEqual(["0.", "0.", "0.", "0."]);
+  });
+
   it("keeps a whole number and up to two decimals", () => {
     expect(typeKeys(["1", "2", ".", "5", "7", "9"])).toBe("12.57");
   });
