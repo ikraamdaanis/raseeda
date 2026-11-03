@@ -4,6 +4,7 @@ import {
   formatCurrencyWithCode,
   getCurrencyCodeForSymbol,
   getCurrencyMarker,
+  negativeSign,
   normalizeCurrency
 } from "~/consts/currencies";
 import type { CurrencyConversion, Invoice } from "~/types";
@@ -86,19 +87,22 @@ export function convertAmount(amount: number, rate: number): number {
 
 // A marker that ends in a letter ("CHF", a custom "Rs") is spaced from the
 // figure, so it reads "CHF 6,292.00"; a symbol sits against it, "$9,205.63".
+// A negative amount has its sign first, "-$6.25".
 export function formatConvertedAmount(
   amount: number,
   conversion: CurrencyConversion
 ): string {
   const marker = getCurrencyMarker(conversion.toCurrency);
-  const formatted = convertAmount(amount, conversion.rate).toLocaleString(
-    "en-US",
-    { minimumFractionDigits: 2, maximumFractionDigits: 2 }
-  );
+  const converted = convertAmount(amount, conversion.rate);
+  const formatted = Math.abs(converted).toLocaleString("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  });
+  const sign = negativeSign(converted, formatted);
 
   return /\p{L}$/u.test(marker)
-    ? `${marker} ${formatted}`
-    : `${marker}${formatted}`;
+    ? `${sign}${marker} ${formatted}`
+    : `${sign}${marker}${formatted}`;
 }
 
 // A total in both currencies, "£7,150.00 / $9,205.63".

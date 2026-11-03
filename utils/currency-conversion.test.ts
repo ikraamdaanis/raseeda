@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { invoiceDefault } from "~/stores/invoice-store";
 import {
+  formatConvertedAmount,
   getCurrencyConversion,
   isSameCurrency
 } from "~/utils/currency-conversion";
@@ -68,5 +69,21 @@ describe("isSameCurrency", () => {
         { currency: "$", currencyCode: "CAD" }
       )
     ).toBe(false);
+  });
+});
+
+describe("formatConvertedAmount", () => {
+  it("puts the minus sign of a negative amount before the marker", () => {
+    const conversion = {
+      rate: 1.25,
+      fromCode: "GBP",
+      toCurrency: "$",
+      toCode: "USD"
+    };
+
+    expect(formatConvertedAmount(-5, conversion)).toBe("-$6.25");
+    expect(
+      formatConvertedAmount(-5, { ...conversion, toCurrency: "CHF" })
+    ).toBe("-CHF 6.25");
   });
 });

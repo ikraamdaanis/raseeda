@@ -75,13 +75,19 @@ export function getCurrencyMarker(currency: string): string {
   return SYMBOL_TO_DISPLAY_MARKER[symbol] ?? symbol;
 }
 
+// A negative amount (a credit line, its tax) reads "-£100.00", the sign ahead
+// of the marker. One that rounds to nothing has no sign.
 export function formatCurrency(amount: number, currency: string): string {
-  const formatted = amount.toLocaleString("en-US", {
+  const formatted = Math.abs(amount).toLocaleString("en-US", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2
   });
 
-  return `${getCurrencyMarker(currency)}${formatted}`;
+  return `${negativeSign(amount, formatted)}${getCurrencyMarker(currency)}${formatted}`;
+}
+
+export function negativeSign(amount: number, formatted: string): string {
+  return amount < 0 && /[1-9]/.test(formatted) ? "-" : "";
 }
 
 /**

@@ -40,6 +40,12 @@ describe("formatCurrency", () => {
     expect(formatCurrency(1234.5, "⃁")).toBe("SAR1,234.50");
     expect(formatCurrency(10, "د.إ")).toBe("AED10.00");
   });
+
+  it("puts the minus sign of a negative amount before the marker", () => {
+    expect(formatCurrency(-100, "£")).toBe("-£100.00");
+    expect(formatCurrency(-1234.5, "CHF")).toBe("-CHF1,234.50");
+    expect(formatCurrency(-0, "£")).toBe("£0.00");
+  });
 });
 
 describe("normalizeCurrency", () => {
