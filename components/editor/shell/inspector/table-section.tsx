@@ -1,3 +1,4 @@
+import { IconRestore } from "@tabler/icons-react";
 import { useId, useState } from "react";
 import {
   InspectorGroupLabel,
@@ -7,6 +8,7 @@ import {
   inspectorFieldClassName
 } from "~/components/editor/shell/inspector/inspector-controls";
 import { cn } from "~/lib/utils";
+import { DEFAULT_TABLE_SETTINGS } from "~/schema/invoice";
 import { useTableSettingsSlice } from "~/stores/invoice-selectors";
 import type { TableSettings } from "~/types";
 
@@ -37,6 +39,9 @@ export function TableSection() {
     setTax
   } = useTableSettingsSlice();
   const { columns, columnLabels } = tableSettings;
+  const hasDefaultColours =
+    tableSettings.backgroundColor === DEFAULT_TABLE_SETTINGS.backgroundColor &&
+    tableSettings.borderColor === DEFAULT_TABLE_SETTINGS.borderColor;
   const shownLabels = LABEL_ROWS.filter(row => {
     switch (row.key) {
       case "quantity":
@@ -127,6 +132,28 @@ export function TableSection() {
             setTableSettings(prev => ({ ...prev, borderColor }))
           }
         />
+        {!hasDefaultColours && (
+          <div className="grid grid-cols-[6rem_minmax(0,1fr)] gap-2">
+            <button
+              type="button"
+              onClick={() =>
+                setTableSettings(prev => ({
+                  ...prev,
+                  backgroundColor: DEFAULT_TABLE_SETTINGS.backgroundColor,
+                  borderColor: DEFAULT_TABLE_SETTINGS.borderColor
+                }))
+              }
+              className="text-muted-foreground hover:text-foreground focus-visible:ring-ring relative col-start-2 -mx-1 flex h-6 w-fit items-center gap-1 rounded-md px-1 text-xs outline-none focus-visible:ring-1"
+            >
+              <IconRestore aria-hidden="true" className="size-3.5 shrink-0" />
+              Reset colours
+              <span
+                aria-hidden="true"
+                className="absolute top-1/2 left-1/2 size-[max(100%,3rem)] -translate-1/2 pointer-fine:hidden"
+              />
+            </button>
+          </div>
+        )}
       </div>
     </InspectorSection>
   );

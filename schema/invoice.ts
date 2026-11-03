@@ -147,7 +147,7 @@ const DEFAULT_COLUMN_LABELS = {
 
 const DEFAULT_TABLE_COLUMNS = { quantityAndPrice: true, unit: true } as const;
 
-const DEFAULT_TABLE_SETTINGS = {
+export const DEFAULT_TABLE_SETTINGS = {
   columnLabels: DEFAULT_COLUMN_LABELS,
   columns: DEFAULT_TABLE_COLUMNS,
   backgroundColor: "#f9fafb",

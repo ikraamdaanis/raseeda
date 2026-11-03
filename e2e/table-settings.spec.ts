@@ -121,7 +121,7 @@ test("the Unit switch hides the unit column while editing", async ({
   await expect(columnHeaders(page)).toHaveCount(4);
 });
 
-test("a colour typed in the panel colours the table's header", async ({
+test("a colour typed in the panel colours the table's header, and resets", async ({
   page
 }) => {
   await gotoTwoLineInvoice(page);
@@ -142,4 +142,17 @@ test("a colour typed in the panel colours the table's header", async ({
   await code.blur();
 
   await expect(code).toHaveValue("#fde68a");
+
+  const reset = page.getByRole("button", { name: "Reset colours" });
+
+  await reset.click();
+
+  await expect(code).toHaveValue("#f9fafb");
+  await expect(
+    page
+      .getByRole("table", { name: "Invoice line items" })
+      .getByRole("row")
+      .first()
+  ).toHaveCSS("background-color", "rgb(249, 250, 251)");
+  await expect(reset).toHaveCount(0);
 });
