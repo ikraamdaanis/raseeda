@@ -15,7 +15,7 @@
 - No account and no sign-up.
 - Any currency, VAT or sales tax, fees, discounts, payment details (bank, account and routing numbers, IBAN, BIC / SWIFT, sort code), templates for repeat clients, and import / export backups.
 - raseeda makes the PDF; it does not email invoices or track payments.
-- No server API and no server-side storage. In the editor, `window.raseeda` offers an on-device API for scripts and assistants driving the browser: `listInvoices()`, `getInvoice(id)`, `createInvoice(data)`, `openInvoice(id)`, `getPdf(id?)`, `downloadPdf(id?)` and `importData(json)`. Documented in the README.
+- No server API and no server-side storage. In the editor, `window.raseeda` offers an on-device API for scripts and assistants driving the browser: `listInvoices()`, `getInvoice(id)`, `createInvoice(data)`, `openInvoice(id)`, `getPdf(id?)`, `downloadPdf(id?)` and `importData(json)`. Invoice data takes the shape of an export's `invoiceData`; with `tax.perLine` on, an item's own `tax: { percentage, exempt }` overrides the invoice's rate. Documented in the README.
 
 ## Source
 

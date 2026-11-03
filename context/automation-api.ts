@@ -99,7 +99,9 @@ const api = {
   },
   // Adds an invoice to the library and opens it. Takes invoice data as an
   // export's `invoiceData` has it; anything left out takes a new invoice's
-  // value (today's date, due in 30 days and so on). Returns its id.
+  // value (today's date, due in 30 days and so on). Returns its id. Tax is
+  // `tax: { percentage, exempt, note, perLine }`; with `perLine` on, an item's
+  // own `tax: { percentage, exempt }` overrides the invoice's rate.
   async createInvoice(data: unknown) {
     if (typeof data !== "object" || data === null || Array.isArray(data)) {
       throw new TypeError("Invoice data must be an object");

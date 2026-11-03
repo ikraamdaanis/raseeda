@@ -46,6 +46,19 @@ const id = await raseeda.createInvoice({
 await raseeda.downloadPdf(id);
 ```
 
+Tax is the invoice's `tax`: `{ percentage, exempt, note, perLine }`. With `perLine: true`, an item can carry a rate of its own, `tax: { percentage, exempt }`, and an item without one is taxed at the invoice's rate. The totals then show a row per rate. With `perLine: false`, every item is taxed at the invoice's rate and any item rates are kept but ignored.
+
+```js
+await raseeda.createInvoice({
+  tax: { percentage: 20, exempt: false, note: "Exempt supply", perLine: true },
+  items: [
+    { description: "Design work", quantity: 10, unitPrice: 80 },
+    { description: "Printed books", quantity: 2, unitPrice: 15, tax: { percentage: 0, exempt: false } },
+    { description: "Training", quantity: 1, unitPrice: 300, tax: { percentage: 0, exempt: true } }
+  ]
+});
+```
+
 ## Tech Stack
 
 - **React 19** with the React Compiler
