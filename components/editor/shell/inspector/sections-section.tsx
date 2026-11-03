@@ -1,9 +1,8 @@
-import { useId } from "react";
 import {
   InspectorGroupLabel,
-  InspectorSection
+  InspectorSection,
+  InspectorSwitch
 } from "~/components/editor/shell/inspector/inspector-controls";
-import { Switch } from "~/components/ui/switch";
 import { useSectionsSlice } from "~/stores/invoice-selectors";
 import type { InvoiceSectionKey } from "~/types";
 
@@ -71,20 +70,12 @@ function SectionSwitch({
   label: string;
 }) {
   const { sections, setSection } = useSectionsSlice();
-  const id = useId();
 
   return (
-    <label
-      htmlFor={id}
-      className="hover:bg-muted -mx-1.5 flex h-8 cursor-pointer items-center justify-between gap-3 rounded-md px-1.5 text-[13px] pointer-coarse:h-11"
-    >
-      <span className="text-foreground">{label}</span>
-      <Switch
-        id={id}
-        size="sm"
-        checked={sections[section]}
-        onCheckedChange={checked => setSection(section, checked)}
-      />
-    </label>
+    <InspectorSwitch
+      label={label}
+      checked={sections[section]}
+      onCheckedChange={checked => setSection(section, checked)}
+    />
   );
 }

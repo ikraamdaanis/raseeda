@@ -1,6 +1,7 @@
 import { IconChevronDown } from "@tabler/icons-react";
 import type { ReactNode } from "react";
 import { useEffect, useId, useRef, useState } from "react";
+import { Switch } from "~/components/ui/switch";
 import { parseBoolean, usePersistentState } from "~/hooks/use-persistent-state";
 import { cn } from "~/lib/utils";
 
@@ -119,6 +120,41 @@ export function InspectorRow({
       </label>
       {children}
     </div>
+  );
+}
+
+// A setting that's on or off, the whole row its label. A nested one indents,
+// for a setting that belongs to the one above.
+export function InspectorSwitch({
+  label,
+  checked,
+  onCheckedChange,
+  field,
+  nested = false
+}: {
+  label: string;
+  checked: boolean;
+  onCheckedChange: (checked: boolean) => void;
+  field?: string;
+  nested?: boolean;
+}) {
+  const id = useId();
+
+  return (
+    <label
+      htmlFor={id}
+      className="hover:bg-muted -mx-1.5 flex h-8 cursor-pointer items-center justify-between gap-3 rounded-md px-1.5 text-[13px] pointer-coarse:h-11"
+    >
+      <span className={cn("text-foreground", nested && "pl-3")}>{label}</span>
+      <Switch
+        id={id}
+        size="sm"
+        aria-label={label}
+        data-field={field}
+        checked={checked}
+        onCheckedChange={onCheckedChange}
+      />
+    </label>
   );
 }
 
