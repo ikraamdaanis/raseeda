@@ -1,11 +1,11 @@
 import { IconMinus, IconPlus } from "@tabler/icons-react";
-import type { FocusEvent } from "react";
+import type { CSSProperties, FocusEvent } from "react";
 import { useEffect, useState } from "react";
 import { InvoiceInput } from "~/components/editor/invoice-input";
 import { Button } from "~/components/ui/button";
 import { getCurrencyMarker } from "~/consts/currencies";
 import { useCurrencyConversion } from "~/hooks/use-currency-conversion";
-import { useIsPreview } from "~/hooks/use-shown-sections";
+import { useIsPreview, useShownSections } from "~/hooks/use-shown-sections";
 import { cn } from "~/lib/utils";
 import {
   useHasTaxColumn,
@@ -15,6 +15,7 @@ import {
 import { useInvoiceStore } from "~/stores/invoice-store";
 import type {
   CurrencyConversion,
+  Invoice,
   InvoiceItem,
   InvoiceLineItemRow,
   InvoiceTheme,
@@ -24,6 +25,7 @@ import type {
 import { buildLineItemRow } from "~/utils/build-invoice-view-model";
 import { getRoleSettings } from "~/utils/get-role-settings";
 import { getTextStyles } from "~/utils/get-text-styles";
+import { handlePercentageInput } from "~/utils/handle-percentage-input";
 
 type LineItemFieldKey = "description" | "quantity" | "unit" | "unitPrice";
 
@@ -50,6 +52,7 @@ interface LineItemColumnConfig {
 
 type UpdateItem = ReturnType<typeof useLineItemsSlice>["updateItem"];
 type RemoveItem = ReturnType<typeof useLineItemsSlice>["removeItem"];
+type SetItemTax = ReturnType<typeof useLineItemsSlice>["setItemTax"];
 type SetTableSettings = ReturnType<
   typeof useLineItemsSlice
 >["setTableSettings"];
@@ -233,14 +236,19 @@ function getColumnCurrency(
 // too. While editing it always shows, so there's somewhere to type one.
 // The converted amount takes its room from the other columns, so the table
 // keeps the page's width. The Tax column shows, as in the PDF, only while the
-// lines' rates differ, and takes its room from the description.
+// lines' rates differ, and takes its room from the description. While editing
+// with Per line on it always shows, so there's somewhere to set a line's rate.
 function useVisibleColumns() {
   const isPreview = useIsPreview();
   const hasUnits = useInvoiceStore(state =>
     state.items.some(item => item.unit.trim())
   );
   const hasConversion = useCurrencyConversion() !== null;
-  const hasTaxColumn = useHasTaxColumn();
+  const hasMixedRates = useHasTaxColumn();
+  const isPerLine = useInvoiceStore(state => state.tax.perLine);
+  const sections = useShownSections();
+  const canEditLineRates = !isPreview && sections.tax && isPerLine;
+  const hasTaxColumn = hasMixedRates || canEditLineRates;
   const hideUnit = isPreview && !hasUnits;
   const columns = LINE_ITEM_COLUMNS.filter(
     column =>
@@ -251,6 +259,7 @@ function useVisibleColumns() {
 
   return {
     columns,
+    canEditLineRates,
     gridClassName: getGridClassName({ hasConversion, hasTaxColumn, hideUnit })
   };
 }
@@ -295,6 +304,7 @@ export function InvoiceLineItems() {
     addItem,
     removeItem,
     updateItem,
+    setItemTax,
     setTableSettings
   } = useLineItemsSlice();
   const theme = useTheme();
@@ -324,6 +334,7 @@ export function InvoiceLineItems() {
             currencySymbol={currencySymbol}
             theme={theme}
             updateItem={updateItem}
+            setItemTax={setItemTax}
             removeItem={removeItem}
           />
         </div>
@@ -463,6 +474,7 @@ function LineItems({
   currencySymbol,
   theme,
   updateItem,
+  setItemTax,
   removeItem
 }: {
   items: InvoiceItem[];
@@ -471,6 +483,7 @@ function LineItems({
   currencySymbol: string;
   theme: InvoiceTheme;
   updateItem: UpdateItem;
+  setItemTax: SetItemTax;
   removeItem: RemoveItem;
 }) {
   return (
@@ -486,6 +499,7 @@ function LineItems({
           currencySymbol={currencySymbol}
           theme={theme}
           updateItem={updateItem}
+          setItemTax={setItemTax}
           removeItem={removeItem}
         />
       ))}
@@ -502,6 +516,7 @@ function LineItem({
   currencySymbol,
   theme,
   updateItem,
+  setItemTax,
   removeItem
 }: {
   item: InvoiceItem;
@@ -512,6 +527,7 @@ function LineItem({
   currencySymbol: string;
   theme: InvoiceTheme;
   updateItem: UpdateItem;
+  setItemTax: SetItemTax;
   removeItem: RemoveItem;
 }) {
   const conversion = useCurrencyConversion();
@@ -519,7 +535,7 @@ function LineItem({
   const taxLabel = useInvoiceStore(state => state.labels.tax);
   const viewRow = buildLineItemRow({ item, currency, conversion, tax });
   const isPreview = useIsPreview();
-  const { columns, gridClassName } = useVisibleColumns();
+  const { columns, canEditLineRates, gridClassName } = useVisibleColumns();
 
   return (
     <div
@@ -545,7 +561,10 @@ function LineItem({
           viewRow={viewRow}
           currencySymbol={currencySymbol}
           theme={theme}
+          invoiceTax={tax}
+          canEditLineRates={canEditLineRates}
           updateItem={updateItem}
+          setItemTax={setItemTax}
         />
       ))}
       {itemCount > 1 && !isPreview && (
@@ -567,7 +586,10 @@ function TableCell({
   viewRow,
   currencySymbol,
   theme,
-  updateItem
+  invoiceTax,
+  canEditLineRates,
+  updateItem,
+  setItemTax
 }: {
   column: LineItemColumnConfig;
   columnLabel: string;
@@ -576,7 +598,10 @@ function TableCell({
   viewRow: InvoiceLineItemRow;
   currencySymbol: string;
   theme: InvoiceTheme;
+  invoiceTax: Invoice["tax"];
+  canEditLineRates: boolean;
   updateItem: UpdateItem;
+  setItemTax: SetItemTax;
 }) {
   const [isEditingNumeric, setIsEditingNumeric] = useState(false);
   const [numericDraft, setNumericDraft] = useState("");
@@ -664,6 +689,21 @@ function TableCell({
 
   const cellLabel = columnLabel || column.headerPlaceholder;
 
+  if (column.cell.kind === "tax" && canEditLineRates) {
+    return (
+      <div role="cell" className={column.cell.wrapperClassName}>
+        <TaxCell
+          item={item}
+          label={`${cellLabel}, item ${index + 1}`}
+          index={index}
+          invoiceTax={invoiceTax}
+          style={rowStyle}
+          setItemTax={setItemTax}
+        />
+      </div>
+    );
+  }
+
   if (
     column.cell.kind === "amount" ||
     column.cell.kind === "convertedAmount" ||
@@ -721,6 +761,103 @@ function TableCell({
         style={rowStyle}
       />
     </div>
+  );
+}
+
+// What a line's rate field shows for its own rate: the digits being typed
+// while they stand for it ("5." is 5), otherwise the rate itself. A line on
+// the invoice's rate shows nothing, leaving the placeholder.
+function reconcileRateDraft(draft: string, percentage: number | undefined) {
+  if (percentage === undefined) return "";
+  if (draft !== "" && Number(draft) === percentage) return draft;
+
+  return String(percentage);
+}
+
+// A line's own tax rate. Left blank, the line is on the invoice's rate, which
+// shows as the placeholder; cleared, it goes back on it. The toggle after it
+// marks the line exempt, hiding the rate but keeping it for when it's toggled
+// back, and stays the same button either way so focus stays on it. A line on
+// an exempt invoice rate has no toggle, as it's already exempt.
+function TaxCell({
+  item,
+  label,
+  index,
+  invoiceTax,
+  style,
+  setItemTax
+}: {
+  item: InvoiceItem;
+  label: string;
+  index: number;
+  invoiceTax: Invoice["tax"];
+  style: CSSProperties;
+  setItemTax: SetItemTax;
+}) {
+  const ownTax = item.tax;
+  const isExempt = ownTax?.exempt ?? false;
+  const inheritsExempt = !ownTax && invoiceTax.exempt;
+  const [draft, setDraft] = useState(() =>
+    reconcileRateDraft("", ownTax?.percentage)
+  );
+
+  useEffect(() => {
+    setDraft(previous => reconcileRateDraft(previous, ownTax?.percentage));
+  }, [ownTax?.percentage]);
+
+  function handleChange(value: string) {
+    const numericValue = handlePercentageInput(value);
+
+    setDraft(numericValue);
+    setItemTax(
+      item.id,
+      numericValue === ""
+        ? undefined
+        : { percentage: Number(numericValue), exempt: false }
+    );
+  }
+
+  function handleBlur() {
+    if (draft.endsWith(".")) setDraft(draft.slice(0, -1));
+  }
+
+  function toggleExempt() {
+    setItemTax(item.id, {
+      percentage: ownTax?.percentage ?? invoiceTax.percentage,
+      exempt: !isExempt
+    });
+  }
+
+  return (
+    <span className="flex h-full items-center justify-center">
+      {!isExempt && (
+        <InvoiceInput
+          aria-label={label}
+          data-field={`items.${item.id}.tax.percentage`}
+          value={draft}
+          placeholder={
+            invoiceTax.exempt ? "Exempt" : String(invoiceTax.percentage)
+          }
+          onChange={handleChange}
+          onBlur={handleBlur}
+          className="field-sizing-content w-auto min-w-[2ch] py-2 text-right focus:px-1 focus:py-2"
+          style={style}
+        />
+      )}
+      {!inheritsExempt && (
+        <button
+          type="button"
+          aria-label={`Toggle exempt, item ${index + 1}`}
+          aria-pressed={isExempt}
+          data-field={`items.${item.id}.tax.exempt`}
+          onClick={toggleExempt}
+          className="hover:bg-paper-muted focus-visible:ring-ring rounded px-0.5 outline-none focus-visible:ring-1"
+          style={style}
+        >
+          {isExempt ? "Exempt" : "%"}
+        </button>
+      )}
+    </span>
   );
 }
 
