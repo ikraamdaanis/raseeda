@@ -39,7 +39,8 @@ async function gotoTwoLineInvoice(page: Page) {
 // than the app's name, and opens it.
 async function createAndOpenInvoice(page: Page, invoice: unknown) {
   await page.evaluate(async data => {
-    const api = Object.values(window).find(
+    // Typed as Window[], which the guard below can't narrow from.
+    const api = (Object.values(window) as unknown[]).find(
       (
         value: unknown
       ): value is {
