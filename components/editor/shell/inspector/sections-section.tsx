@@ -106,7 +106,7 @@ function TaxSwitches({ label }: { label: string }) {
           />
           <p className="text-muted-foreground pb-1 text-xs">
             {isPerLine
-              ? 'Lines without their own rate charge no tax, with a note such as "Reverse charge" instead.'
+              ? 'Lines without their own rate charge no tax, and show a note like "Reverse charge".'
               : 'Charges no tax, with a note such as "Reverse charge" instead of the rate.'}
           </p>
         </>

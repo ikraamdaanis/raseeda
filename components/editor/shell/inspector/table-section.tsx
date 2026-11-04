@@ -100,7 +100,8 @@ export function TableSection() {
           />
         ) : (
           <p className="text-muted-foreground pb-1 text-xs">
-            Each line is a description and an amount you type.
+            Each line is a description and an amount you type, without a
+            quantity or unit price.
           </p>
         )}
         {hasTax && (
