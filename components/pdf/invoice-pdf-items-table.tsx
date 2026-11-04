@@ -8,7 +8,11 @@ import {
   PDF_PAGE_WIDTH,
   pdfRoleStyle
 } from "~/utils/pdf-styles";
-import { getShownColumns, getTaxColumnLabel } from "~/utils/table-columns";
+import {
+  getAmountColumnLabel,
+  getShownColumns,
+  getTaxColumnLabel
+} from "~/utils/table-columns";
 
 // Cells sit 10pt apart, and the row's own padding keeps the outer ones 8pt in
 // from the border.
@@ -110,6 +114,7 @@ export function InvoicePdfItemsTable({
   const headerStyle = pdfRoleStyle(theme, "tableHeaderRight");
   const cellStyle = pdfRoleStyle(theme, "tableRowRight");
   const fromCode = conversion ? [conversion.fromCode] : [];
+  const amountLabel = getAmountColumnLabel(labels, invoice.sections.tax);
   const columnWidths = {
     description: {
       flexGrow: 1,
@@ -151,14 +156,14 @@ export function InvoicePdfItemsTable({
           })
         : 0,
       amount: measureColumn({
-        header: [labels.amount, ...fromCode],
+        header: [amountLabel, ...fromCode],
         cells: lineItems.map(row => row.amount),
         headerStyle,
         cellStyle
       }),
       convertedAmount: conversion
         ? measureColumn({
-            header: [labels.amount || "Amount", conversion.toCode],
+            header: [amountLabel, conversion.toCode],
             cells: lineItems.map(row => row.convertedAmount ?? ""),
             headerStyle,
             cellStyle
@@ -247,7 +252,7 @@ export function InvoicePdfItemsTable({
         )}
         <View style={[styles.tableCell, columnWidths.amount]}>
           <Text style={pdfRoleStyle(theme, "tableHeaderRight")}>
-            {labels.amount}
+            {amountLabel}
           </Text>
           {conversion && (
             <Text style={pdfRoleStyle(theme, "tableHeaderRight")}>
@@ -258,7 +263,7 @@ export function InvoicePdfItemsTable({
         {conversion && (
           <View style={[styles.tableCell, columnWidths.convertedAmount]}>
             <Text style={pdfRoleStyle(theme, "tableHeaderRight")}>
-              {labels.amount || "Amount"}
+              {amountLabel}
             </Text>
             <Text style={pdfRoleStyle(theme, "tableHeaderRight")}>
               {conversion.toCode}

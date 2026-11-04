@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { getShownColumns, getTaxColumnLabel } from "~/utils/table-columns";
+import {
+  getAmountColumnLabel,
+  getShownColumns,
+  getTaxColumnLabel
+} from "~/utils/table-columns";
 
 const LABELS = {
   description: "Item",
@@ -7,7 +11,7 @@ const LABELS = {
   unit: "Unit",
   unitPrice: "Unit Price",
   tax: "",
-  amount: "Amount"
+  amount: ""
 };
 
 describe("getTaxColumnLabel", () => {
@@ -18,6 +22,22 @@ describe("getTaxColumnLabel", () => {
   it("uses its own label once one is typed", () => {
     expect(getTaxColumnLabel({ ...LABELS, tax: "Rate" }, { tax: "VAT" })).toBe(
       "Rate"
+    );
+  });
+});
+
+describe("getAmountColumnLabel", () => {
+  it("reads Net amount while the tax section is on", () => {
+    expect(getAmountColumnLabel(LABELS, true)).toBe("Net amount");
+  });
+
+  it("reads Amount while the tax section is off", () => {
+    expect(getAmountColumnLabel(LABELS, false)).toBe("Amount");
+  });
+
+  it("uses its own label once one is typed", () => {
+    expect(getAmountColumnLabel({ ...LABELS, amount: "Total" }, true)).toBe(
+      "Total"
     );
   });
 });

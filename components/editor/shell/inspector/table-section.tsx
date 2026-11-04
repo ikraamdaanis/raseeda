@@ -11,6 +11,7 @@ import { cn } from "~/lib/utils";
 import { DEFAULT_TABLE_SETTINGS } from "~/schema/invoice";
 import { useTableSettingsSlice } from "~/stores/invoice-selectors";
 import type { TableSettings } from "~/types";
+import { getAmountColumnLabel } from "~/utils/table-columns";
 
 type ColumnLabelKey = keyof TableSettings["columnLabels"];
 
@@ -27,8 +28,8 @@ const LABEL_ROWS: { key: ColumnLabelKey; label: string }[] = [
 const HEX_COLOUR = /^#?([0-9a-f]{3}|[0-9a-f]{6})$/i;
 
 // The line items' columns, their labels and colours. The labels are the same
-// ones the table's header edits on the page; the Tax label is blank while it
-// follows the tax row's, which shows as its placeholder.
+// ones the table's header edits on the page; the Tax and Amount labels are
+// blank while they follow, with what they follow as their placeholders.
 export function TableSection() {
   const {
     tableSettings,
@@ -55,6 +56,17 @@ export function TableSection() {
         return true;
     }
   });
+
+  // A label left blank follows: the Tax column the tax row's label, the
+  // Amount column the tax section ("Net amount" while tax is on).
+  function getPlaceholder(row: { key: ColumnLabelKey; label: string }) {
+    if (row.key === "tax") return taxLabel;
+    if (row.key === "amount") {
+      return getAmountColumnLabel({ ...columnLabels, amount: "" }, hasTax);
+    }
+
+    return row.label;
+  }
 
   function setColumn(column: keyof TableSettings["columns"], isOn: boolean) {
     setTableSettings(prev => ({
@@ -109,7 +121,7 @@ export function TableSection() {
             column={row.key}
             label={row.label}
             value={columnLabels[row.key]}
-            placeholder={row.key === "tax" ? taxLabel : row.label}
+            placeholder={getPlaceholder(row)}
             onChange={value => setColumnLabel(row.key, value)}
           />
         ))}

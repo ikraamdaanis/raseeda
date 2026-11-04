@@ -30,7 +30,11 @@ import { getRoleSettings } from "~/utils/get-role-settings";
 import { getTextStyles } from "~/utils/get-text-styles";
 import { handlePercentageInput } from "~/utils/handle-percentage-input";
 import { measureTextWidth } from "~/utils/measure-text-width";
-import { getShownColumns, getTaxColumnLabel } from "~/utils/table-columns";
+import {
+  getAmountColumnLabel,
+  getShownColumns,
+  getTaxColumnLabel
+} from "~/utils/table-columns";
 
 type LineItemFieldKey = "description" | "quantity" | "unit" | "unitPrice";
 
@@ -200,27 +204,51 @@ const LINE_ITEM_COLUMNS: LineItemColumnConfig[] = [
   }
 ];
 
-// The converted amount reads as the Amount label in the second currency,
-// "Amount (USD)", wherever a cell needs its column named; the Tax column as
-// the tax row's label until it has one of its own.
-function getColumnLabel({
+// A column's header as it prints. The Tax and Amount headers follow the tax
+// row's label and the tax section until they have labels of their own, and
+// the converted amount reads as the Amount header.
+function getPrintedColumnLabel({
   column,
   columnLabels,
   taxLabel,
-  conversion
+  hasTax
 }: {
   column: LineItemColumnConfig;
   columnLabels: TableSettings["columnLabels"];
   taxLabel: string;
-  conversion: CurrencyConversion | null;
+  hasTax: boolean;
 }) {
   if (column.id === "tax") {
     return getTaxColumnLabel(columnLabels, { tax: taxLabel });
   }
 
-  if (column.id !== "convertedAmount") return columnLabels[column.id];
+  if (column.id === "amount" || column.id === "convertedAmount") {
+    return getAmountColumnLabel(columnLabels, hasTax);
+  }
 
-  return `${columnLabels.amount || "Amount"} (${conversion?.toCode ?? ""})`;
+  return columnLabels[column.id];
+}
+
+// Whether a header left blank reads as another label rather than as nothing.
+function followsLabel(
+  column: LineItemColumnConfig
+): column is LineItemColumnConfig & { id: "tax" | "amount" } {
+  return column.id === "tax" || column.id === "amount";
+}
+
+// The converted amount reads as the Amount header in the second currency,
+// "Net amount (USD)", wherever a cell needs its column named.
+function getColumnLabel({
+  conversion,
+  ...printed
+}: Parameters<typeof getPrintedColumnLabel>[0] & {
+  conversion: CurrencyConversion | null;
+}) {
+  const label = getPrintedColumnLabel(printed);
+
+  if (printed.column.id !== "convertedAmount") return label;
+
+  return `${label} (${conversion?.toCode ?? ""})`;
 }
 
 // An invoice shown in a second currency names the currency of each money
@@ -344,6 +372,7 @@ function useColumnTemplate({
   const conversion = useCurrencyConversion();
   const tax = useInvoiceStore(state => state.tax);
   const taxLabel = useInvoiceStore(state => state.labels.tax);
+  const hasTax = useInvoiceStore(state => state.sections.tax);
   const isPreview = useIsPreview();
   const rows = items.map(item =>
     buildLineItemRow({ item, currency, conversion, tax })
@@ -384,11 +413,12 @@ function useColumnTemplate({
         settings: getRoleSettings(theme, column.rowRole)
       });
       const label =
-        column.id === "convertedAmount"
-          ? tableSettings.columnLabels.amount || "Amount"
-          : column.id === "tax"
-            ? getTaxColumnLabel(tableSettings.columnLabels, { tax: taxLabel })
-            : tableSettings.columnLabels[column.id] || column.headerPlaceholder;
+        getPrintedColumnLabel({
+          column,
+          columnLabels: tableSettings.columnLabels,
+          taxLabel,
+          hasTax
+        }) || column.headerPlaceholder;
       const headerWidths = [label, getColumnCurrency(column, conversion)].map(
         line => measureTextWidth(line, headerStyle)
       );
@@ -482,22 +512,35 @@ function TableHeader({
   const { columns } = useVisibleColumns();
   const conversion = useCurrencyConversion();
   const taxLabel = useInvoiceStore(state => state.labels.tax);
+  const hasTax = useInvoiceStore(state => state.sections.tax);
   const isPreview = useIsPreview();
 
-  // The Tax header is blank while it follows the tax row, which shows as its
-  // placeholder; Preview has no placeholders, so it reads the label itself.
+  function getPrintedLabel(column: LineItemColumnConfig) {
+    return getPrintedColumnLabel({
+      column,
+      columnLabels: tableSettings.columnLabels,
+      taxLabel,
+      hasTax
+    });
+  }
+
+  // A following header is blank, with what it follows as its placeholder;
+  // Preview has no placeholders, so it reads the label itself.
   function getHeaderLabel(column: LineItemColumnConfig) {
-    const { columnLabels } = tableSettings;
+    if (isPreview || !followsLabel(column)) return getPrintedLabel(column);
 
-    if (column.id === "tax") {
-      return isPreview
-        ? getTaxColumnLabel(columnLabels, { tax: taxLabel })
-        : columnLabels.tax;
-    }
+    return tableSettings.columnLabels[column.id];
+  }
 
-    if (column.id !== "convertedAmount") return columnLabels[column.id];
+  function getHeaderPlaceholder(column: LineItemColumnConfig) {
+    if (!followsLabel(column)) return column.headerPlaceholder;
 
-    return columnLabels.amount || "Amount";
+    return getPrintedColumnLabel({
+      column,
+      columnLabels: { ...tableSettings.columnLabels, [column.id]: "" },
+      taxLabel,
+      hasTax
+    });
   }
 
   return (
@@ -515,9 +558,7 @@ function TableHeader({
           key={column.id}
           column={column}
           label={getHeaderLabel(column)}
-          placeholder={
-            column.id === "tax" ? taxLabel : column.headerPlaceholder
-          }
+          placeholder={getHeaderPlaceholder(column)}
           currencyCode={getColumnCurrency(column, conversion)}
           theme={theme}
           setTableSettings={setTableSettings}
@@ -551,10 +592,13 @@ function TableHeaderCell({
 }) {
   const settings = getRoleSettings(theme, column.headerRole);
   const style = getTextStyles({ settings });
+  // A following header's placeholder is what prints, so it reads in the
+  // header's own colour rather than as a hint.
   const labelClassName = cn(
     column.headerInputClassName,
     "h-auto",
-    currencyCode ? "mt-1 py-1 focus:py-1" : "focus:pt-2 focus:pb-2"
+    currencyCode ? "mt-1 py-1 focus:py-1" : "focus:pt-2 focus:pb-2",
+    followsLabel(column) && "placeholder:text-current"
   );
 
   function handleChange(value: string) {
@@ -671,6 +715,7 @@ function LineItem({
   const conversion = useCurrencyConversion();
   const tax = useInvoiceStore(state => state.tax);
   const taxLabel = useInvoiceStore(state => state.labels.tax);
+  const hasTax = useInvoiceStore(state => state.sections.tax);
   const viewRow = buildLineItemRow({ item, currency, conversion, tax });
   const isPreview = useIsPreview();
   const { columns, canEditLineRates, canTypeAmount } = useVisibleColumns();
@@ -692,6 +737,7 @@ function LineItem({
             column,
             columnLabels: tableSettings.columnLabels,
             taxLabel,
+            hasTax,
             conversion
           })}
           item={item}

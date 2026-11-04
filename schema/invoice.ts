@@ -9,7 +9,7 @@ import "~/lib/configure-zod";
 // fields (subtotal, total, per-item amount, tax.amount) are intentionally absent
 // and stripped on parse, since totals are computed at render.
 
-export const CURRENT_INVOICE_SCHEMA_VERSION = 2;
+export const CURRENT_INVOICE_SCHEMA_VERSION = 3;
 
 const INVOICE_FONTS = [
   "schibsted-grotesk",
@@ -142,7 +142,7 @@ const DEFAULT_COLUMN_LABELS = {
   unit: "Unit",
   unitPrice: "Unit Price",
   tax: "",
-  amount: "Amount"
+  amount: ""
 } as const;
 
 const DEFAULT_TABLE_COLUMNS = { quantityAndPrice: true, unit: true } as const;

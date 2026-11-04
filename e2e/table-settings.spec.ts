@@ -71,6 +71,31 @@ test("the Tax header follows the tax row until it's given a label of its own", a
   await expect(header).toHaveValue("VAT");
 });
 
+test("the Amount header reads Net amount while tax is on, until it's given a label", async ({
+  page
+}) => {
+  await gotoTwoLineInvoice(page);
+
+  const header = page
+    .getByRole("columnheader")
+    .getByRole("textbox", { name: "Amount column label" });
+
+  await expect(header).toHaveValue("");
+  await expect(header).toHaveAttribute("placeholder", "Net amount");
+  await expect(page.getByLabel("Net amount, item 1")).toBeVisible();
+
+  await page.getByRole("switch", { name: "Tax", exact: true }).click();
+
+  await expect(header).toHaveAttribute("placeholder", "Amount");
+
+  await page.getByRole("switch", { name: "Tax", exact: true }).click();
+  await header.fill("Total");
+  await modeButton(page, "Preview").click();
+
+  await expect(header).toHaveValue("Total");
+  await expect.poll(() => savedContains(page, '"amount":"Total"')).toBe(true);
+});
+
 test("with quantity and price off, a line's amount is typed in", async ({
   page
 }) => {

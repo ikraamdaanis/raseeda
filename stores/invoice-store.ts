@@ -8,7 +8,10 @@ import {
   DEFAULT_INVOICE_SECTIONS,
   DEFAULT_INVOICE_THEME
 } from "~/schema/invoice";
-import { migrateInvoiceData } from "~/schema/migrations";
+import {
+  CURRENT_INVOICE_SCHEMA_VERSION,
+  migrateInvoiceData
+} from "~/schema/migrations";
 import type {
   Invoice,
   InvoiceClient,
@@ -76,7 +79,7 @@ export const invoiceDefault: Invoice = {
       unit: "Unit",
       unitPrice: "Unit Price",
       tax: "",
-      amount: "Amount"
+      amount: ""
     },
     columns: { quantityAndPrice: true, unit: true },
     backgroundColor: "#f9fafb",
@@ -304,9 +307,12 @@ export const useInvoiceStore = create<InvoiceStore>()(
       // Whole state operations
       setInvoice: invoice =>
         set(() => {
-          // Validate + migrate any legacy/imported shape to the current schema.
-          // Totals are derived at render, so there is nothing to recompute here.
-          return migrateInvoiceData(invoice);
+          // Every caller hands over current data (stored, imported and stashed
+          // invoices are migrated as they're read), so this only validates it:
+          // re-running the migrations would undo a label typed to match an old
+          // default. Totals are derived at render, so there is nothing to
+          // recompute here.
+          return migrateInvoiceData(invoice, CURRENT_INVOICE_SCHEMA_VERSION);
         }),
 
       resetInvoice: () =>

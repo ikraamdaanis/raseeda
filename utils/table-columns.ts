@@ -9,6 +9,16 @@ export function getTaxColumnLabel(
   return columnLabels.tax || labels.tax;
 }
 
+// The Amount column's header, which the second currency's column shares: its
+// own label once one is typed, otherwise "Net amount" while the invoice charges
+// tax, since a line's amount is before tax, and "Amount" without it.
+export function getAmountColumnLabel(
+  columnLabels: TableSettings["columnLabels"],
+  hasTax: boolean
+): string {
+  return columnLabels.amount || (hasTax ? "Net amount" : "Amount");
+}
+
 // Which of the optional columns show. Unit goes with quantity and price, and
 // prints (in the PDF and Preview) only once a line has a unit, so invoices
 // that never use one keep the narrower table. While editing it shows anyway,

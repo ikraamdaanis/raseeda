@@ -84,12 +84,31 @@ function migrateV1ToV2(raw: Record<string, unknown>): Record<string, unknown> {
   };
 }
 
+// v2 -> v3: the Amount column's label follows the tax section, reading "Net
+// amount" while tax is on, until one is typed. Before v3 every invoice stored
+// the old default, "Amount", which would now read as typed, so it's cleared.
+function migrateV2ToV3(raw: Record<string, unknown>): Record<string, unknown> {
+  const table = raw.tableSettings;
+
+  if (!isRecord(table) || !isRecord(table.columnLabels)) return raw;
+  if (table.columnLabels.amount !== "Amount") return raw;
+
+  return {
+    ...raw,
+    tableSettings: {
+      ...table,
+      columnLabels: { ...table.columnLabels, amount: "" }
+    }
+  };
+}
+
 const migrations: {
   to: number;
   up: (raw: Record<string, unknown>) => Record<string, unknown>;
 }[] = [
   { to: 1, up: migrateV0ToV1 },
-  { to: 2, up: migrateV1ToV2 }
+  { to: 2, up: migrateV1ToV2 },
+  { to: 3, up: migrateV2ToV3 }
 ];
 
 /**

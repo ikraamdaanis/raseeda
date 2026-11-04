@@ -148,7 +148,7 @@ const COLUMN_LABEL_SETS: TableSettings["columnLabels"][] = [
     unit: "Unit",
     unitPrice: "Unit Price",
     tax: "",
-    amount: "Amount"
+    amount: ""
   },
   {
     description: "Description",
@@ -164,7 +164,7 @@ const COLUMN_LABEL_SETS: TableSettings["columnLabels"][] = [
     unit: "Unit",
     unitPrice: "Rate",
     tax: "",
-    amount: "Amount"
+    amount: ""
   },
   {
     description: "Product",

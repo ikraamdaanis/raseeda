@@ -20,6 +20,10 @@ import {
   watchInvoice,
   writeInvoiceContent
 } from "~/db";
+import {
+  CURRENT_INVOICE_SCHEMA_VERSION,
+  migrateInvoiceData
+} from "~/schema/migrations";
 import { getChangeOrigin, runWithOrigin } from "~/stores/change-origin";
 import { useDocumentStore } from "~/stores/document-store";
 import {
@@ -238,6 +242,9 @@ type UnsavedStash = {
   nameSource: InvoiceNameSource;
   templateId: string | null;
   invoiceData: Invoice;
+  // The schema the invoice was stashed in. A stash from before it was kept
+  // has none, and migrates from the start.
+  schemaVersion?: number;
 };
 
 function stashUnsaved(session: Session) {
@@ -252,7 +259,8 @@ function stashUnsaved(session: Session) {
     name: session.name,
     nameSource: session.nameSource,
     templateId: session.templateId,
-    invoiceData: liveContent()
+    invoiceData: liveContent(),
+    schemaVersion: CURRENT_INVOICE_SCHEMA_VERSION
   };
 
   writeStorage(
@@ -268,7 +276,17 @@ function readStash(id: string): UnsavedStash | null {
   if (!raw) return null;
 
   try {
-    return JSON.parse(raw) as UnsavedStash;
+    const stash = JSON.parse(raw) as UnsavedStash;
+
+    // A page from an older release may have left it, in an older shape.
+    return {
+      ...stash,
+      invoiceData: migrateInvoiceData(
+        stash.invoiceData,
+        stash.schemaVersion ?? 0
+      ),
+      schemaVersion: CURRENT_INVOICE_SCHEMA_VERSION
+    };
   } catch {
     return null;
   }
