@@ -7,14 +7,15 @@ let context: CanvasRenderingContext2D | null = null;
 // on each edit, and almost every cell's text is the same as the last time.
 const measured = new Map<string, number>();
 
-// Forgets the widths measured so far. Until a web font arrives text measures
-// in the fallback, so a caller forgets them once fonts load and measures
-// again.
+// Forgets the widths measured so far, for a caller to measure again once
+// fonts load.
 export function forgetMeasuredWidths() {
   measured.clear();
 }
 
-// How wide a line of text sets in pixels, in a style from getTextStyles.
+// How wide a line of text sets in pixels, in a style from getTextStyles. Until
+// a web font arrives it measures in the fallback, so a caller re-measures once
+// fonts load.
 export function measureTextWidth(text: string, style: CSSProperties) {
   const fontSize = Number.parseFloat(String(style.fontSize ?? 16));
   const characters = Array.from(text).length;
@@ -42,7 +43,9 @@ export function measureTextWidth(text: string, style: CSSProperties) {
 
   const width = context.measureText(text).width;
 
-  measured.set(key, width);
+  // Only once the font is in, so a width measured in the fallback is never
+  // kept, however the font's loading and the caller's listener interleave.
+  if (document.fonts.check(font)) measured.set(key, width);
 
   return width + spacing;
 }
