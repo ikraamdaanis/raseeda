@@ -181,3 +181,48 @@ test("a colour typed in the panel colours the table's header, and resets", async
   ).toHaveCSS("background-color", "rgb(249, 250, 251)");
   await expect(reset).toHaveCount(0);
 });
+
+test("the Tax column's label shows in the panel only while lines can have rates", async ({
+  page
+}) => {
+  await gotoTwoLineInvoice(page);
+
+  const label = page.getByRole("textbox", { name: "Tax column", exact: true });
+
+  await expect(label).toHaveCount(0);
+
+  await page.getByRole("switch", { name: "Tax per line" }).click();
+
+  await expect(label).toBeVisible();
+});
+
+test("a header colour stored as a name shows as that colour in its swatch", async ({
+  page
+}) => {
+  await gotoEditorReady(page);
+  await page.evaluate(async () => {
+    const api = (
+      window as unknown as Record<
+        string,
+        { createInvoice: (data: unknown) => Promise<string> }
+      >
+    ).raseeda;
+
+    await api.createInvoice({
+      tableSettings: {
+        backgroundColor: "white",
+        borderColor: "rgba(255, 0, 0, 0.5)"
+      }
+    });
+  });
+
+  await expect(
+    page.getByRole("textbox", { name: "Header colour code" })
+  ).toHaveValue("white");
+  await expect(page.getByLabel("Header colour", { exact: true })).toHaveValue(
+    "#ffffff"
+  );
+  await expect(page.getByLabel("Borders colour", { exact: true })).toHaveValue(
+    "#ff0000"
+  );
+});

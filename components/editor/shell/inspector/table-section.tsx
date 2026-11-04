@@ -12,6 +12,7 @@ import { DEFAULT_TABLE_SETTINGS } from "~/schema/invoice";
 import { useTableSettingsSlice } from "~/stores/invoice-selectors";
 import type { TableSettings } from "~/types";
 import { getAmountColumnLabel } from "~/utils/table-columns";
+import { HEX_COLOUR, toSixDigitHex } from "~/utils/to-six-digit-hex";
 
 type ColumnLabelKey = keyof TableSettings["columnLabels"];
 
@@ -23,9 +24,6 @@ const LABEL_ROWS: { key: ColumnLabelKey; label: string }[] = [
   { key: "tax", label: "Tax" },
   { key: "amount", label: "Amount" }
 ];
-
-// A whole hex code, with or without its "#": three digits or six.
-const HEX_COLOUR = /^#?([0-9a-f]{3}|[0-9a-f]{6})$/i;
 
 // The line items' columns, their labels and colours. The labels are the same
 // ones the table's header edits on the page; the Tax and Amount labels are
@@ -51,7 +49,7 @@ export function TableSection() {
       case "unit":
         return columns.quantityAndPrice && columns.unit;
       case "tax":
-        return hasTax;
+        return hasTax && isPerLine;
       default:
         return true;
     }
@@ -61,6 +59,7 @@ export function TableSection() {
   // Amount column the tax section ("Net amount" while tax is on).
   function getPlaceholder(row: { key: ColumnLabelKey; label: string }) {
     if (row.key === "tax") return taxLabel;
+
     if (row.key === "amount") {
       return getAmountColumnLabel({ ...columnLabels, amount: "" }, hasTax);
     }
@@ -203,19 +202,6 @@ function ColumnLabelRow({
       />
     </InspectorRow>
   );
-}
-
-// The colour input wants all six digits.
-function toSixDigitHex(colour: string) {
-  const match = HEX_COLOUR.exec(colour);
-
-  if (!match) return "#000000";
-
-  const digits = match[1];
-
-  return digits.length === 3
-    ? `#${Array.from(digits, digit => digit + digit).join("")}`
-    : `#${digits}`;
 }
 
 // A colour as a swatch that opens the system's picker, and its hex code,
