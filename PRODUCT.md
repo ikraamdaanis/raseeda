@@ -18,6 +18,36 @@ raseeda is a free invoice generator that runs entirely in the browser. It lets s
 
 Truly local-first. There are no accounts and no server-side data; all invoice data lives in the browser's IndexedDB. The only analytics are anonymous first-party counts (event name, country, browser family, OS, device type, language, the kind of site a visit came from, and bucketed invoice details such as the currency code, never names or amounts), with no identifiers or cookies. A hosted invoicing tool cannot truthfully make that claim.
 
+## Scope
+
+raseeda's job ends when the PDF is saved. A feature belongs if it makes the document better or the next one faster to make. Anything about what happens after it's sent (chasing, tracking, reporting, collecting payment) is out.
+
+### In scope
+
+- Invoices, and three close cousins made the same way: quotes, receipts and credit notes. Each is a one-off document with its own title, dates and closing rows, and turning a quote into an invoice is a duplicate with the type changed. Only invoices exist today.
+- Everything the printed document needs to say, including how to pay: bank details, a payment QR code built on the device, or a payment link the user types in.
+- A printed invoice that works in any language and region: renameable labels, any script, local date and number formats.
+- Reuse: templates, the business profile, auto-numbering, duplicating, and suggesting clients from past invoices while the client block is filled in.
+- The library as a working set for finding, reopening, duplicating and fixing past documents. Its search, sort, grouping and filters exist to find one.
+- Backup and restore through an export file, which is also how invoices move to another device.
+
+### Out of scope
+
+- Tracking: sent, paid or overdue status in the library, reminders, follow-ups. A payment written on the document (amount paid, the PAID stamp) is document content and stays.
+- Reporting: totals per client, month or year, dashboards, exports for accounting.
+- A client list kept apart from the invoices. Client suggestions come from past invoices only.
+- Links between documents or their state, such as which quote was accepted or which invoice a credit note cancels. A credit note names the invoice it refers to as printed text.
+- Sending or collecting: emailing from raseeda, payment providers, checking whether a payment arrived. The user downloads the PDF and sends it.
+- Recurring invoices, or anything else that runs on a schedule.
+- Sync of any kind: no cloud copy, no peer-to-peer, no synced folder.
+- Accounts, teams, or sharing between people.
+- Translating the editor's own interface, which stays in English.
+- Paid features of any kind (see Brand Commitments).
+
+### Open questions
+
+- E-invoices (Factur-X / ZUGFeRD, XRechnung, Peppol). Out for now, since they bring structured tax and party data and strict validation. Not ruled out: a Factur-X file is still a PDF made on the device, and EU countries are starting to require e-invoices between businesses (Germany from 2027).
+
 ## Operating Context
 
 - Users edit one invoice at a time on a canvas, with settings alongside, then export to PDF (A4) or print.
@@ -27,14 +57,16 @@ Truly local-first. There are no accounts and no server-side data; all invoice da
 
 ## Capabilities and Constraints
 
-- Seller and client details, line items, tax, fees, discounts, terms, and payment details (bank name, account number, IBAN, BIC/SWIFT, sort code, notes).
-- Customisable look: ten invoice fonts, font weight, three sizes, and logo upload. The invoice font library is a user-facing feature, separate from the app's own typography.
+- Seller and client details, line items, tax (one rate or a rate per line), fees, discounts, terms, and payment details (bank name, account number, IBAN, BIC/SWIFT, sort code, notes).
+- Every amount can also show in a second currency, at a rate the user types in.
+- Autosave with no Save step, undo and redo, and a version history per invoice.
+- Customisable look: eleven invoice fonts, font weight, three sizes, and logo upload. The invoice font library is a user-facing feature, separate from the app's own typography.
 - Any currency, with custom symbols.
 - Save/load documents and templates in IndexedDB; full data import/export.
 - PDF export via @react-pdf/renderer; print is a first-class target (A4).
 - No backend for data; deployed as static assets on Cloudflare Workers. The only request the app makes is the anonymous usage beacon to its own origin.
 - Every page sends a Content-Security-Policy that refuses requests to any other origin. The homepage names it as a check visitors can make, so it must stay.
-- No service worker: an open tab keeps working without a connection, but a fresh visit needs one. Do not claim offline support.
+- A service worker saves the whole app once the editor has been opened, so later visits work offline.
 - The editor has no accent-colour control today (the theme's accent is fixed at its default); do not advertise one.
 - Must work for international users: any currency, multiple scripts and fonts, varied name and address formats.
 - Mobile editing is a real scenario, not a desktop-only afterthought.
@@ -43,6 +75,7 @@ Truly local-first. There are no accounts and no server-side data; all invoice da
 
 - Name: raseeda (lowercase), served at raseeda.com.
 - Voice: plain and direct, with no sign-up or marketing pressure ("There is nothing to sign up for", "Files are written to your machine, not someone else's").
+- Free: every feature is free and stays free, with no premium tier, watermark or invoice limit. If raseeda is ever funded, it is by donations or sponsorship, never by gating features or using data.
 - Privacy claims on the site (no third-party analytics, no third-party requests, no cookies, anonymous usage counts only) are binding and must stay true.
 
 ## Evidence on Hand
@@ -56,7 +89,7 @@ Truly local-first. There are no accounts and no server-side data; all invoice da
 2. Local-first is a promise, not a feature. Never add accounts, servers holding user data, tracking of individuals or third-party requests, and keep privacy copy honest.
 3. Fast to a correct invoice. Defaults should be good enough that a first-time user can finish without configuration.
 4. Customisation serves the freelancer's identity, not complexity. Power is available but never required.
-5. Works for everyone's invoice: any currency, any language, any device.
+5. Works for everyone's invoice: any currency, any language and region on the printed page, any device.
 
 ## Accessibility & Inclusion
 

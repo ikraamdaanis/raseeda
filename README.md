@@ -4,6 +4,8 @@ A free, local-first invoice generator that runs entirely in your browser. Fill i
 
 **Live app:** [raseeda.com](https://raseeda.com)
 
+raseeda makes the document and stops there: it isn't an invoice tracker, CRM or accounting tool. What's in and out of scope is in [PRODUCT.md](PRODUCT.md#scope).
+
 ## Features
 
 - Create invoices with seller and client details, line items, tax, fees, discounts, and terms

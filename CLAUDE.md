@@ -4,6 +4,8 @@
 
 raseeda is a free, local-first invoice generator that runs entirely in the browser. No accounts, no tracking of individuals; all invoice data stays on the user's device in IndexedDB. The only thing pages send back is an anonymous usage event: its name and a few bucketed fields, never invoice content.
 
+What raseeda is for, and what it deliberately leaves out (it is not an invoice tracker), is in the Scope section of `PRODUCT.md`. Check a feature against it before proposing or building one.
+
 ## Tech Stack
 
 - **Framework:** TanStack Start (React 19 + TanStack Router)
