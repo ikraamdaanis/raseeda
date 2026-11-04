@@ -302,8 +302,11 @@ const DESCRIPTION_FLOOR_WIDTH = "4em";
 // The rows' gap between columns, gap-2.
 const COLUMN_GAP_WIDTH = 8;
 
-// Room a field needs beyond its text: its padding while it's edited.
-const CELL_PADDING_WIDTH = 16;
+// Room a figure needs beyond its text at rest: a field's border, and the
+// amount columns' right padding. The padding a field gains while it's edited
+// comes out of the spare room, so in a table with none a focused figure
+// scrolls a little rather than the table overflowing.
+const CELL_PADDING_WIDTH = 10;
 
 // Room a column takes beyond that where the row has it, so the figures don't
 // crowd. A row short of room gives it up before the description shrinks.

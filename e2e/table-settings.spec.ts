@@ -357,4 +357,16 @@ test("a long figure takes room from the description rather than being cut off", 
   expect(
     await header.evaluate(row => row.scrollWidth - row.clientWidth)
   ).toBeLessThanOrEqual(0);
+
+  // Nor does any figure get cut off inside its own cell.
+  const clipped = await page
+    .getByRole("table", { name: "Invoice line items" })
+    .locator("input")
+    .evaluateAll(fields =>
+      fields
+        .filter(field => field.scrollWidth > field.clientWidth)
+        .map(field => field.getAttribute("aria-label"))
+    );
+
+  expect(clipped).toEqual([]);
 });
