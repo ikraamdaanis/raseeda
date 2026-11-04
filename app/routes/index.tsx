@@ -354,12 +354,12 @@ function SectionHeading({
 // The hero is a sky from behind the header (the section pulls up under it) to
 // the editor window's cut: inset from the viewport with rounded corners from
 // `lg`, and running to the screen's edges below it. The copy sits centred on
-// it and the window rises from its foot. The h1 opens with what the page is,
-// a small line over the headline, so the heading search engines read names
-// the topic. The copy rises into place line by line, 60ms apart (that line
-// with the first), then the editor window fades in. On phones the copy and
-// buttons sit on the left, in line with the editor window's crop below them;
-// from `sm` they are centred over the whole window.
+// it and the window rises from its foot. The h1's first line says what the
+// page is, so the heading search engines read names the topic; its second
+// is the promise. The copy rises into place line by line, 60ms apart, then
+// the editor window fades in. On phones the copy and buttons sit on the left,
+// in line with the editor window's crop below them; from `sm` they are
+// centred over the whole window.
 function Hero() {
   return (
     <HeroSky>
@@ -371,20 +371,12 @@ function Hero() {
       >
         <div className="flex flex-col items-start gap-5 sm:items-center">
           <h1 className={cn(HEADING, typeClass("display"))}>
-            <span
-              className={cn(
-                CONTROL_TEXT,
-                "hero-focus text-brand-700 mb-3 block tracking-normal"
-              )}
-            >
-              Free invoice generator
-            </span>
-            <span className="hero-focus block">Make the invoice.</span>
+            <span className="hero-focus block">Free invoice generator.</span>
             <span className="hero-focus block [animation-delay:60ms]">
               Keep your data.
             </span>
           </h1>
-          <p className="hero-focus text-ink/75 max-w-[48ch] text-lg/7 text-pretty [animation-delay:120ms]">
+          <p className="hero-focus text-ink/75 max-w-[48ch] text-lg/7 text-pretty [animation-delay:120ms] sm:max-w-[60ch]">
             A free,{" "}
             <a
               href={SOURCE_URL}
@@ -404,8 +396,10 @@ function Hero() {
                 aria-hidden="true"
               />
             </a>{" "}
-            invoice maker for freelancers that runs in your browser. No sign-up,
-            and your invoices are never uploaded.
+            invoice maker that runs in your browser.{" "}
+            <span className="sm:block">
+              No sign-up or watermark. Invoices stay right here.
+            </span>
           </p>
         </div>
         <div
@@ -1193,14 +1187,14 @@ function Closing() {
             "flex flex-col items-center gap-8 py-24 text-center sm:py-32"
           )}
         >
-          <div className="flex flex-col items-center gap-4">
-            <p className={cn("text-brand-700 font-medium", CONTROL_TEXT)}>
-              Nothing to sign up for
-            </p>
+          <div className="flex flex-col items-center gap-5">
             <h2 className={cn(HEADING, typeClass("display"))}>
               <span className="block">Your next invoice</span>
               <span className="block">starts here.</span>
             </h2>
+            <p className="text-ink/75 max-w-[48ch] text-lg/7 text-balance">
+              Nothing to sign up for. Your invoices stay in this browser.
+            </p>
           </div>
           <div className="flex flex-wrap items-center justify-center gap-3">
             <CreateInvoiceLink />

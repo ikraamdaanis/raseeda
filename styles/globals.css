@@ -646,8 +646,8 @@ html[data-editor-theme="dark"] {
    for single-line controls and secondary headings: display drops a notch and
    body tightens its leading to fit a button or label. The hero's display size
    grows with the viewport, from 36/40 at 400px to 60/60 at 800px, rather than
-   jumping at a breakpoint; below 400px it keeps shrinking so "Make the
-   invoice." stays on one line down to a 360px phone. Section titles grow
+   jumping at a breakpoint; below 400px it keeps shrinking so "Keep your
+   data." stays on one line down to a 360px phone. Section titles grow
    the same way, from 28px on phones to 36px by 672px, so they never match
    the hero's headline. */
 .home-type {
