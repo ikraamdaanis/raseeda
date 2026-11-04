@@ -35,6 +35,29 @@ async function gotoTwoLineInvoice(page: Page) {
   await setNumber(page.getByLabel("Tax percentage"), "20");
 }
 
+// Adds an invoice through the automation API, found by what it does rather
+// than the app's name, and opens it.
+async function createAndOpenInvoice(page: Page, invoice: unknown) {
+  await page.evaluate(async data => {
+    const api = Object.values(window).find(
+      (
+        value: unknown
+      ): value is {
+        createInvoice: (data: unknown) => Promise<string>;
+        openInvoice: (id: string) => Promise<void>;
+      } =>
+        typeof value === "object" &&
+        value !== null &&
+        "createInvoice" in value &&
+        typeof value.createInvoice === "function"
+    );
+
+    if (!api) throw new Error("The automation API isn't on the page");
+
+    await api.openInvoice(await api.createInvoice(data));
+  }, invoice);
+}
+
 test("the Tax header follows the tax row until it's given a label of its own", async ({
   page
 }) => {
@@ -200,28 +223,11 @@ test("a header colour stored as a name shows as that colour in its swatch", asyn
   page
 }) => {
   await gotoEditorReady(page);
-  // The automation API, found by what it does rather than the app's name.
-  await page.evaluate(async () => {
-    const api = Object.values(window).find(
-      (
-        value: unknown
-      ): value is {
-        createInvoice: (data: unknown) => Promise<string>;
-      } =>
-        typeof value === "object" &&
-        value !== null &&
-        "createInvoice" in value &&
-        typeof value.createInvoice === "function"
-    );
-
-    if (!api) throw new Error("The automation API isn't on the page");
-
-    await api.createInvoice({
-      tableSettings: {
-        backgroundColor: "white",
-        borderColor: "rgba(255, 0, 0, 0.5)"
-      }
-    });
+  await createAndOpenInvoice(page, {
+    tableSettings: {
+      backgroundColor: "white",
+      borderColor: "rgba(255, 0, 0, 0.5)"
+    }
   });
 
   await expect(
@@ -233,4 +239,100 @@ test("a header colour stored as a name shows as that colour in its swatch", asyn
   await expect(page.getByLabel("Borders colour", { exact: true })).toHaveValue(
     "#ff0000"
   );
+});
+
+test("the picker's colour undoes in one step, from the picker", async ({
+  page
+}) => {
+  await gotoTwoLineInvoice(page);
+
+  const picker = page.getByLabel("Header colour", { exact: true });
+  const code = page.getByRole("textbox", { name: "Header colour code" });
+
+  await picker.fill("#ff0000");
+  await picker.fill("#ee1100");
+  await picker.fill("#dd2200");
+  await expect(code).toHaveValue("#dd2200");
+
+  await pressShortcut(page, "Mod+z");
+
+  await expect(code).toHaveValue("#f9fafb");
+  await expect(picker).toBeFocused();
+});
+
+test("a credit keeps its minus, tabbed through or typed", async ({ page }) => {
+  await gotoEditorReady(page);
+  await createAndOpenInvoice(page, {
+    currency: "£",
+    currencyCode: "GBP",
+    items: [
+      { id: "a", description: "Work", quantity: 1, unit: "", unitPrice: 300 },
+      { id: "b", description: "Credit", quantity: 1, unit: "", unitPrice: -150 }
+    ]
+  });
+
+  const price = page.getByLabel("Unit Price, item 2");
+
+  await expect(price).toHaveValue("-£150.00");
+  await price.focus();
+  await expect(price).toHaveValue("-£150");
+  await price.press("Tab");
+  await expect(price).toHaveValue("-£150.00");
+
+  await page.getByRole("switch", { name: "Quantity and price" }).click();
+
+  const amount = page.getByLabel("Net amount, item 1");
+
+  await setNumber(amount, "-75");
+
+  await expect(amount).toHaveValue("-£75.00");
+  await expect.poll(() => savedContains(page, '"unitPrice":-75')).toBe(true);
+});
+
+test("a long figure takes room from the description rather than being cut off", async ({
+  page
+}) => {
+  await gotoEditorReady(page);
+  await createAndOpenInvoice(page, {
+    currency: "£",
+    currencyCode: "GBP",
+    theme: { font: "jetbrains-mono", size: "large" },
+    sections: { tax: true, currencyConversion: true },
+    currencyConversion: {
+      currency: "¥",
+      currencyCode: "JPY",
+      rate: 191.37,
+      date: "2026-11-04",
+      source: "ECB",
+      showRate: true
+    },
+    tax: { percentage: 20, exempt: false, note: "", perLine: true },
+    items: [
+      {
+        id: "a",
+        description: "Website redesign",
+        quantity: 40,
+        unit: "hours",
+        unitPrice: 1250,
+        tax: { percentage: 17.25, exempt: false }
+      },
+      {
+        id: "b",
+        description: "Hosting",
+        quantity: 12,
+        unit: "months",
+        unitPrice: 85.5
+      }
+    ]
+  });
+
+  const header = page
+    .getByRole("table", { name: "Invoice line items" })
+    .getByRole("row")
+    .first();
+
+  await expect(header.getByRole("columnheader")).toHaveCount(7);
+  expect(
+    await header.evaluate(row => row.scrollWidth - row.clientWidth)
+  ).toBeLessThanOrEqual(0);
 });

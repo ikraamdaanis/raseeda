@@ -1,4 +1,5 @@
 import { IconMinus, IconPlus } from "@tabler/icons-react";
+import { sum } from "lodash-es";
 import type { CSSProperties, FocusEvent } from "react";
 import { useEffect, useState } from "react";
 import { useShallow } from "zustand/react/shallow";
@@ -26,6 +27,11 @@ import type {
 } from "~/types";
 import { buildLineItemRow } from "~/utils/build-invoice-view-model";
 import { calculateLineAmount } from "~/utils/calculate-invoice-totals";
+import {
+  formatDecimalDraft,
+  normalizeDecimalInput,
+  parseDecimalDraft
+} from "~/utils/decimal-input";
 import { getRoleSettings } from "~/utils/get-role-settings";
 import { getTextStyles } from "~/utils/get-text-styles";
 import { handlePercentageInput } from "~/utils/handle-percentage-input";
@@ -70,40 +76,6 @@ type SetTableSettings = ReturnType<
   typeof useLineItemsSlice
 >["setTableSettings"];
 type VisibleColumns = ReturnType<typeof useVisibleColumns>;
-
-// Coerce raw input into a decimal draft string: drop everything that is not a
-// digit or a dot (this also strips any currency symbol), keep only the first
-// dot, cap at two decimal places, and remove leading zeros.
-function normalizeDecimalInput(value: string): string {
-  let numericValue = value.replace(/[^0-9.]/g, "");
-
-  const firstDot = numericValue.indexOf(".");
-
-  if (firstDot !== -1) {
-    const wholePart = numericValue.slice(0, firstDot);
-    const decimalPart = numericValue
-      .slice(firstDot + 1)
-      .replace(/\./g, "")
-      .slice(0, 2);
-    numericValue = `${wholePart}.${decimalPart}`;
-  }
-
-  if (
-    numericValue.length > 1 &&
-    numericValue.startsWith("0") &&
-    !numericValue.startsWith("0.")
-  ) {
-    numericValue = numericValue.replace(/^0+/, "");
-  }
-
-  return numericValue;
-}
-
-// An in-progress draft like "" or "." has no numeric value yet, so it commits
-// as 0.
-function parseDecimalDraft(draft: string): number {
-  return draft === "" || draft === "." ? 0 : Number(draft);
-}
 
 const LINE_ITEM_COLUMNS: LineItemColumnConfig[] = [
   {
@@ -320,9 +292,15 @@ function useVisibleColumns() {
   };
 }
 
-// The description keeps at least this much of the table, however long the
-// figures.
+// The description keeps at least this much of the table while the figures
+// leave room for it.
 const DESCRIPTION_MIN_WIDTH = "15%";
+
+// What the description keeps however long the figures: a few characters.
+const DESCRIPTION_FLOOR_WIDTH = "4em";
+
+// The rows' gap between columns, gap-2.
+const COLUMN_GAP_WIDTH = 8;
 
 // Room a field needs beyond its text: its padding while it's edited.
 const CELL_PADDING_WIDTH = 16;
@@ -405,34 +383,53 @@ function useColumnTemplate({
     }
   }
 
+  // Each figure column's width: its widest text, header line or figure, and
+  // the field's padding.
+  function measureColumn(column: LineItemColumnConfig) {
+    const headerStyle = getTextStyles({
+      settings: getRoleSettings(theme, column.headerRole)
+    });
+    const rowStyle = getTextStyles({
+      settings: getRoleSettings(theme, column.rowRole)
+    });
+    const label =
+      getPrintedColumnLabel({
+        column,
+        columnLabels: tableSettings.columnLabels,
+        taxLabel,
+        hasTax
+      }) || column.headerPlaceholder;
+    const headerWidths = [label, getColumnCurrency(column, conversion)].map(
+      line => measureTextWidth(line, headerStyle)
+    );
+    const cellWidths = getCellTexts(column).map(text =>
+      measureTextWidth(text, rowStyle)
+    );
+
+    return (
+      Math.ceil(Math.max(0, ...headerWidths, ...cellWidths)) +
+      CELL_PADDING_WIDTH
+    );
+  }
+
+  const widths = new Map(
+    columns
+      .filter(column => column.id !== "description")
+      .map(column => [column.id, measureColumn(column)])
+  );
+  // What the figures and the gaps between the columns take. The description
+  // keeps its share of the rest, but gives it up before a figure is clipped,
+  // as the PDF's does, down to a few characters.
+  const figuresWidth =
+    sum([...widths.values()]) + COLUMN_GAP_WIDTH * (columns.length - 1);
+
   return columns
     .map(column => {
-      if (column.id === "description") {
-        return `minmax(${DESCRIPTION_MIN_WIDTH}, 1fr)`;
-      }
+      const width = widths.get(column.id);
 
-      const headerStyle = getTextStyles({
-        settings: getRoleSettings(theme, column.headerRole)
-      });
-      const rowStyle = getTextStyles({
-        settings: getRoleSettings(theme, column.rowRole)
-      });
-      const label =
-        getPrintedColumnLabel({
-          column,
-          columnLabels: tableSettings.columnLabels,
-          taxLabel,
-          hasTax
-        }) || column.headerPlaceholder;
-      const headerWidths = [label, getColumnCurrency(column, conversion)].map(
-        line => measureTextWidth(line, headerStyle)
-      );
-      const cellWidths = getCellTexts(column).map(text =>
-        measureTextWidth(text, rowStyle)
-      );
-      const width =
-        Math.ceil(Math.max(0, ...headerWidths, ...cellWidths)) +
-        CELL_PADDING_WIDTH;
+      if (width === undefined) {
+        return `minmax(max(${DESCRIPTION_FLOOR_WIDTH}, min(${DESCRIPTION_MIN_WIDTH}, 100% - ${figuresWidth}px)), 1fr)`;
+      }
 
       return `minmax(${width}px, ${width + COLUMN_SPARE_WIDTH}px)`;
     })
@@ -871,12 +868,13 @@ function TableCell({
     setIsEditingNumeric(false);
     setNumericDraft("");
 
-    const hasDigits = /\d/.test(target.value);
-    const number = Number(
-      target.value.replace(currencySymbol, "").replace(/[^0-9.]/g, "")
+    // A leftover draft ("5.", "-") settles on its number; a credit keeps its
+    // minus.
+    const draft = normalizeDecimalInput(
+      target.value.replace(currencySymbol, "")
     );
 
-    updateItem(index, itemField, hasDigits ? number : 0);
+    updateItem(index, itemField, parseDecimalDraft(draft));
   }
 
   function handleFocus() {
@@ -956,7 +954,7 @@ function TableCell({
 
   if (column.cell.kind === "currency") {
     inputValue = isEditingNumeric
-      ? `${currencySymbol}${numericDraft}`
+      ? formatDecimalDraft(numericDraft, currencySymbol)
       : viewRow.unitPrice;
   }
 
@@ -1045,7 +1043,11 @@ function AmountCell({
     <InvoiceInput
       aria-label={label}
       data-field={`items.${item.id}.amount`}
-      value={draft === null ? formattedAmount : `${currencySymbol}${draft}`}
+      value={
+        draft === null
+          ? formattedAmount
+          : formatDecimalDraft(draft, currencySymbol)
+      }
       onChange={handleChange}
       onFocus={() => setDraft(String(amount))}
       onBlur={() => setDraft(null)}

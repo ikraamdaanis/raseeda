@@ -72,16 +72,19 @@ test("coerces non-numeric input to zero, never NaN", async ({ page }) => {
   await expect(amount).not.toContainText("NaN");
 });
 
-test("strips a leading negative sign from numeric fields", async ({ page }) => {
+test("keeps a leading minus, so a line can be a credit", async ({ page }) => {
   await gotoEditorReady(page);
 
   const quantity = page.getByLabel("Quantity, item 1");
 
   await setNumber(quantity, "-5");
-  await expect(quantity).toHaveValue("5");
+  await expect(quantity).toHaveValue("-5");
 
-  await setNumber(page.getByLabel("Unit Price, item 1"), "-10");
-  await expect(page.getByLabel("Amount, item 1")).toHaveText("$50.00");
+  await setNumber(page.getByLabel("Unit Price, item 1"), "10");
+  await expect(page.getByLabel("Amount, item 1")).toHaveText("-$50.00");
+
+  await setNumber(quantity, "5-");
+  await expect(quantity).toHaveValue("5");
 });
 
 test("handles many items without losing rows", async ({ page }) => {
