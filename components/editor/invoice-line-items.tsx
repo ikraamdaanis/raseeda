@@ -3,6 +3,7 @@ import type { CSSProperties, FocusEvent } from "react";
 import { useEffect, useState } from "react";
 import { useShallow } from "zustand/react/shallow";
 import { InvoiceInput } from "~/components/editor/invoice-input";
+import { InvoiceTextArea } from "~/components/editor/invoice-textarea";
 import { Button } from "~/components/ui/button";
 import { getCurrencyMarker } from "~/consts/currencies";
 import { useCurrencyConversion } from "~/hooks/use-currency-conversion";
@@ -28,6 +29,7 @@ import { calculateLineAmount } from "~/utils/calculate-invoice-totals";
 import { getRoleSettings } from "~/utils/get-role-settings";
 import { getTextStyles } from "~/utils/get-text-styles";
 import { handlePercentageInput } from "~/utils/handle-percentage-input";
+import { measureTextWidth } from "~/utils/measure-text-width";
 import { getShownColumns, getTaxColumnLabel } from "~/utils/table-columns";
 
 type LineItemFieldKey = "description" | "quantity" | "unit" | "unitPrice";
@@ -43,8 +45,6 @@ interface LineItemColumnConfig {
   rowRole: TextRole;
   headerPlaceholder: string;
   headerInputClassName: string;
-  // Its track in the table's grid, narrower with a second currency's column.
-  width: { single: string; converted: string };
   cell: {
     kind: LineItemColumnKind;
     itemField?: LineItemFieldKey;
@@ -105,7 +105,6 @@ const LINE_ITEM_COLUMNS: LineItemColumnConfig[] = [
     headerPlaceholder: "Description",
     headerInputClassName:
       "relative h-full w-full rounded-none rounded-tl-sm border-none bg-transparent py-2 pl-2 hover:bg-brand-50 focus-visible:z-10 focus-visible:px-2",
-    width: { single: "1fr", converted: "1fr" },
     cell: {
       kind: "text",
       itemField: "description",
@@ -122,7 +121,6 @@ const LINE_ITEM_COLUMNS: LineItemColumnConfig[] = [
     headerPlaceholder: "Quantity",
     headerInputClassName:
       "relative h-full w-full rounded-none border-none bg-transparent py-2 hover:bg-brand-50 focus-visible:z-10 focus:px-0",
-    width: { single: "80px", converted: "64px" },
     cell: {
       kind: "integer",
       itemField: "quantity",
@@ -138,7 +136,6 @@ const LINE_ITEM_COLUMNS: LineItemColumnConfig[] = [
     headerPlaceholder: "Unit",
     headerInputClassName:
       "relative h-full w-full rounded-none border-none bg-transparent py-2 hover:bg-brand-50 focus-visible:z-10 focus:px-0",
-    width: { single: "80px", converted: "64px" },
     cell: {
       kind: "text",
       itemField: "unit",
@@ -155,7 +152,6 @@ const LINE_ITEM_COLUMNS: LineItemColumnConfig[] = [
     headerPlaceholder: "Unit Price",
     headerInputClassName:
       "relative h-full w-full rounded-none border-none bg-transparent py-2 hover:bg-brand-50 focus-visible:z-10 focus:px-0",
-    width: { single: "120px", converted: "96px" },
     cell: {
       kind: "currency",
       itemField: "unitPrice",
@@ -171,7 +167,6 @@ const LINE_ITEM_COLUMNS: LineItemColumnConfig[] = [
     headerPlaceholder: "Tax",
     headerInputClassName:
       "relative h-full w-full rounded-none border-none bg-transparent py-2 hover:bg-brand-50 focus-visible:z-10 focus:px-0",
-    width: { single: "64px", converted: "64px" },
     cell: {
       kind: "tax",
       wrapperClassName: "col-span-1 text-center",
@@ -185,7 +180,6 @@ const LINE_ITEM_COLUMNS: LineItemColumnConfig[] = [
     headerPlaceholder: "Amount",
     headerInputClassName:
       "relative h-auto w-full rounded-none rounded-tr-sm border-none bg-transparent py-2 pr-2 hover:bg-brand-50 focus-visible:z-10 focus:pr-2 focus:pl-0",
-    width: { single: "150px", converted: "104px" },
     cell: {
       kind: "amount",
       wrapperClassName: "col-span-1 pr-2",
@@ -198,7 +192,6 @@ const LINE_ITEM_COLUMNS: LineItemColumnConfig[] = [
     rowRole: "tableRowRight",
     headerPlaceholder: "Converted amount",
     headerInputClassName: "block py-2 pr-2",
-    width: { single: "120px", converted: "120px" },
     cell: {
       kind: "convertedAmount",
       wrapperClassName: "col-span-1 pr-2",
@@ -251,10 +244,9 @@ function getColumnCurrency(
  */
 // Quantity, Unit and Unit price show as the table's settings say, and the PDF
 // leaves out the Unit column when no line has a unit, so Preview does too.
-// The converted amount takes its room from the other columns, so the table
-// keeps the page's width. The Tax column shows, as in the PDF, only while the
-// lines' rates differ, and takes its room from the description. While editing
-// with Per line on it always shows, so there's somewhere to set a line's rate.
+// The Tax column shows, as in the PDF, only while the lines' rates differ.
+// While editing with Per line on it always shows, so there's somewhere to set
+// a line's rate.
 // With quantity and price off, a line's amount is typed in instead.
 function useVisibleColumns() {
   const isPreview = useIsPreview();
@@ -292,13 +284,124 @@ function useVisibleColumns() {
   return {
     columns,
     canEditLineRates,
-    canTypeAmount: !isPreview && !shown.quantityAndPrice,
-    gridTemplateColumns: columns
-      .map(column =>
-        hasConversion ? column.width.converted : column.width.single
-      )
-      .join(" ")
+    canTypeAmount: !isPreview && !shown.quantityAndPrice
   };
+}
+
+// The description keeps at least this much of the table, however long the
+// figures.
+const DESCRIPTION_MIN_WIDTH = "15%";
+
+// Room a field needs beyond its text: its padding while it's edited.
+const CELL_PADDING_WIDTH = 16;
+
+// Room a column takes beyond that where the row has it, so the figures don't
+// crowd. A row short of room gives it up before the description shrinks.
+const COLUMN_SPARE_WIDTH = 12;
+
+// Bumps when a web font finishes loading, so text measured in a fallback font
+// is measured again.
+function useFontLoads() {
+  const [fontLoads, setFontLoads] = useState(0);
+
+  useEffect(() => {
+    function handleLoadingDone() {
+      setFontLoads(count => count + 1);
+    }
+
+    document.fonts.addEventListener("loadingdone", handleLoadingDone);
+
+    return () =>
+      document.fonts.removeEventListener("loadingdone", handleLoadingDone);
+  }, []);
+
+  return fontLoads;
+}
+
+// The table's grid: every column but the description as wide as its widest
+// text, a label, its currency or a line's figure, and the description the
+// rest, the way the PDF sizes them, so Preview matches it. The grid grows a
+// column into its spare room only once each column has its text's width, and
+// the description takes what's left.
+function useColumnTemplate({
+  columns,
+  items,
+  tableSettings,
+  currency
+}: {
+  columns: LineItemColumnConfig[];
+  items: InvoiceItem[];
+  tableSettings: TableSettings;
+  currency: string;
+}) {
+  // Measured text changes when a font loads, which nothing here reads, so the
+  // compiler mustn't keep a template measured in the fallback.
+  "use no memo";
+
+  useFontLoads();
+
+  const theme = useTheme();
+  const conversion = useCurrencyConversion();
+  const tax = useInvoiceStore(state => state.tax);
+  const taxLabel = useInvoiceStore(state => state.labels.tax);
+  const isPreview = useIsPreview();
+  const rows = items.map(item =>
+    buildLineItemRow({ item, currency, conversion, tax })
+  );
+
+  function getCellTexts(column: LineItemColumnConfig) {
+    switch (column.id) {
+      case "quantity":
+        return items.map(item => String(item.quantity));
+      case "unit":
+        return items.map(
+          item =>
+            item.unit || (isPreview ? "" : (column.cell.placeholder ?? ""))
+        );
+      case "unitPrice":
+        return rows.map(row => row.unitPrice);
+      case "tax":
+        return rows.map(row => row.tax);
+      case "amount":
+        return rows.map(row => row.amount);
+      case "convertedAmount":
+        return rows.map(row => row.convertedAmount ?? "");
+      default:
+        return [];
+    }
+  }
+
+  return columns
+    .map(column => {
+      if (column.id === "description") {
+        return `minmax(${DESCRIPTION_MIN_WIDTH}, 1fr)`;
+      }
+
+      const headerStyle = getTextStyles({
+        settings: getRoleSettings(theme, column.headerRole)
+      });
+      const rowStyle = getTextStyles({
+        settings: getRoleSettings(theme, column.rowRole)
+      });
+      const label =
+        column.id === "convertedAmount"
+          ? tableSettings.columnLabels.amount || "Amount"
+          : column.id === "tax"
+            ? getTaxColumnLabel(tableSettings.columnLabels, { tax: taxLabel })
+            : tableSettings.columnLabels[column.id] || column.headerPlaceholder;
+      const headerWidths = [label, getColumnCurrency(column, conversion)].map(
+        line => measureTextWidth(line, headerStyle)
+      );
+      const cellWidths = getCellTexts(column).map(text =>
+        measureTextWidth(text, rowStyle)
+      );
+      const width =
+        Math.ceil(Math.max(0, ...headerWidths, ...cellWidths)) +
+        CELL_PADDING_WIDTH;
+
+      return `minmax(${width}px, ${width + COLUMN_SPARE_WIDTH}px)`;
+    })
+    .join(" ");
 }
 
 export function InvoiceLineItems() {
@@ -316,6 +419,13 @@ export function InvoiceLineItems() {
   const theme = useTheme();
   const isPreview = useIsPreview();
   const currencySymbol = getCurrencyMarker(currency);
+  const { columns } = useVisibleColumns();
+  const columnTemplate = useColumnTemplate({
+    columns,
+    items,
+    tableSettings,
+    currency
+  });
 
   return (
     <div data-field-area="items" className="w-full">
@@ -323,7 +433,12 @@ export function InvoiceLineItems() {
         role="table"
         aria-label="Invoice line items"
         className="line-items-container rounded-surface flex flex-col border"
-        style={{ borderColor: tableSettings.borderColor }}
+        style={
+          {
+            borderColor: tableSettings.borderColor,
+            "--line-item-columns": columnTemplate
+          } as CSSProperties
+        }
       >
         <div role="rowgroup" className="flex flex-col">
           <TableHeader
@@ -364,7 +479,7 @@ function TableHeader({
   theme: InvoiceTheme;
   setTableSettings: SetTableSettings;
 }) {
-  const { columns, gridTemplateColumns } = useVisibleColumns();
+  const { columns } = useVisibleColumns();
   const conversion = useCurrencyConversion();
   const taxLabel = useInvoiceStore(state => state.labels.tax);
   const isPreview = useIsPreview();
@@ -392,7 +507,7 @@ function TableHeader({
       style={{
         backgroundColor: tableSettings.backgroundColor,
         borderColor: tableSettings.borderColor,
-        gridTemplateColumns
+        gridTemplateColumns: "var(--line-item-columns)"
       }}
     >
       {columns.map(column => (
@@ -558,14 +673,16 @@ function LineItem({
   const taxLabel = useInvoiceStore(state => state.labels.tax);
   const viewRow = buildLineItemRow({ item, currency, conversion, tax });
   const isPreview = useIsPreview();
-  const { columns, canEditLineRates, canTypeAmount, gridTemplateColumns } =
-    useVisibleColumns();
+  const { columns, canEditLineRates, canTypeAmount } = useVisibleColumns();
 
   return (
     <div
       role="row"
       className="group/row relative grid items-center gap-2 border-t"
-      style={{ borderColor: tableSettings.borderColor, gridTemplateColumns }}
+      style={{
+        borderColor: tableSettings.borderColor,
+        gridTemplateColumns: "var(--line-item-columns)"
+      }}
     >
       {columns.map(column => (
         <TableCell
@@ -788,6 +905,25 @@ function TableCell({
       ? "invoice-field-table"
       : undefined;
 
+  // A description wraps onto more lines, as it does in the PDF, rather than
+  // scrolling out of sight in a narrow column.
+  if (column.id === "description") {
+    return (
+      <div role="cell" className={column.cell.wrapperClassName}>
+        <InvoiceTextArea
+          id={focusId}
+          aria-label={`${cellLabel}, item ${index + 1}`}
+          data-field={`items.${item.id}.description`}
+          value={inputValue}
+          placeholder={column.cell.placeholder}
+          onChange={handleChange}
+          className={column.cell.inputClassName}
+          style={rowStyle}
+        />
+      </div>
+    );
+  }
+
   return (
     <div role="cell" className={column.cell.wrapperClassName}>
       <InvoiceInput
@@ -995,13 +1131,13 @@ function AddItemButton({
     });
   }
 
-  // A quiet row under the table, always there while editing; it only fills in
-  // on hover.
+  // A quiet button under the table, always there while editing and only as
+  // wide as its label; it fills in on hover.
   return (
     <button
       type="button"
       onClick={handleAddItem}
-      className="text-paper-muted-foreground hover:bg-paper-muted hover:text-paper-foreground focus-visible:ring-ring rounded-control my-1.5 flex h-8 w-full items-center gap-1.5 px-2 text-sm transition-colors outline-none focus-visible:ring-1 pointer-coarse:h-11"
+      className="text-paper-muted-foreground hover:bg-paper-muted hover:text-paper-foreground focus-visible:ring-ring rounded-control my-1.5 flex h-8 w-fit items-center gap-1.5 px-2 text-sm transition-colors outline-none focus-visible:ring-1 pointer-coarse:h-11"
     >
       <IconPlus aria-hidden="true" className="size-3.5" />
       Add item
