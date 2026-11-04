@@ -26,21 +26,30 @@ raseeda's job ends when the PDF is saved. A feature belongs if it makes the docu
 
 - Invoices, and three close cousins made the same way: quotes, receipts and credit notes. Each is a one-off document with its own title, dates and closing rows, and turning a quote into an invoice is a duplicate with the type changed. Only invoices exist today.
 - Everything the printed document needs to say, including how to pay: bank details, a payment QR code built on the device, or a payment link the user types in.
-- A printed invoice that works in any language and region: renameable labels, any script, local date and number formats.
-- Reuse: templates, the business profile, auto-numbering, duplicating, and suggesting clients from past invoices while the client block is filled in.
+- A printed invoice that works in any language and region: renameable labels, any script, local date and number formats, and A4 or Letter paper. Only A4 exists today.
+- Styling the document: fonts, size, weight, colours, a logo, section switches and renamed labels.
+- The fields a valid invoice needs, such as a supply date, per-line tax and a tax note. What goes on the invoice is the user's responsibility.
+- Reuse: templates, duplicating, and suggesting clients from past invoices while the client block is filled in.
 - The library as a working set for finding, reopening, duplicating and fixing past documents. Its search, sort, grouping and filters exist to find one.
 - Backup and restore through an export file, which is also how invoices move to another device.
+- Scripts and AI assistants making, opening and exporting documents through `window.raseeda` in the open tab, within the same scope as the editor.
+- Site pages that open the editor ready for a job, like the template gallery or a template for a trade or document type.
 
 ### Out of scope
 
 - Tracking: sent, paid or overdue status in the library, reminders, follow-ups. A payment written on the document (amount paid, the PAID stamp) is document content and stays.
 - Reporting: totals per client, month or year, dashboards, exports for accounting.
 - A client list kept apart from the invoices. Client suggestions come from past invoices only.
+- A saved sender profile or a stored numbering sequence. A template carries the user's own details, and the next number is typed in; a counter kept between invoices is the start of tracking. Both existed once and were removed.
+- Free-form layout: moving blocks around, a layout designer, custom CSS. One well-made layout stays correct in print.
+- Country rules: per-country rule sets, warnings that an invoice is missing something, checking VAT numbers.
 - Links between documents or their state, such as which quote was accepted or which invoice a credit note cancels. A credit note names the invoice it refers to as printed text.
 - Sending or collecting: emailing from raseeda, payment providers, checking whether a payment arrived. The user downloads the PDF and sends it.
 - Recurring invoices, or anything else that runs on a schedule.
 - Sync of any kind: no cloud copy, no peer-to-peer, no synced folder.
 - Accounts, teams, or sharing between people.
+- A hosted API or a raseeda MCP server, since either would pass invoice data through a server.
+- A blog, articles, or mass-produced pages per country or city.
 - Translating the editor's own interface, which stays in English.
 - Paid features of any kind (see Brand Commitments).
 
@@ -75,6 +84,7 @@ raseeda's job ends when the PDF is saved. A feature belongs if it makes the docu
 
 - Name: raseeda (lowercase), served at raseeda.com.
 - Voice: plain and direct, with no sign-up or marketing pressure ("There is nothing to sign up for", "Files are written to your machine, not someone else's").
+- Open source: the code stays MIT-licensed and anyone can run their own copy with no raseeda server behind it, so the privacy promise never rests on trusting raseeda.com.
 - Free: every feature is free and stays free, with no premium tier, watermark or invoice limit. If raseeda is ever funded, it is by donations or sponsorship, never by gating features or using data.
 - Privacy claims on the site (no third-party analytics, no third-party requests, no cookies, anonymous usage counts only) are binding and must stay true.
 
