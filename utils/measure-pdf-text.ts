@@ -1,11 +1,8 @@
 import { Font } from "@react-pdf/renderer";
 import type { Style } from "@react-pdf/types";
 import { getInvoiceFontDefinition } from "~/consts/invoice-fonts";
+import { FALLBACK_EM_PER_CHARACTER } from "~/consts/text-measurement";
 import type { InvoiceTheme } from "~/types";
-
-// A character's advance, in ems, guessed for a font that hasn't loaded: wide
-// enough for any font's figures, so a column sized by it never clips one.
-const FALLBACK_EM_PER_CHARACTER = 0.65;
 
 const PDF_FONT_WEIGHTS = [400, 500, 600, 700];
 

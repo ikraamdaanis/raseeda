@@ -29,7 +29,10 @@ import { calculateLineAmount } from "~/utils/calculate-invoice-totals";
 import { getRoleSettings } from "~/utils/get-role-settings";
 import { getTextStyles } from "~/utils/get-text-styles";
 import { handlePercentageInput } from "~/utils/handle-percentage-input";
-import { measureTextWidth } from "~/utils/measure-text-width";
+import {
+  forgetMeasuredWidths,
+  measureTextWidth
+} from "~/utils/measure-text-width";
 import {
   getAmountColumnLabel,
   getShownColumns,
@@ -66,6 +69,7 @@ type SetItemAmount = ReturnType<typeof useLineItemsSlice>["setItemAmount"];
 type SetTableSettings = ReturnType<
   typeof useLineItemsSlice
 >["setTableSettings"];
+type VisibleColumns = ReturnType<typeof useVisibleColumns>;
 
 // Coerce raw input into a decimal draft string: drop everything that is not a
 // digit or a dot (this also strips any currency symbol), keep only the first
@@ -334,6 +338,7 @@ function useFontLoads() {
 
   useEffect(() => {
     function handleLoadingDone() {
+      forgetMeasuredWidths();
       setFontLoads(count => count + 1);
     }
 
@@ -449,9 +454,10 @@ export function InvoiceLineItems() {
   const theme = useTheme();
   const isPreview = useIsPreview();
   const currencySymbol = getCurrencyMarker(currency);
-  const { columns } = useVisibleColumns();
+  // Worked out once for the table, so each row doesn't go over every line.
+  const visibleColumns = useVisibleColumns();
   const columnTemplate = useColumnTemplate({
-    columns,
+    columns: visibleColumns.columns,
     items,
     tableSettings,
     currency
@@ -472,6 +478,7 @@ export function InvoiceLineItems() {
       >
         <div role="rowgroup" className="flex flex-col">
           <TableHeader
+            columns={visibleColumns.columns}
             tableSettings={tableSettings}
             theme={theme}
             setTableSettings={setTableSettings}
@@ -480,6 +487,7 @@ export function InvoiceLineItems() {
         <div role="rowgroup" className="flex flex-col">
           <LineItems
             items={items}
+            visibleColumns={visibleColumns}
             tableSettings={tableSettings}
             currency={currency}
             currencySymbol={currencySymbol}
@@ -501,15 +509,16 @@ export function InvoiceLineItems() {
 }
 
 function TableHeader({
+  columns,
   tableSettings,
   theme,
   setTableSettings
 }: {
+  columns: LineItemColumnConfig[];
   tableSettings: TableSettings;
   theme: InvoiceTheme;
   setTableSettings: SetTableSettings;
 }) {
-  const { columns } = useVisibleColumns();
   const conversion = useCurrencyConversion();
   const taxLabel = useInvoiceStore(state => state.labels.tax);
   const hasTax = useInvoiceStore(state => state.sections.tax);
@@ -646,6 +655,7 @@ function TableHeaderCell({
 
 function LineItems({
   items,
+  visibleColumns,
   tableSettings,
   currency,
   currencySymbol,
@@ -656,6 +666,7 @@ function LineItems({
   removeItem
 }: {
   items: InvoiceItem[];
+  visibleColumns: VisibleColumns;
   tableSettings: TableSettings;
   currency: string;
   currencySymbol: string;
@@ -673,6 +684,7 @@ function LineItems({
           item={item}
           index={index}
           itemCount={items.length}
+          visibleColumns={visibleColumns}
           tableSettings={tableSettings}
           currency={currency}
           currencySymbol={currencySymbol}
@@ -691,6 +703,7 @@ function LineItem({
   item,
   index,
   itemCount,
+  visibleColumns,
   tableSettings,
   currency,
   currencySymbol,
@@ -703,6 +716,7 @@ function LineItem({
   item: InvoiceItem;
   index: number;
   itemCount: number;
+  visibleColumns: VisibleColumns;
   tableSettings: TableSettings;
   currency: string;
   currencySymbol: string;
@@ -718,7 +732,7 @@ function LineItem({
   const hasTax = useInvoiceStore(state => state.sections.tax);
   const viewRow = buildLineItemRow({ item, currency, conversion, tax });
   const isPreview = useIsPreview();
-  const { columns, canEditLineRates, canTypeAmount } = useVisibleColumns();
+  const { columns, canEditLineRates, canTypeAmount } = visibleColumns;
 
   return (
     <div

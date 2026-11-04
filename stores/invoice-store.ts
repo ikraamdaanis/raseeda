@@ -6,7 +6,8 @@ import {
   DEFAULT_CURRENCY_CONVERSION,
   DEFAULT_INVOICE_DATE_FORMAT,
   DEFAULT_INVOICE_SECTIONS,
-  DEFAULT_INVOICE_THEME
+  DEFAULT_INVOICE_THEME,
+  DEFAULT_TABLE_SETTINGS
 } from "~/schema/invoice";
 import {
   CURRENT_INVOICE_SCHEMA_VERSION,
@@ -72,19 +73,7 @@ export const invoiceDefault: Invoice = {
       unitPrice: 0
     }
   ],
-  tableSettings: {
-    columnLabels: {
-      description: "Item",
-      quantity: "Quantity",
-      unit: "Unit",
-      unitPrice: "Unit Price",
-      tax: "",
-      amount: ""
-    },
-    columns: { quantityAndPrice: true, unit: true },
-    backgroundColor: "#f9fafb",
-    borderColor: "#e5e7eb"
-  },
+  tableSettings: DEFAULT_TABLE_SETTINGS,
   labels: {
     invoiceNumber: "Invoice No.",
     invoiceDate: "Date",

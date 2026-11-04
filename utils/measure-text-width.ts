@@ -1,14 +1,20 @@
 import type { CSSProperties } from "react";
-
-// A character's advance, in ems, guessed where there's no canvas to measure
-// with (on the server): wide enough for any font's figures.
-const FALLBACK_EM_PER_CHARACTER = 0.65;
+import { FALLBACK_EM_PER_CHARACTER } from "~/consts/text-measurement";
 
 let context: CanvasRenderingContext2D | null = null;
 
-// How wide a line of text sets in pixels, in a style from getTextStyles. Until
-// a web font arrives it measures in the fallback, so a caller re-measures once
-// fonts load.
+// Widths already measured, by font and text. The table re-measures every cell
+// on each edit, and almost every cell's text is the same as the last time.
+const measured = new Map<string, number>();
+
+// Forgets the widths measured so far. Until a web font arrives text measures
+// in the fallback, so a caller forgets them once fonts load and measures
+// again.
+export function forgetMeasuredWidths() {
+  measured.clear();
+}
+
+// How wide a line of text sets in pixels, in a style from getTextStyles.
 export function measureTextWidth(text: string, style: CSSProperties) {
   const fontSize = Number.parseFloat(String(style.fontSize ?? 16));
   const characters = Array.from(text).length;
@@ -26,7 +32,17 @@ export function measureTextWidth(text: string, style: CSSProperties) {
     return characters * FALLBACK_EM_PER_CHARACTER * fontSize + spacing;
   }
 
-  context.font = `${style.fontWeight ?? 400} ${fontSize}px ${style.fontFamily ?? "sans-serif"}`;
+  const font = `${style.fontWeight ?? 400} ${fontSize}px ${style.fontFamily ?? "sans-serif"}`;
+  const key = `${font}\n${text}`;
+  const cached = measured.get(key);
 
-  return context.measureText(text).width + spacing;
+  if (cached !== undefined) return cached + spacing;
+
+  context.font = font;
+
+  const width = context.measureText(text).width;
+
+  measured.set(key, width);
+
+  return width + spacing;
 }
