@@ -12,6 +12,7 @@ import { useCurrencyConversion } from "~/hooks/use-currency-conversion";
 import { useIsPreview, useShownSections } from "~/hooks/use-shown-sections";
 import { cn } from "~/lib/utils";
 import {
+  useConvertedTotals,
   useCurrencySymbol,
   useInvoiceTotals,
   usePricingSlice,
@@ -205,6 +206,7 @@ export function InvoicePricing() {
 function SubtotalRow() {
   const { currency, labels, setLabels } = usePricingSlice();
   const { subtotal } = useInvoiceTotals();
+  const converted = useConvertedTotals();
   const conversion = useCurrencyConversion();
   const theme = useTheme();
   const labelSettings = getRoleSettings(theme, "totalsLabel");
@@ -229,7 +231,8 @@ function SubtotalRow() {
         {withConvertedAmount(
           formatCurrency(subtotal, currency),
           subtotal,
-          conversion
+          conversion,
+          converted.subtotal
         )}
       </span>
     </div>
@@ -660,6 +663,7 @@ function TotalRow() {
   const { currency, currencyCode, amountPaid, labels, setLabels } =
     usePricingSlice();
   const { total } = useInvoiceTotals();
+  const converted = useConvertedTotals();
   const conversion = useCurrencyConversion();
   const theme = useTheme();
   const sections = useShownSections();
@@ -692,6 +696,7 @@ function TotalRow() {
       >
         {formatInvoiceTotal({
           amount: total,
+          convertedAmount: converted.total,
           currency,
           currencyCode,
           conversion
@@ -792,6 +797,7 @@ function BalanceDueRow() {
   const { amountPaid, currency, currencyCode, labels, setLabels } =
     usePricingSlice();
   const { balanceDue } = useInvoiceTotals();
+  const converted = useConvertedTotals();
   const conversion = useCurrencyConversion();
   const theme = useTheme();
   const labelSettings = getRoleSettings(theme, "grandTotalLabel");
@@ -819,6 +825,7 @@ function BalanceDueRow() {
       >
         {formatInvoiceTotal({
           amount: balanceDue,
+          convertedAmount: converted.balanceDue,
           currency,
           currencyCode,
           conversion

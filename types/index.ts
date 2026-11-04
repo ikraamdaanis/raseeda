@@ -270,6 +270,10 @@ export type InvoiceTotals = {
   taxGroups: InvoiceTaxGroup[];
   taxAmount: number;
   discountAmount: number;
+  // The fees and payment the total and balance count, 0 while their row is
+  // switched off.
+  fees: number;
+  amountPaid: number;
   total: number;
   balanceDue: number;
 };

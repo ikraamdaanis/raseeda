@@ -197,6 +197,8 @@ export function calculateInvoiceTotals(
     taxGroups,
     taxAmount,
     discountAmount,
+    fees,
+    amountPaid,
     total,
     balanceDue
   };

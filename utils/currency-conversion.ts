@@ -1,3 +1,4 @@
+import { sumBy } from "lodash-es";
 import {
   currencyOptions,
   formatCurrency,
@@ -7,7 +8,7 @@ import {
   negativeSign,
   normalizeCurrency
 } from "~/consts/currencies";
-import type { CurrencyConversion, Invoice } from "~/types";
+import type { CurrencyConversion, Invoice, InvoiceTotals } from "~/types";
 import { roundCents } from "~/utils/calculate-invoice-totals";
 import { formatInvoiceDate } from "~/utils/format-invoice-date";
 
@@ -85,6 +86,40 @@ export function convertAmount(amount: number, rate: number): number {
   return roundCents(amount * rate);
 }
 
+// The second currency's sums, each added up from the converted figures above
+// it, so its column adds up on the page the way the first currency's does.
+// Converting a sum on its own, like every other figure, can leave it a cent
+// from its rows.
+export function calculateConvertedTotals({
+  totals,
+  rate
+}: {
+  totals: InvoiceTotals;
+  rate: number;
+}) {
+  const subtotal = roundCents(
+    sumBy(totals.items, item => convertAmount(item.amount, rate))
+  );
+  const taxAmount = roundCents(
+    sumBy(totals.taxGroups, group => convertAmount(group.taxAmount, rate))
+  );
+  const total = Math.max(
+    0,
+    roundCents(
+      subtotal -
+        convertAmount(totals.discountAmount, rate) +
+        taxAmount +
+        convertAmount(totals.fees, rate)
+    )
+  );
+  const balanceDue = Math.max(
+    0,
+    roundCents(total - convertAmount(totals.amountPaid, rate))
+  );
+
+  return { subtotal, total, balanceDue };
+}
+
 // A marker that ends in a letter ("CHF", a custom "Rs") is spaced from the
 // figure, so it reads "CHF 6,292.00"; a symbol sits against it, "$9,205.63".
 // A negative amount has its sign first, "-$6.25".
@@ -92,8 +127,19 @@ export function formatConvertedAmount(
   amount: number,
   conversion: CurrencyConversion
 ): string {
+  return formatInSecondCurrency(
+    convertAmount(amount, conversion.rate),
+    conversion
+  );
+}
+
+// An amount already in the second currency, formatted as
+// formatConvertedAmount does.
+function formatInSecondCurrency(
+  converted: number,
+  conversion: CurrencyConversion
+): string {
   const marker = getCurrencyMarker(conversion.toCurrency);
-  const converted = convertAmount(amount, conversion.rate);
   const formatted = Math.abs(converted).toLocaleString("en-US", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2
@@ -105,15 +151,19 @@ export function formatConvertedAmount(
     : `${sign}${marker}${formatted}`;
 }
 
-// A total in both currencies, "£7,150.00 / $9,205.63".
+// A total in both currencies, "£7,150.00 / $9,205.63". A sum passes its
+// converted figure from calculateConvertedTotals, which adds up its rows.
 export function withConvertedAmount(
   value: string,
   amount: number,
-  conversion: CurrencyConversion | null
+  conversion: CurrencyConversion | null,
+  convertedAmount?: number
 ): string {
   if (!conversion) return value;
 
-  return `${value} / ${formatConvertedAmount(amount, conversion)}`;
+  const converted = convertedAmount ?? convertAmount(amount, conversion.rate);
+
+  return `${value} / ${formatInSecondCurrency(converted, conversion)}`;
 }
 
 // A deduction (a discount, a payment), in both currencies beside a second
@@ -141,11 +191,14 @@ export function formatDeduction({
 // already name both.
 export function formatInvoiceTotal({
   amount,
+  convertedAmount,
   currency,
   currencyCode,
   conversion
 }: {
   amount: number;
+  // The total in the second currency, from calculateConvertedTotals.
+  convertedAmount: number;
   currency: string;
   currencyCode: string;
   conversion: CurrencyConversion | null;
@@ -156,7 +209,8 @@ export function formatInvoiceTotal({
   return withConvertedAmount(
     formatCurrency(amount, currency),
     amount,
-    conversion
+    conversion,
+    convertedAmount
   );
 }
 

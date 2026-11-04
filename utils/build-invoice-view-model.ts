@@ -17,6 +17,7 @@ import {
   getLineTax
 } from "~/utils/calculate-invoice-totals";
 import {
+  calculateConvertedTotals,
   formatConvertedAmount,
   formatDeduction,
   formatInvoiceTotal,
@@ -228,6 +229,9 @@ function buildSummaryRows(input: {
   paidDate: string;
   dateFormat: Invoice["dateFormat"];
   balanceDue: number;
+  // The subtotal, total and balance due in the second currency, added up
+  // from its rows.
+  converted: { subtotal: number; total: number; balanceDue: number };
   currency: string;
   currencyCode: string;
   sections: Pick<InvoiceSections, "discounts" | "tax" | "fees" | "amountPaid">;
@@ -243,7 +247,8 @@ function buildSummaryRows(input: {
       value: withConvertedAmount(
         formatCurrency(input.subtotal, currency),
         input.subtotal,
-        conversion
+        conversion,
+        input.converted.subtotal
       ),
       isVisible: true,
       isTotal: false
@@ -280,6 +285,7 @@ function buildSummaryRows(input: {
       label: labels.total,
       value: formatInvoiceTotal({
         amount: input.total,
+        convertedAmount: input.converted.total,
         currency,
         currencyCode: input.currencyCode,
         conversion
@@ -307,6 +313,7 @@ function buildSummaryRows(input: {
       label: labels.balanceDue,
       value: formatInvoiceTotal({
         amount: input.balanceDue,
+        convertedAmount: input.converted.balanceDue,
         currency,
         currencyCode: input.currencyCode,
         conversion
@@ -354,6 +361,10 @@ export function buildInvoiceViewModel(invoice: Invoice): InvoiceViewModel {
       paidDate: invoice.paidDate,
       dateFormat: invoice.dateFormat,
       balanceDue: totals.balanceDue,
+      converted: calculateConvertedTotals({
+        totals,
+        rate: conversion?.rate ?? 0
+      }),
       currency: invoice.currency,
       currencyCode: invoice.currencyCode,
       sections: invoice.sections,

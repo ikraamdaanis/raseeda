@@ -5,6 +5,10 @@ import { useInvoiceStore } from "~/stores/invoice-store";
 import type { Invoice, InvoiceTotals } from "~/types";
 import { hasMixedTaxRates } from "~/utils/build-invoice-view-model";
 import { calculateInvoiceTotals } from "~/utils/calculate-invoice-totals";
+import {
+  calculateConvertedTotals,
+  getCurrencyConversion
+} from "~/utils/currency-conversion";
 
 // The persisted invoice fields, in one place. `satisfies` rejects typos and
 // keys that aren't on Invoice; the MissingKey assertion below rejects forgetting
@@ -264,6 +268,23 @@ export function useInvoiceTotals(): {
         balanceDue: totals.balanceDue
       };
     })
+  );
+}
+
+// The subtotal, total and balance due in the second currency, each added up
+// from the converted rows above it. All 0 while there's no conversion.
+export function useConvertedTotals(): {
+  subtotal: number;
+  total: number;
+  balanceDue: number;
+} {
+  return useInvoiceStore(
+    useShallow(state =>
+      calculateConvertedTotals({
+        totals: calculateInvoiceTotals(state),
+        rate: getCurrencyConversion(state)?.rate ?? 0
+      })
+    )
   );
 }
 
