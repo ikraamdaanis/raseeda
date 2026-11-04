@@ -200,13 +200,21 @@ test("a header colour stored as a name shows as that colour in its swatch", asyn
   page
 }) => {
   await gotoEditorReady(page);
+  // The automation API, found by what it does rather than the app's name.
   await page.evaluate(async () => {
-    const api = (
-      window as unknown as Record<
-        string,
-        { createInvoice: (data: unknown) => Promise<string> }
-      >
-    ).raseeda;
+    const api = Object.values(window).find(
+      (
+        value: unknown
+      ): value is {
+        createInvoice: (data: unknown) => Promise<string>;
+      } =>
+        typeof value === "object" &&
+        value !== null &&
+        "createInvoice" in value &&
+        typeof value.createInvoice === "function"
+    );
+
+    if (!api) throw new Error("The automation API isn't on the page");
 
     await api.createInvoice({
       tableSettings: {
