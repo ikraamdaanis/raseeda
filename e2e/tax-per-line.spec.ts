@@ -193,7 +193,9 @@ test("on an exempt invoice a line can take a rate, and the note moves to the Exe
 
   await setNumber(page.getByLabel("Tax, item 1"), "20");
 
-  await expect(page.getByText("Exempt by default")).toBeVisible();
+  await expect(
+    page.locator("[data-paper]").getByText("Exempt by default")
+  ).toBeVisible();
   await expect(page.getByText("Tax 20% on $100.00")).toBeVisible();
   await expect(page.getByText("Exempt on $50.00")).toBeVisible();
   await expect(page.getByTestId("total-value")).toHaveText("$170.00 USD");
@@ -201,8 +203,12 @@ test("on an exempt invoice a line can take a rate, and the note moves to the Exe
   await page.getByLabel("Tax exempt note").fill("Reverse charge");
   await modeButton(page, "Preview").click();
 
-  await expect(page.getByText("Reverse charge")).toBeVisible();
-  await expect(page.getByText("Exempt by default")).toHaveCount(0);
+  await expect(
+    page.locator("[data-paper]").getByText("Reverse charge")
+  ).toBeVisible();
+  await expect(
+    page.locator("[data-paper]").getByText("Exempt by default")
+  ).toHaveCount(0);
 });
 
 test("a rate typed from a leading dot is a fraction", async ({ page }) => {
@@ -213,4 +219,37 @@ test("a rate typed from a leading dot is a fraction", async ({ page }) => {
 
   await expect(page.getByLabel("Tax, item 2")).toHaveValue("0.5");
   await expect(page.getByTestId("total-value")).toHaveText("$170.25 USD");
+});
+
+test("the tax row's % toggle is always shown, explains itself and matches the panel's switch", async ({
+  page
+}) => {
+  await gotoTwoLineInvoice(page);
+
+  const toggle = page.getByRole("button", { name: "Toggle tax exempt" });
+  const exempt = page.getByRole("switch", { name: "Tax exempt" });
+
+  await page.mouse.move(0, 0);
+
+  await expect(toggle).toHaveCSS("opacity", "1");
+
+  await toggle.hover();
+
+  await expect(page.getByText("Tax is charged at this rate.")).toBeVisible();
+  await expect(exempt).not.toBeChecked();
+
+  await toggle.click();
+
+  await expect(exempt).toBeChecked();
+  await expect(toggle).toHaveText("Exempt");
+
+  await exempt.click();
+
+  await expect(toggle).toHaveText("%");
+
+  await page.getByRole("switch", { name: "Tax per line" }).click();
+
+  await expect(
+    page.getByRole("switch", { name: "Exempt by default" })
+  ).toBeVisible();
 });

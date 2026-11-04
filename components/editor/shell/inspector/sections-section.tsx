@@ -3,7 +3,10 @@ import {
   InspectorSection,
   InspectorSwitch
 } from "~/components/editor/shell/inspector/inspector-controls";
-import { useSectionsSlice } from "~/stores/invoice-selectors";
+import {
+  useSectionsSlice,
+  useTaxExemptSlice
+} from "~/stores/invoice-selectors";
 import type { InvoiceSectionKey } from "~/types";
 
 const SECTION_GROUPS: {
@@ -49,13 +52,17 @@ export function SectionsSection() {
       {SECTION_GROUPS.map(group => (
         <div key={group.label} className="flex flex-col gap-0.5">
           <InspectorGroupLabel>{group.label}</InspectorGroupLabel>
-          {group.items.map(item => (
-            <SectionSwitch
-              key={item.key}
-              section={item.key}
-              label={item.label}
-            />
-          ))}
+          {group.items.map(item =>
+            item.key === "tax" ? (
+              <TaxSwitches key={item.key} label={item.label} />
+            ) : (
+              <SectionSwitch
+                key={item.key}
+                section={item.key}
+                label={item.label}
+              />
+            )
+          )}
         </div>
       ))}
     </InspectorSection>
@@ -77,5 +84,33 @@ function SectionSwitch({
       checked={sections[section]}
       onCheckedChange={checked => setSection(section, checked)}
     />
+  );
+}
+
+// The Tax section's switch and, while it's on, the same Exempt setting as the
+// % / Exempt toggle on the page's tax row.
+function TaxSwitches({ label }: { label: string }) {
+  const { sections } = useSectionsSlice();
+  const { isExempt, isPerLine, setTax } = useTaxExemptSlice();
+
+  return (
+    <>
+      <SectionSwitch section="tax" label={label} />
+      {sections.tax && (
+        <>
+          <InspectorSwitch
+            label={isPerLine ? "Exempt by default" : "Tax exempt"}
+            field="tax.exempt"
+            checked={isExempt}
+            onCheckedChange={exempt => setTax(prev => ({ ...prev, exempt }))}
+          />
+          <p className="text-muted-foreground pb-1 text-xs">
+            {isPerLine
+              ? 'Lines without their own rate charge no tax, with a note such as "Reverse charge" instead.'
+              : 'Charges no tax, with a note such as "Reverse charge" instead of the rate.'}
+          </p>
+        </>
+      )}
+    </>
   );
 }

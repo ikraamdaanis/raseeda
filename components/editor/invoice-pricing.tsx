@@ -2,6 +2,11 @@ import type { CSSProperties, ReactNode } from "react";
 import { useEffect, useState } from "react";
 import { InvoiceDateField } from "~/components/editor/invoice-date-field";
 import { InvoiceInput } from "~/components/editor/invoice-input";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger
+} from "~/components/ui/tooltip";
 import { formatCurrency } from "~/consts/currencies";
 import { useCurrencyConversion } from "~/hooks/use-currency-conversion";
 import { useIsPreview, useShownSections } from "~/hooks/use-shown-sections";
@@ -72,11 +77,14 @@ function PricingRowToggles({ children }: { children: ReactNode }) {
 }
 
 // A toggle stays out of sight until the row is hovered or focused, unless
-// it's showing a non-default choice (a % discount, exempt tax).
+// it's showing a non-default choice (a % discount, exempt tax) or is always
+// shown. A tooltip says what it does and what a click changes.
 function PricingRowToggle({
   label,
   field,
   active,
+  isAlwaysVisible = false,
+  tooltip,
   onClick,
   children
 }: {
@@ -84,10 +92,12 @@ function PricingRowToggle({
   // The data-field path, for undo to find the toggle again.
   field?: string;
   active: boolean;
+  isAlwaysVisible?: boolean;
+  tooltip?: string;
   onClick: () => void;
   children: ReactNode;
 }) {
-  return (
+  const button = (
     <button
       type="button"
       aria-label={label}
@@ -96,13 +106,23 @@ function PricingRowToggle({
       onClick={onClick}
       className={cn(
         "hover:bg-paper-muted focus-visible:ring-ring shrink-0 rounded px-1.5 py-0.5 text-xs whitespace-nowrap transition-[color,opacity] outline-none focus-visible:ring-1",
-        active
-          ? "text-paper-foreground"
-          : "text-paper-muted-foreground opacity-0 group-focus-within/pricing-row:opacity-100 group-hover/pricing-row:opacity-100 pointer-coarse:opacity-100"
+        active ? "text-paper-foreground" : "text-paper-muted-foreground",
+        !active &&
+          !isAlwaysVisible &&
+          "opacity-0 group-focus-within/pricing-row:opacity-100 group-hover/pricing-row:opacity-100 pointer-coarse:opacity-100"
       )}
     >
       {children}
     </button>
+  );
+
+  if (!tooltip) return button;
+
+  return (
+    <Tooltip>
+      <TooltipTrigger render={button} />
+      <TooltipContent className="max-w-60">{tooltip}</TooltipContent>
+    </Tooltip>
   );
 }
 
@@ -326,6 +346,20 @@ function PrintedTaxRows({ rows }: { rows: InvoiceSummaryRow[] }) {
   );
 }
 
+// What the tax row's % / Exempt toggle does now, and what a click changes.
+// With Per line on it only decides the lines that have no rate of their own.
+function getExemptTooltip(tax: { exempt: boolean; perLine: boolean }) {
+  if (tax.perLine) {
+    return tax.exempt
+      ? 'Lines without their own rate are exempt: no tax, with a note such as "Reverse charge". Click to tax them at a rate instead.'
+      : 'Lines without their own rate are taxed at this rate. Click to make them exempt: no tax, with a note such as "Reverse charge".';
+  }
+
+  return tax.exempt
+    ? 'The invoice is exempt: no tax, with a note such as "Reverse charge". Click to charge tax at a rate instead.'
+    : 'Tax is charged at this rate. Click to make the invoice exempt: no tax, with a note such as "Reverse charge".';
+}
+
 // The invoice's own rate: its label, rate, Exempt and Per line toggles, and
 // what it comes to. While the lines' rates are printed in rows of their own
 // below it, it's the default the lines without one follow, and says so.
@@ -352,6 +386,11 @@ function InvoiceTaxRow({ isDefault }: { isDefault: boolean }) {
               label="Toggle tax per line"
               field="tax.perLine"
               active={tax.perLine}
+              tooltip={
+                tax.perLine
+                  ? "Each line can have its own rate, in the Tax column. Click to tax the whole invoice at one rate."
+                  : "The whole invoice is taxed at one rate. Click to give lines their own rates, in a Tax column."
+              }
               onClick={() =>
                 setTax(prev => ({ ...prev, perLine: !prev.perLine }))
               }
@@ -361,6 +400,8 @@ function InvoiceTaxRow({ isDefault }: { isDefault: boolean }) {
             <PricingRowToggle
               label="Toggle tax exempt"
               active={tax.exempt}
+              isAlwaysVisible
+              tooltip={getExemptTooltip(tax)}
               onClick={() =>
                 setTax(prev => ({ ...prev, exempt: !prev.exempt }))
               }
