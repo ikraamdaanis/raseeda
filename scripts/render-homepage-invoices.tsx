@@ -19,6 +19,7 @@ import {
 } from "~/components/templates/invoice-templates";
 import { invoiceDefault } from "~/stores/invoice-store";
 import type { Invoice, InvoiceItem } from "~/types";
+import { loadInvoicePdfFonts } from "~/utils/measure-pdf-text";
 import { PDF_FONT_FAMILIES } from "~/utils/register-invoice-pdf-fonts";
 import { PAGE_META } from "~/utils/site-meta";
 
@@ -386,6 +387,7 @@ async function renderPage(directory: string, name: string, invoice: Invoice) {
   const pdfPath = join(directory, `${name}.pdf`);
   const pngPath = join(directory, name);
 
+  await loadInvoicePdfFonts(invoice.theme);
   await renderToFile(<InvoicePDF invoice={invoice} />, pdfPath);
   await run([
     "pdftoppm",

@@ -1,105 +1,14 @@
 import { StyleSheet, Text, View } from "@react-pdf/renderer";
-import type {
-  CurrencyConversion,
-  Invoice,
-  InvoiceLineItemRow,
-  TableSettings
-} from "~/types";
-import { pdfRoleStyle } from "~/utils/pdf-styles";
+import type { Style } from "@react-pdf/types";
+import { clamp, mapValues, sum } from "lodash-es";
+import type { CurrencyConversion, Invoice, InvoiceLineItemRow } from "~/types";
+import { measurePdfText } from "~/utils/measure-pdf-text";
+import {
+  PDF_PAGE_PADDING,
+  PDF_PAGE_WIDTH,
+  pdfRoleStyle
+} from "~/utils/pdf-styles";
 import { getShownColumns, getTaxColumnLabel } from "~/utils/table-columns";
-
-// Column widths in percent of the table, with and without the unit column or
-// quantity and price, and with the converted amount taking its room from the
-// others. A money column names its currency under its label, so it's only as
-// wide as its figures and the description keeps the rest.
-const COLUMN_WIDTHS = {
-  units: {
-    description: 42,
-    quantity: 12,
-    unit: 10,
-    unitPrice: 18,
-    amount: 18,
-    convertedAmount: 0
-  },
-  noUnits: {
-    description: 48,
-    quantity: 14,
-    unit: 0,
-    unitPrice: 19,
-    amount: 19,
-    convertedAmount: 0
-  },
-  convertedUnits: {
-    description: 33,
-    quantity: 11,
-    unit: 9,
-    unitPrice: 13,
-    amount: 15,
-    convertedAmount: 19
-  },
-  convertedNoUnits: {
-    description: 42,
-    quantity: 11,
-    unit: 0,
-    unitPrice: 13,
-    amount: 15,
-    convertedAmount: 19
-  },
-  amountOnly: {
-    description: 81,
-    quantity: 0,
-    unit: 0,
-    unitPrice: 0,
-    amount: 19,
-    convertedAmount: 0
-  },
-  convertedAmountOnly: {
-    description: 66,
-    quantity: 0,
-    unit: 0,
-    unitPrice: 0,
-    amount: 15,
-    convertedAmount: 19
-  }
-};
-
-// The Tax column, shown when the lines' rates differ, takes its room from the
-// description, so the money columns keep theirs. It fits "Exempt" in a
-// monospaced font at the large size.
-const TAX_COLUMN_WIDTH = 11;
-
-function getColumnWidths({
-  columns,
-  hasConversion,
-  hasTaxColumn
-}: {
-  columns: TableSettings["columns"];
-  hasConversion: boolean;
-  hasTaxColumn: boolean;
-}) {
-  const widths = !columns.quantityAndPrice
-    ? hasConversion
-      ? COLUMN_WIDTHS.convertedAmountOnly
-      : COLUMN_WIDTHS.amountOnly
-    : hasConversion
-      ? columns.unit
-        ? COLUMN_WIDTHS.convertedUnits
-        : COLUMN_WIDTHS.convertedNoUnits
-      : columns.unit
-        ? COLUMN_WIDTHS.units
-        : COLUMN_WIDTHS.noUnits;
-  const taxWidth = hasTaxColumn ? TAX_COLUMN_WIDTH : 0;
-
-  return {
-    description: `${widths.description - taxWidth}%`,
-    quantity: `${widths.quantity}%`,
-    unit: `${widths.unit}%`,
-    unitPrice: `${widths.unitPrice}%`,
-    tax: `${taxWidth}%`,
-    amount: `${widths.amount}%`,
-    convertedAmount: `${widths.convertedAmount}%`
-  };
-}
 
 // Cells sit 10pt apart, and the row's own padding keeps the outer ones 8pt in
 // from the border.
@@ -112,6 +21,71 @@ const UNBREAKABLE_WORD_MAX_LENGTH = 20;
 
 function keepWordsWhole(word: string) {
   return word.length > UNBREAKABLE_WORD_MAX_LENGTH ? Array.from(word) : [word];
+}
+
+// A header line wider than this wraps between its words rather than widening
+// its column.
+const HEADER_LINE_MAX_WIDTH = 80;
+
+// However long the figures, the description keeps some of the table.
+const DESCRIPTION_MIN_SHARE = 0.15;
+
+// Room a column has beyond its text, so the figures sit 22pt apart.
+const COLUMN_SPARE_WIDTH = 12;
+
+// The width the columns share: the page inside its margins, less the table's
+// border and the rows' padding.
+const TABLE_INNER_WIDTH =
+  PDF_PAGE_WIDTH - PDF_PAGE_PADDING * 2 - 2 - ROW_PADDING_X * 2;
+
+// How wide a column's widest text is, a figure or a line of its header, with
+// the cell's padding.
+function measureColumn({
+  header,
+  cells,
+  headerStyle,
+  cellStyle
+}: {
+  header: string[];
+  cells: string[];
+  headerStyle: Style;
+  cellStyle: Style;
+}) {
+  const headerWidths = header.map(line => {
+    const width = measurePdfText(line, headerStyle);
+
+    if (width <= HEADER_LINE_MAX_WIDTH) return width;
+
+    const wordWidths = line
+      .split(/\s+/)
+      .map(word => measurePdfText(word, headerStyle));
+
+    return Math.max(HEADER_LINE_MAX_WIDTH, ...wordWidths);
+  });
+  const cellWidths = cells.map(cell => measurePdfText(cell, cellStyle));
+  const textWidth = Math.max(0, ...headerWidths, ...cellWidths);
+
+  // A point spare, so rounding never pushes a figure onto a second line.
+  return Math.ceil(textWidth) + 1 + CELL_PADDING_X * 2;
+}
+
+// Every column but the description is as wide as its text plus its spare
+// room, whatever the font, size or amounts, and the description takes the
+// rest. A row short of room gives up the spare room first; one whose figures
+// still don't fit squeezes its columns, wrapping a figure rather than
+// clipping it at the table's edge. A column that isn't shown measures 0.
+function getColumnWidths<TColumn extends string>(
+  measured: Record<TColumn, number>
+) {
+  const shown = Object.values<number>(measured).filter(width => width > 0);
+  const freeWidth =
+    TABLE_INNER_WIDTH * (1 - DESCRIPTION_MIN_SHARE) - sum(shown);
+  const spareWidth = clamp(freeWidth / shown.length, 0, COLUMN_SPARE_WIDTH);
+
+  return mapValues(measured, width => ({
+    width: width + spareWidth,
+    flexShrink: 1
+  }));
 }
 
 export function InvoicePdfItemsTable({
@@ -133,11 +107,65 @@ export function InvoicePdfItemsTable({
     items: lineItems,
     isPrinted: true
   });
-  const columnWidths = getColumnWidths({
-    columns,
-    hasConversion: conversion !== null,
-    hasTaxColumn
-  });
+  const headerStyle = pdfRoleStyle(theme, "tableHeaderRight");
+  const cellStyle = pdfRoleStyle(theme, "tableRowRight");
+  const fromCode = conversion ? [conversion.fromCode] : [];
+  const columnWidths = {
+    description: {
+      flexGrow: 1,
+      flexShrink: 0,
+      flexBasis: 0,
+      minWidth: `${DESCRIPTION_MIN_SHARE * 100}%`
+    },
+    ...getColumnWidths({
+      quantity: columns.quantityAndPrice
+        ? measureColumn({
+            header: [labels.quantity],
+            cells: lineItems.map(row => String(row.quantity)),
+            headerStyle,
+            cellStyle
+          })
+        : 0,
+      unit: columns.unit
+        ? measureColumn({
+            header: [labels.unit],
+            cells: lineItems.map(row => row.unit),
+            headerStyle,
+            cellStyle
+          })
+        : 0,
+      unitPrice: columns.quantityAndPrice
+        ? measureColumn({
+            header: [labels.unitPrice, ...fromCode],
+            cells: lineItems.map(row => row.unitPrice),
+            headerStyle,
+            cellStyle
+          })
+        : 0,
+      tax: hasTaxColumn
+        ? measureColumn({
+            header: [getTaxColumnLabel(labels, invoice.labels)],
+            cells: lineItems.map(row => row.tax),
+            headerStyle,
+            cellStyle
+          })
+        : 0,
+      amount: measureColumn({
+        header: [labels.amount, ...fromCode],
+        cells: lineItems.map(row => row.amount),
+        headerStyle,
+        cellStyle
+      }),
+      convertedAmount: conversion
+        ? measureColumn({
+            header: [labels.amount || "Amount", conversion.toCode],
+            cells: lineItems.map(row => row.convertedAmount ?? ""),
+            headerStyle,
+            cellStyle
+          })
+        : 0
+    })
+  };
   const styles = StyleSheet.create({
     table: {
       display: "flex",
@@ -179,27 +207,27 @@ export function InvoicePdfItemsTable({
           { borderTopLeftRadius: 4, borderTopRightRadius: 4 }
         ]}
       >
-        <View style={[styles.tableCell, { width: columnWidths.description }]}>
+        <View style={[styles.tableCell, columnWidths.description]}>
           <Text style={pdfRoleStyle(theme, "tableHeaderLeft")}>
             {labels.description}
           </Text>
         </View>
         {columns.quantityAndPrice && (
-          <View style={[styles.tableCell, { width: columnWidths.quantity }]}>
+          <View style={[styles.tableCell, columnWidths.quantity]}>
             <Text style={pdfRoleStyle(theme, "tableHeaderCenter")}>
               {labels.quantity}
             </Text>
           </View>
         )}
         {columns.unit && (
-          <View style={[styles.tableCell, { width: columnWidths.unit }]}>
+          <View style={[styles.tableCell, columnWidths.unit]}>
             <Text style={pdfRoleStyle(theme, "tableHeaderCenter")}>
               {labels.unit}
             </Text>
           </View>
         )}
         {columns.quantityAndPrice && (
-          <View style={[styles.tableCell, { width: columnWidths.unitPrice }]}>
+          <View style={[styles.tableCell, columnWidths.unitPrice]}>
             <Text style={pdfRoleStyle(theme, "tableHeaderCenter")}>
               {labels.unitPrice}
             </Text>
@@ -211,13 +239,13 @@ export function InvoicePdfItemsTable({
           </View>
         )}
         {hasTaxColumn && (
-          <View style={[styles.tableCell, { width: columnWidths.tax }]}>
+          <View style={[styles.tableCell, columnWidths.tax]}>
             <Text style={pdfRoleStyle(theme, "tableHeaderCenter")}>
               {getTaxColumnLabel(labels, invoice.labels)}
             </Text>
           </View>
         )}
-        <View style={[styles.tableCell, { width: columnWidths.amount }]}>
+        <View style={[styles.tableCell, columnWidths.amount]}>
           <Text style={pdfRoleStyle(theme, "tableHeaderRight")}>
             {labels.amount}
           </Text>
@@ -228,9 +256,7 @@ export function InvoicePdfItemsTable({
           )}
         </View>
         {conversion && (
-          <View
-            style={[styles.tableCell, { width: columnWidths.convertedAmount }]}
-          >
+          <View style={[styles.tableCell, columnWidths.convertedAmount]}>
             <Text style={pdfRoleStyle(theme, "tableHeaderRight")}>
               {labels.amount || "Amount"}
             </Text>
@@ -248,9 +274,7 @@ export function InvoicePdfItemsTable({
             key={row.id}
             style={isLastItem ? styles.tableLastRow : styles.tableRow}
           >
-            <View
-              style={[styles.tableCell, { width: columnWidths.description }]}
-            >
+            <View style={[styles.tableCell, columnWidths.description]}>
               <Text
                 style={pdfRoleStyle(theme, "tableRowLeft")}
                 hyphenationCallback={keepWordsWhole}
@@ -259,49 +283,40 @@ export function InvoicePdfItemsTable({
               </Text>
             </View>
             {columns.quantityAndPrice && (
-              <View
-                style={[styles.tableCell, { width: columnWidths.quantity }]}
-              >
+              <View style={[styles.tableCell, columnWidths.quantity]}>
                 <Text style={pdfRoleStyle(theme, "tableRowCenter")}>
                   {row.quantity}
                 </Text>
               </View>
             )}
             {columns.unit && (
-              <View style={[styles.tableCell, { width: columnWidths.unit }]}>
+              <View style={[styles.tableCell, columnWidths.unit]}>
                 <Text style={pdfRoleStyle(theme, "tableRowCenter")}>
                   {row.unit}
                 </Text>
               </View>
             )}
             {columns.quantityAndPrice && (
-              <View
-                style={[styles.tableCell, { width: columnWidths.unitPrice }]}
-              >
+              <View style={[styles.tableCell, columnWidths.unitPrice]}>
                 <Text style={pdfRoleStyle(theme, "tableRowCenter")}>
                   {row.unitPrice}
                 </Text>
               </View>
             )}
             {hasTaxColumn && (
-              <View style={[styles.tableCell, { width: columnWidths.tax }]}>
+              <View style={[styles.tableCell, columnWidths.tax]}>
                 <Text style={pdfRoleStyle(theme, "tableRowCenter")}>
                   {row.tax}
                 </Text>
               </View>
             )}
-            <View style={[styles.tableCell, { width: columnWidths.amount }]}>
+            <View style={[styles.tableCell, columnWidths.amount]}>
               <Text style={pdfRoleStyle(theme, "tableRowRight")}>
                 {row.amount}
               </Text>
             </View>
             {conversion && (
-              <View
-                style={[
-                  styles.tableCell,
-                  { width: columnWidths.convertedAmount }
-                ]}
-              >
+              <View style={[styles.tableCell, columnWidths.convertedAmount]}>
                 <Text style={pdfRoleStyle(theme, "tableRowRight")}>
                   {row.convertedAmount}
                 </Text>

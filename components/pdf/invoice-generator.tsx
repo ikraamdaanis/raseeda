@@ -9,6 +9,7 @@ import { InvoicePdfTotals } from "~/components/pdf/invoice-pdf-totals";
 import { getInvoiceFontDefinition } from "~/consts/invoice-fonts";
 import type { Invoice } from "~/types";
 import { buildInvoiceViewModel } from "~/utils/build-invoice-view-model";
+import { PDF_PAGE_PADDING } from "~/utils/pdf-styles";
 import { registerInvoicePdfFonts } from "~/utils/register-invoice-pdf-fonts";
 import { getPrintedSections } from "~/utils/section-visibility";
 
@@ -31,7 +32,7 @@ export function InvoicePDF({ invoice }: { invoice: Invoice }) {
     page: {
       fontFamily: baseFont.pdfFamily,
       fontSize: 12,
-      padding: 40,
+      padding: PDF_PAGE_PADDING,
       backgroundColor: invoice.pdfSettings.backgroundColor
     }
   });

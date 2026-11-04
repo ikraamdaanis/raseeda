@@ -4,6 +4,10 @@ import { getFontWeight } from "~/utils/get-font-weight";
 import { getRoleSettings } from "~/utils/get-role-settings";
 import { scaleFontSize } from "~/utils/scale-font-size";
 
+// The page: A4, in points, and the margin round it.
+export const PDF_PAGE_WIDTH = 595.28;
+export const PDF_PAGE_PADDING = 40;
+
 // Line height shared by section labels, address lines and detail rows, the
 // PDF twin of the editor's leading-paper-row, so the details column lands on
 // the same lines as the address beside it.
