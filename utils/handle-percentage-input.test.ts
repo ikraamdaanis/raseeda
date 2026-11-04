@@ -21,6 +21,12 @@ describe("handlePercentageInput", () => {
     expect(typeKeys(["1", "2", ".", "5", "7", "9"])).toBe("12.57");
   });
 
+  it("reads a comma as a decimal point, as much of Europe writes one", () => {
+    expect(typeKeys(["7", ",", "5"])).toBe("7.5");
+    expect(handlePercentageInput("17,25")).toBe("17.25");
+    expect(handlePercentageInput(",5")).toBe(".5");
+  });
+
   it("stays empty when cleared", () => {
     expect(handlePercentageInput("")).toBe("");
   });

@@ -3,11 +3,13 @@
  * Allows up to 2 decimal places. The whole-number part is limited to two
  * digits, so an overshoot like "400" is truncated to "40" rather than
  * clamped to 100. An exact "100" is the single allowed three-digit value so
- * the full 0-100 range stays reachable. A cleared field stays empty while
- * typing; it reads 0 once it loses focus.
+ * the full 0-100 range stays reachable. A comma reads as a decimal point. A
+ * cleared field stays empty while typing; it reads 0 once it loses focus.
  */
 export function handlePercentageInput(value: string) {
-  let numericValue = value.replace(/[^0-9.]/g, "");
+  // A rate is never in the thousands, so a comma can only be a decimal point,
+  // as "7,5" is written across much of Europe.
+  let numericValue = value.replace(/,/g, ".").replace(/[^0-9.]/g, "");
 
   if (numericValue === "") return "";
 
