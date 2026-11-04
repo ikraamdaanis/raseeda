@@ -1,0 +1,7 @@
+# How to report a security problem in raseeda (RFC 9116). Reports go to
+# GitHub's private vulnerability reporting, so they stay private until fixed.
+# Move Expires forward before it passes; scanners ignore a stale file.
+Contact: https://github.com/ikraamdaanis/raseeda/security/advisories/new
+Expires: 2027-11-04T00:00:00.000Z
+Preferred-Languages: en
+Canonical: https://raseeda.com/.well-known/security.txt
