@@ -244,6 +244,67 @@ describe("invoice history", () => {
   });
 });
 
+// A setting with a control on the page and another in the inspector, both
+// carrying its data-field path.
+describe("putting focus back", () => {
+  beforeEach(() => {
+    vi.stubGlobal("requestAnimationFrame", (callback: FrameRequestCallback) => {
+      callback(0);
+
+      return 0;
+    });
+    document.body.innerHTML = "";
+    startInvoiceHistory();
+    setInvoiceHistoryEnabled(true);
+    loadBlank();
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  function addControl(label: string) {
+    const control = document.createElement("button");
+
+    control.dataset.field = "tax.perLine";
+    control.setAttribute("aria-label", label);
+    document.body.append(control);
+
+    return control;
+  }
+
+  it("keeps focus on the control that made the change", () => {
+    addControl("Toggle tax per line");
+    const inspectorSwitch = addControl("Tax per line");
+
+    inspectorSwitch.focus();
+    noteFocusChange();
+    store().setTax(tax => ({ ...tax, perLine: true }));
+    undoInvoiceChange();
+
+    expect(store().tax.perLine).toBe(false);
+    expect(document.activeElement).toBe(inspectorSwitch);
+  });
+
+  it("skips a control that can't take focus", () => {
+    const hidden = document.createElement("div");
+
+    hidden.setAttribute("inert", "");
+    document.body.append(hidden);
+    const pageToggle = addControl("Toggle tax per line");
+    hidden.append(pageToggle);
+    const inspectorSwitch = addControl("Tax per line");
+
+    inspectorSwitch.focus();
+    noteFocusChange();
+    store().setTax(tax => ({ ...tax, perLine: true }));
+    blurAll();
+    undoInvoiceChange();
+
+    expect(document.activeElement).toBe(inspectorSwitch);
+  });
+});
+
 // Every kind of edit the editor makes, as discrete steps.
 const editArbitrary = fc.oneof(
   fc.record({ kind: fc.constant("title"), value: fc.string({ maxLength: 8 }) }),

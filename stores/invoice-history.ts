@@ -372,6 +372,21 @@ function cssEscape(value: string) {
     : value.replace(/["\\]/g, "\\$&");
 }
 
+// The field a step changed. Some settings have a control on the page and one
+// in the inspector with the same path: the one in use keeps focus, otherwise
+// the first that can take it.
+function findField(path: string): HTMLElement | null {
+  const fields = Array.from(
+    document.querySelectorAll<HTMLElement>(`[data-field="${cssEscape(path)}"]`)
+  ).filter(field => !field.closest("[inert]"));
+
+  return (
+    fields.find(field => field === document.activeElement) ??
+    fields.at(0) ??
+    null
+  );
+}
+
 // Puts focus and the caret back in the field a step changed and scrolls it
 // into view. With no field to go to (a switch, a removed row), the part of
 // the page that changed flashes instead.
@@ -379,13 +394,9 @@ function showChange(focus: FieldFocus | null, area: string) {
   if (typeof document === "undefined") return;
 
   requestAnimationFrame(() => {
-    const field = focus
-      ? document.querySelector<HTMLElement>(
-          `[data-field="${cssEscape(focus.field)}"]`
-        )
-      : null;
+    const field = focus ? findField(focus.field) : null;
 
-    if (focus && field && !field.closest("[inert]")) {
+    if (focus && field) {
       field.focus({ preventScroll: true });
 
       if (
