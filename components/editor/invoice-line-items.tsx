@@ -10,11 +10,7 @@ import { getCurrencyMarker } from "~/consts/currencies";
 import { useCurrencyConversion } from "~/hooks/use-currency-conversion";
 import { useIsPreview, useShownSections } from "~/hooks/use-shown-sections";
 import { cn } from "~/lib/utils";
-import {
-  useHasTaxColumn,
-  useLineItemsSlice,
-  useTheme
-} from "~/stores/invoice-selectors";
+import { useLineItemsSlice, useTheme } from "~/stores/invoice-selectors";
 import { useInvoiceStore } from "~/stores/invoice-store";
 import type {
   CurrencyConversion,
@@ -25,7 +21,10 @@ import type {
   TableSettings,
   TextRole
 } from "~/types";
-import { buildLineItemRow } from "~/utils/build-invoice-view-model";
+import {
+  buildLineItemRow,
+  showsTaxColumn
+} from "~/utils/build-invoice-view-model";
 import { calculateLineAmount } from "~/utils/calculate-invoice-totals";
 import {
   formatDecimalDraft,
@@ -264,11 +263,13 @@ function useVisibleColumns() {
     )
   );
   const hasConversion = useCurrencyConversion() !== null;
-  const hasMixedRates = useHasTaxColumn();
   const isPerLine = useInvoiceStore(state => state.tax.perLine);
   const sections = useShownSections();
-  const canEditLineRates = !isPreview && sections.tax && isPerLine;
-  const hasTaxColumn = hasMixedRates || canEditLineRates;
+  const hasTaxColumn = showsTaxColumn({
+    tax: { perLine: isPerLine },
+    sections
+  });
+  const canEditLineRates = !isPreview && hasTaxColumn;
   const columns = LINE_ITEM_COLUMNS.filter(column => {
     switch (column.id) {
       case "quantity":

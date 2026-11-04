@@ -3,7 +3,6 @@ import { getCurrencyMarker } from "~/consts/currencies";
 import type { InvoiceStore } from "~/stores/invoice-store";
 import { useInvoiceStore } from "~/stores/invoice-store";
 import type { Invoice, InvoiceTotals } from "~/types";
-import { hasMixedTaxRates } from "~/utils/build-invoice-view-model";
 import { calculateInvoiceTotals } from "~/utils/calculate-invoice-totals";
 import {
   calculateConvertedTotals,
@@ -305,17 +304,6 @@ export function useTaxGroups(): Pick<InvoiceTotals, "taxGroups" | "taxAmount"> {
   const { taxGroups, taxAmount } = calculateInvoiceTotals(pricing);
 
   return { taxGroups, taxAmount };
-}
-
-// Whether the line items show a Tax column: only while the lines' rates
-// differ. A boolean, so it only re-renders when that changes.
-export function useHasTaxColumn(): boolean {
-  return useInvoiceStore(state =>
-    hasMixedTaxRates({
-      taxGroups: calculateInvoiceTotals(state).taxGroups,
-      sections: state.sections
-    })
-  );
 }
 
 // Terms slice

@@ -133,17 +133,17 @@ export function buildLineItemRow({
   };
 }
 
-// Whether the line items need a Tax column: only when the lines with an
-// amount are taxed at more than one rate, so an invoice with one rate keeps
-// it in the totals alone.
-export function hasMixedTaxRates({
-  taxGroups,
+// Whether the line items show a Tax column: whenever tax is on and charged per
+// line, even when every line shares one rate, since Per line is a column
+// switch and some invoices must state each line's rate.
+export function showsTaxColumn({
+  tax,
   sections
 }: {
-  taxGroups: InvoiceTaxGroup[];
+  tax: Pick<Invoice["tax"], "perLine">;
   sections: Pick<InvoiceSections, "tax">;
 }): boolean {
-  return sections.tax && taxGroups.length > 1;
+  return sections.tax && tax.perLine;
 }
 
 // The tax rows: with one rate, the single row it's always been ("VAT 20%",
@@ -371,8 +371,8 @@ export function buildInvoiceViewModel(invoice: Invoice): InvoiceViewModel {
       conversion
     }),
     conversion,
-    hasTaxColumn: hasMixedTaxRates({
-      taxGroups: totals.taxGroups,
+    hasTaxColumn: showsTaxColumn({
+      tax: invoice.tax,
       sections: invoice.sections
     })
   };

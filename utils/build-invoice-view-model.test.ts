@@ -669,7 +669,7 @@ describe("buildInvoiceViewModel with a tax rate per line", () => {
     expect(lineItems.map(row => row.tax)).toEqual(["20%", "5%", "Exempt"]);
   });
 
-  it("keeps today's single row and no column when every line shares a rate", () => {
+  it("keeps today's single row when every line shares a rate, and the column while Per line is on", () => {
     const items = [
       makeItem({ quantity: 3, unitPrice: 19.99 }),
       makeItem({ unitPrice: 250, tax: { percentage: 20, exempt: false } })
@@ -689,7 +689,7 @@ describe("buildInvoiceViewModel with a tax rate per line", () => {
     expect(perLine.summaryRows).toEqual(single.summaryRows);
     expect(tax).toMatchObject({ label: "VAT", percentage: 20 });
     expect(tax?.value).toBe("£59.99");
-    expect(perLine.hasTaxColumn).toBe(false);
+    expect(perLine.hasTaxColumn).toBe(true);
     expect(single.hasTaxColumn).toBe(false);
   });
 
@@ -725,8 +725,8 @@ describe("buildInvoiceViewModel with a tax rate per line", () => {
     expect(rows[0].percentage).toBeUndefined();
   });
 
-  it("adds no row or column for a line with no amount at another rate", () => {
-    const { summaryRows, hasTaxColumn } = buildInvoiceViewModel(
+  it("adds no row for a line with no amount at another rate", () => {
+    const { summaryRows } = buildInvoiceViewModel(
       makeVatInvoice({
         items: [
           makeItem({ unitPrice: 1000 }),
@@ -736,7 +736,6 @@ describe("buildInvoiceViewModel with a tax rate per line", () => {
     );
 
     expect(summaryRows.filter(row => row.id === "tax")).toHaveLength(1);
-    expect(hasTaxColumn).toBe(false);
   });
 
   it("shows a rate that nets negative with its negative tax", () => {
