@@ -7,6 +7,9 @@ let context: CanvasRenderingContext2D | null = null;
 // on each edit, and almost every cell's text is the same as the last time.
 const measured = new Map<string, number>();
 
+// Far more than a table's cells, in every font they've been measured in.
+const MEASURED_WIDTHS_MAX = 2000;
+
 // Forgets the widths measured so far, for a caller to measure again once
 // fonts load.
 export function forgetMeasuredWidths() {
@@ -42,6 +45,10 @@ export function measureTextWidth(text: string, style: CSSProperties) {
   context.font = font;
 
   const width = context.measureText(text).width;
+
+  // Every draft typed into a figure is a new text, so the cache starts over
+  // rather than growing for as long as the page is open.
+  if (measured.size >= MEASURED_WIDTHS_MAX) measured.clear();
 
   // Only once the font is in, so a width measured in the fallback is never
   // kept, however the font's loading and the caller's listener interleave.

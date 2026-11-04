@@ -247,9 +247,8 @@ function getColumnCurrency(
  */
 // Quantity, Unit and Unit price show as the table's settings say, and the PDF
 // leaves out the Unit column when no line has a unit, so Preview does too.
-// The Tax column shows, as in the PDF, only while the lines' rates differ.
-// While editing with Per line on it always shows, so there's somewhere to set
-// a line's rate.
+// The Tax column shows, as in the PDF, whenever tax is on and charged per
+// line; while editing, its cells are where a line's rate is set.
 // With quantity and price off, a line's amount is typed in instead.
 function useVisibleColumns() {
   const isPreview = useIsPreview();

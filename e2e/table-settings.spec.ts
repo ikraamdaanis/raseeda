@@ -261,6 +261,27 @@ test("the picker's colour undoes in one step, from the picker", async ({
   await expect(picker).toBeFocused();
 });
 
+test("a typed colour undone from its field shows the colour it goes back to", async ({
+  page
+}) => {
+  await gotoTwoLineInvoice(page);
+
+  const code = page.getByRole("textbox", { name: "Header colour code" });
+
+  await code.fill("#fde68a");
+  await expect(
+    page
+      .getByRole("table", { name: "Invoice line items" })
+      .getByRole("row")
+      .first()
+  ).toHaveCSS("background-color", "rgb(253, 230, 138)");
+
+  await pressShortcut(page, "Mod+z");
+
+  await expect(code).toBeFocused();
+  await expect(code).toHaveValue("#f9fafb");
+});
+
 test("a credit keeps its minus, tabbed through or typed", async ({ page }) => {
   await gotoEditorReady(page);
   await createAndOpenInvoice(page, {

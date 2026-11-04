@@ -270,6 +270,8 @@ export function useInvoiceTotals(): {
   );
 }
 
+const NO_CONVERTED_TOTALS = { subtotal: 0, total: 0, balanceDue: 0 };
+
 // The subtotal, total and balance due in the second currency, each added up
 // from the converted rows above it. All 0 while there's no conversion.
 export function useConvertedTotals(): {
@@ -278,12 +280,16 @@ export function useConvertedTotals(): {
   balanceDue: number;
 } {
   return useInvoiceStore(
-    useShallow(state =>
-      calculateConvertedTotals({
+    useShallow(state => {
+      const conversion = getCurrencyConversion(state);
+
+      if (!conversion) return NO_CONVERTED_TOTALS;
+
+      return calculateConvertedTotals({
         totals: calculateInvoiceTotals(state),
-        rate: getCurrencyConversion(state)?.rate ?? 0
-      })
-    )
+        rate: conversion.rate
+      });
+    })
   );
 }
 

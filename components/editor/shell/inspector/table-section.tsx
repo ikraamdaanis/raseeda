@@ -222,14 +222,25 @@ function ColourRow({
   onChange: (colour: string) => void;
 }) {
   const id = useId();
-  const [draft, setDraft] = useState<string | null>(null);
+  // What's typed, with the colour in use when it was typed: once the colour
+  // changes from elsewhere (undo, Reset colours), the field shows that instead.
+  const [draft, setDraft] = useState<{ typed: string; colour: string } | null>(
+    null
+  );
 
   function handleTyped(typed: string) {
-    setDraft(typed);
+    const code = typed.trim();
 
-    if (HEX_COLOUR.test(typed.trim())) {
-      onChange(`#${typed.trim().replace("#", "").toLowerCase()}`);
+    if (!HEX_COLOUR.test(code)) {
+      setDraft({ typed, colour: value });
+
+      return;
     }
+
+    const colour = `#${code.replace("#", "").toLowerCase()}`;
+
+    setDraft({ typed, colour });
+    onChange(colour);
   }
 
   return (
@@ -254,7 +265,7 @@ function ColourRow({
           name={field}
           aria-label={`${label} colour code`}
           data-field={field}
-          value={draft ?? value}
+          value={draft?.colour === value ? draft.typed : value}
           onChange={event => handleTyped(event.target.value)}
           onBlur={() => setDraft(null)}
           spellCheck={false}
