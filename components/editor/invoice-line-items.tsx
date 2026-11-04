@@ -1119,6 +1119,13 @@ function TaxCell({
     });
   }
 
+  const placeholder = invoiceTax.exempt
+    ? "Exempt"
+    : String(invoiceTax.percentage);
+  // The field's width in characters, where the browser has no field-sizing
+  // to fit it to its text and would otherwise make it 20 characters wide.
+  const fieldSize = Math.max(1, (draft || placeholder).length);
+
   return (
     <span className="flex h-full items-center justify-center">
       {!isExempt && (
@@ -1126,11 +1133,10 @@ function TaxCell({
           aria-label={label}
           data-field={`items.${item.id}.tax.percentage`}
           value={draft}
-          placeholder={
-            invoiceTax.exempt ? "Exempt" : String(invoiceTax.percentage)
-          }
+          placeholder={placeholder}
           onChange={handleChange}
           onBlur={handleBlur}
+          size={fieldSize}
           className="field-sizing-content w-auto min-w-[2ch] py-2 text-right focus:px-1 focus:py-2"
           style={style}
         />
