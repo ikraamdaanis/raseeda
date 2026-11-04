@@ -206,7 +206,9 @@ function ColumnLabelRow({
 
 // A colour as a swatch that opens the system's picker, and its hex code,
 // which can be typed. A typed code takes once it's whole; leaving the field
-// puts back the colour in use, so a half-typed one never sticks.
+// puts back the colour in use, so a half-typed one never sticks. Both carry
+// the colour's path, so undo works from either and a drag through the picker
+// is one step.
 function ColourRow({
   label,
   field,
@@ -241,6 +243,7 @@ function ColourRow({
           type="color"
           name={`${field}-picker`}
           aria-label={`${label} colour`}
+          data-field={field}
           value={toSixDigitHex(value)}
           onChange={event => onChange(event.target.value)}
           className="size-6 shrink-0 cursor-pointer appearance-none rounded-sm border-0 bg-transparent p-0 [&::-moz-color-swatch]:rounded-sm [&::-moz-color-swatch]:border-black/10 [&::-webkit-color-swatch]:rounded-sm [&::-webkit-color-swatch]:border [&::-webkit-color-swatch]:border-black/10 dark:[&::-webkit-color-swatch]:border-white/15 [&::-webkit-color-swatch-wrapper]:p-0"
