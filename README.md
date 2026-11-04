@@ -59,7 +59,7 @@ await raseeda.createInvoice({
 });
 ```
 
-The line items table is `tableSettings`: `{ columnLabels, columns, backgroundColor, borderColor }`. `columns` is `{ quantityAndPrice, unit }`, both on by default. With `quantityAndPrice: false`, the Quantity, Unit and Unit price columns are hidden and each item is a description and an amount, so give each one `quantity: 1` and the amount as its `unitPrice`. `columnLabels.tax` names the Tax column; left blank, it uses the tax row's label (`labels.tax`).
+The line items table is `tableSettings`: `{ columnLabels, columns, backgroundColor, borderColor }`. `columns` is `{ quantityAndPrice, unit }`, both on by default. With `quantityAndPrice: false`, the Quantity, Unit and Unit price columns are hidden and each item is a description and an amount, so give each one `quantity: 1` and the amount as its `unitPrice`. `columnLabels.tax` names the Tax column; left blank, it uses the tax row's label (`labels.tax`). `columnLabels.amount` names the Amount column; left blank, it reads "Net amount" while the tax section is on and "Amount" while it's off.
 
 ## Tech Stack
 
