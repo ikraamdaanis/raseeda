@@ -49,7 +49,9 @@ jobs:
 
   e2e:
     name: E2E (Playwright)
-    runs-on: ubuntu-latest
+    # Playwright's WebKit build links against Ubuntu 24.04's libraries (ICU 74),
+    # so it won't launch on ubuntu-latest once that moves to 26.04.
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout
         uses: actions/checkout@v4
