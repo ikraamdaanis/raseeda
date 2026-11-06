@@ -144,9 +144,9 @@ export const invoiceDefault: Invoice = {
  * snapshot, never sharing nested objects with the default. The invoice and due
  * dates are stamped from the clock at call time (due 30 days out), so an invoice
  * created today is dated today rather than whenever the module was loaded.
- * Its number format, currency position and paper size come from the browser's language
- * (issue #117) unless given, as the automation API gives the stored-invoice
- * defaults so the same data always makes the same invoice.
+ * Its number format, currency position and paper size come from the browser's
+ * language (issue #117) unless given, as the automation API gives the
+ * stored-invoice defaults so the same data always makes the same invoice.
  */
 export function createBlankInvoice(
   formats: Pick<

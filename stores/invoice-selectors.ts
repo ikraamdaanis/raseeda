@@ -379,8 +379,7 @@ export function useCurrencySlice() {
   );
 }
 
-// How amounts are written, for the inspector's Number format and Currency
-// position rows.
+// The invoice's paper size, for the inspector's Paper row.
 export function usePaperSizeSlice() {
   return useInvoiceStore(
     useShallow(state => ({
@@ -394,6 +393,8 @@ export function usePaperSize() {
   return useInvoiceStore(state => state.paperSize);
 }
 
+// How amounts are written, for the inspector's Number format and Currency
+// position rows.
 export function useAmountFormatSlice() {
   return useInvoiceStore(
     useShallow(state => ({
