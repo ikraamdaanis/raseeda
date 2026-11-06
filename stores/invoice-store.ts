@@ -144,14 +144,14 @@ export const invoiceDefault: Invoice = {
  * snapshot, never sharing nested objects with the default. The invoice and due
  * dates are stamped from the clock at call time (due 30 days out), so an invoice
  * created today is dated today rather than whenever the module was loaded.
- * Its number format and currency position come from the browser's language
+ * Its number format, currency position and paper size come from the browser's language
  * (issue #117) unless given, as the automation API gives the stored-invoice
  * defaults so the same data always makes the same invoice.
  */
 export function createBlankInvoice(
   formats: Pick<
     Invoice,
-    "numberFormat" | "currencyPosition"
+    "numberFormat" | "currencyPosition" | "paperSize"
   > = getLocaleDefaults(getBrowserLanguage())
 ): Invoice {
   const now = new Date();
@@ -193,6 +193,7 @@ interface InvoiceActions {
   setDateFormat: (dateFormat: Invoice["dateFormat"]) => void;
   setNumberFormat: (numberFormat: Invoice["numberFormat"]) => void;
   setCurrencyPosition: (currencyPosition: Invoice["currencyPosition"]) => void;
+  setPaperSize: (paperSize: Invoice["paperSize"]) => void;
 
   // Title
   setTitle: (title: string) => void;
@@ -351,6 +352,11 @@ export const useInvoiceStore = create<InvoiceStore>()(
       setCurrencyPosition: currencyPosition =>
         set(state => {
           state.currencyPosition = currencyPosition;
+        }),
+
+      setPaperSize: paperSize =>
+        set(state => {
+          state.paperSize = paperSize;
         }),
 
       // Title

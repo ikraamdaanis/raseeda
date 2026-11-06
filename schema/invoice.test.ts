@@ -84,3 +84,17 @@ describe("invoiceSchema number format and currency position", () => {
     expect(parsed.currencyPosition).toBe("after");
   });
 });
+
+describe("invoiceSchema paper size", () => {
+  it("reads an invoice saved before it, or a bad value, as A4", () => {
+    const { paperSize: _paperSize, ...old } = invoiceDefault;
+
+    expect(invoiceSchema.parse(old).paperSize).toBe("A4");
+    expect(
+      invoiceSchema.parse({ ...invoiceDefault, paperSize: "A5" }).paperSize
+    ).toBe("A4");
+    expect(
+      invoiceSchema.parse({ ...invoiceDefault, paperSize: "Letter" }).paperSize
+    ).toBe("Letter");
+  });
+});

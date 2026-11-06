@@ -89,12 +89,17 @@ export const INVOICE_NUMBER_FORMATS = [
 // it (1.234,56 €).
 export const CURRENCY_POSITIONS = ["before", "after"] as const;
 
+// The page the PDF and the canvas are cut to: A4 (595.28 x 841.89 pt) or US
+// Letter (612 x 792 pt), wider and shorter.
+export const INVOICE_PAPER_SIZES = ["A4", "Letter"] as const;
+
 // What an invoice stored before these settings existed reads as, so it
 // prints exactly as it did. A new blank invoice takes the browser's locale
 // instead (utils/locale-defaults.ts).
 export const STORED_INVOICE_FORMATS = {
   numberFormat: "comma-dot",
-  currencyPosition: "before"
+  currencyPosition: "before",
+  paperSize: "A4"
 } as const;
 
 // Which optional parts of the invoice are switched on. Switching one off hides
@@ -406,7 +411,8 @@ export const invoiceSchema = z.object({
     .catch(STORED_INVOICE_FORMATS.numberFormat),
   currencyPosition: z
     .enum(CURRENCY_POSITIONS)
-    .catch(STORED_INVOICE_FORMATS.currencyPosition)
+    .catch(STORED_INVOICE_FORMATS.currencyPosition),
+  paperSize: z.enum(INVOICE_PAPER_SIZES).catch(STORED_INVOICE_FORMATS.paperSize)
 });
 
 export type Invoice = z.infer<typeof invoiceSchema>;

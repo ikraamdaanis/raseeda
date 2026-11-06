@@ -31,7 +31,8 @@ import { cn } from "~/lib/utils";
 import {
   CURRENCY_POSITIONS,
   INVOICE_DATE_FORMATS,
-  INVOICE_NUMBER_FORMATS
+  INVOICE_NUMBER_FORMATS,
+  INVOICE_PAPER_SIZES
 } from "~/schema/invoice";
 import {
   useAmountFormatSlice,
@@ -39,6 +40,7 @@ import {
   useCurrencySlice,
   useDetailsSlice,
   useMoneyFormat,
+  usePaperSizeSlice,
   useTheme
 } from "~/stores/invoice-selectors";
 import { isSameCurrency } from "~/utils/currency-conversion";
@@ -64,6 +66,7 @@ export function DetailsSection() {
       <DateFormatRow />
       <NumberFormatRow />
       <CurrencyPositionRow />
+      <PaperSizeRow />
     </InspectorSection>
   );
 }
@@ -393,6 +396,39 @@ function CurrencyPositionRow() {
         {CURRENCY_POSITIONS.map(position => (
           <option key={position} value={position}>
             {`${position === "before" ? "Before" : "After"}: ${formatCurrency(1234.5, { ...money, position })}`}
+          </option>
+        ))}
+      </NativeSelect>
+    </InspectorRow>
+  );
+}
+
+const PAPER_SIZE_LABELS = {
+  A4: "A4 · 210 × 297 mm",
+  Letter: "Letter · 8.5 × 11 in"
+};
+
+// The page the PDF, the canvas and print are cut to.
+function PaperSizeRow() {
+  const { paperSize, setPaperSize } = usePaperSizeSlice();
+
+  return (
+    <InspectorRow label="Paper" htmlFor="inspector-paper-size">
+      <NativeSelect
+        id="inspector-paper-size"
+        value={paperSize}
+        onChange={event => {
+          const next = INVOICE_PAPER_SIZES.find(
+            option => option === event.target.value
+          );
+
+          if (next) setPaperSize(next);
+        }}
+        className={cn(inspectorFieldClassName, "pr-7")}
+      >
+        {INVOICE_PAPER_SIZES.map(option => (
+          <option key={option} value={option}>
+            {PAPER_SIZE_LABELS[option]}
           </option>
         ))}
       </NativeSelect>

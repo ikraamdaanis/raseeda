@@ -9,7 +9,7 @@ import { InvoicePdfTotals } from "~/components/pdf/invoice-pdf-totals";
 import { getInvoiceFontDefinition } from "~/consts/invoice-fonts";
 import type { Invoice } from "~/types";
 import { buildInvoiceViewModel } from "~/utils/build-invoice-view-model";
-import { PDF_PAGE_PADDING } from "~/utils/pdf-styles";
+import { PDF_PAGE_PADDING, PDF_PAGE_SIZES } from "~/utils/pdf-styles";
 import { registerInvoicePdfFonts } from "~/utils/register-invoice-pdf-fonts";
 import { getPrintedSections } from "~/utils/section-visibility";
 
@@ -39,7 +39,7 @@ export function InvoicePDF({ invoice }: { invoice: Invoice }) {
 
   return (
     <Document title={documentTitle}>
-      <Page size="A4" style={styles.page}>
+      <Page size={PDF_PAGE_SIZES[invoice.paperSize]} style={styles.page}>
         <InvoicePdfHeader invoice={invoice} imageUrl={imageUrl} />
         <InvoicePdfDetails invoice={invoice} detailRows={detailRows} />
         <InvoicePdfItemsTable

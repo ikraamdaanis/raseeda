@@ -1,11 +1,22 @@
 import type { Style } from "@react-pdf/types";
-import type { InvoiceTheme, TextRole, TextSettings } from "~/types";
+import type {
+  InvoicePaperSize,
+  InvoiceTheme,
+  TextRole,
+  TextSettings
+} from "~/types";
 import { getFontWeight } from "~/utils/get-font-weight";
 import { getRoleSettings } from "~/utils/get-role-settings";
 import { scaleFontSize } from "~/utils/scale-font-size";
 
-// The page: A4, in points, and the margin round it.
-export const PDF_PAGE_WIDTH = 595.28;
+// Each paper size's page, in points, and the margin round it.
+export const PDF_PAGE_SIZES: Record<
+  InvoicePaperSize,
+  { width: number; height: number }
+> = {
+  A4: { width: 595.28, height: 841.89 },
+  Letter: { width: 612, height: 792 }
+};
 export const PDF_PAGE_PADDING = 40;
 
 // Line height shared by section labels, address lines and detail rows, the

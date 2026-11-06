@@ -15,6 +15,8 @@ export type InvoiceNumberFormat = Invoice["numberFormat"];
 
 export type CurrencyPosition = Invoice["currencyPosition"];
 
+export type InvoicePaperSize = Invoice["paperSize"];
+
 export type TextSettings = {
   align: "left" | "center" | "right";
   size: string;

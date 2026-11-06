@@ -26,7 +26,7 @@ raseeda's job ends when the PDF is saved. A feature belongs if it makes the docu
 
 - Invoices, and four close cousins made the same way: quotes, proforma invoices, receipts and credit notes. Each is a one-off document with its own title, dates and closing rows, and turning a quote into an invoice is a duplicate with the type changed. Only invoices exist today.
 - Everything the printed document needs to say, including how to pay: bank details, other ways to pay such as PayPal, Venmo, Zelle, UPI or Wise, a payment QR code built on the device, or a payment link the user types in. Only bank details exist today.
-- A printed invoice that works in any language and region: renameable labels, a language preset that sets every label at once, any script, local date and number formats, and A4 or Letter paper. Only renameable labels and A4 exist today.
+- A printed invoice that works in any language and region: renameable labels, a language preset that sets every label at once, any script, local date and number formats, and A4 or Letter paper. Renameable labels, local number formats and A4 or Letter exist today; the language preset doesn't.
 - Styling the document: fonts, size, weight, colours, a logo, a signature (uploaded or drawn), section switches and renamed labels.
 - Printing straight from the editor as well as downloading the PDF. Only the download exists today.
 - The fields a valid invoice needs, such as a supply date, per-line tax and a tax note. What goes on the invoice is the user's responsibility.
@@ -60,7 +60,7 @@ raseeda's job ends when the PDF is saved. A feature belongs if it makes the docu
 
 ## Operating Context
 
-- Users edit one invoice at a time on a canvas, with settings alongside, then export to PDF (A4) or print.
+- Users edit one invoice at a time on a canvas, with settings alongside, then export to PDF (A4 or Letter) or print.
 - Documents and reusable templates are saved locally. Import/export of all data (invoices, templates, images) is the backup story, since there is no cloud copy.
 - Invoices are sent to clients as PDFs, so the rendered invoice is what the end client judges.
 - Users work on both desktop and phones.
@@ -73,7 +73,7 @@ raseeda's job ends when the PDF is saved. A feature belongs if it makes the docu
 - Customisable look: eleven invoice fonts, font weight, three sizes, and logo upload. The invoice font library is a user-facing feature, separate from the app's own typography.
 - Any currency, with custom symbols.
 - Save/load documents and templates in IndexedDB; full data import/export.
-- PDF export via @react-pdf/renderer; print is a first-class target (A4).
+- PDF export via @react-pdf/renderer; print is a first-class target (A4 or Letter).
 - No backend for data; deployed as static assets on Cloudflare Workers. The only request the app makes is the anonymous usage beacon to its own origin.
 - Every page sends a Content-Security-Policy that refuses requests to any other origin. The homepage names it as a check visitors can make, so it must stay.
 - A service worker saves the whole app once the editor has been opened, so later visits work offline.

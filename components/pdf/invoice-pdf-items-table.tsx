@@ -1,12 +1,17 @@
 import { StyleSheet, Text, View } from "@react-pdf/renderer";
 import type { Style } from "@react-pdf/types";
 import { clamp, mapValues, sum } from "lodash-es";
-import type { CurrencyConversion, Invoice, InvoiceLineItemRow } from "~/types";
+import type {
+  CurrencyConversion,
+  Invoice,
+  InvoiceLineItemRow,
+  InvoicePaperSize
+} from "~/types";
 import { measurePdfText } from "~/utils/measure-pdf-text";
 import { breakBeforeCurrency } from "~/utils/pdf-money-breaks";
 import {
   PDF_PAGE_PADDING,
-  PDF_PAGE_WIDTH,
+  PDF_PAGE_SIZES,
   pdfRoleStyle
 } from "~/utils/pdf-styles";
 import {
@@ -39,9 +44,15 @@ const DESCRIPTION_MIN_SHARE = 0.15;
 const COLUMN_SPARE_WIDTH = 12;
 
 // The width the columns share: the page inside its margins, less the table's
-// border and the rows' padding.
-const TABLE_INNER_WIDTH =
-  PDF_PAGE_WIDTH - PDF_PAGE_PADDING * 2 - 2 - ROW_PADDING_X * 2;
+// border and the rows' padding. Letter is 17pt wider than A4.
+function getTableInnerWidth(paperSize: InvoicePaperSize) {
+  return (
+    PDF_PAGE_SIZES[paperSize].width -
+    PDF_PAGE_PADDING * 2 -
+    2 -
+    ROW_PADDING_X * 2
+  );
+}
 
 // How wide a column's widest text is, a figure or a line of its header, with
 // the cell's padding.
@@ -80,11 +91,11 @@ function measureColumn({
 // still don't fit squeezes its columns, wrapping a figure rather than
 // clipping it at the table's edge. A column that isn't shown measures 0.
 function getColumnWidths<TColumn extends string>(
-  measured: Record<TColumn, number>
+  measured: Record<TColumn, number>,
+  tableWidth: number
 ) {
   const shown = Object.values<number>(measured).filter(width => width > 0);
-  const freeWidth =
-    TABLE_INNER_WIDTH * (1 - DESCRIPTION_MIN_SHARE) - sum(shown);
+  const freeWidth = tableWidth * (1 - DESCRIPTION_MIN_SHARE) - sum(shown);
   const spareWidth = clamp(freeWidth / shown.length, 0, COLUMN_SPARE_WIDTH);
 
   return mapValues(measured, width => ({
@@ -123,54 +134,57 @@ export function InvoicePdfItemsTable({
       flexBasis: 0,
       minWidth: `${DESCRIPTION_MIN_SHARE * 100}%`
     },
-    ...getColumnWidths({
-      quantity: columns.quantityAndPrice
-        ? measureColumn({
-            header: [labels.quantity],
-            cells: lineItems.map(row => String(row.quantity)),
-            headerStyle,
-            cellStyle
-          })
-        : 0,
-      unit: columns.unit
-        ? measureColumn({
-            header: [labels.unit],
-            cells: lineItems.map(row => row.unit),
-            headerStyle,
-            cellStyle
-          })
-        : 0,
-      unitPrice: columns.quantityAndPrice
-        ? measureColumn({
-            header: [labels.unitPrice, ...fromCode],
-            cells: lineItems.map(row => row.unitPrice),
-            headerStyle,
-            cellStyle
-          })
-        : 0,
-      tax: hasTaxColumn
-        ? measureColumn({
-            header: [getTaxColumnLabel(labels, invoice.labels)],
-            cells: lineItems.map(row => row.tax),
-            headerStyle,
-            cellStyle
-          })
-        : 0,
-      amount: measureColumn({
-        header: [amountLabel, ...fromCode],
-        cells: lineItems.map(row => row.amount),
-        headerStyle,
-        cellStyle
-      }),
-      convertedAmount: conversion
-        ? measureColumn({
-            header: [amountLabel, conversion.toCode],
-            cells: lineItems.map(row => row.convertedAmount ?? ""),
-            headerStyle,
-            cellStyle
-          })
-        : 0
-    })
+    ...getColumnWidths(
+      {
+        quantity: columns.quantityAndPrice
+          ? measureColumn({
+              header: [labels.quantity],
+              cells: lineItems.map(row => String(row.quantity)),
+              headerStyle,
+              cellStyle
+            })
+          : 0,
+        unit: columns.unit
+          ? measureColumn({
+              header: [labels.unit],
+              cells: lineItems.map(row => row.unit),
+              headerStyle,
+              cellStyle
+            })
+          : 0,
+        unitPrice: columns.quantityAndPrice
+          ? measureColumn({
+              header: [labels.unitPrice, ...fromCode],
+              cells: lineItems.map(row => row.unitPrice),
+              headerStyle,
+              cellStyle
+            })
+          : 0,
+        tax: hasTaxColumn
+          ? measureColumn({
+              header: [getTaxColumnLabel(labels, invoice.labels)],
+              cells: lineItems.map(row => row.tax),
+              headerStyle,
+              cellStyle
+            })
+          : 0,
+        amount: measureColumn({
+          header: [amountLabel, ...fromCode],
+          cells: lineItems.map(row => row.amount),
+          headerStyle,
+          cellStyle
+        }),
+        convertedAmount: conversion
+          ? measureColumn({
+              header: [amountLabel, conversion.toCode],
+              cells: lineItems.map(row => row.convertedAmount ?? ""),
+              headerStyle,
+              cellStyle
+            })
+          : 0
+      },
+      getTableInnerWidth(invoice.paperSize)
+    )
   };
   const styles = StyleSheet.create({
     table: {

@@ -576,7 +576,7 @@ const STEPS: {
   {
     title: "Download the PDF",
     description:
-      "Download an A4 PDF, with no watermark, or print it, then send it to your client however you like.",
+      "Download an A4 or Letter PDF, with no watermark, or print it, then send it to your client however you like.",
     demo: DownloadDemo,
     hues: [TILE_HUES.blush, TILE_HUES.lavender]
   },

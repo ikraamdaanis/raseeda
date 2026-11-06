@@ -87,12 +87,16 @@ describe("createBlankInvoice", () => {
     try {
       expect(createBlankInvoice()).toMatchObject({
         numberFormat: "dot-comma",
-        currencyPosition: "after"
+        currencyPosition: "after",
+        paperSize: "A4"
       });
       expect(createBlankInvoice(getLocaleDefaults(undefined))).toMatchObject({
         numberFormat: "comma-dot",
-        currencyPosition: "before"
+        currencyPosition: "before",
+        paperSize: "A4"
       });
+      vi.stubGlobal("navigator", { language: "en-US" });
+      expect(createBlankInvoice().paperSize).toBe("Letter");
     } finally {
       vi.unstubAllGlobals();
     }

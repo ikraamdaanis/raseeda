@@ -23,7 +23,8 @@ import { useInvoicePdf } from "~/hooks/use-invoice-pdf";
 import {
   useCurrencySlice,
   useInvoiceTotals,
-  useMoneyFormat
+  useMoneyFormat,
+  usePaperSize
 } from "~/stores/invoice-selectors";
 import { toPdfFileName } from "~/utils/save-file";
 
@@ -41,6 +42,7 @@ export function DownloadPopover() {
   const { total } = useInvoiceTotals();
   const { currencyCode } = useCurrencySlice();
   const money = useMoneyFormat();
+  const paperSize = usePaperSize();
   const fileName = toPdfFileName(documentName);
 
   function handleOpenChange(next: boolean) {
@@ -90,7 +92,9 @@ export function DownloadPopover() {
             <span className="text-foreground truncate font-medium">
               {fileName}
             </span>
-            <span className="text-muted-foreground text-xs">PDF · A4</span>
+            <span className="text-muted-foreground text-xs">
+              PDF · {paperSize}
+            </span>
           </div>
         </div>
         <dl className="border-border flex flex-col gap-1.5 border-y py-2.5 text-[13px]">

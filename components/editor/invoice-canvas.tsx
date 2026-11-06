@@ -5,7 +5,15 @@ import { getInvoiceFontDefinition } from "~/consts/invoice-fonts";
 import { FIELD_ZOOM, useCanvasView } from "~/context/canvas-view-context";
 import { useEditorUi } from "~/context/editor-ui-context";
 import { settleGesture, useCanvasGestures } from "~/hooks/use-canvas-gestures";
-import { useTheme } from "~/stores/invoice-selectors";
+import { cn } from "~/lib/utils";
+import { usePaperSize, useTheme } from "~/stores/invoice-selectors";
+import type { InvoicePaperSize } from "~/types";
+
+// The page at the invoice's paper size: A4 is 210 x 297mm, Letter 8.5 x 11in.
+const PAGE_SIZE_CLASSES: Record<InvoicePaperSize, string> = {
+  A4: "min-h-[297mm] w-[210mm]",
+  Letter: "min-h-[11in] w-[8.5in]"
+};
 
 const CANVAS_STATIC_STYLES: CSSProperties = {
   WebkitFontSmoothing: "antialiased",
@@ -16,6 +24,7 @@ export function InvoiceCanvas({ children }: { children: ReactNode }) {
   const { view, setView, setZoom, zoomToField } = useCanvasView();
   const { mode, isNarrow } = useEditorUi();
   const theme = useTheme();
+  const paperSize = usePaperSize();
   const baseFont = getInvoiceFontDefinition(theme.font);
   const sectionRef = useRef<HTMLElement>(null);
   const sizerRef = useRef<HTMLDivElement>(null);
@@ -172,7 +181,11 @@ export function InvoiceCanvas({ children }: { children: ReactNode }) {
         <div
           ref={pageRef}
           data-paper
-          className="border-paper-border bg-paper text-paper-foreground min-h-[297mm] w-[210mm] border p-[40pt] shadow-md"
+          data-paper-size={paperSize}
+          className={cn(
+            "border-paper-border bg-paper text-paper-foreground border p-[40pt] shadow-md",
+            PAGE_SIZE_CLASSES[paperSize]
+          )}
           style={{
             ...CANVAS_STATIC_STYLES,
             fontFamily: baseFont.cssFamily,

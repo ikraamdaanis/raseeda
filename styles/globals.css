@@ -770,6 +770,17 @@ html[data-header-ready]:not([data-header-pill]) .home-header-pill {
   margin: 16mm;
 }
 
+/* @page can't read the invoice, so a Letter invoice prints on a named page
+   of its own. */
+@page letter {
+  size: letter;
+  margin: 16mm;
+}
+
+[data-paper-size="Letter"] {
+  page: letter;
+}
+
 @media print {
   html,
   body {

@@ -5,7 +5,7 @@
 ## Pages
 
 - [Home](https://raseeda.com/): what raseeda does, how it compares with other invoice generators and accounting software, what goes on the invoice, and common questions
-- [Invoice editor](https://raseeda.com/create): create, edit and download an invoice as an A4 PDF (requires JavaScript)
+- [Invoice editor](https://raseeda.com/create): create, edit and download an invoice as an A4 or Letter PDF (requires JavaScript)
 - [Invoice templates](https://raseeda.com/invoice-template): sample invoices for freelance, consulting, small business, contractor, photography and web development work, each opening the editor in its font
 - [Privacy](https://raseeda.com/privacy): what raseeda stores, where, and what never leaves the device
 
@@ -15,7 +15,7 @@
 - No account and no sign-up.
 - Any currency, VAT or sales tax, fees, discounts, payment details (bank, account and routing numbers, IBAN, BIC / SWIFT, sort code), templates for repeat clients, and import / export backups.
 - raseeda makes the PDF; it does not email invoices or track payments.
-- No server API and no server-side storage. In the editor, `window.raseeda` offers an on-device API for scripts and assistants driving the browser: `listInvoices()`, `getInvoice(id)`, `createInvoice(data)`, `openInvoice(id)`, `getPdf(id?)`, `downloadPdf(id?)` and `importData(json)`. Invoice data takes the shape of an export's `invoiceData`; with `tax.perLine` on, an item's own `tax: { percentage, exempt }` overrides the invoice's rate. `tableSettings.columns` (`{ quantityAndPrice, unit }`) switches the Quantity, Unit and Unit price columns off, and `tableSettings.columnLabels.tax` names the Tax column (blank uses the tax row's label) and `columnLabels.amount` the Amount column (blank reads "Net amount" with tax on, "Amount" without). `numberFormat` (`"comma-dot"`, `"dot-comma"`, `"space-comma"`, `"apostrophe-dot"` or `"indian"`) and `currencyPosition` (`"before"` or `"after"`) say how amounts are written; left out, a script's invoice is `"comma-dot"` and `"before"`. Zero-decimal currencies such as JPY are reckoned in whole units. Documented in the README.
+- No server API and no server-side storage. In the editor, `window.raseeda` offers an on-device API for scripts and assistants driving the browser: `listInvoices()`, `getInvoice(id)`, `createInvoice(data)`, `openInvoice(id)`, `getPdf(id?)`, `downloadPdf(id?)` and `importData(json)`. Invoice data takes the shape of an export's `invoiceData`; with `tax.perLine` on, an item's own `tax: { percentage, exempt }` overrides the invoice's rate. `tableSettings.columns` (`{ quantityAndPrice, unit }`) switches the Quantity, Unit and Unit price columns off, and `tableSettings.columnLabels.tax` names the Tax column (blank uses the tax row's label) and `columnLabels.amount` the Amount column (blank reads "Net amount" with tax on, "Amount" without). `numberFormat` (`"comma-dot"`, `"dot-comma"`, `"space-comma"`, `"apostrophe-dot"` or `"indian"`) and `currencyPosition` (`"before"` or `"after"`) say how amounts are written; `paperSize` (`"A4"` or `"Letter"`) is the page size. Left out, a script's invoice is `"comma-dot"`, `"before"` and `"A4"`. Zero-decimal currencies such as JPY are reckoned in whole units. Documented in the README.
 
 ## Source
 

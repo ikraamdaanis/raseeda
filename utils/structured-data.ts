@@ -108,7 +108,7 @@ export const HOME_STRUCTURED_DATA = {
         url: absoluteUrl("/create")
       },
       featureList: [
-        "Download or print an A4 PDF invoice",
+        "Download or print an A4 or Letter PDF invoice",
         `Upload your logo and choose from ${INVOICE_FONTS.length} fonts at three sizes`,
         "Any currency, with custom symbols",
         "VAT or sales tax, fees, and fixed or percentage discounts",

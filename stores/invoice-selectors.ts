@@ -46,7 +46,8 @@ export const INVOICE_DATA_KEYS = [
   "sections",
   "dateFormat",
   "numberFormat",
-  "currencyPosition"
+  "currencyPosition",
+  "paperSize"
 ] as const satisfies ReadonlyArray<keyof Invoice>;
 
 type MissingInvoiceKey = Exclude<
@@ -380,6 +381,19 @@ export function useCurrencySlice() {
 
 // How amounts are written, for the inspector's Number format and Currency
 // position rows.
+export function usePaperSizeSlice() {
+  return useInvoiceStore(
+    useShallow(state => ({
+      paperSize: state.paperSize,
+      setPaperSize: state.setPaperSize
+    }))
+  );
+}
+
+export function usePaperSize() {
+  return useInvoiceStore(state => state.paperSize);
+}
+
 export function useAmountFormatSlice() {
   return useInvoiceStore(
     useShallow(state => ({

@@ -164,6 +164,8 @@ function describeAction(
       return { label: "Number format", area: "page" };
     case "currencyPosition":
       return { label: "Currency position", area: "page" };
+    case "paperSize":
+      return { label: "Paper size", area: "page" };
     case "currency":
     case "currencyCode":
       return { label: "Currency", area: "page" };

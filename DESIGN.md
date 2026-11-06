@@ -559,8 +559,9 @@ Medium and meta drops to 12px. The homepage's pictures of the editor mirror
   `rounded-t-2xl`, `shadow-floating`) above the tab bar with a tap-to-close
   backdrop, and the canvas pill is hidden. The light/dark switch is also in
   the project menu.
-- **The page is viewport-independent.** The A4 sheet is fixed at 210mm by at
-  least 297mm with 40pt padding, and nothing inside it uses responsive
+- **The page is viewport-independent.** The sheet is fixed at the invoice's
+  paper size (A4, 210mm by at least 297mm; Letter, 8.5in by at least 11in)
+  with 40pt padding, and nothing inside it uses responsive
   breakpoints, so what you see on screen matches the PDF. Small screens scale
   the whole sheet with zoom; they never reflow it.
 - **Zoom.** Presets run 50% to 200%, plus Fit. Below 768px the editor opens at
@@ -610,7 +611,8 @@ Medium and meta drops to 12px. The homepage's pictures of the editor mirror
 - **Storage refused.** When the browser blocks storage, a note with an
   `amber-600` warning icon sits right under the hero's buttons, in `ink` at
   80%, saying what still works and how to fix it, before anyone starts.
-- **Print is a first-class target.** `@page` is A4 with 16mm margins;
+- **Print is a first-class target.** `@page` is A4 with 16mm margins,
+  and a Letter invoice prints on the named `letter` page;
   `.invoice-page` forces page breaks, `.avoid-break` prevents mid-block splits,
   `.no-print` hides chrome, and print colour-adjust is forced `exact`.
 

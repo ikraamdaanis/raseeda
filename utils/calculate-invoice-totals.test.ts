@@ -87,6 +87,7 @@ function makeInvoice(overrides: Partial<Invoice> = {}): Invoice {
     dateFormat: "yyyy-MM-dd",
     numberFormat: "comma-dot",
     currencyPosition: "before",
+    paperSize: "A4",
     ...overrides
   };
 }

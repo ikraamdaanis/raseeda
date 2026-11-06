@@ -1,5 +1,9 @@
 import { STORED_INVOICE_FORMATS } from "~/schema/invoice";
-import type { CurrencyPosition, InvoiceNumberFormat } from "~/types";
+import type {
+  CurrencyPosition,
+  InvoiceNumberFormat,
+  InvoicePaperSize
+} from "~/types";
 
 // A language's most common region (CLDR's likely subtags), for a browser
 // language with no region ("de" is Germany). Languages not listed fall back
@@ -147,6 +151,25 @@ const CURRENCY_AFTER_REGIONS = new Set([
   "VN"
 ]);
 
+// Where Letter is the paper size, as CLDR's paper-size territories have it.
+// Everywhere else is A4.
+const LETTER_REGIONS = new Set([
+  "BZ",
+  "CA",
+  "CL",
+  "CO",
+  "CR",
+  "GT",
+  "MX",
+  "NI",
+  "PA",
+  "PH",
+  "PR",
+  "SV",
+  "US",
+  "VE"
+]);
+
 // Bilingual countries where the language decides: French in Canada and
 // Belgium writes 1 234,56 $ while English and Dutch don't.
 function getLanguageOverride(
@@ -188,13 +211,14 @@ function parseLanguageTag(tag: string) {
   return { language, region };
 }
 
-// A new blank invoice's number format and currency position, from the
-// browser's language: someone in Berlin starts on 1.234,56 €, someone in
-// Chicago on $1,234.56. An unknown or missing tag gets the stored-invoice
-// defaults.
+// A new blank invoice's number format, currency position and paper size,
+// from the browser's language: someone in Berlin starts on 1.234,56 € and
+// A4, someone in Chicago on $1,234.56 and Letter. An unknown or missing tag
+// gets the stored-invoice defaults.
 export function getLocaleDefaults(tag: string | undefined): {
   numberFormat: InvoiceNumberFormat;
   currencyPosition: CurrencyPosition;
+  paperSize: InvoicePaperSize;
 } {
   if (!tag) return { ...STORED_INVOICE_FORMATS };
 
@@ -202,12 +226,13 @@ export function getLocaleDefaults(tag: string | undefined): {
 
   if (!region) return { ...STORED_INVOICE_FORMATS };
 
-  return (
-    getLanguageOverride(language, region) ?? {
+  return {
+    ...(getLanguageOverride(language, region) ?? {
       numberFormat: getNumberFormat(region),
       currencyPosition: CURRENCY_AFTER_REGIONS.has(region) ? "after" : "before"
-    }
-  );
+    }),
+    paperSize: LETTER_REGIONS.has(region) ? "Letter" : "A4"
+  };
 }
 
 // The browser's language, or none where there's no browser (the server
