@@ -1,8 +1,8 @@
 import { useShallow } from "zustand/react/shallow";
-import { getCurrencyMarker } from "~/consts/currencies";
+import { getMoneyFormat } from "~/consts/currencies";
 import type { InvoiceStore } from "~/stores/invoice-store";
 import { useInvoiceStore } from "~/stores/invoice-store";
-import type { Invoice, InvoiceTotals } from "~/types";
+import type { Invoice, InvoiceTotals, MoneyFormat } from "~/types";
 import { calculateInvoiceTotals } from "~/utils/calculate-invoice-totals";
 import {
   calculateConvertedTotals,
@@ -162,7 +162,6 @@ export function useLineItemsSlice() {
     useShallow(state => ({
       items: state.items,
       tableSettings: state.tableSettings,
-      currency: state.currency,
       addItem: state.addItem,
       removeItem: state.removeItem,
       updateItem: state.updateItem,
@@ -210,7 +209,6 @@ export function usePricingSlice() {
       discountType: state.discountType,
       amountPaid: state.amountPaid,
       paidDate: state.paidDate,
-      currency: state.currency,
       currencyCode: state.currencyCode,
       labels: state.labels,
       setTax: state.setTax,
@@ -373,9 +371,15 @@ export function useCurrencySlice() {
   );
 }
 
-// Currency marker - derived display value, only re-renders when currency changes
-export function useCurrencySymbol() {
-  return useInvoiceStore(state => getCurrencyMarker(state.currency));
+// How the invoice writes its amounts: its currency's marker in its font.
+export function useMoneyFormat(): MoneyFormat {
+  return useInvoiceStore(useShallow(getMoneyFormat));
+}
+
+// The currency's marker alone, the symbol or, where the invoice's font can't
+// draw it, the code.
+export function useCurrencyMarker(): string {
+  return useInvoiceStore(state => getMoneyFormat(state).marker);
 }
 
 // Full invoice data for serialization (save/load)

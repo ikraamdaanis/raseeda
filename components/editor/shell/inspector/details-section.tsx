@@ -31,7 +31,8 @@ import { INVOICE_DATE_FORMATS } from "~/schema/invoice";
 import {
   useCurrencyConversionSlice,
   useCurrencySlice,
-  useDetailsSlice
+  useDetailsSlice,
+  useTheme
 } from "~/stores/invoice-selectors";
 import { isSameCurrency } from "~/utils/currency-conversion";
 import { formatInvoiceDate } from "~/utils/format-invoice-date";
@@ -237,6 +238,7 @@ function CurrencyPicker({
   onChange: (symbol: string, code: string) => void;
 }) {
   const [customOpen, setCustomOpen] = useState(false);
+  const { font } = useTheme();
   const selected = normalizeCurrency(currency);
   const isCustom = !currencyOptions.some(option => option.symbol === selected);
   // The selected preset stays listed even when excluded, so the select never
@@ -275,7 +277,7 @@ function CurrencyPicker({
           >
             {options.map(({ symbol, code, label: name }) => (
               <option key={symbol} value={symbol}>
-                {`${getCurrencyMarker(symbol)} ${name} · ${code}`}
+                {`${getCurrencyMarker({ currency: symbol, currencyCode: code, font })} ${name} · ${code}`}
               </option>
             ))}
             <option value={CUSTOM_CURRENCY}>

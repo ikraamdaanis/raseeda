@@ -360,7 +360,7 @@ function PaletteCommands() {
                 )
               )}
             >
-              {`Currency: ${getCurrencyMarker(option.symbol)} ${option.label} (${option.code})`}
+              {`Currency: ${getCurrencyMarker({ currency: option.symbol, currencyCode: option.code, font: theme.font })} ${option.label} (${option.code})`}
             </PaletteItem>
           ))}
         </CommandGroup>

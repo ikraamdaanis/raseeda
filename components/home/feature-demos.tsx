@@ -11,7 +11,7 @@ import {
 import type { ComponentType, CSSProperties, ReactNode } from "react";
 import { ScaledFrame } from "~/components/home/editor-preview";
 import { buttonVariants } from "~/components/ui/button";
-import { formatCurrencyWithCode } from "~/consts/currencies";
+import { formatCurrencyWithCode, getMoneyFormat } from "~/consts/currencies";
 import {
   FONT_DEMO_WORD,
   getHomePreviewFontClass
@@ -515,7 +515,15 @@ export function CurrencyDemo({
               )}
               style={{ "--phase": index } as CSSProperties}
             >
-              {formatCurrencyWithCode(2475, currency.symbol, currency.code)}
+              {formatCurrencyWithCode(
+                2475,
+                getMoneyFormat({
+                  currency: currency.symbol,
+                  currencyCode: currency.code,
+                  theme: { font: "schibsted-grotesk" }
+                }),
+                currency.code
+              )}
             </span>
           ))}
         </span>

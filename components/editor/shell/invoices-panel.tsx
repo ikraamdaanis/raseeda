@@ -20,7 +20,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger
 } from "~/components/ui/dropdown-menu";
-import { formatCurrency } from "~/consts/currencies";
+import { formatCurrency, getMoneyFormat } from "~/consts/currencies";
 import { useFileActions } from "~/context/file-actions-context";
 import { useInvoiceDocument } from "~/context/invoice-document-context";
 import { watchInvoices, watchTemplates } from "~/db";
@@ -268,7 +268,7 @@ function InvoiceList({
                 title={document.name || "Untitled invoice"}
                 aside={formatCurrency(
                   getInvoiceTotal(document),
-                  document.invoiceData.currency
+                  getMoneyFormat(document.invoiceData)
                 )}
                 meta={invoiceMeta(document, view)}
                 onSelect={() => actions.openInvoice(document.id)}

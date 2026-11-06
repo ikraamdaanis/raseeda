@@ -242,6 +242,21 @@ describe("buildInvoiceViewModel", () => {
       expect(dirham.lineItems[0].unitPrice).toBe("AED9.00");
       expect(dirham.lineItems[0].amount).toBe("AED9.00");
     });
+
+    it("prints a symbol the invoice's font lacks as its code", () => {
+      const rupees = (font: Invoice["theme"]["font"]) =>
+        buildInvoiceViewModel(
+          makeInvoice({
+            currency: "₹",
+            currencyCode: "INR",
+            theme: { ...makeInvoice().theme, font },
+            items: [makeItem({ quantity: 1, unitPrice: 9 })]
+          })
+        );
+
+      expect(rupees("inter").lineItems[0].amount).toBe("₹9.00");
+      expect(rupees("lora").lineItems[0].amount).toBe("INR9.00");
+    });
   });
 
   describe("summaryRows", () => {
@@ -475,7 +490,8 @@ describe("buildInvoiceViewModel with a second currency", () => {
       rate: 1.2875,
       fromCode: "GBP",
       toCurrency: "$",
-      toCode: "USD"
+      toCode: "USD",
+      toMarker: "$"
     });
     expect(lineItems[0].convertedAmount).toBe("$9,205.63");
     expect(valueById.subtotal).toBe("£7,150.00 / $9,205.63");

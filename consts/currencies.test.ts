@@ -1,50 +1,110 @@
 import { describe, expect, it } from "vitest";
 import {
   formatCurrency,
+  formatCurrencyWithCode,
   getCurrencyMarker,
+  getMoneyFormat,
   normalizeCurrency
 } from "~/consts/currencies";
+import { INVOICE_FONTS } from "~/consts/invoice-fonts";
+import type { InvoiceFont } from "~/types";
+
+function marker(
+  currency: string,
+  currencyCode = "",
+  font: InvoiceFont = "inter"
+) {
+  return getCurrencyMarker({ currency, currencyCode, font });
+}
+
+function money(
+  currency: string,
+  currencyCode = "",
+  font: InvoiceFont = "inter"
+) {
+  return getMoneyFormat({ currency, currencyCode, theme: { font } });
+}
 
 describe("getCurrencyMarker", () => {
-  it("returns the symbol unchanged for latin-glyph currencies", () => {
-    expect(getCurrencyMarker("£")).toBe("£");
-    expect(getCurrencyMarker("$")).toBe("$");
-    expect(getCurrencyMarker("€")).toBe("€");
-    expect(getCurrencyMarker("¥")).toBe("¥");
-    expect(getCurrencyMarker("CHF")).toBe("CHF");
+  it("returns the symbol when the font draws it", () => {
+    for (const font of INVOICE_FONTS) {
+      expect(marker("£", "GBP", font.id)).toBe("£");
+      expect(marker("$", "USD", font.id)).toBe("$");
+      expect(marker("€", "EUR", font.id)).toBe("€");
+      expect(marker("¥", "JPY", font.id)).toBe("¥");
+      expect(marker("CHF", "CHF", font.id)).toBe("CHF");
+    }
   });
 
-  it("swaps the tofu-prone Riyal and Dirham symbols for ASCII codes", () => {
-    expect(getCurrencyMarker("⃁")).toBe("SAR");
-    expect(getCurrencyMarker("د.إ")).toBe("AED");
+  it("prints the code for a symbol no invoice font has", () => {
+    for (const font of INVOICE_FONTS) {
+      expect(marker("⃁", "SAR", font.id)).toBe("SAR");
+      expect(marker("د.إ", "AED", font.id)).toBe("AED");
+    }
+  });
+
+  it("prints the code only in the fonts that lack the symbol", () => {
+    expect(marker("₹", "INR", "inter")).toBe("₹");
+    expect(marker("₹", "INR", "lora")).toBe("INR");
+    expect(marker("₹", "INR", "libre-baskerville")).toBe("INR");
+    expect(marker("₹", "INR", "jetbrains-mono")).toBe("INR");
+    expect(marker("₪", "ILS", "inter")).toBe("₪");
+    expect(marker("₪", "ILS", "lora")).toBe("ILS");
+  });
+
+  it("checks every character of a custom symbol", () => {
+    expect(marker("zł", "PLN", "inter")).toBe("zł");
+    expect(marker("zł", "PLN", "lora")).toBe("zł");
+  });
+
+  it("uses a preset's own code when none is stored", () => {
+    expect(marker("⃁")).toBe("SAR");
+    expect(marker("د.إ")).toBe("AED");
+  });
+
+  it("prints a custom symbol with no code as typed", () => {
+    expect(marker("₹", "", "lora")).toBe("₹");
+    expect(marker("Rs")).toBe("Rs");
   });
 
   it("resolves legacy currency codes before choosing the marker", () => {
-    expect(getCurrencyMarker("SAR")).toBe("SAR");
-    expect(getCurrencyMarker("AED")).toBe("AED");
-    expect(getCurrencyMarker("GBP")).toBe("£");
-  });
-
-  it("passes through a custom symbol untouched", () => {
-    expect(getCurrencyMarker("₹")).toBe("₹");
+    expect(marker("SAR")).toBe("SAR");
+    expect(marker("AED")).toBe("AED");
+    expect(marker("GBP")).toBe("£");
   });
 });
 
 describe("formatCurrency", () => {
   it("prefixes the amount with the resolved marker", () => {
-    expect(formatCurrency(1234.5, "£")).toBe("£1,234.50");
-    expect(formatCurrency(9, "CHF")).toBe("CHF9.00");
+    expect(formatCurrency(1234.5, money("£", "GBP"))).toBe("£1,234.50");
+    expect(formatCurrency(9, money("CHF", "CHF"))).toBe("CHF9.00");
   });
 
   it("renders Riyal and Dirham amounts with legible ASCII markers", () => {
-    expect(formatCurrency(1234.5, "⃁")).toBe("SAR1,234.50");
-    expect(formatCurrency(10, "د.إ")).toBe("AED10.00");
+    expect(formatCurrency(1234.5, money("⃁", "SAR"))).toBe("SAR1,234.50");
+    expect(formatCurrency(10, money("د.إ", "AED"))).toBe("AED10.00");
+  });
+
+  it("writes a rupee the font can't draw as INR", () => {
+    expect(formatCurrency(1500, money("₹", "INR", "inter"))).toBe("₹1,500.00");
+    expect(formatCurrency(1500, money("₹", "INR", "lora"))).toBe("INR1,500.00");
   });
 
   it("puts the minus sign of a negative amount before the marker", () => {
-    expect(formatCurrency(-100, "£")).toBe("-£100.00");
-    expect(formatCurrency(-1234.5, "CHF")).toBe("-CHF1,234.50");
-    expect(formatCurrency(-0, "£")).toBe("£0.00");
+    expect(formatCurrency(-100, money("£"))).toBe("-£100.00");
+    expect(formatCurrency(-1234.5, money("CHF"))).toBe("-CHF1,234.50");
+    expect(formatCurrency(-0, money("£"))).toBe("£0.00");
+  });
+});
+
+describe("formatCurrencyWithCode", () => {
+  it("doesn't repeat a code the marker already is", () => {
+    expect(formatCurrencyWithCode(10, money("₹", "INR", "inter"), "INR")).toBe(
+      "₹10.00 INR"
+    );
+    expect(formatCurrencyWithCode(10, money("₹", "INR", "lora"), "INR")).toBe(
+      "INR10.00"
+    );
   });
 });
 

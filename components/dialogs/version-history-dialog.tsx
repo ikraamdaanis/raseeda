@@ -11,7 +11,7 @@ import {
   DialogIcon,
   DialogTitle
 } from "~/components/ui/dialog";
-import { formatCurrency } from "~/consts/currencies";
+import { formatCurrency, getMoneyFormat } from "~/consts/currencies";
 import { useInvoiceDocument } from "~/context/invoice-document-context";
 import { getInvoiceVersions } from "~/db";
 import type { InvoiceVersion, InvoiceVersionReason } from "~/types";
@@ -157,7 +157,7 @@ export function VersionHistoryDialog({
                         {formatWhen(new Date(version.createdAt))}
                       </span>
                       <span className="text-muted-foreground truncate text-xs">
-                        {`${REASON_LABELS[version.reason]} · ${version.name} · ${formatCurrency(total, invoiceData.currency)}`}
+                        {`${REASON_LABELS[version.reason]} · ${version.name} · ${formatCurrency(total, getMoneyFormat(invoiceData))}`}
                       </span>
                     </div>
                     <Button

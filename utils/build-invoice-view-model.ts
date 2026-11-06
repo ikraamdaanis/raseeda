@@ -1,4 +1,4 @@
-import { formatCurrency } from "~/consts/currencies";
+import { formatCurrency, getMoneyFormat } from "~/consts/currencies";
 import type {
   CurrencyConversion,
   Invoice,
@@ -9,7 +9,8 @@ import type {
   InvoiceSections,
   InvoiceSummaryRow,
   InvoiceTaxGroup,
-  InvoiceViewModel
+  InvoiceViewModel,
+  MoneyFormat
 } from "~/types";
 import {
   calculateInvoiceTotals,
@@ -107,12 +108,12 @@ export function buildDetailRows(input: {
 // rate, so each line reads on its own.
 export function buildLineItemRow({
   item,
-  currency,
+  money,
   conversion,
   tax
 }: {
   item: InvoiceItem;
-  currency: string;
+  money: MoneyFormat;
   conversion: CurrencyConversion | null;
   tax: Invoice["tax"];
 }): InvoiceLineItemRow {
@@ -124,8 +125,8 @@ export function buildLineItemRow({
     description: item.description,
     quantity: item.quantity,
     unit: item.unit,
-    unitPrice: formatCurrency(item.unitPrice, currency),
-    amount: formatCurrency(amount, currency),
+    unitPrice: formatCurrency(item.unitPrice, money),
+    amount: formatCurrency(amount, money),
     convertedAmount: conversion
       ? formatConvertedAmount(amount, conversion)
       : undefined,
@@ -156,7 +157,7 @@ export function buildTaxRows({
   tax,
   taxGroups,
   taxAmount,
-  currency,
+  money,
   conversion,
   isVisible
 }: {
@@ -164,7 +165,7 @@ export function buildTaxRows({
   tax: Invoice["tax"];
   taxGroups: InvoiceTaxGroup[];
   taxAmount: number;
-  currency: string;
+  money: MoneyFormat;
   conversion: CurrencyConversion | null;
   isVisible: boolean;
 }): InvoiceSummaryRow[] {
@@ -182,7 +183,7 @@ export function buildTaxRows({
         value: exempt
           ? exemptValue
           : withConvertedAmount(
-              formatCurrency(taxAmount, currency),
+              formatCurrency(taxAmount, money),
               taxAmount,
               conversion
             ),
@@ -195,7 +196,7 @@ export function buildTaxRows({
   }
 
   return taxGroups.map(group => {
-    const base = formatCurrency(group.taxableAmount, currency);
+    const base = formatCurrency(group.taxableAmount, money);
 
     return {
       id: "tax",
@@ -205,7 +206,7 @@ export function buildTaxRows({
       value: group.exempt
         ? exemptValue
         : withConvertedAmount(
-            formatCurrency(group.taxAmount, currency),
+            formatCurrency(group.taxAmount, money),
             group.taxAmount,
             conversion
           ),
@@ -232,12 +233,12 @@ function buildSummaryRows(input: {
   // The subtotal, total and balance due in the second currency, added up
   // from its rows.
   converted: { subtotal: number; total: number; balanceDue: number };
-  currency: string;
+  money: MoneyFormat;
   currencyCode: string;
   sections: Pick<InvoiceSections, "discounts" | "tax" | "fees" | "amountPaid">;
   conversion: CurrencyConversion | null;
 }): InvoiceSummaryRow[] {
-  const { labels, currency, sections, conversion } = input;
+  const { labels, money, sections, conversion } = input;
   const hasPayment = sections.amountPaid && input.amountPaid > 0;
 
   return [
@@ -245,7 +246,7 @@ function buildSummaryRows(input: {
       id: "subtotal",
       label: labels.subtotal,
       value: withConvertedAmount(
-        formatCurrency(input.subtotal, currency),
+        formatCurrency(input.subtotal, money),
         input.subtotal,
         conversion,
         input.converted.subtotal
@@ -260,7 +261,7 @@ function buildSummaryRows(input: {
       label: labels.discounts,
       value: formatDeduction({
         amount: input.discountAmount,
-        currency,
+        money,
         conversion
       }),
       percentage:
@@ -273,7 +274,7 @@ function buildSummaryRows(input: {
       id: "fees",
       label: labels.fees,
       value: withConvertedAmount(
-        formatCurrency(input.fees, currency),
+        formatCurrency(input.fees, money),
         input.fees,
         conversion
       ),
@@ -286,7 +287,7 @@ function buildSummaryRows(input: {
       value: formatInvoiceTotal({
         amount: input.total,
         convertedAmount: input.converted.total,
-        currency,
+        money,
         currencyCode: input.currencyCode,
         conversion
       }),
@@ -302,7 +303,7 @@ function buildSummaryRows(input: {
         : labels.amountPaid,
       value: formatDeduction({
         amount: input.amountPaid,
-        currency,
+        money,
         conversion
       }),
       isVisible: hasPayment,
@@ -314,7 +315,7 @@ function buildSummaryRows(input: {
       value: formatInvoiceTotal({
         amount: input.balanceDue,
         convertedAmount: input.converted.balanceDue,
-        currency,
+        money,
         currencyCode: input.currencyCode,
         conversion
       }),
@@ -329,13 +330,14 @@ export function buildInvoiceViewModel(invoice: Invoice): InvoiceViewModel {
   const conversion = getPrintedSections(invoice).currencyConversion
     ? getCurrencyConversion(invoice)
     : null;
+  const money = getMoneyFormat(invoice);
 
   return {
     detailRows: buildDetailRows(invoice),
     lineItems: invoice.items.map(item =>
       buildLineItemRow({
         item,
-        currency: invoice.currency,
+        money,
         conversion,
         tax: invoice.tax
       })
@@ -348,7 +350,7 @@ export function buildInvoiceViewModel(invoice: Invoice): InvoiceViewModel {
         tax: invoice.tax,
         taxGroups: totals.taxGroups,
         taxAmount: totals.taxAmount,
-        currency: invoice.currency,
+        money,
         conversion,
         isVisible: invoice.sections.tax
       }),
@@ -365,7 +367,7 @@ export function buildInvoiceViewModel(invoice: Invoice): InvoiceViewModel {
         totals,
         rate: conversion?.rate ?? 0
       }),
-      currency: invoice.currency,
+      money,
       currencyCode: invoice.currencyCode,
       sections: invoice.sections,
       conversion

@@ -15,7 +15,7 @@ import {
   ContextMenuContent,
   ContextMenuTrigger
 } from "~/components/ui/context-menu";
-import { formatCurrency } from "~/consts/currencies";
+import { formatCurrency, getMoneyFormat } from "~/consts/currencies";
 import { cn } from "~/lib/utils";
 import type {
   InvoiceDocument,
@@ -555,7 +555,7 @@ export function InvoiceListTable({
                     {getClientName(invoice)} ·{" "}
                     {formatCurrency(
                       getInvoiceTotal(invoice),
-                      invoice.invoiceData.currency
+                      getMoneyFormat(invoice.invoiceData)
                     )}
                   </div>
                 </td>
@@ -577,7 +577,7 @@ export function InvoiceListTable({
                 >
                   {formatCurrency(
                     getInvoiceTotal(invoice),
-                    invoice.invoiceData.currency
+                    getMoneyFormat(invoice.invoiceData)
                   )}
                 </td>
                 <td

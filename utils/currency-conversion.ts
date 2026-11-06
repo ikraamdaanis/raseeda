@@ -3,31 +3,26 @@ import {
   currencyOptions,
   formatCurrency,
   formatCurrencyWithCode,
-  getCurrencyCodeForSymbol,
   getCurrencyMarker,
   negativeSign,
-  normalizeCurrency
+  normalizeCurrency,
+  resolveCurrencyCode
 } from "~/consts/currencies";
-import type { CurrencyConversion, Invoice, InvoiceTotals } from "~/types";
+import type {
+  CurrencyConversion,
+  Invoice,
+  InvoiceTotals,
+  MoneyFormat
+} from "~/types";
 import { roundCents } from "~/utils/calculate-invoice-totals";
 import { formatInvoiceDate } from "~/utils/format-invoice-date";
 
 type CurrencyPair = { currency: string; currencyCode: string };
 
-// A currency's code: the one stored, or a preset's own when none is (an
-// invoice saved before codes were, or imported without one, still has "£"
-// as GBP, as the currency picker shows it). A custom symbol may have none.
-function resolveCurrencyCode({ currency, currencyCode: code }: CurrencyPair) {
-  return (
-    code.trim().toUpperCase() ||
-    getCurrencyCodeForSymbol(normalizeCurrency(currency))
-  );
-}
-
-// The code that names a currency on the page ("GBP"), or its marker when it
+// The code that names a currency on the page ("GBP"), or its symbol when it
 // has no code.
 function currencyLabel(pair: CurrencyPair) {
-  return resolveCurrencyCode(pair) || getCurrencyMarker(pair.currency);
+  return resolveCurrencyCode(pair) || normalizeCurrency(pair.currency);
 }
 
 // Two currencies are the same when their codes match. A "$" in USD and a "$"
@@ -65,7 +60,7 @@ export function getCurrencyConversion(
   invoice: Pick<
     Invoice,
     "sections" | "currency" | "currencyCode" | "currencyConversion"
-  >
+  > & { theme: Pick<Invoice["theme"], "font"> }
 ): CurrencyConversion | null {
   const target = invoice.currencyConversion;
 
@@ -76,7 +71,12 @@ export function getCurrencyConversion(
     rate: Math.max(0, Number(target.rate) || 0),
     fromCode: currencyLabel(invoice),
     toCurrency: target.currency,
-    toCode: currencyLabel(target)
+    toCode: currencyLabel(target),
+    toMarker: getCurrencyMarker({
+      currency: target.currency,
+      currencyCode: target.currencyCode,
+      font: invoice.theme.font
+    })
   };
 }
 
@@ -139,7 +139,7 @@ function formatInSecondCurrency(
   converted: number,
   conversion: CurrencyConversion
 ): string {
-  const marker = getCurrencyMarker(conversion.toCurrency);
+  const marker = conversion.toMarker;
   const formatted = Math.abs(converted).toLocaleString("en-US", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2
@@ -170,14 +170,14 @@ export function withConvertedAmount(
 // one: "-£500.00 / -$643.75".
 export function formatDeduction({
   amount,
-  currency,
+  money,
   conversion
 }: {
   amount: number;
-  currency: string;
+  money: MoneyFormat;
   conversion: CurrencyConversion | null;
 }): string {
-  const value = `-${formatCurrency(amount, currency)}`;
+  const value = `-${formatCurrency(amount, money)}`;
 
   if (!conversion) return value;
 
@@ -192,22 +192,21 @@ export function formatDeduction({
 export function formatInvoiceTotal({
   amount,
   convertedAmount,
-  currency,
+  money,
   currencyCode,
   conversion
 }: {
   amount: number;
   // The total in the second currency, from calculateConvertedTotals.
   convertedAmount: number;
-  currency: string;
+  money: MoneyFormat;
   currencyCode: string;
   conversion: CurrencyConversion | null;
 }): string {
-  if (!conversion)
-    return formatCurrencyWithCode(amount, currency, currencyCode);
+  if (!conversion) return formatCurrencyWithCode(amount, money, currencyCode);
 
   return withConvertedAmount(
-    formatCurrency(amount, currency),
+    formatCurrency(amount, money),
     amount,
     conversion,
     convertedAmount

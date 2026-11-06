@@ -244,6 +244,15 @@ export type CurrencyConversion = {
   fromCode: string;
   toCurrency: string;
   toCode: string;
+  // The second currency's marker in the invoice's font: its symbol, or its
+  // code when the font can't draw the symbol.
+  toMarker: string;
+};
+
+// How an invoice writes its amounts: the currency's marker, its symbol or,
+// where the invoice's font can't draw that, its code.
+export type MoneyFormat = {
+  marker: string;
 };
 
 export type InvoiceViewModel = {

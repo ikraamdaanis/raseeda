@@ -15,7 +15,7 @@ import {
 import { NativeSelect } from "~/components/ui/select";
 import { getCurrencyMarker } from "~/consts/currencies";
 import { cn } from "~/lib/utils";
-import type { InvoiceDocument, InvoiceLibraryView } from "~/types";
+import type { InvoiceDocument, InvoiceFont, InvoiceLibraryView } from "~/types";
 import {
   countActiveFilters,
   DEFAULT_LIBRARY_VIEW,
@@ -25,6 +25,12 @@ import {
   listClients,
   listCurrencies
 } from "~/utils/invoice-library";
+
+// The currency filter is a native select, drawn in the system's font, which
+// has far more symbols than any invoice font. Inter's coverage, the widest,
+// stands in for it, so only a symbol almost no font has (the Riyal sign, the
+// Arabic-script Dirham) reads as its code.
+const LIBRARY_FONT: InvoiceFont = "inter";
 
 const fieldClassName =
   "bg-muted dark:bg-muted dark:hover:bg-muted hover:border-input focus-visible:border-ring text-foreground h-8 w-full min-w-0 rounded-md border border-transparent pr-7 pl-2 text-[13px] outline-none";
@@ -193,7 +199,11 @@ export function LibraryViewOptions({
               <option value="">Any currency</option>
               {currencies.map(currency => (
                 <option key={currency} value={currency}>
-                  {getCurrencyMarker(currency)}
+                  {getCurrencyMarker({
+                    currency,
+                    currencyCode: "",
+                    font: LIBRARY_FONT
+                  })}
                 </option>
               ))}
             </NativeSelect>

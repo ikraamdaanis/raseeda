@@ -6,11 +6,14 @@ import { useShallow } from "zustand/react/shallow";
 import { InvoiceInput } from "~/components/editor/invoice-input";
 import { InvoiceTextArea } from "~/components/editor/invoice-textarea";
 import { Button } from "~/components/ui/button";
-import { getCurrencyMarker } from "~/consts/currencies";
 import { useCurrencyConversion } from "~/hooks/use-currency-conversion";
 import { useIsPreview, useShownSections } from "~/hooks/use-shown-sections";
 import { cn } from "~/lib/utils";
-import { useLineItemsSlice, useTheme } from "~/stores/invoice-selectors";
+import {
+  useLineItemsSlice,
+  useMoneyFormat,
+  useTheme
+} from "~/stores/invoice-selectors";
 import { useInvoiceStore } from "~/stores/invoice-store";
 import type {
   CurrencyConversion,
@@ -18,6 +21,7 @@ import type {
   InvoiceItem,
   InvoiceLineItemRow,
   InvoiceTheme,
+  MoneyFormat,
   TableSettings,
   TextRole
 } from "~/types";
@@ -341,12 +345,12 @@ function useColumnTemplate({
   columns,
   items,
   tableSettings,
-  currency
+  money
 }: {
   columns: LineItemColumnConfig[];
   items: InvoiceItem[];
   tableSettings: TableSettings;
-  currency: string;
+  money: MoneyFormat;
 }) {
   // Measured text changes when a font loads, which nothing here reads, so the
   // compiler mustn't keep a template measured in the fallback.
@@ -361,7 +365,7 @@ function useColumnTemplate({
   const hasTax = useInvoiceStore(state => state.sections.tax);
   const isPreview = useIsPreview();
   const rows = items.map(item =>
-    buildLineItemRow({ item, currency, conversion, tax })
+    buildLineItemRow({ item, money, conversion, tax })
   );
 
   function getCellTexts(column: LineItemColumnConfig) {
@@ -443,7 +447,6 @@ export function InvoiceLineItems() {
   const {
     items,
     tableSettings,
-    currency,
     addItem,
     removeItem,
     updateItem,
@@ -453,14 +456,15 @@ export function InvoiceLineItems() {
   } = useLineItemsSlice();
   const theme = useTheme();
   const isPreview = useIsPreview();
-  const currencySymbol = getCurrencyMarker(currency);
+  const money = useMoneyFormat();
+  const currencySymbol = money.marker;
   // Worked out once for the table, so each row doesn't go over every line.
   const visibleColumns = useVisibleColumns();
   const columnTemplate = useColumnTemplate({
     columns: visibleColumns.columns,
     items,
     tableSettings,
-    currency
+    money
   });
 
   return (
@@ -489,7 +493,7 @@ export function InvoiceLineItems() {
             items={items}
             visibleColumns={visibleColumns}
             tableSettings={tableSettings}
-            currency={currency}
+            money={money}
             currencySymbol={currencySymbol}
             theme={theme}
             updateItem={updateItem}
@@ -657,7 +661,7 @@ function LineItems({
   items,
   visibleColumns,
   tableSettings,
-  currency,
+  money,
   currencySymbol,
   theme,
   updateItem,
@@ -668,7 +672,7 @@ function LineItems({
   items: InvoiceItem[];
   visibleColumns: VisibleColumns;
   tableSettings: TableSettings;
-  currency: string;
+  money: MoneyFormat;
   currencySymbol: string;
   theme: InvoiceTheme;
   updateItem: UpdateItem;
@@ -686,7 +690,7 @@ function LineItems({
           itemCount={items.length}
           visibleColumns={visibleColumns}
           tableSettings={tableSettings}
-          currency={currency}
+          money={money}
           currencySymbol={currencySymbol}
           theme={theme}
           updateItem={updateItem}
@@ -705,7 +709,7 @@ function LineItem({
   itemCount,
   visibleColumns,
   tableSettings,
-  currency,
+  money,
   currencySymbol,
   theme,
   updateItem,
@@ -718,7 +722,7 @@ function LineItem({
   itemCount: number;
   visibleColumns: VisibleColumns;
   tableSettings: TableSettings;
-  currency: string;
+  money: MoneyFormat;
   currencySymbol: string;
   theme: InvoiceTheme;
   updateItem: UpdateItem;
@@ -730,7 +734,7 @@ function LineItem({
   const tax = useInvoiceStore(state => state.tax);
   const taxLabel = useInvoiceStore(state => state.labels.tax);
   const hasTax = useInvoiceStore(state => state.sections.tax);
-  const viewRow = buildLineItemRow({ item, currency, conversion, tax });
+  const viewRow = buildLineItemRow({ item, money, conversion, tax });
   const isPreview = useIsPreview();
   const { columns, canEditLineRates, canTypeAmount } = visibleColumns;
 

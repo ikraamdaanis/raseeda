@@ -22,7 +22,8 @@ function conversionFor({
     sections: { ...invoiceDefault.sections, currencyConversion: true },
     currency,
     currencyCode,
-    currencyConversion: { ...invoiceDefault.currencyConversion, ...second }
+    currencyConversion: { ...invoiceDefault.currencyConversion, ...second },
+    theme: { font: "inter" }
   });
 }
 
@@ -81,12 +82,17 @@ describe("formatConvertedAmount", () => {
       rate: 1.25,
       fromCode: "GBP",
       toCurrency: "$",
-      toCode: "USD"
+      toCode: "USD",
+      toMarker: "$"
     };
 
     expect(formatConvertedAmount(-5, conversion)).toBe("-$6.25");
     expect(
-      formatConvertedAmount(-5, { ...conversion, toCurrency: "CHF" })
+      formatConvertedAmount(-5, {
+        ...conversion,
+        toCurrency: "CHF",
+        toMarker: "CHF"
+      })
     ).toBe("-CHF 6.25");
   });
 });

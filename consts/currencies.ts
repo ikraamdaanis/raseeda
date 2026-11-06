@@ -1,3 +1,6 @@
+import type { InvoiceFont, InvoiceTheme, MoneyFormat } from "~/types";
+import { fontHasCharacters } from "~/utils/font-coverage";
+
 /**
  * The invoice stores a currency symbol directly, deduped by symbol so the
  * various dollar/yen currencies collapse to a single entry. Each preset carries
@@ -51,39 +54,72 @@ export function normalizeCurrency(currency: string): string {
   return LEGACY_CODE_TO_SYMBOL[currency] ?? currency;
 }
 
-/**
- * Some currency symbols have no glyph in the latin-subset webfonts used for PDF
- * generation, and are missing from most OS fonts too, so they render as a tofu
- * box in both the PDF and the editor preview. The Riyal sign (U+20C1) and the
- * Arabic-script Dirham symbol fall in this bucket. We show a legible ASCII code
- * for them instead, so money stays readable everywhere it is formatted.
- */
-const SYMBOL_TO_DISPLAY_MARKER: Record<string, string> = {
-  "⃁": "SAR",
-  "د.إ": "AED"
-};
+// The ISO code a currency is printed with: the one stored, or a preset's own
+// when none is (an invoice saved before codes were, or imported without one,
+// still has "£" as GBP, as the currency picker shows it). A custom symbol may
+// have none.
+export function resolveCurrencyCode({
+  currency,
+  currencyCode
+}: {
+  currency: string;
+  currencyCode: string;
+}): string {
+  return (
+    currencyCode.trim().toUpperCase() ||
+    getCurrencyCodeForSymbol(normalizeCurrency(currency))
+  );
+}
 
 /**
- * Resolves the stored currency to the marker shown before amounts. Legacy codes
- * are normalised to their symbol first, then any tofu-prone symbol is swapped
- * for its ASCII code. The stored currency value itself is left untouched, so the
- * picker selection and saved invoices keep working.
+ * The marker shown with amounts. It's the currency's symbol when the invoice's
+ * font draws every character in it, and its ISO code otherwise, so a symbol
+ * the font lacks (the Riyal sign, the Arabic-script Dirham, "₹" in Lora)
+ * prints as "SAR", "AED" or "INR" rather than a box. The editor and the PDF
+ * read the same coverage table, so they always agree. A custom symbol with no
+ * code is printed as typed. Legacy codes are normalised to their symbol
+ * first; the stored currency itself is left untouched.
  */
-export function getCurrencyMarker(currency: string): string {
+export function getCurrencyMarker({
+  currency,
+  currencyCode,
+  font
+}: {
+  currency: string;
+  currencyCode: string;
+  font: InvoiceFont;
+}): string {
   const symbol = normalizeCurrency(currency);
 
-  return SYMBOL_TO_DISPLAY_MARKER[symbol] ?? symbol;
+  if (fontHasCharacters(font, symbol)) return symbol;
+
+  return resolveCurrencyCode({ currency, currencyCode }) || symbol;
+}
+
+// How an invoice writes its amounts, from its currency and font.
+export function getMoneyFormat(invoice: {
+  currency: string;
+  currencyCode: string;
+  theme: Pick<InvoiceTheme, "font">;
+}): MoneyFormat {
+  return {
+    marker: getCurrencyMarker({
+      currency: invoice.currency,
+      currencyCode: invoice.currencyCode,
+      font: invoice.theme.font
+    })
+  };
 }
 
 // A negative amount (a credit line, its tax) reads "-£100.00", the sign ahead
 // of the marker. One that rounds to nothing has no sign.
-export function formatCurrency(amount: number, currency: string): string {
+export function formatCurrency(amount: number, money: MoneyFormat): string {
   const formatted = Math.abs(amount).toLocaleString("en-US", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2
   });
 
-  return `${negativeSign(amount, formatted)}${getCurrencyMarker(currency)}${formatted}`;
+  return `${negativeSign(amount, formatted)}${money.marker}${formatted}`;
 }
 
 export function negativeSign(amount: number, formatted: string): string {
@@ -93,18 +129,19 @@ export function negativeSign(amount: number, formatted: string): string {
 /**
  * Formats an amount with the ISO code appended (e.g. "£115.50 GBP") so a bare,
  * ambiguous symbol like "$" is disambiguated on the document. The suffix is
- * skipped when no code is set, and when the rendered marker already is the code
- * (CHF, and the SAR/AED tofu-replacement markers), which would otherwise repeat
- * it: "CHF115.50 CHF".
+ * skipped when no code is set, and when the marker already is the code (CHF,
+ * and a symbol the font can't draw), which would otherwise repeat it:
+ * "CHF115.50 CHF".
  */
 export function formatCurrencyWithCode(
   amount: number,
-  currency: string,
+  money: MoneyFormat,
   currencyCode: string
 ): string {
-  const formatted = formatCurrency(amount, currency);
+  const formatted = formatCurrency(amount, money);
   const code = currencyCode.trim();
-  if (!code || getCurrencyMarker(currency) === code) return formatted;
+
+  if (!code || money.marker === code) return formatted;
 
   return `${formatted} ${code}`;
 }

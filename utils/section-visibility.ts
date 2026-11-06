@@ -43,6 +43,7 @@ export function getPrintedSections(
     | "notes"
     | "terms"
     | "latePayment"
+    | "theme"
   >
 ): Record<InvoiceSectionKey, boolean> {
   const { sections } = invoice;

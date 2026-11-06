@@ -13,13 +13,14 @@ import { useIsPreview, useShownSections } from "~/hooks/use-shown-sections";
 import { cn } from "~/lib/utils";
 import {
   useConvertedTotals,
-  useCurrencySymbol,
+  useCurrencyMarker,
   useInvoiceTotals,
+  useMoneyFormat,
   usePricingSlice,
   useTaxGroups,
   useTheme
 } from "~/stores/invoice-selectors";
-import type { InvoiceSummaryRow } from "~/types";
+import type { InvoiceSummaryRow, MoneyFormat } from "~/types";
 import { buildTaxRows } from "~/utils/build-invoice-view-model";
 import {
   formatDeduction,
@@ -137,7 +138,7 @@ function MoneyInput({
   input,
   amount,
   display,
-  currency,
+  money,
   currencySymbol,
   style,
   onInput,
@@ -149,7 +150,7 @@ function MoneyInput({
   input: string;
   amount: number;
   display?: string;
-  currency: string;
+  money: MoneyFormat;
   currencySymbol: string;
   style: CSSProperties;
   onInput: (numericValue: string) => void;
@@ -164,7 +165,7 @@ function MoneyInput({
       value={
         focused
           ? `${currencySymbol}${input}`
-          : (display ?? formatCurrency(amount, currency))
+          : (display ?? formatCurrency(amount, money))
       }
       className="field-sizing-content min-w-20 text-right"
       style={style}
@@ -204,7 +205,8 @@ export function InvoicePricing() {
 }
 
 function SubtotalRow() {
-  const { currency, labels, setLabels } = usePricingSlice();
+  const { labels, setLabels } = usePricingSlice();
+  const money = useMoneyFormat();
   const { subtotal } = useInvoiceTotals();
   const converted = useConvertedTotals();
   const conversion = useCurrencyConversion();
@@ -229,7 +231,7 @@ function SubtotalRow() {
         style={getTextStyles({ settings: valueSettings })}
       >
         {withConvertedAmount(
-          formatCurrency(subtotal, currency),
+          formatCurrency(subtotal, money),
           subtotal,
           conversion,
           converted.subtotal
@@ -241,7 +243,8 @@ function SubtotalRow() {
 
 // The tax rows the PDF prints: one per rate when the lines' rates differ.
 function usePrintedTaxRows(): InvoiceSummaryRow[] {
-  const { tax, labels, currency } = usePricingSlice();
+  const { tax, labels } = usePricingSlice();
+  const money = useMoneyFormat();
   const { taxGroups, taxAmount } = useTaxGroups();
   const conversion = useCurrencyConversion();
 
@@ -250,7 +253,7 @@ function usePrintedTaxRows(): InvoiceSummaryRow[] {
     tax,
     taxGroups,
     taxAmount,
-    currency,
+    money,
     conversion,
     isVisible: true
   });
@@ -367,7 +370,8 @@ function getExemptTooltip(tax: { exempt: boolean; perLine: boolean }) {
 // what it comes to. While the lines' rates are printed in rows of their own
 // below it, it's the default the lines without one follow, and says so.
 function InvoiceTaxRow({ isDefault }: { isDefault: boolean }) {
-  const { tax, currency, setTax, labels, setLabels } = usePricingSlice();
+  const { tax, setTax, labels, setLabels } = usePricingSlice();
+  const money = useMoneyFormat();
   const { taxAmount } = useInvoiceTotals();
   const conversion = useCurrencyConversion();
   const isPreview = useIsPreview();
@@ -473,7 +477,7 @@ function InvoiceTaxRow({ isDefault }: { isDefault: boolean }) {
           style={getTextStyles({ settings: valueSettings })}
         >
           {withConvertedAmount(
-            formatCurrency(taxAmount, currency),
+            formatCurrency(taxAmount, money),
             taxAmount,
             conversion
           )}
@@ -484,8 +488,9 @@ function InvoiceTaxRow({ isDefault }: { isDefault: boolean }) {
 }
 
 function FeesRow() {
-  const { fees, setFees, currency, labels, setLabels } = usePricingSlice();
-  const currencySymbol = useCurrencySymbol();
+  const { fees, setFees, labels, setLabels } = usePricingSlice();
+  const money = useMoneyFormat();
+  const currencySymbol = useCurrencyMarker();
   const theme = useTheme();
   const labelSettings = getRoleSettings(theme, "totalsLabel");
   const valueSettings = getRoleSettings(theme, "totalsValue");
@@ -514,11 +519,11 @@ function FeesRow() {
           input={feesInput}
           amount={fees}
           display={withConvertedAmount(
-            formatCurrency(fees, currency),
+            formatCurrency(fees, money),
             fees,
             conversion
           )}
-          currency={currency}
+          money={money}
           currencySymbol={currencySymbol}
           style={getTextStyles({ settings: valueSettings })}
           onInput={numericValue => {
@@ -538,12 +543,12 @@ function DiscountsRow() {
     discountType,
     setDiscounts,
     setDiscountType,
-    currency,
     labels,
     setLabels
   } = usePricingSlice();
+  const money = useMoneyFormat();
   const { discountAmount } = useInvoiceTotals();
-  const currencySymbol = useCurrencySymbol();
+  const currencySymbol = useCurrencyMarker();
   const theme = useTheme();
   const labelSettings = getRoleSettings(theme, "totalsLabel");
   const valueSettings = getRoleSettings(theme, "totalsValue");
@@ -614,7 +619,7 @@ function DiscountsRow() {
           className="whitespace-nowrap"
           style={getTextStyles({ settings: valueSettings })}
         >
-          {formatDeduction({ amount: discountAmount, currency, conversion })}
+          {formatDeduction({ amount: discountAmount, money, conversion })}
         </span>
       ) : (
         <span
@@ -630,16 +635,16 @@ function DiscountsRow() {
               discountAmount > 0
                 ? formatDeduction({
                     amount: discountAmount,
-                    currency,
+                    money,
                     conversion
                   })
                 : withConvertedAmount(
-                    formatCurrency(discounts, currency),
+                    formatCurrency(discounts, money),
                     discounts,
                     conversion
                   )
             }
-            currency={currency}
+            money={money}
             currencySymbol={currencySymbol}
             style={getTextStyles({ settings: valueSettings })}
             onInput={numericValue => {
@@ -660,8 +665,8 @@ function DiscountsRow() {
 // the balance-due row below reads as the figure to pay instead. A payment only
 // counts while its row is switched on, as in the PDF.
 function TotalRow() {
-  const { currency, currencyCode, amountPaid, labels, setLabels } =
-    usePricingSlice();
+  const { currencyCode, amountPaid, labels, setLabels } = usePricingSlice();
+  const money = useMoneyFormat();
   const { total } = useInvoiceTotals();
   const converted = useConvertedTotals();
   const conversion = useCurrencyConversion();
@@ -697,7 +702,7 @@ function TotalRow() {
         {formatInvoiceTotal({
           amount: total,
           convertedAmount: converted.total,
-          currency,
+          money,
           currencyCode,
           conversion
         })}
@@ -714,11 +719,11 @@ function AmountPaidRow() {
     paidDate,
     setAmountPaid,
     setPaidDate,
-    currency,
     labels,
     setLabels
   } = usePricingSlice();
-  const currencySymbol = useCurrencySymbol();
+  const money = useMoneyFormat();
+  const currencySymbol = useCurrencyMarker();
   const theme = useTheme();
   const isPreview = useIsPreview();
   const labelSettings = getRoleSettings(theme, "totalsLabel");
@@ -770,14 +775,14 @@ function AmountPaidRow() {
           amount={amountPaid}
           display={
             amountPaid > 0
-              ? formatDeduction({ amount: amountPaid, currency, conversion })
+              ? formatDeduction({ amount: amountPaid, money, conversion })
               : withConvertedAmount(
-                  formatCurrency(amountPaid, currency),
+                  formatCurrency(amountPaid, money),
                   amountPaid,
                   conversion
                 )
           }
-          currency={currency}
+          money={money}
           currencySymbol={currencySymbol}
           style={getTextStyles({ settings: valueSettings })}
           onInput={numericValue => {
@@ -794,8 +799,8 @@ function AmountPaidRow() {
 }
 
 function BalanceDueRow() {
-  const { amountPaid, currency, currencyCode, labels, setLabels } =
-    usePricingSlice();
+  const { amountPaid, currencyCode, labels, setLabels } = usePricingSlice();
+  const money = useMoneyFormat();
   const { balanceDue } = useInvoiceTotals();
   const converted = useConvertedTotals();
   const conversion = useCurrencyConversion();
@@ -826,7 +831,7 @@ function BalanceDueRow() {
         {formatInvoiceTotal({
           amount: balanceDue,
           convertedAmount: converted.balanceDue,
-          currency,
+          money,
           currencyCode,
           conversion
         })}

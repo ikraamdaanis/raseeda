@@ -20,7 +20,11 @@ import {
 } from "~/context/invoice-document-context";
 import { getInvoice } from "~/db";
 import { useInvoicePdf } from "~/hooks/use-invoice-pdf";
-import { useCurrencySlice, useInvoiceTotals } from "~/stores/invoice-selectors";
+import {
+  useCurrencySlice,
+  useInvoiceTotals,
+  useMoneyFormat
+} from "~/stores/invoice-selectors";
 import { toPdfFileName } from "~/utils/save-file";
 
 // Download opens a small summary first, like Framer's Publish: what file you
@@ -35,7 +39,8 @@ export function DownloadPopover() {
   const { libraryDocumentId } = useInvoiceDocument();
   const documentName = useDocumentName();
   const { total } = useInvoiceTotals();
-  const { currency, currencyCode } = useCurrencySlice();
+  const { currencyCode } = useCurrencySlice();
+  const money = useMoneyFormat();
   const fileName = toPdfFileName(documentName);
 
   function handleOpenChange(next: boolean) {
@@ -92,7 +97,7 @@ export function DownloadPopover() {
           <div className="flex items-center justify-between gap-3">
             <dt className="text-muted-foreground">Total</dt>
             <dd className="text-foreground tabular-nums">
-              {formatCurrencyWithCode(total, currency, currencyCode)}
+              {formatCurrencyWithCode(total, money, currencyCode)}
             </dd>
           </div>
           <div className="flex items-center justify-between gap-3">

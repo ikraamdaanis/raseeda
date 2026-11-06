@@ -21,6 +21,7 @@
     "render:home": "bun --preload ./scripts/vite-url-imports.ts scripts/render-homepage-invoices.tsx",
     "encode:home": "bun scripts/encode-homepage-avif.ts",
     "subset:preview-fonts": "bun scripts/subset-preview-fonts.ts",
+    "build:pdf-fonts": "bun scripts/build-pdf-fonts.ts",
     "deploy": "bun run build && wrangler deploy",
     "cf-typegen": "wrangler types --include-runtime=false",
     "sandcastle:build-image": "sandcastle docker build-image --dockerfile .sandcastle/Dockerfile",
