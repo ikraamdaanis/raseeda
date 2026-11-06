@@ -1,5 +1,12 @@
-import type { InvoiceFont, InvoiceTheme, MoneyFormat } from "~/types";
+import type {
+  CurrencyPosition,
+  InvoiceFont,
+  InvoiceNumberFormat,
+  InvoiceTheme,
+  MoneyFormat
+} from "~/types";
 import { fontHasCharacters } from "~/utils/font-coverage";
+import { formatNumber } from "~/utils/format-number";
 
 /**
  * The invoice stores a currency symbol directly, deduped by symbol so the
@@ -96,30 +103,94 @@ export function getCurrencyMarker({
   return resolveCurrencyCode({ currency, currencyCode }) || symbol;
 }
 
-// How an invoice writes its amounts, from its currency and font.
+// ISO 4217's currencies with no minor unit. Their amounts print, and add up,
+// in whole units: ¥1,235, not ¥1,235.00. Three-decimal currencies (BHD, KWD,
+// OMR, JOD, TND) keep two for now.
+export const ZERO_DECIMAL_CURRENCIES = new Set([
+  "BIF",
+  "CLP",
+  "DJF",
+  "GNF",
+  "ISK",
+  "JPY",
+  "KMF",
+  "KRW",
+  "PYG",
+  "RWF",
+  "UGX",
+  "UYI",
+  "VND",
+  "VUV",
+  "XAF",
+  "XOF",
+  "XPF"
+]);
+
+// A currency's decimals, from its ISO code: 0 for the zero-decimal currencies,
+// 2 for everything else, a custom currency with no code included.
+export function getCurrencyDecimals(currency: {
+  currency: string;
+  currencyCode: string;
+}): number {
+  return ZERO_DECIMAL_CURRENCIES.has(resolveCurrencyCode(currency)) ? 0 : 2;
+}
+
+// How an invoice writes its amounts, from its currency, font, number format
+// and currency position.
 export function getMoneyFormat(invoice: {
   currency: string;
   currencyCode: string;
   theme: Pick<InvoiceTheme, "font">;
+  numberFormat: InvoiceNumberFormat;
+  currencyPosition: CurrencyPosition;
 }): MoneyFormat {
   return {
     marker: getCurrencyMarker({
       currency: invoice.currency,
       currencyCode: invoice.currencyCode,
       font: invoice.theme.font
-    })
+    }),
+    numberFormat: invoice.numberFormat,
+    position: invoice.currencyPosition,
+    decimals: getCurrencyDecimals(invoice)
   };
+}
+
+// Puts the marker beside a figure. After it, the marker is spaced with a
+// no-break space ("1.234,56 €", "1 234,56 zł"). Before it, a marker that ends
+// in a letter is spaced ("CHF 1’234.50"), a symbol sits against the figure
+// ("$1,234.56"). The sign of a negative amount comes first either way
+// ("-1.234,56 €", "-$6.25").
+export function placeMarker({
+  sign,
+  figure,
+  marker,
+  position
+}: {
+  sign: string;
+  figure: string;
+  marker: string;
+  position: CurrencyPosition;
+}): string {
+  if (!marker) return `${sign}${figure}`;
+  if (position === "after") return `${sign}${figure}\u00a0${marker}`;
+
+  return /\p{L}$/u.test(marker)
+    ? `${sign}${marker}\u00a0${figure}`
+    : `${sign}${marker}${figure}`;
 }
 
 // A negative amount (a credit line, its tax) reads "-£100.00", the sign ahead
 // of the marker. One that rounds to nothing has no sign.
 export function formatCurrency(amount: number, money: MoneyFormat): string {
-  const formatted = Math.abs(amount).toLocaleString("en-US", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2
-  });
+  const figure = formatNumber(amount, money);
 
-  return `${negativeSign(amount, formatted)}${money.marker}${formatted}`;
+  return placeMarker({
+    sign: negativeSign(amount, figure),
+    figure,
+    marker: money.marker,
+    position: money.position
+  });
 }
 
 export function negativeSign(amount: number, formatted: string): string {

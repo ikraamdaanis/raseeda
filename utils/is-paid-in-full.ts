@@ -7,7 +7,14 @@ import { calculateInvoiceTotals } from "~/utils/calculate-invoice-totals";
 export function isPaidInFull(
   invoice: Pick<
     Invoice,
-    "items" | "tax" | "fees" | "discounts" | "discountType" | "amountPaid"
+    | "items"
+    | "tax"
+    | "fees"
+    | "discounts"
+    | "discountType"
+    | "amountPaid"
+    | "currency"
+    | "currencyCode"
   > & { sections: Invoice["sections"] }
 ): boolean {
   const { total, balanceDue } = calculateInvoiceTotals(invoice);

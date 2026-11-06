@@ -17,6 +17,7 @@ import {
   getHomePreviewFontClass
 } from "~/consts/home-preview-fonts";
 import { INVOICE_FONTS } from "~/consts/invoice-fonts";
+import { STORED_INVOICE_FORMATS } from "~/schema/invoice";
 import { useOnScreen } from "~/hooks/use-on-screen";
 import { cn } from "~/lib/utils";
 
@@ -520,7 +521,8 @@ export function CurrencyDemo({
                 getMoneyFormat({
                   currency: currency.symbol,
                   currencyCode: currency.code,
-                  theme: { font: "schibsted-grotesk" }
+                  theme: { font: "schibsted-grotesk" },
+                  ...STORED_INVOICE_FORMATS
                 }),
                 currency.code
               )}

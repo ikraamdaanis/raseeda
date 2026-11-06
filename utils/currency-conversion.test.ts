@@ -77,23 +77,57 @@ describe("isSameCurrency", () => {
 });
 
 describe("formatConvertedAmount", () => {
-  it("puts the minus sign of a negative amount before the marker", () => {
-    const conversion = {
-      rate: 1.25,
-      fromCode: "GBP",
-      toCurrency: "$",
-      toCode: "USD",
-      toMarker: "$"
-    };
+  const conversion = {
+    rate: 1.25,
+    fromCode: "GBP",
+    toCurrency: "$",
+    toCode: "USD",
+    toMarker: "$",
+    toDecimals: 2
+  };
+  const money = {
+    marker: "£",
+    numberFormat: "comma-dot",
+    position: "before",
+    decimals: 2
+  } as const;
 
-    expect(formatConvertedAmount(-5, conversion)).toBe("-$6.25");
+  it("puts the minus sign of a negative amount before the marker", () => {
+    expect(formatConvertedAmount(-5, conversion, money)).toBe("-$6.25");
     expect(
-      formatConvertedAmount(-5, {
-        ...conversion,
-        toCurrency: "CHF",
-        toMarker: "CHF"
+      formatConvertedAmount(
+        -5,
+        { ...conversion, toCurrency: "CHF", toMarker: "CHF" },
+        money
+      )
+    ).toBe("-CHF\u00a06.25");
+  });
+
+  it("writes the second currency in the invoice's number format", () => {
+    expect(
+      formatConvertedAmount(1234.5, conversion, {
+        ...money,
+        numberFormat: "dot-comma",
+        position: "after"
       })
-    ).toBe("-CHF 6.25");
+    ).toBe("1.543,13\u00a0$");
+  });
+
+  it("rounds to the second currency's own decimals", () => {
+    expect(
+      formatConvertedAmount(
+        10,
+        {
+          ...conversion,
+          rate: 187.456,
+          toCurrency: "¥",
+          toCode: "JPY",
+          toMarker: "¥",
+          toDecimals: 0
+        },
+        money
+      )
+    ).toBe("¥1,875");
   });
 });
 
@@ -125,11 +159,18 @@ describe("calculateConvertedTotals", () => {
     discounts: 50,
     discountType: "fixed",
     fees: 25,
-    amountPaid: 500
+    amountPaid: 500,
+    currency: "£",
+    currencyCode: "GBP"
   });
 
   it("adds each sum up from the converted rows above it", () => {
-    expect(calculateConvertedTotals({ totals, rate: 1.1734 })).toEqual({
+    expect(
+      calculateConvertedTotals({
+        totals,
+        conversion: { rate: 1.1734, toDecimals: 2 }
+      })
+    ).toEqual({
       subtotal: 1255.54,
       total: 1452.71,
       balanceDue: 866.01
@@ -137,18 +178,46 @@ describe("calculateConvertedTotals", () => {
   });
 
   it("reads zero at a rate of zero", () => {
-    expect(calculateConvertedTotals({ totals, rate: 0 })).toEqual({
+    expect(
+      calculateConvertedTotals({
+        totals,
+        conversion: { rate: 0, toDecimals: 2 }
+      })
+    ).toEqual({
       subtotal: 0,
       total: 0,
       balanceDue: 0
     });
   });
 
+  it("reads zero without a conversion", () => {
+    expect(calculateConvertedTotals({ totals, conversion: null })).toEqual({
+      subtotal: 0,
+      total: 0,
+      balanceDue: 0
+    });
+  });
+
+  it("adds a zero-decimal second currency up in whole units", () => {
+    const converted = calculateConvertedTotals({
+      totals,
+      conversion: { rate: 187.456, toDecimals: 0 }
+    });
+    const lines = totals.items.reduce(
+      (sum, item) =>
+        sum + convertAmount(item.amount, { rate: 187.456, toDecimals: 0 }),
+      0
+    );
+
+    expect(Number.isInteger(converted.total)).toBe(true);
+    expect(converted.subtotal).toBe(lines);
+  });
+
   it("never reads a negative balance", () => {
     expect(
       calculateConvertedTotals({
         totals: { ...totals, amountPaid: 5000 },
-        rate: 1.1734
+        conversion: { rate: 1.1734, toDecimals: 2 }
       }).balanceDue
     ).toBe(0);
   });
@@ -195,12 +264,17 @@ describe("the second currency's column", () => {
         discounts: pick([0, 10, 99.99, 12.5]),
         discountType: pick(["fixed", "percentage"] as const),
         fees: pick([0, 25, 3.33]),
-        amountPaid: pick([0, 100, 999.99])
+        amountPaid: pick([0, 100, 999.99]),
+        currency: "£",
+        currencyCode: "GBP"
       });
-      const converted = calculateConvertedTotals({ totals, rate });
+      const converted = calculateConvertedTotals({
+        totals,
+        conversion: { rate, toDecimals: 2 }
+      });
       const toCents = (amount: number) => Math.round(amount * 100);
       const convertedCents = (amount: number) =>
-        toCents(convertAmount(amount, rate));
+        toCents(convertAmount(amount, { rate, toDecimals: 2 }));
       const lines = totals.items.reduce(
         (sum, item) => sum + convertedCents(item.amount),
         0

@@ -7,7 +7,8 @@ import {
   DEFAULT_INVOICE_DATE_FORMAT,
   DEFAULT_INVOICE_SECTIONS,
   DEFAULT_INVOICE_THEME,
-  DEFAULT_TABLE_SETTINGS
+  DEFAULT_TABLE_SETTINGS,
+  STORED_INVOICE_FORMATS
 } from "~/schema/invoice";
 import {
   CURRENT_INVOICE_SCHEMA_VERSION,
@@ -31,6 +32,10 @@ import {
   isSameCurrency,
   pickSecondCurrency
 } from "~/utils/currency-conversion";
+import {
+  getBrowserLanguage,
+  getLocaleDefaults
+} from "~/utils/locale-defaults";
 
 export const invoiceDefault: Invoice = {
   id: "1",
@@ -131,7 +136,8 @@ export const invoiceDefault: Invoice = {
   currencyCode: "USD",
   theme: DEFAULT_INVOICE_THEME,
   sections: DEFAULT_INVOICE_SECTIONS,
-  dateFormat: DEFAULT_INVOICE_DATE_FORMAT
+  dateFormat: DEFAULT_INVOICE_DATE_FORMAT,
+  ...STORED_INVOICE_FORMATS
 };
 
 /**
@@ -141,12 +147,21 @@ export const invoiceDefault: Invoice = {
  * snapshot, never sharing nested objects with the default. The invoice and due
  * dates are stamped from the clock at call time (due 30 days out), so an invoice
  * created today is dated today rather than whenever the module was loaded.
+ * Its number format and currency position come from the browser's language
+ * (issue #117) unless given, as the automation API gives the stored-invoice
+ * defaults so the same data always makes the same invoice.
  */
-export function createBlankInvoice(): Invoice {
+export function createBlankInvoice(
+  formats: Pick<
+    Invoice,
+    "numberFormat" | "currencyPosition"
+  > = getLocaleDefaults(getBrowserLanguage())
+): Invoice {
   const now = new Date();
 
   return {
     ...structuredClone(invoiceDefault),
+    ...formats,
     invoiceDate: format(now, "yyyy-MM-dd"),
     dueDate: format(addDays(now, 30), "yyyy-MM-dd"),
     items: invoiceDefault.items.map(item => ({
@@ -179,6 +194,8 @@ interface InvoiceActions {
 
   // Dates
   setDateFormat: (dateFormat: Invoice["dateFormat"]) => void;
+  setNumberFormat: (numberFormat: Invoice["numberFormat"]) => void;
+  setCurrencyPosition: (currencyPosition: Invoice["currencyPosition"]) => void;
 
   // Title
   setTitle: (title: string) => void;
@@ -326,6 +343,17 @@ export const useInvoiceStore = create<InvoiceStore>()(
       setDateFormat: dateFormat =>
         set(state => {
           state.dateFormat = dateFormat;
+        }),
+
+      // Amounts
+      setNumberFormat: numberFormat =>
+        set(state => {
+          state.numberFormat = numberFormat;
+        }),
+
+      setCurrencyPosition: currencyPosition =>
+        set(state => {
+          state.currencyPosition = currencyPosition;
         }),
 
       // Title

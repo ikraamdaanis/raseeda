@@ -29,6 +29,8 @@ import {
 } from "~/utils/currency-conversion";
 import { getRoleSettings } from "~/utils/get-role-settings";
 import { getTextStyles } from "~/utils/get-text-styles";
+import { formatDecimalDraft } from "~/utils/decimal-input";
+import { formatPlainNumber } from "~/utils/format-number";
 import { handleCurrencyInput } from "~/utils/handle-currency-input";
 import { handlePercentageInput } from "~/utils/handle-percentage-input";
 import { reconcilePricingInput } from "~/utils/reconcile-pricing-input";
@@ -164,14 +166,22 @@ function MoneyInput({
       data-field={field}
       value={
         focused
-          ? `${currencySymbol}${input}`
+          ? formatDecimalDraft(input, money)
           : (display ?? formatCurrency(amount, money))
       }
       className="field-sizing-content min-w-20 text-right"
       style={style}
       placeholder={currencySymbol}
       onFocus={() => setFocused(true)}
-      onChange={value => onInput(handleCurrencyInput(value, currencySymbol))}
+      onChange={value =>
+        onInput(
+          handleCurrencyInput(value, {
+            currencySymbol,
+            numberFormat: money.numberFormat,
+            decimals: money.decimals
+          })
+        )
+      }
       onBlur={() => {
         setFocused(false);
         onCommit();
@@ -230,12 +240,7 @@ function SubtotalRow() {
         className="text-paper-foreground text-right whitespace-nowrap"
         style={getTextStyles({ settings: valueSettings })}
       >
-        {withConvertedAmount(
-          formatCurrency(subtotal, money),
-          subtotal,
-          conversion,
-          converted.subtotal
-        )}
+        {withConvertedAmount({ value: formatCurrency(subtotal, money), amount: subtotal, conversion, money, convertedAmount: converted.subtotal })}
       </span>
     </div>
   );
@@ -303,6 +308,7 @@ function TaxRow() {
 // there, as on the invoice's own row.
 function PrintedTaxRows({ rows }: { rows: InvoiceSummaryRow[] }) {
   const { tax, setTax } = usePricingSlice();
+  const money = useMoneyFormat();
   const isPreview = useIsPreview();
   const theme = useTheme();
   const labelStyle = getTextStyles({
@@ -325,7 +331,7 @@ function PrintedTaxRows({ rows }: { rows: InvoiceSummaryRow[] }) {
           >
             {row.percentage === undefined
               ? row.label
-              : `${row.label} ${row.percentage}%`}
+              : `${row.label} ${formatPlainNumber(row.percentage, money.numberFormat)}%`}
           </span>
           {row.note !== undefined && !isPreview ? (
             <InvoiceInput
@@ -435,7 +441,7 @@ function InvoiceTaxRow({ isDefault }: { isDefault: boolean }) {
               id="invoice-field-totals"
               aria-label="Tax percentage"
               data-field="tax.percentage"
-              value={taxInput}
+              value={formatPlainNumber(taxInput, money.numberFormat)}
               onChange={value => {
                 const numericValue = handlePercentageInput(value);
                 setTaxInput(numericValue);
@@ -476,11 +482,7 @@ function InvoiceTaxRow({ isDefault }: { isDefault: boolean }) {
           className="whitespace-nowrap"
           style={getTextStyles({ settings: valueSettings })}
         >
-          {withConvertedAmount(
-            formatCurrency(taxAmount, money),
-            taxAmount,
-            conversion
-          )}
+          {withConvertedAmount({ value: formatCurrency(taxAmount, money), amount: taxAmount, conversion, money })}
         </span>
       )}
     </div>
@@ -518,11 +520,7 @@ function FeesRow() {
           field="fees"
           input={feesInput}
           amount={fees}
-          display={withConvertedAmount(
-            formatCurrency(fees, money),
-            fees,
-            conversion
-          )}
+          display={withConvertedAmount({ value: formatCurrency(fees, money), amount: fees, conversion, money })}
           money={money}
           currencySymbol={currencySymbol}
           style={getTextStyles({ settings: valueSettings })}
@@ -595,7 +593,7 @@ function DiscountsRow() {
             <InvoiceInput
               aria-label="Discount percentage"
               data-field="discounts"
-              value={discountsInput}
+              value={formatPlainNumber(discountsInput, money.numberFormat)}
               onChange={value => {
                 const numericValue = handlePercentageInput(value);
                 setDiscountsInput(numericValue);
@@ -638,11 +636,7 @@ function DiscountsRow() {
                     money,
                     conversion
                   })
-                : withConvertedAmount(
-                    formatCurrency(discounts, money),
-                    discounts,
-                    conversion
-                  )
+                : withConvertedAmount({ value: formatCurrency(discounts, money), amount: discounts, conversion, money })
             }
             money={money}
             currencySymbol={currencySymbol}
@@ -776,11 +770,7 @@ function AmountPaidRow() {
           display={
             amountPaid > 0
               ? formatDeduction({ amount: amountPaid, money, conversion })
-              : withConvertedAmount(
-                  formatCurrency(amountPaid, money),
-                  amountPaid,
-                  conversion
-                )
+              : withConvertedAmount({ value: formatCurrency(amountPaid, money), amount: amountPaid, conversion, money })
           }
           money={money}
           currencySymbol={currencySymbol}

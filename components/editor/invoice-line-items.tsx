@@ -20,6 +20,7 @@ import type {
   Invoice,
   InvoiceItem,
   InvoiceLineItemRow,
+  InvoiceNumberFormat,
   InvoiceTheme,
   MoneyFormat,
   TableSettings,
@@ -35,6 +36,7 @@ import {
   normalizeDecimalInput,
   parseDecimalDraft
 } from "~/utils/decimal-input";
+import { formatPlainNumber } from "~/utils/format-number";
 import { getRoleSettings } from "~/utils/get-role-settings";
 import { getTextStyles } from "~/utils/get-text-styles";
 import { handlePercentageInput } from "~/utils/handle-percentage-input";
@@ -371,7 +373,7 @@ function useColumnTemplate({
   function getCellTexts(column: LineItemColumnConfig) {
     switch (column.id) {
       case "quantity":
-        return items.map(item => String(item.quantity));
+        return rows.map(row => row.quantity);
       case "unit":
         return items.map(
           item =>
@@ -761,6 +763,7 @@ function LineItem({
           item={item}
           index={index}
           viewRow={viewRow}
+          money={money}
           currencySymbol={currencySymbol}
           theme={theme}
           invoiceTax={tax}
@@ -788,6 +791,7 @@ function TableCell({
   item,
   index,
   viewRow,
+  money,
   currencySymbol,
   theme,
   invoiceTax,
@@ -802,6 +806,7 @@ function TableCell({
   item: InvoiceItem;
   index: number;
   viewRow: InvoiceLineItemRow;
+  money: MoneyFormat;
   currencySymbol: string;
   theme: InvoiceTheme;
   invoiceTax: Invoice["tax"];
@@ -813,6 +818,9 @@ function TableCell({
 }) {
   const [isEditingNumeric, setIsEditingNumeric] = useState(false);
   const [numericDraft, setNumericDraft] = useState("");
+  // A quantity reads the invoice's decimal separator, with up to two places
+  // whatever the currency.
+  const quantityFormat = { numberFormat: money.numberFormat, decimals: 2 };
   const storeNumber =
     column.cell.kind === "currency"
       ? item.unitPrice
@@ -855,7 +863,10 @@ function TableCell({
         column.cell.kind === "currency"
           ? value.replace(currencySymbol, "")
           : value;
-      const numericValue = normalizeDecimalInput(withoutSymbol);
+      const numericValue = normalizeDecimalInput(
+        withoutSymbol,
+        column.cell.kind === "currency" ? money : quantityFormat
+      );
 
       setNumericDraft(numericValue);
       updateItem(index, itemField, parseDecimalDraft(numericValue));
@@ -878,7 +889,8 @@ function TableCell({
     // A leftover draft ("5.", "-") settles on its number; a credit keeps its
     // minus.
     const draft = normalizeDecimalInput(
-      target.value.replace(currencySymbol, "")
+      target.value.replace(currencySymbol, ""),
+      column.cell.kind === "currency" ? money : quantityFormat
     );
 
     updateItem(index, itemField, parseDecimalDraft(draft));
@@ -906,6 +918,7 @@ function TableCell({
           label={`${cellLabel}, item ${index + 1}`}
           index={index}
           invoiceTax={invoiceTax}
+          numberFormat={money.numberFormat}
           style={rowStyle}
           setItemTax={setItemTax}
         />
@@ -920,6 +933,7 @@ function TableCell({
           item={item}
           label={`${cellLabel}, item ${index + 1}`}
           formattedAmount={viewRow.amount}
+          money={money}
           currencySymbol={currencySymbol}
           style={rowStyle}
           setItemAmount={setItemAmount}
@@ -956,12 +970,15 @@ function TableCell({
   }
 
   if (column.cell.kind === "integer") {
-    inputValue = isEditingNumeric ? numericDraft : item.quantity.toString();
+    inputValue = formatPlainNumber(
+      isEditingNumeric ? numericDraft : item.quantity,
+      money.numberFormat
+    );
   }
 
   if (column.cell.kind === "currency") {
     inputValue = isEditingNumeric
-      ? formatDecimalDraft(numericDraft, currencySymbol)
+      ? formatDecimalDraft(numericDraft, money)
       : viewRow.unitPrice;
   }
 
@@ -1014,6 +1031,7 @@ function AmountCell({
   item,
   label,
   formattedAmount,
+  money,
   currencySymbol,
   style,
   setItemAmount
@@ -1021,12 +1039,17 @@ function AmountCell({
   item: InvoiceItem;
   label: string;
   formattedAmount: string;
+  money: MoneyFormat;
   currencySymbol: string;
   style: CSSProperties;
   setItemAmount: SetItemAmount;
 }) {
   const [draft, setDraft] = useState<string | null>(null);
-  const amount = calculateLineAmount(item.quantity, item.unitPrice);
+  const amount = calculateLineAmount(
+    item.quantity,
+    item.unitPrice,
+    money.decimals
+  );
 
   // An outside change (undo, another tab) while focused shows the new figure.
   useEffect(() => {
@@ -1039,7 +1062,8 @@ function AmountCell({
 
   function handleChange(value: string) {
     const numericValue = normalizeDecimalInput(
-      value.replace(currencySymbol, "")
+      value.replace(currencySymbol, ""),
+      money
     );
 
     setDraft(numericValue);
@@ -1053,7 +1077,7 @@ function AmountCell({
       value={
         draft === null
           ? formattedAmount
-          : formatDecimalDraft(draft, currencySymbol)
+          : formatDecimalDraft(draft, money)
       }
       onChange={handleChange}
       onFocus={() => setDraft(String(amount))}
@@ -1084,6 +1108,7 @@ function TaxCell({
   label,
   index,
   invoiceTax,
+  numberFormat,
   style,
   setItemTax
 }: {
@@ -1091,6 +1116,7 @@ function TaxCell({
   label: string;
   index: number;
   invoiceTax: Invoice["tax"];
+  numberFormat: InvoiceNumberFormat;
   style: CSSProperties;
   setItemTax: SetItemTax;
 }) {
@@ -1130,7 +1156,7 @@ function TaxCell({
 
   const placeholder = invoiceTax.exempt
     ? "Exempt"
-    : String(invoiceTax.percentage);
+    : formatPlainNumber(invoiceTax.percentage, numberFormat);
   // The field's width in characters, where the browser has no field-sizing
   // to fit it to its text and would otherwise make it 20 characters wide.
   const fieldSize = Math.max(1, (draft || placeholder).length);
@@ -1141,7 +1167,7 @@ function TaxCell({
         <InvoiceInput
           aria-label={label}
           data-field={`items.${item.id}.tax.percentage`}
-          value={draft}
+          value={formatPlainNumber(draft, numberFormat)}
           placeholder={placeholder}
           onChange={handleChange}
           onBlur={handleBlur}

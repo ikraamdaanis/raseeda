@@ -160,6 +160,10 @@ function describeAction(
       return { label: "Style", area: "page" };
     case "dateFormat":
       return { label: "Date format", area: "page" };
+    case "numberFormat":
+      return { label: "Number format", area: "page" };
+    case "currencyPosition":
+      return { label: "Currency position", area: "page" };
     case "currency":
     case "currencyCode":
       return { label: "Currency", area: "page" };

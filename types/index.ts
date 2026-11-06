@@ -11,6 +11,10 @@ import type { Invoice } from "~/schema/invoice";
 // type while making it usable by the document/template types below.
 export type { Invoice };
 
+export type InvoiceNumberFormat = Invoice["numberFormat"];
+
+export type CurrencyPosition = Invoice["currencyPosition"];
+
 export type TextSettings = {
   align: "left" | "center" | "right";
   size: string;
@@ -210,7 +214,8 @@ export type InvoiceDetailRow = {
 export type InvoiceLineItemRow = {
   id: string;
   description: string;
-  quantity: number;
+  // Written in the invoice's number format, "1,5" on a 1.234,56 invoice.
+  quantity: string;
   unit: string;
   unitPrice: string;
   amount: string;
@@ -247,12 +252,18 @@ export type CurrencyConversion = {
   // The second currency's marker in the invoice's font: its symbol, or its
   // code when the font can't draw the symbol.
   toMarker: string;
+  // The second currency's own decimals: 0 for yen, 2 for most.
+  toDecimals: number;
 };
 
-// How an invoice writes its amounts: the currency's marker, its symbol or,
-// where the invoice's font can't draw that, its code.
+// How an invoice writes its amounts: the currency's marker (its symbol or,
+// where the invoice's font can't draw that, its code), the number format,
+// which side of the figure the marker sits, and the currency's decimals.
 export type MoneyFormat = {
   marker: string;
+  numberFormat: InvoiceNumberFormat;
+  position: CurrencyPosition;
+  decimals: number;
 };
 
 export type InvoiceViewModel = {

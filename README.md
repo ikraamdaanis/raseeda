@@ -63,6 +63,18 @@ await raseeda.createInvoice({
 
 The line items table is `tableSettings`: `{ columnLabels, columns, backgroundColor, borderColor }`. `columns` is `{ quantityAndPrice, unit }`, both on by default. With `quantityAndPrice: false`, the Quantity, Unit and Unit price columns are hidden and each item is a description and an amount, so give each one `quantity: 1` and the amount as its `unitPrice`. `columnLabels.tax` names the Tax column; left blank, it uses the tax row's label (`labels.tax`). `columnLabels.amount` names the Amount column; left blank, it reads "Net amount" while the tax section is on and "Amount" while it's off.
 
+How amounts are written is `numberFormat` and `currencyPosition`. `numberFormat` is one of `"comma-dot"` (1,234.56), `"dot-comma"` (1.234,56), `"space-comma"` (1 234,56), `"apostrophe-dot"` (1’234.56) or `"indian"` (12,34,567.89); `currencyPosition` is `"before"` ($1,234.56) or `"after"` (1.234,56 €). A script's invoice left without them is `"comma-dot"` and `"before"`, whatever the browser's language; a blank invoice made in the editor starts on the browser's. Currencies with no minor unit (JPY, KRW, VND and the rest of ISO 4217's zero-decimal list) are reckoned and printed in whole units.
+
+```js
+await raseeda.createInvoice({
+  currency: "€",
+  currencyCode: "EUR",
+  numberFormat: "dot-comma",
+  currencyPosition: "after",
+  items: [{ description: "Beratung", quantity: 1.5, unitPrice: 120 }]
+});
+```
+
 ## Tech Stack
 
 - **React 19** with the React Compiler

@@ -44,7 +44,9 @@ export const INVOICE_DATA_KEYS = [
   "currencyCode",
   "theme",
   "sections",
-  "dateFormat"
+  "dateFormat",
+  "numberFormat",
+  "currencyPosition"
 ] as const satisfies ReadonlyArray<keyof Invoice>;
 
 type MissingInvoiceKey = Exclude<
@@ -228,6 +230,7 @@ export function useCurrencyConversionSlice() {
     useShallow(state => ({
       currencyConversion: state.currencyConversion,
       dateFormat: state.dateFormat,
+      numberFormat: state.numberFormat,
       setCurrencyConversion: state.setCurrencyConversion,
       setSecondCurrency: state.setSecondCurrency
     }))
@@ -254,6 +257,8 @@ export function useInvoiceTotals(): {
         discounts: state.discounts,
         discountType: state.discountType,
         amountPaid: state.amountPaid,
+        currency: state.currency,
+        currencyCode: state.currencyCode,
         sections: state.sections
       });
 
@@ -285,7 +290,7 @@ export function useConvertedTotals(): {
 
       return calculateConvertedTotals({
         totals: calculateInvoiceTotals(state),
-        rate: conversion.rate
+        conversion
       });
     })
   );
@@ -302,6 +307,8 @@ export function useTaxGroups(): Pick<InvoiceTotals, "taxGroups" | "taxAmount"> {
       discounts: state.discounts,
       discountType: state.discountType,
       amountPaid: state.amountPaid,
+      currency: state.currency,
+      currencyCode: state.currencyCode,
       sections: state.sections
     }))
   );
@@ -367,6 +374,19 @@ export function useCurrencySlice() {
       currency: state.currency,
       currencyCode: state.currencyCode,
       setCurrency: state.setCurrency
+    }))
+  );
+}
+
+// How amounts are written, for the inspector's Number format and Currency
+// position rows.
+export function useAmountFormatSlice() {
+  return useInvoiceStore(
+    useShallow(state => ({
+      numberFormat: state.numberFormat,
+      currencyPosition: state.currencyPosition,
+      setNumberFormat: state.setNumberFormat,
+      setCurrencyPosition: state.setCurrencyPosition
     }))
   );
 }

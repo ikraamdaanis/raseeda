@@ -3,19 +3,20 @@ import {
   currencyOptions,
   formatCurrency,
   formatCurrencyWithCode,
+  getCurrencyDecimals,
   getCurrencyMarker,
-  negativeSign,
   normalizeCurrency,
   resolveCurrencyCode
 } from "~/consts/currencies";
 import type {
   CurrencyConversion,
   Invoice,
+  InvoiceNumberFormat,
   InvoiceTotals,
   MoneyFormat
 } from "~/types";
-import { roundCents } from "~/utils/calculate-invoice-totals";
 import { formatInvoiceDate } from "~/utils/format-invoice-date";
+import { formatPlainNumber, roundToDecimals } from "~/utils/format-number";
 
 type CurrencyPair = { currency: string; currencyCode: string };
 
@@ -71,99 +72,105 @@ export function getCurrencyConversion(
     rate: Math.max(0, Number(target.rate) || 0),
     fromCode: currencyLabel(invoice),
     toCurrency: target.currency,
-    toCode: currencyLabel(target),
+      toCode: currencyLabel(target),
     toMarker: getCurrencyMarker({
       currency: target.currency,
       currencyCode: target.currencyCode,
       font: invoice.theme.font
-    })
+    }),
+    toDecimals: getCurrencyDecimals(target)
   };
 }
 
-// An amount in the other currency: the amount times the rate, rounded to two
-// decimals.
-export function convertAmount(amount: number, rate: number): number {
-  return roundCents(amount * rate);
+// An amount in the other currency: the amount times the rate, rounded to that
+// currency's decimals.
+export function convertAmount(
+  amount: number,
+  conversion: Pick<CurrencyConversion, "rate" | "toDecimals">
+): number {
+  return roundToDecimals(amount * conversion.rate, conversion.toDecimals);
 }
+
+const NO_CONVERTED_TOTALS = { subtotal: 0, total: 0, balanceDue: 0 };
 
 // The second currency's sums, each added up from the converted figures above
 // it, so its column adds up on the page the way the first currency's does.
 // Converting a sum on its own, like every other figure, can leave it a cent
-// from its rows.
+// from its rows. All 0 without a conversion.
 export function calculateConvertedTotals({
   totals,
-  rate
+  conversion
 }: {
   totals: InvoiceTotals;
-  rate: number;
+  conversion: Pick<CurrencyConversion, "rate" | "toDecimals"> | null;
 }) {
-  const subtotal = roundCents(
-    sumBy(totals.items, item => convertAmount(item.amount, rate))
-  );
-  const taxAmount = roundCents(
-    sumBy(totals.taxGroups, group => convertAmount(group.taxAmount, rate))
+  if (!conversion) return NO_CONVERTED_TOTALS;
+
+  const round = (value: number) =>
+    roundToDecimals(value, conversion.toDecimals);
+  const convert = (amount: number) => convertAmount(amount, conversion);
+  const subtotal = round(sumBy(totals.items, item => convert(item.amount)));
+  const taxAmount = round(
+    sumBy(totals.taxGroups, group => convert(group.taxAmount))
   );
   const total = Math.max(
     0,
-    roundCents(
-      subtotal -
-        convertAmount(totals.discountAmount, rate) +
-        taxAmount +
-        convertAmount(totals.fees, rate)
+    round(
+      subtotal - convert(totals.discountAmount) + taxAmount + convert(totals.fees)
     )
   );
-  const balanceDue = Math.max(
-    0,
-    roundCents(total - convertAmount(totals.amountPaid, rate))
-  );
+  const balanceDue = Math.max(0, round(total - convert(totals.amountPaid)));
 
   return { subtotal, total, balanceDue };
 }
 
-// A marker that ends in a letter ("CHF", a custom "Rs") is spaced from the
-// figure, so it reads "CHF 6,292.00"; a symbol sits against it, "$9,205.63".
-// A negative amount has its sign first, "-$6.25".
-export function formatConvertedAmount(
-  amount: number,
-  conversion: CurrencyConversion
-): string {
-  return formatInSecondCurrency(
-    convertAmount(amount, conversion.rate),
-    conversion
-  );
+// The second currency's amounts are written in the invoice's number format and
+// currency position, with that currency's own marker and decimals.
+function secondCurrencyFormat(
+  conversion: CurrencyConversion,
+  money: MoneyFormat
+): MoneyFormat {
+  return {
+    marker: conversion.toMarker,
+    numberFormat: money.numberFormat,
+    position: money.position,
+    decimals: conversion.toDecimals
+  };
 }
 
-// An amount already in the second currency, formatted as
-// formatConvertedAmount does.
-function formatInSecondCurrency(
-  converted: number,
-  conversion: CurrencyConversion
+// An amount converted and written in the second currency: "$9,205.63",
+// "CHF 6,292.00", "-$6.25".
+export function formatConvertedAmount(
+  amount: number,
+  conversion: CurrencyConversion,
+  money: MoneyFormat
 ): string {
-  const marker = conversion.toMarker;
-  const formatted = Math.abs(converted).toLocaleString("en-US", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2
-  });
-  const sign = negativeSign(converted, formatted);
-
-  return /\p{L}$/u.test(marker)
-    ? `${sign}${marker} ${formatted}`
-    : `${sign}${marker}${formatted}`;
+  return formatCurrency(
+    convertAmount(amount, conversion),
+    secondCurrencyFormat(conversion, money)
+  );
 }
 
 // A total in both currencies, "£7,150.00 / $9,205.63". A sum passes its
 // converted figure from calculateConvertedTotals, which adds up its rows.
-export function withConvertedAmount(
-  value: string,
-  amount: number,
-  conversion: CurrencyConversion | null,
-  convertedAmount?: number
-): string {
+export function withConvertedAmount({
+  value,
+  amount,
+  conversion,
+  money,
+  convertedAmount
+}: {
+  value: string;
+  amount: number;
+  conversion: CurrencyConversion | null;
+  money: MoneyFormat;
+  convertedAmount?: number;
+}): string {
   if (!conversion) return value;
 
-  const converted = convertedAmount ?? convertAmount(amount, conversion.rate);
+  const converted = convertedAmount ?? convertAmount(amount, conversion);
 
-  return `${value} / ${formatInSecondCurrency(converted, conversion)}`;
+  return `${value} / ${formatCurrency(converted, secondCurrencyFormat(conversion, money))}`;
 }
 
 // A deduction (a discount, a payment), in both currencies beside a second
@@ -181,7 +188,7 @@ export function formatDeduction({
 
   if (!conversion) return value;
 
-  return `${value} / -${formatConvertedAmount(amount, conversion)}`;
+  return `${value} / -${formatConvertedAmount(amount, conversion, money)}`;
 }
 
 // The grand total, and the balance due that takes its place once a payment is
@@ -205,20 +212,26 @@ export function formatInvoiceTotal({
 }): string {
   if (!conversion) return formatCurrencyWithCode(amount, money, currencyCode);
 
-  return withConvertedAmount(
-    formatCurrency(amount, money),
+  return withConvertedAmount({
+    value: formatCurrency(amount, money),
     amount,
     conversion,
+    money,
     convertedAmount
-  );
+  });
 }
 
-export function formatExchangeRate(rate: number): string {
-  return rate.toLocaleString("en-US", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 6,
-    useGrouping: false
-  });
+// A rate as it's typed and printed: up to six decimals, no grouping, in the
+// invoice's decimal separator ("1,2875" on a 1.234,56 invoice).
+export function formatExchangeRate(
+  rate: number,
+  numberFormat: InvoiceNumberFormat
+): string {
+  const digits = roundToDecimals(rate, 6)
+    .toFixed(6)
+    .replace(/(\.\d\d\d*?)0+$/, "$1");
+
+  return formatPlainNumber(digits, numberFormat);
 }
 
 // The line under the totals: "Exchange rate: 1 GBP = 1.2875 USD (Bank of
@@ -226,18 +239,20 @@ export function formatExchangeRate(rate: number): string {
 export function buildExchangeRateLine({
   conversion,
   currencyConversion,
-  dateFormat
+  dateFormat,
+  numberFormat
 }: {
   conversion: CurrencyConversion;
   currencyConversion: Invoice["currencyConversion"];
   dateFormat: Invoice["dateFormat"];
+  numberFormat: InvoiceNumberFormat;
 }): string {
   const source = currencyConversion.source.trim();
   const date = currencyConversion.date
     ? formatInvoiceDate(currencyConversion.date, dateFormat)
     : "";
   const details = [source, date].filter(Boolean);
-  const rate = `Exchange rate: 1 ${conversion.fromCode} = ${formatExchangeRate(conversion.rate)} ${conversion.toCode}`;
+  const rate = `Exchange rate: 1 ${conversion.fromCode} = ${formatExchangeRate(conversion.rate, numberFormat)} ${conversion.toCode}`;
 
   return details.length > 0 ? `${rate} (${details.join(", ")})` : rate;
 }

@@ -2,6 +2,7 @@ import { pick } from "lodash-es";
 import { APP_NAME } from "~/consts/app";
 import { documentActions } from "~/context/document-session";
 import { createInvoice, getAllInvoices, getInvoice } from "~/db";
+import { STORED_INVOICE_FORMATS } from "~/schema/invoice";
 import {
   CURRENT_INVOICE_SCHEMA_VERSION,
   migrateInvoiceData
@@ -110,7 +111,7 @@ const api = {
     const known = pick(data, INVOICE_DATA_KEYS);
     const invoiceData = ensureItemIds(
       migrateInvoiceData(
-        { ...createBlankInvoice(), ...known },
+        { ...createBlankInvoice(STORED_INVOICE_FORMATS), ...known },
         CURRENT_INVOICE_SCHEMA_VERSION
       )
     );

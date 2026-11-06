@@ -82,6 +82,8 @@ function makeInvoice(overrides: Partial<Invoice> = {}): Invoice {
     },
     sections: { ...DEFAULT_INVOICE_SECTIONS },
     dateFormat: "yyyy-MM-dd",
+    numberFormat: "comma-dot",
+    currencyPosition: "before",
     ...overrides
   };
 }
@@ -184,6 +186,47 @@ describe("buildInvoiceViewModel", () => {
     });
   });
 
+  describe("number format and currency position", () => {
+    it("writes every figure in the invoice's format, the euro after it", () => {
+      const { lineItems, summaryRows } = buildInvoiceViewModel(
+        makeInvoice({
+          currency: "€",
+          currencyCode: "EUR",
+          numberFormat: "dot-comma",
+          currencyPosition: "after",
+          items: [makeItem({ quantity: 1.5, unitPrice: 1234.5 })]
+        })
+      );
+      const value = (id: string) =>
+        summaryRows.find(row => row.id === id)?.value;
+
+      expect(lineItems[0]).toMatchObject({
+        quantity: "1,5",
+        unitPrice: "1.234,50\u00a0€",
+        amount: "1.851,75\u00a0€"
+      });
+      expect(value("subtotal")).toBe("1.851,75\u00a0€");
+    });
+
+    it("prints a yen invoice in whole yen, its lines adding up to the total", () => {
+      const { lineItems, summaryRows } = buildInvoiceViewModel(
+        makeInvoice({
+          currency: "¥",
+          currencyCode: "JPY",
+          items: [
+            makeItem({ quantity: 1, unitPrice: 1234.5 }),
+            makeItem({ quantity: 3, unitPrice: 0.4 })
+          ]
+        })
+      );
+      const value = (id: string) =>
+        summaryRows.find(row => row.id === id)?.value;
+
+      expect(lineItems.map(item => item.amount)).toEqual(["¥1,235", "¥1"]);
+      expect(value("subtotal")).toBe("¥1,236");
+    });
+  });
+
   describe("lineItems", () => {
     it("formats unit price and computes the amount once per item", () => {
       const { lineItems } = buildInvoiceViewModel(
@@ -197,13 +240,13 @@ describe("buildInvoiceViewModel", () => {
 
       expect(lineItems[0]).toMatchObject({
         description: "Design",
-        quantity: 2,
+        quantity: "2",
         unitPrice: "£50.00",
         amount: "£100.00"
       });
       expect(lineItems[1]).toMatchObject({
         description: "Build",
-        quantity: 3,
+        quantity: "3",
         unitPrice: "£10.50",
         amount: "£31.50"
       });
@@ -229,8 +272,8 @@ describe("buildInvoiceViewModel", () => {
         })
       );
 
-      expect(riyal.lineItems[0].unitPrice).toBe("SAR50.00");
-      expect(riyal.lineItems[0].amount).toBe("SAR100.00");
+      expect(riyal.lineItems[0].unitPrice).toBe("SAR\u00a050.00");
+      expect(riyal.lineItems[0].amount).toBe("SAR\u00a0100.00");
 
       const dirham = buildInvoiceViewModel(
         makeInvoice({
@@ -239,8 +282,8 @@ describe("buildInvoiceViewModel", () => {
         })
       );
 
-      expect(dirham.lineItems[0].unitPrice).toBe("AED9.00");
-      expect(dirham.lineItems[0].amount).toBe("AED9.00");
+      expect(dirham.lineItems[0].unitPrice).toBe("AED\u00a09.00");
+      expect(dirham.lineItems[0].amount).toBe("AED\u00a09.00");
     });
 
     it("prints a symbol the invoice's font lacks as its code", () => {
@@ -255,7 +298,7 @@ describe("buildInvoiceViewModel", () => {
         );
 
       expect(rupees("inter").lineItems[0].amount).toBe("₹9.00");
-      expect(rupees("lora").lineItems[0].amount).toBe("INR9.00");
+      expect(rupees("lora").lineItems[0].amount).toBe("INR\u00a09.00");
     });
   });
 
@@ -378,7 +421,7 @@ describe("buildInvoiceViewModel", () => {
       );
       const total = summaryRows.find(row => row.id === "total");
 
-      expect(total?.value).toBe("CHF100.00");
+      expect(total?.value).toBe("CHF\u00a0100.00");
     });
 
     it("skips the code suffix for tofu-replacement markers like SAR", () => {
@@ -391,7 +434,7 @@ describe("buildInvoiceViewModel", () => {
       );
       const total = summaryRows.find(row => row.id === "total");
 
-      expect(total?.value).toBe("SAR100.00");
+      expect(total?.value).toBe("SAR\u00a0100.00");
     });
 
     it("shows tax, fees, and discounts once they have a value", () => {
@@ -491,7 +534,8 @@ describe("buildInvoiceViewModel with a second currency", () => {
       fromCode: "GBP",
       toCurrency: "$",
       toCode: "USD",
-      toMarker: "$"
+      toMarker: "$",
+      toDecimals: 2
     });
     expect(lineItems[0].convertedAmount).toBe("$9,205.63");
     expect(valueById.subtotal).toBe("£7,150.00 / $9,205.63");
@@ -533,8 +577,8 @@ describe("buildInvoiceViewModel with a second currency", () => {
 
     expect(conversion?.toCode).toBe("EUR");
     expect(lineItems[0].convertedAmount).toBe("€8,580.00");
-    expect(franc.lineItems[0].convertedAmount).toBe("CHF 6,292.00");
-    expect(custom.lineItems[0].convertedAmount).toBe("Rs 786,500.00");
+    expect(franc.lineItems[0].convertedAmount).toBe("CHF\u00a06,292.00");
+    expect(custom.lineItems[0].convertedAmount).toBe("Rs\u00a0786,500.00");
   });
 
   it("writes the rate line with its source and date", () => {
@@ -546,7 +590,8 @@ describe("buildInvoiceViewModel with a second currency", () => {
         buildExchangeRateLine({
           conversion,
           currencyConversion: invoice.currencyConversion,
-          dateFormat: invoice.dateFormat
+          dateFormat: invoice.dateFormat,
+          numberFormat: invoice.numberFormat
         })
     ).toBe(
       "Exchange rate: 1 GBP = 1.2875 USD (Bank of England rate, 30 Oct 2026)"

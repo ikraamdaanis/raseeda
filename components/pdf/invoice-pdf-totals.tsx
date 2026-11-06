@@ -1,6 +1,7 @@
 import { StyleSheet, Text, View } from "@react-pdf/renderer";
 import type { CurrencyConversion, Invoice, InvoiceSummaryRow } from "~/types";
 import { buildExchangeRateLine } from "~/utils/currency-conversion";
+import { formatPlainNumber } from "~/utils/format-number";
 import { pdfRoleStyle } from "~/utils/pdf-styles";
 
 // Two columns, as in the editor: the labels right-aligned, 36pt (the
@@ -71,7 +72,7 @@ export function InvoicePdfTotals({
             >
               {row.percentage === undefined
                 ? row.label
-                : `${row.label} ${row.percentage}%`}
+                : `${row.label} ${formatPlainNumber(row.percentage, invoice.numberFormat)}%`}
             </Text>
           ))}
         </View>
@@ -102,7 +103,8 @@ export function InvoicePdfTotals({
           {buildExchangeRateLine({
             conversion,
             currencyConversion: invoice.currencyConversion,
-            dateFormat: invoice.dateFormat
+            dateFormat: invoice.dateFormat,
+            numberFormat: invoice.numberFormat
           })}
         </Text>
       )}

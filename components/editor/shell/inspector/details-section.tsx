@@ -19,6 +19,7 @@ import { NativeSelect } from "~/components/ui/select";
 import { Switch } from "~/components/ui/switch";
 import {
   currencyOptions,
+  formatCurrency,
   getCurrencyCodeForSymbol,
   getCurrencyMarker,
   normalizeCurrency
@@ -27,14 +28,21 @@ import { useCurrencyConversion } from "~/hooks/use-currency-conversion";
 import { useExchangeRateInput } from "~/hooks/use-exchange-rate-input";
 import { useSecondCurrency } from "~/hooks/use-second-currency";
 import { cn } from "~/lib/utils";
-import { INVOICE_DATE_FORMATS } from "~/schema/invoice";
+import {
+  CURRENCY_POSITIONS,
+  INVOICE_DATE_FORMATS,
+  INVOICE_NUMBER_FORMATS
+} from "~/schema/invoice";
 import {
   useCurrencyConversionSlice,
+  useAmountFormatSlice,
   useCurrencySlice,
   useDetailsSlice,
+  useMoneyFormat,
   useTheme
 } from "~/stores/invoice-selectors";
 import { isSameCurrency } from "~/utils/currency-conversion";
+import { formatNumber } from "~/utils/format-number";
 import { formatInvoiceDate } from "~/utils/format-invoice-date";
 import {
   addDaysToIsoDate,
@@ -54,6 +62,8 @@ export function DetailsSection() {
       <CurrencyRows />
       <DatesRows />
       <DateFormatRow />
+      <NumberFormatRow />
+      <CurrencyPositionRow />
     </InspectorSection>
   );
 }
@@ -325,6 +335,64 @@ function DateFormatRow() {
         {INVOICE_DATE_FORMATS.map(option => (
           <option key={option} value={option}>
             {format(today, option)}
+          </option>
+        ))}
+      </NativeSelect>
+    </InspectorRow>
+  );
+}
+
+// Each format is shown as a sample amount written that way.
+function NumberFormatRow() {
+  const { numberFormat, setNumberFormat } = useAmountFormatSlice();
+
+  return (
+    <InspectorRow label="Number format" htmlFor="inspector-number-format">
+      <NativeSelect
+        id="inspector-number-format"
+        value={numberFormat}
+        onChange={event => {
+          const next = INVOICE_NUMBER_FORMATS.find(
+            option => option === event.target.value
+          );
+
+          if (next) setNumberFormat(next);
+        }}
+        className={cn(inspectorFieldClassName, "pr-7")}
+      >
+        {INVOICE_NUMBER_FORMATS.map(option => (
+          <option key={option} value={option}>
+            {formatNumber(1234567.89, { numberFormat: option, decimals: 2 })}
+          </option>
+        ))}
+      </NativeSelect>
+    </InspectorRow>
+  );
+}
+
+// Which side of the figure the currency sits, each shown as an amount in the
+// invoice's own currency and format.
+function CurrencyPositionRow() {
+  const { currencyPosition, setCurrencyPosition } = useAmountFormatSlice();
+  const money = useMoneyFormat();
+
+  return (
+    <InspectorRow label="Symbol" htmlFor="inspector-currency-position">
+      <NativeSelect
+        id="inspector-currency-position"
+        value={currencyPosition}
+        onChange={event => {
+          const next = CURRENCY_POSITIONS.find(
+            option => option === event.target.value
+          );
+
+          if (next) setCurrencyPosition(next);
+        }}
+        className={cn(inspectorFieldClassName, "pr-7")}
+      >
+        {CURRENCY_POSITIONS.map(position => (
+          <option key={position} value={position}>
+            {`${position === "before" ? "Before" : "After"}: ${formatCurrency(1234.5, { ...money, position })}`}
           </option>
         ))}
       </NativeSelect>

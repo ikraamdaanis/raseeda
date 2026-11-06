@@ -85,6 +85,8 @@ function makeInvoice(overrides: Partial<Invoice> = {}): Invoice {
     },
     sections: { ...DEFAULT_INVOICE_SECTIONS },
     dateFormat: "yyyy-MM-dd",
+    numberFormat: "comma-dot",
+    currencyPosition: "before",
     ...overrides
   };
 }
@@ -115,6 +117,29 @@ describe("calculateInvoiceTotals", () => {
     expect(totals.items[1].amount).toBe(30);
     expect(totals.subtotal).toBe(130);
     expect(totals.total).toBe(130);
+  });
+
+  it("rounds a zero-decimal currency to whole units, so its lines add up", () => {
+    const totals = calculateInvoiceTotals(
+      makeInvoice({
+        currency: "¥",
+        currencyCode: "JPY",
+        items: [
+          makeItem({ quantity: 1, unitPrice: 1234.5 }),
+          makeItem({ quantity: 3, unitPrice: 0.4 })
+        ],
+        tax: { percentage: 10, exempt: false, note: "", perLine: false },
+        fees: 10.5,
+        amountPaid: 0.4
+      })
+    );
+
+    expect(totals.items.map(item => item.amount)).toEqual([1235, 1]);
+    expect(totals.subtotal).toBe(1236);
+    expect(totals.taxAmount).toBe(124);
+    expect(totals.fees).toBe(11);
+    expect(totals.total).toBe(1236 + 124 + 11);
+    expect(totals.amountPaid).toBe(0);
   });
 
   it("computes the line amount for a fractional quantity", () => {

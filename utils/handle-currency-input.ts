@@ -1,21 +1,42 @@
+import type { InvoiceNumberFormat } from "~/types";
+import { toPlainDecimal } from "~/utils/decimal-input";
+
 /**
  * Takes a string value and returns a formatted currency string.
  * Handles inputs like $124.34, 002343, etc.
  * Returns a valid number string 0 or greater without leading zeros, or "" for
  * a cleared field, which reads 0 once it loses focus.
  *
+ * The value is read in the invoice's number format: on a 1.234,56 invoice
+ * "12,50" is twelve and a half. A currency with no decimals takes none.
+ *
  * Pass `currencySymbol` when the value is prefixed with the symbol so it can be
  * stripped before sanitising. This matters for symbols that contain a literal
  * dot (the dirham "د.إ"), which would otherwise survive as a stray decimal
  * point and corrupt the amount.
  */
-export function handleCurrencyInput(value: string, currencySymbol?: string) {
+export function handleCurrencyInput(
+  value: string,
+  {
+    currencySymbol,
+    numberFormat,
+    decimals
+  }: {
+    currencySymbol?: string;
+    numberFormat: InvoiceNumberFormat;
+    decimals: number;
+  }
+) {
   const withoutSymbol = currencySymbol
     ? value.replace(currencySymbol, "")
     : value;
 
-  // Remove commas and any other non-numeric characters
-  let numericValue = withoutSymbol.replace(/[^0-9.]/g, "");
+  // Read the invoice's separators, then drop the grouping, spaces and any
+  // other non-numeric characters
+  let numericValue = toPlainDecimal(withoutSymbol, {
+    numberFormat,
+    decimals
+  }).replace(/[^0-9.]/g, "");
 
   // Prevent multiple decimal points
   const decimalCount = numericValue.split(".").length - 1;
@@ -29,8 +50,8 @@ export function handleCurrencyInput(value: string, currencySymbol?: string) {
   // Handle decimal places
   if (numericValue.includes(".")) {
     const [whole, decimal] = numericValue.split(".");
-    // Limit decimal places to 2
-    numericValue = `${whole}.${decimal.slice(0, 2)}`;
+    // Limit decimal places to the currency's
+    numericValue = `${whole}.${decimal.slice(0, decimals)}`;
   }
 
   if (!numericValue) return "";

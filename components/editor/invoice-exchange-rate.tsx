@@ -16,8 +16,12 @@ import { getTextStyles } from "~/utils/get-text-styles";
 // and comma hug the fields beside them, as they do in print.
 export function InvoiceExchangeRate() {
   const conversion = useCurrencyConversion();
-  const { currencyConversion, dateFormat, setCurrencyConversion } =
-    useCurrencyConversionSlice();
+  const {
+    currencyConversion,
+    dateFormat,
+    numberFormat,
+    setCurrencyConversion
+  } = useCurrencyConversionSlice();
   const isPreview = useIsPreview();
   const theme = useTheme();
   const style = getTextStyles({
@@ -35,7 +39,12 @@ export function InvoiceExchangeRate() {
         className="text-paper-foreground mt-3 text-right text-sm"
         style={style}
       >
-        {buildExchangeRateLine({ conversion, currencyConversion, dateFormat })}
+        {buildExchangeRateLine({
+          conversion,
+          currencyConversion,
+          dateFormat,
+          numberFormat
+        })}
       </p>
     );
   }

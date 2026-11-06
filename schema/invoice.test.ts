@@ -48,3 +48,39 @@ describe("invoiceSchema line-item resilience", () => {
     expect(parsed.items).toEqual([]);
   });
 });
+
+describe("invoiceSchema number format and currency position", () => {
+  it("reads an invoice saved before them as 1,234.56 with the symbol first", () => {
+    const {
+      numberFormat: _numberFormat,
+      currencyPosition: _position,
+      ...old
+    } = invoiceDefault;
+    const parsed = invoiceSchema.parse(old);
+
+    expect(parsed.numberFormat).toBe("comma-dot");
+    expect(parsed.currencyPosition).toBe("before");
+  });
+
+  it("replaces an unknown value with the default", () => {
+    const parsed = invoiceSchema.parse({
+      ...invoiceDefault,
+      numberFormat: "comma-comma",
+      currencyPosition: "middle"
+    });
+
+    expect(parsed.numberFormat).toBe("comma-dot");
+    expect(parsed.currencyPosition).toBe("before");
+  });
+
+  it("keeps a valid value", () => {
+    const parsed = invoiceSchema.parse({
+      ...invoiceDefault,
+      numberFormat: "indian",
+      currencyPosition: "after"
+    });
+
+    expect(parsed.numberFormat).toBe("indian");
+    expect(parsed.currencyPosition).toBe("after");
+  });
+});

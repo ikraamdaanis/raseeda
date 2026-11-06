@@ -29,6 +29,7 @@ import {
   formatInvoiceDate,
   formatServicePeriod
 } from "~/utils/format-invoice-date";
+import { formatPlainNumber } from "~/utils/format-number";
 import { getPrintedSections } from "~/utils/section-visibility";
 
 // Maps an invoice to an ordered, fully-formatted view-model so the HTML canvas
@@ -117,20 +118,26 @@ export function buildLineItemRow({
   conversion: CurrencyConversion | null;
   tax: Invoice["tax"];
 }): InvoiceLineItemRow {
-  const amount = calculateLineAmount(item.quantity, item.unitPrice);
+  const amount = calculateLineAmount(
+    item.quantity,
+    item.unitPrice,
+    money.decimals
+  );
   const lineTax = getLineTax(item, tax);
 
   return {
     id: item.id,
     description: item.description,
-    quantity: item.quantity,
+    quantity: formatPlainNumber(item.quantity, money.numberFormat),
     unit: item.unit,
     unitPrice: formatCurrency(item.unitPrice, money),
     amount: formatCurrency(amount, money),
     convertedAmount: conversion
-      ? formatConvertedAmount(amount, conversion)
+      ? formatConvertedAmount(amount, conversion, money)
       : undefined,
-    tax: lineTax.exempt ? "Exempt" : `${lineTax.percentage}%`
+    tax: lineTax.exempt
+      ? "Exempt"
+      : `${formatPlainNumber(lineTax.percentage, money.numberFormat)}%`
   };
 }
 
@@ -182,11 +189,7 @@ export function buildTaxRows({
         label,
         value: exempt
           ? exemptValue
-          : withConvertedAmount(
-              formatCurrency(taxAmount, money),
-              taxAmount,
-              conversion
-            ),
+          : withConvertedAmount({ value: formatCurrency(taxAmount, money), amount: taxAmount, conversion, money }),
         percentage: exempt ? undefined : (group?.percentage ?? tax.percentage),
         note: exempt ? note : undefined,
         isVisible,
@@ -202,14 +205,10 @@ export function buildTaxRows({
       id: "tax",
       label: group.exempt
         ? `Exempt on ${base}`
-        : `${label} ${group.percentage}% on ${base}`,
+        : `${label} ${formatPlainNumber(group.percentage, money.numberFormat)}% on ${base}`,
       value: group.exempt
         ? exemptValue
-        : withConvertedAmount(
-            formatCurrency(group.taxAmount, money),
-            group.taxAmount,
-            conversion
-          ),
+        : withConvertedAmount({ value: formatCurrency(group.taxAmount, money), amount: group.taxAmount, conversion, money }),
       note: group.exempt ? note : undefined,
       isVisible,
       isTotal: false
@@ -245,12 +244,7 @@ function buildSummaryRows(input: {
     {
       id: "subtotal",
       label: labels.subtotal,
-      value: withConvertedAmount(
-        formatCurrency(input.subtotal, money),
-        input.subtotal,
-        conversion,
-        input.converted.subtotal
-      ),
+      value: withConvertedAmount({ value: formatCurrency(input.subtotal, money), amount: input.subtotal, conversion, money, convertedAmount: input.converted.subtotal }),
       isVisible: true,
       isTotal: false
     },
@@ -273,11 +267,7 @@ function buildSummaryRows(input: {
     {
       id: "fees",
       label: labels.fees,
-      value: withConvertedAmount(
-        formatCurrency(input.fees, money),
-        input.fees,
-        conversion
-      ),
+      value: withConvertedAmount({ value: formatCurrency(input.fees, money), amount: input.fees, conversion, money }),
       isVisible: sections.fees && input.fees > 0,
       isTotal: false
     },
@@ -365,7 +355,7 @@ export function buildInvoiceViewModel(invoice: Invoice): InvoiceViewModel {
       balanceDue: totals.balanceDue,
       converted: calculateConvertedTotals({
         totals,
-        rate: conversion?.rate ?? 0
+        conversion
       }),
       money,
       currencyCode: invoice.currencyCode,

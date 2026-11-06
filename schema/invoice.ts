@@ -72,6 +72,31 @@ export const INVOICE_DATE_FORMATS = [
 
 export const DEFAULT_INVOICE_DATE_FORMAT = "d MMM yyyy";
 
+// How amounts are written (issue #117): the grouping and decimal separators,
+// named by those two in order. Formatted by raseeda itself, never Intl, so
+// the editor, the PDF and the tests agree: 1,234.56 (UK, US), 1.234,56
+// (Germany, Brazil), 1 234,56 with a no-break space (France, Poland),
+// 1’234.56 (Switzerland), 12,34,567.89 (India).
+export const INVOICE_NUMBER_FORMATS = [
+  "comma-dot",
+  "dot-comma",
+  "space-comma",
+  "apostrophe-dot",
+  "indian"
+] as const;
+
+// Whether the currency's marker sits before the figure ($1,234.56) or after
+// it (1.234,56 €).
+export const CURRENCY_POSITIONS = ["before", "after"] as const;
+
+// What an invoice stored before these settings existed reads as, so it
+// prints exactly as it did. A new blank invoice takes the browser's locale
+// instead (utils/locale-defaults.ts).
+export const STORED_INVOICE_FORMATS = {
+  numberFormat: "comma-dot",
+  currencyPosition: "before"
+} as const;
+
 // Which optional parts of the invoice are switched on. Switching one off hides
 // it in the editor and the PDF, and leaves out its money from the totals, but
 // keeps what was typed, so switching it back on restores it. An on section
@@ -375,7 +400,13 @@ export const invoiceSchema = z.object({
   currencyCode: z.string().catch(""),
   theme: invoiceThemeSchema,
   sections: invoiceSectionsSchema,
-  dateFormat: z.enum(INVOICE_DATE_FORMATS).catch(DEFAULT_INVOICE_DATE_FORMAT)
+  dateFormat: z.enum(INVOICE_DATE_FORMATS).catch(DEFAULT_INVOICE_DATE_FORMAT),
+  numberFormat: z
+    .enum(INVOICE_NUMBER_FORMATS)
+    .catch(STORED_INVOICE_FORMATS.numberFormat),
+  currencyPosition: z
+    .enum(CURRENCY_POSITIONS)
+    .catch(STORED_INVOICE_FORMATS.currencyPosition)
 });
 
 export type Invoice = z.infer<typeof invoiceSchema>;
