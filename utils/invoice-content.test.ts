@@ -112,6 +112,26 @@ describe("isLargeRemoval", () => {
     ).toBe(true);
   });
 
+  it("counts the ways to pay", () => {
+    const withMethods = {
+      ...createBlankInvoice(),
+      paymentDetails: {
+        ...invoiceDefault.paymentDetails,
+        methods: [
+          { id: "venmo", name: "Venmo", detail: "@jane-designs-studio" },
+          { id: "pix", name: "Pix", detail: "jane@example.com" }
+        ]
+      }
+    };
+
+    expect(
+      isLargeRemoval(withMethods, {
+        ...withMethods,
+        paymentDetails: { ...withMethods.paymentDetails, methods: [] }
+      })
+    ).toBe(true);
+  });
+
   it("ignores small edits and nearly empty invoices", () => {
     expect(
       isLargeRemoval(written, {

@@ -567,6 +567,29 @@ describe("version history", () => {
     expect(versions[0].invoiceData.title).toBe("As opened");
   });
 
+  it("keeps one opened version of an imported invoice whose rows have no ids", async () => {
+    const page = await loadPage();
+    const invoiceData = structuredClone(invoiceDefault);
+
+    invoiceData.paymentDetails.methods = [
+      { id: "", name: "Venmo", detail: "@jane" },
+      { id: "", name: "Pix", detail: "jane@example.com" }
+    ];
+    await page.saveInvoice(storedInvoice({ id: "kept", invoiceData }));
+    await page.saveInvoice(storedInvoice({ id: "other", name: "Other" }));
+
+    for (let i = 0; i < 3; i++) {
+      await page.openInvoice("kept");
+      await settle();
+      await vi.advanceTimersByTimeAsync(10 * 60 * 1000);
+      await page.openInvoice("other");
+      await settle();
+      await vi.advanceTimersByTimeAsync(10 * 60 * 1000);
+    }
+
+    expect(await page.getInvoiceVersions("kept")).toHaveLength(1);
+  });
+
   it("restores a version as one undoable step, keeping the current state first", async () => {
     const page = await loadPage();
 

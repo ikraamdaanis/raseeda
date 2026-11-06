@@ -43,6 +43,31 @@ describe("ensureRowIds", () => {
     );
   });
 
+  it("gives line items sharing an id ids of their own", () => {
+    const invoice = ensureRowIds({
+      ...invoiceDefault,
+      items: [
+        { id: "1", description: "A", quantity: 1, unit: "", unitPrice: 1 },
+        { id: "1", description: "B", quantity: 1, unit: "", unitPrice: 1 }
+      ]
+    });
+
+    expect(invoice.items[0].id).toBe("1");
+    expect(invoice.items[1].id).not.toBe("1");
+    expect(invoice.items[1].id).not.toBe("");
+  });
+
+  it("gives the same rows the same ids each time, so reopening changes nothing", () => {
+    const methods = [
+      { id: "", name: "Venmo", detail: "@jane" },
+      { id: "", name: "Pix", detail: "jane@example.com" }
+    ];
+
+    expect(ensureRowIds(withMethods(methods))).toEqual(
+      ensureRowIds(withMethods(methods))
+    );
+  });
+
   it("leaves an invoice whose rows all have their own ids as it is", () => {
     const invoice = withMethods([{ id: "a", name: "Venmo", detail: "@jane" }]);
 
