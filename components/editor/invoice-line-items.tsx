@@ -459,7 +459,6 @@ export function InvoiceLineItems() {
   const theme = useTheme();
   const isPreview = useIsPreview();
   const money = useMoneyFormat();
-  const currencySymbol = money.marker;
   // Worked out once for the table, so each row doesn't go over every line.
   const visibleColumns = useVisibleColumns();
   const columnTemplate = useColumnTemplate({
@@ -496,7 +495,6 @@ export function InvoiceLineItems() {
             visibleColumns={visibleColumns}
             tableSettings={tableSettings}
             money={money}
-            currencySymbol={currencySymbol}
             theme={theme}
             updateItem={updateItem}
             setItemTax={setItemTax}
@@ -664,7 +662,6 @@ function LineItems({
   visibleColumns,
   tableSettings,
   money,
-  currencySymbol,
   theme,
   updateItem,
   setItemTax,
@@ -675,7 +672,6 @@ function LineItems({
   visibleColumns: VisibleColumns;
   tableSettings: TableSettings;
   money: MoneyFormat;
-  currencySymbol: string;
   theme: InvoiceTheme;
   updateItem: UpdateItem;
   setItemTax: SetItemTax;
@@ -693,7 +689,6 @@ function LineItems({
           visibleColumns={visibleColumns}
           tableSettings={tableSettings}
           money={money}
-          currencySymbol={currencySymbol}
           theme={theme}
           updateItem={updateItem}
           setItemTax={setItemTax}
@@ -712,7 +707,6 @@ function LineItem({
   visibleColumns,
   tableSettings,
   money,
-  currencySymbol,
   theme,
   updateItem,
   setItemTax,
@@ -725,7 +719,6 @@ function LineItem({
   visibleColumns: VisibleColumns;
   tableSettings: TableSettings;
   money: MoneyFormat;
-  currencySymbol: string;
   theme: InvoiceTheme;
   updateItem: UpdateItem;
   setItemTax: SetItemTax;
@@ -764,7 +757,6 @@ function LineItem({
           index={index}
           viewRow={viewRow}
           money={money}
-          currencySymbol={currencySymbol}
           theme={theme}
           invoiceTax={tax}
           canEditLineRates={canEditLineRates}
@@ -792,7 +784,6 @@ function TableCell({
   index,
   viewRow,
   money,
-  currencySymbol,
   theme,
   invoiceTax,
   canEditLineRates,
@@ -807,7 +798,6 @@ function TableCell({
   index: number;
   viewRow: InvoiceLineItemRow;
   money: MoneyFormat;
-  currencySymbol: string;
   theme: InvoiceTheme;
   invoiceTax: Invoice["tax"];
   canEditLineRates: boolean;
@@ -864,7 +854,7 @@ function TableCell({
       // a typed "5" into 0.05.
       const withoutSymbol =
         column.cell.kind === "currency"
-          ? value.replace(currencySymbol, "")
+          ? value.replace(money.marker, "")
           : value;
       const numericValue = normalizeDecimalInput(
         withoutSymbol,
@@ -896,7 +886,7 @@ function TableCell({
     // A leftover draft ("5.", "-") settles on its number; a credit keeps its
     // minus.
     const draft = normalizeDecimalInput(
-      target.value.replace(currencySymbol, ""),
+      target.value.replace(money.marker, ""),
       column.cell.kind === "currency" ? money : quantityFormat
     );
 
@@ -941,7 +931,6 @@ function TableCell({
           label={`${cellLabel}, item ${index + 1}`}
           formattedAmount={viewRow.amount}
           money={money}
-          currencySymbol={currencySymbol}
           style={rowStyle}
           setItemAmount={setItemAmount}
         />
@@ -1039,7 +1028,6 @@ function AmountCell({
   label,
   formattedAmount,
   money,
-  currencySymbol,
   style,
   setItemAmount
 }: {
@@ -1047,7 +1035,6 @@ function AmountCell({
   label: string;
   formattedAmount: string;
   money: MoneyFormat;
-  currencySymbol: string;
   style: CSSProperties;
   setItemAmount: SetItemAmount;
 }) {
@@ -1069,7 +1056,7 @@ function AmountCell({
 
   function handleChange(value: string) {
     const numericValue = normalizeDecimalInput(
-      value.replace(currencySymbol, ""),
+      value.replace(money.marker, ""),
       money
     );
 

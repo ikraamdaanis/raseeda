@@ -139,7 +139,7 @@ export function InvoicePdfItemsTable({
         quantity: columns.quantityAndPrice
           ? measureColumn({
               header: [labels.quantity],
-              cells: lineItems.map(row => String(row.quantity)),
+              cells: lineItems.map(row => row.quantity),
               headerStyle,
               cellStyle
             })

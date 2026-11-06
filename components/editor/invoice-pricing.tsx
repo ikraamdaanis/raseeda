@@ -13,7 +13,6 @@ import { useIsPreview, useShownSections } from "~/hooks/use-shown-sections";
 import { cn } from "~/lib/utils";
 import {
   useConvertedTotals,
-  useCurrencyMarker,
   useInvoiceTotals,
   useMoneyFormat,
   usePricingSlice,
@@ -141,7 +140,6 @@ function MoneyInput({
   amount,
   display,
   money,
-  currencySymbol,
   style,
   onInput,
   onCommit
@@ -153,7 +151,6 @@ function MoneyInput({
   amount: number;
   display?: string;
   money: MoneyFormat;
-  currencySymbol: string;
   style: CSSProperties;
   onInput: (numericValue: string) => void;
   onCommit: () => void;
@@ -171,12 +168,12 @@ function MoneyInput({
       }
       className="field-sizing-content min-w-20 text-right"
       style={style}
-      placeholder={currencySymbol}
+      placeholder={money.marker}
       onFocus={() => setFocused(true)}
       onChange={value =>
         onInput(
           handleCurrencyInput(value, {
-            currencySymbol,
+            currencySymbol: money.marker,
             numberFormat: money.numberFormat,
             decimals: money.decimals
           })
@@ -503,7 +500,6 @@ function InvoiceTaxRow({ isDefault }: { isDefault: boolean }) {
 function FeesRow() {
   const { fees, setFees, labels, setLabels } = usePricingSlice();
   const money = useMoneyFormat();
-  const currencySymbol = useCurrencyMarker();
   const theme = useTheme();
   const labelSettings = getRoleSettings(theme, "totalsLabel");
   const valueSettings = getRoleSettings(theme, "totalsValue");
@@ -540,7 +536,6 @@ function FeesRow() {
             money
           })}
           money={money}
-          currencySymbol={currencySymbol}
           style={getTextStyles({ settings: valueSettings })}
           onInput={numericValue => {
             setFeesInput(numericValue);
@@ -564,7 +559,6 @@ function DiscountsRow() {
   } = usePricingSlice();
   const money = useMoneyFormat();
   const { discountAmount } = useInvoiceTotals();
-  const currencySymbol = useCurrencyMarker();
   const theme = useTheme();
   const labelSettings = getRoleSettings(theme, "totalsLabel");
   const valueSettings = getRoleSettings(theme, "totalsValue");
@@ -588,7 +582,7 @@ function DiscountsRow() {
                 setDiscountType(isPercentage ? "fixed" : "percentage")
               }
             >
-              {isPercentage ? "%" : currencySymbol}
+              {isPercentage ? "%" : money.marker}
             </PricingRowToggle>
           </PricingRowToggles>
           <InvoiceInput
@@ -662,7 +656,6 @@ function DiscountsRow() {
                   })
             }
             money={money}
-            currencySymbol={currencySymbol}
             style={getTextStyles({ settings: valueSettings })}
             onInput={numericValue => {
               setDiscountsInput(numericValue);
@@ -740,7 +733,6 @@ function AmountPaidRow() {
     setLabels
   } = usePricingSlice();
   const money = useMoneyFormat();
-  const currencySymbol = useCurrencyMarker();
   const theme = useTheme();
   const isPreview = useIsPreview();
   const labelSettings = getRoleSettings(theme, "totalsLabel");
@@ -805,7 +797,6 @@ function AmountPaidRow() {
                 })
           }
           money={money}
-          currencySymbol={currencySymbol}
           style={getTextStyles({ settings: valueSettings })}
           onInput={numericValue => {
             setAmountPaidInput(numericValue);

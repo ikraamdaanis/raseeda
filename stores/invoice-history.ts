@@ -185,7 +185,7 @@ function describeAction(
       return { label: "Payment date", area: "pricing" };
     case "paymentDetails":
       return {
-        label: next.paymentDetails.label || "Payment details",
+        label: next.paymentDetails.label.trim() || "Payment details",
         area: "paymentDetails"
       };
     default:

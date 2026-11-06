@@ -411,12 +411,6 @@ export function useMoneyFormat(): MoneyFormat {
   return useInvoiceStore(useShallow(getMoneyFormat));
 }
 
-// The currency's marker alone, the symbol or, where the invoice's font can't
-// draw it, the code.
-export function useCurrencyMarker(): string {
-  return useInvoiceStore(state => getMoneyFormat(state).marker);
-}
-
 // Full invoice data for serialization (save/load)
 // This extracts only the Invoice data, not actions
 export function useInvoiceData(): Invoice {
