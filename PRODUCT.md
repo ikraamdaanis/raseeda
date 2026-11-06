@@ -24,10 +24,11 @@ raseeda's job ends when the PDF is saved. A feature belongs if it makes the docu
 
 ### In scope
 
-- Invoices, and three close cousins made the same way: quotes, receipts and credit notes. Each is a one-off document with its own title, dates and closing rows, and turning a quote into an invoice is a duplicate with the type changed. Only invoices exist today.
-- Everything the printed document needs to say, including how to pay: bank details, a payment QR code built on the device, or a payment link the user types in.
-- A printed invoice that works in any language and region: renameable labels, any script, local date and number formats, and A4 or Letter paper. Only A4 exists today.
-- Styling the document: fonts, size, weight, colours, a logo, section switches and renamed labels.
+- Invoices, and four close cousins made the same way: quotes, proforma invoices, receipts and credit notes. Each is a one-off document with its own title, dates and closing rows, and turning a quote into an invoice is a duplicate with the type changed. Only invoices exist today.
+- Everything the printed document needs to say, including how to pay: bank details, other ways to pay such as PayPal, Venmo, Zelle, UPI or Wise, a payment QR code built on the device, or a payment link the user types in. Only bank details exist today.
+- A printed invoice that works in any language and region: renameable labels, a language preset that sets every label at once, any script, local date and number formats, and A4 or Letter paper. Only renameable labels and A4 exist today.
+- Styling the document: fonts, size, weight, colours, a logo, a signature (uploaded or drawn), section switches and renamed labels.
+- Printing straight from the editor as well as downloading the PDF. Only the download exists today.
 - The fields a valid invoice needs, such as a supply date, per-line tax and a tax note. What goes on the invoice is the user's responsibility.
 - Reuse: templates, duplicating, and suggesting clients from past invoices while the client block is filled in.
 - The library as a working set for finding, reopening, duplicating and fixing past documents. Its search, sort, grouping and filters exist to find one.
