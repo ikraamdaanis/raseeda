@@ -1,5 +1,8 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { STORED_INVOICE_THEME_FALLBACK } from "~/schema/invoice";
+import {
+  STORED_INVOICE_FORMATS,
+  STORED_INVOICE_THEME_FALLBACK
+} from "~/schema/invoice";
 import { createBlankInvoice, invoiceDefault } from "~/stores/invoice-store";
 import { isBlankInvoice, isLargeRemoval } from "~/utils/invoice-content";
 import { getLocaleDefaults } from "~/utils/locale-defaults";
@@ -71,6 +74,20 @@ describe("isBlankInvoice", () => {
           numberFormat: "comma-dot",
           currencyPosition: "before"
         })
+      ).toBe(false);
+    });
+
+    it("reads a blank from before formats existed in the stored ones", () => {
+      vi.stubGlobal("navigator", { language: "de-DE" });
+
+      const legacyBlank = createBlankInvoice(STORED_INVOICE_FORMATS);
+
+      expect(isBlankInvoice(legacyBlank, STORED_INVOICE_FORMATS)).toBe(true);
+      expect(
+        isBlankInvoice(
+          { ...legacyBlank, title: "Quote" },
+          STORED_INVOICE_FORMATS
+        )
       ).toBe(false);
     });
   });

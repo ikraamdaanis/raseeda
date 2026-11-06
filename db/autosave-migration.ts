@@ -1,5 +1,6 @@
 import type { Transaction } from "dexie";
 import { isEqual } from "lodash-es";
+import { STORED_INVOICE_FORMATS } from "~/schema/invoice";
 import {
   CURRENT_INVOICE_SCHEMA_VERSION,
   migrateInvoiceData
@@ -120,7 +121,11 @@ export async function migrateToAutosave(
       await invoices.add(copy);
       openId = copy.id;
     }
-  } else if (!untouched && !isBlankInvoice(content)) {
+  } else if (
+    !untouched &&
+    // The draft predates number formats, so it reads in the stored ones.
+    !isBlankInvoice(content, STORED_INVOICE_FORMATS)
+  ) {
     const created = newInvoiceFromDraft(content, draft.documentName, now);
 
     await invoices.add(created);

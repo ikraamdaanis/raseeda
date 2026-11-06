@@ -7,23 +7,25 @@ import { invoiceDefault } from "~/stores/invoice-store";
 import type { Invoice } from "~/types";
 import { getBrowserLanguage, getLocaleDefaults } from "~/utils/locale-defaults";
 
+type BlankFormats = Pick<
+  Invoice,
+  "numberFormat" | "currencyPosition" | "paperSize"
+>;
+
 // The invoice with what's filled in for you (its dates, the line items' ids
-// and the formats the browser's language picked) left out, so two blanks made
-// on different days compare equal. Formats someone chose aren't left out, so
-// changing only the number format still counts as an edit.
-function withoutAutoFilledValues(invoice: Invoice) {
+// and the formats a new blank took) left out, so two blanks made on different
+// days compare equal. Formats someone chose aren't left out, so changing only
+// the number format still counts as an edit.
+function withoutAutoFilledValues(invoice: Invoice, blankFormats: BlankFormats) {
   const formatKeys = Object.keys(STORED_INVOICE_FORMATS);
   const formats = pick(invoice, formatKeys);
-  // Only the browser's own: an invoice set to the stored defaults by hand (an
+  // Only the blank's own: an invoice set to the stored defaults by hand (an
   // American picking A4) was changed on purpose.
-  const isAutoFilled = isEqual(
-    formats,
-    getLocaleDefaults(getBrowserLanguage())
-  );
+  const isAutoFilled = isEqual(formats, blankFormats);
 
   return {
     ...omit(invoice, formatKeys),
-    formats: isAutoFilled ? "the browser's" : formats,
+    formats: isAutoFilled ? "the blank's" : formats,
     invoiceDate: "",
     dueDate: "",
     items: invoice.items.map(item => ({ ...item, id: "" }))
@@ -39,15 +41,20 @@ const GEIST_BLANK: Invoice = {
 
 // Whether an invoice is still the blank a new one starts as, now or before
 // the default font changed, so blanks saved then are still cleared up. Today's
-// date is filled in for you, so it doesn't count as an edit.
-export function isBlankInvoice(invoice: Invoice): boolean {
-  const content = withoutAutoFilledValues(invoice);
+// date is filled in for you, so it doesn't count as an edit. A new blank takes
+// the browser's formats; one from before they existed (a pre-autosave draft)
+// read as the stored ones, so it's compared in those.
+export function isBlankInvoice(
+  invoice: Invoice,
+  blankFormats: BlankFormats = getLocaleDefaults(getBrowserLanguage())
+): boolean {
+  const content = withoutAutoFilledValues(invoice, blankFormats);
 
-  const formats = getLocaleDefaults(getBrowserLanguage());
-
-  // A new invoice takes the browser's formats, so a blank is compared in them.
   return [invoiceDefault, GEIST_BLANK].some(blank =>
-    isEqual(content, withoutAutoFilledValues({ ...blank, ...formats }))
+    isEqual(
+      content,
+      withoutAutoFilledValues({ ...blank, ...blankFormats }, blankFormats)
+    )
   );
 }
 
