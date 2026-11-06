@@ -327,6 +327,8 @@ function PaymentMethodRow({
 // The name is picked from the suggestions in a native select. "Other…" swaps
 // in a text field for any other name until it loses focus, and the select then
 // lists that name too. Preview shows the name as plain text, as it prints.
+// Focused, the select opens out like the page's text fields, its chevron
+// moving in with the padding.
 function PaymentMethodName({
   method,
   index,
@@ -382,14 +384,14 @@ function PaymentMethodName({
       value={method.name}
       onChange={event => handleChange(event.target.value)}
       className={cn(
-        "text-paper-foreground hover:bg-brand-50 focus-visible:border-brand-500 focus-visible:bg-brand-50 h-[unset] w-32 shrink-0 cursor-pointer border-transparent py-0 pr-5 pl-0 leading-(--text-sm--line-height) focus-visible:z-20",
+        "text-paper-foreground hover:bg-brand-50 focus:border-brand-500 focus:bg-brand-50 relative h-[unset] w-32 shrink-0 cursor-pointer border-transparent py-0 pr-5 pl-0 leading-(--text-sm--line-height) transition-[background-color,border-color,padding,background-position] [--chevron-inset:0.25em] focus:z-20 focus:py-1 focus:pr-7 focus:pl-2 focus:[--chevron-inset:0.5rem]",
         !method.name && "text-paper-muted-foreground"
       )}
       style={{
         ...style,
         color: method.name ? style.color : undefined,
         backgroundSize: "0.9em 0.9em",
-        backgroundPosition: "right 0.25em center"
+        backgroundPosition: "right var(--chevron-inset) center"
       }}
     >
       <option value="" disabled>
