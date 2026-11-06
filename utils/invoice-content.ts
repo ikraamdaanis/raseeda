@@ -1,4 +1,4 @@
-import { isEqual, pick } from "lodash-es";
+import { isEqual, omit, pick } from "lodash-es";
 import {
   STORED_INVOICE_FORMATS,
   STORED_INVOICE_THEME_FALLBACK
@@ -12,15 +12,18 @@ import { getBrowserLanguage, getLocaleDefaults } from "~/utils/locale-defaults";
 // on different days compare equal. Formats someone chose aren't left out, so
 // changing only the number format still counts as an edit.
 function withoutAutoFilledValues(invoice: Invoice) {
-  const formats = pick(invoice, Object.keys(STORED_INVOICE_FORMATS));
-  const isAutoFilled = [
-    STORED_INVOICE_FORMATS,
+  const formatKeys = Object.keys(STORED_INVOICE_FORMATS);
+  const formats = pick(invoice, formatKeys);
+  // Only the browser's own: an invoice set to the stored defaults by hand (an
+  // American picking A4) was changed on purpose.
+  const isAutoFilled = isEqual(
+    formats,
     getLocaleDefaults(getBrowserLanguage())
-  ].some(autoFilled => isEqual(formats, autoFilled));
+  );
 
   return {
-    ...invoice,
-    ...(isAutoFilled ? STORED_INVOICE_FORMATS : formats),
+    ...omit(invoice, formatKeys),
+    formats: isAutoFilled ? "the browser's" : formats,
     invoiceDate: "",
     dueDate: "",
     items: invoice.items.map(item => ({ ...item, id: "" }))
@@ -40,8 +43,11 @@ const GEIST_BLANK: Invoice = {
 export function isBlankInvoice(invoice: Invoice): boolean {
   const content = withoutAutoFilledValues(invoice);
 
+  const formats = getLocaleDefaults(getBrowserLanguage());
+
+  // A new invoice takes the browser's formats, so a blank is compared in them.
   return [invoiceDefault, GEIST_BLANK].some(blank =>
-    isEqual(content, withoutAutoFilledValues(blank))
+    isEqual(content, withoutAutoFilledValues({ ...blank, ...formats }))
   );
 }
 

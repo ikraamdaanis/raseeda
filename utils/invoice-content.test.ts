@@ -50,6 +50,13 @@ describe("isBlankInvoice", () => {
       expect(
         isBlankInvoice({ ...createBlankInvoice(), numberFormat: "space-comma" })
       ).toBe(false);
+      expect(
+        isBlankInvoice({
+          ...createBlankInvoice(),
+          numberFormat: "comma-dot",
+          currencyPosition: "before"
+        })
+      ).toBe(false);
     });
   });
 
