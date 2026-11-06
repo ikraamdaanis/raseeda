@@ -38,7 +38,10 @@ const WEIGHTS = [400, 500, 600, 700];
 // characters across subsets (space, "A"); merged as they are, fontTools keeps
 // each copy and adds a locl swap to it, which fontkit applies, so pairs
 // with "A" lose their kerning. So each subset first drops the characters an
-// earlier one already has, and every character keeps its Latin glyph.
+// earlier one already has, and every character keeps its Latin glyph: Latin
+// text sets exactly as before. What that costs is the later subset's own
+// kerning against a shared letter ("ȚA", "ườ"), since it pointed at the copy
+// that was dropped; those pairs set unkerned.
 const MERGE_PROGRAM = `
 import json, sys, os, tempfile
 from fontTools.merge import Merger
