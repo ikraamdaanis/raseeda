@@ -189,7 +189,12 @@ export function buildTaxRows({
         label,
         value: exempt
           ? exemptValue
-          : withConvertedAmount({ value: formatCurrency(taxAmount, money), amount: taxAmount, conversion, money }),
+          : withConvertedAmount({
+              value: formatCurrency(taxAmount, money),
+              amount: taxAmount,
+              conversion,
+              money
+            }),
         percentage: exempt ? undefined : (group?.percentage ?? tax.percentage),
         note: exempt ? note : undefined,
         isVisible,
@@ -208,7 +213,12 @@ export function buildTaxRows({
         : `${label} ${formatPlainNumber(group.percentage, money.numberFormat)}% on ${base}`,
       value: group.exempt
         ? exemptValue
-        : withConvertedAmount({ value: formatCurrency(group.taxAmount, money), amount: group.taxAmount, conversion, money }),
+        : withConvertedAmount({
+            value: formatCurrency(group.taxAmount, money),
+            amount: group.taxAmount,
+            conversion,
+            money
+          }),
       note: group.exempt ? note : undefined,
       isVisible,
       isTotal: false
@@ -244,7 +254,13 @@ function buildSummaryRows(input: {
     {
       id: "subtotal",
       label: labels.subtotal,
-      value: withConvertedAmount({ value: formatCurrency(input.subtotal, money), amount: input.subtotal, conversion, money, convertedAmount: input.converted.subtotal }),
+      value: withConvertedAmount({
+        value: formatCurrency(input.subtotal, money),
+        amount: input.subtotal,
+        conversion,
+        money,
+        convertedAmount: input.converted.subtotal
+      }),
       isVisible: true,
       isTotal: false
     },
@@ -267,7 +283,12 @@ function buildSummaryRows(input: {
     {
       id: "fees",
       label: labels.fees,
-      value: withConvertedAmount({ value: formatCurrency(input.fees, money), amount: input.fees, conversion, money }),
+      value: withConvertedAmount({
+        value: formatCurrency(input.fees, money),
+        amount: input.fees,
+        conversion,
+        money
+      }),
       isVisible: sections.fees && input.fees > 0,
       isTotal: false
     },

@@ -1,6 +1,7 @@
 import { addDays, format } from "date-fns";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createBlankInvoice, invoiceDefault } from "~/stores/invoice-store";
+import { getLocaleDefaults } from "~/utils/locale-defaults";
 
 describe("createBlankInvoice", () => {
   afterEach(() => {
@@ -78,5 +79,22 @@ describe("createBlankInvoice", () => {
     const second = createBlankInvoice();
 
     expect(second.seller.content).toBe("");
+  });
+
+  it("takes the browser language's formats unless it's given some", () => {
+    vi.stubGlobal("navigator", { language: "de-DE" });
+
+    try {
+      expect(createBlankInvoice()).toMatchObject({
+        numberFormat: "dot-comma",
+        currencyPosition: "after"
+      });
+      expect(createBlankInvoice(getLocaleDefaults(undefined))).toMatchObject({
+        numberFormat: "comma-dot",
+        currencyPosition: "before"
+      });
+    } finally {
+      vi.unstubAllGlobals();
+    }
   });
 });

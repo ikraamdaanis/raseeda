@@ -2,10 +2,14 @@ import { describe, expect, it } from "vitest";
 import { STORED_INVOICE_THEME_FALLBACK } from "~/schema/invoice";
 import { createBlankInvoice, invoiceDefault } from "~/stores/invoice-store";
 import { isBlankInvoice, isLargeRemoval } from "~/utils/invoice-content";
+import { getLocaleDefaults } from "~/utils/locale-defaults";
 
 describe("isBlankInvoice", () => {
   it("treats a new invoice as blank whatever day it was made", () => {
     expect(isBlankInvoice(createBlankInvoice())).toBe(true);
+    expect(isBlankInvoice(createBlankInvoice(getLocaleDefaults("de-DE")))).toBe(
+      true
+    );
     expect(
       isBlankInvoice({ ...createBlankInvoice(), invoiceDate: "2020-01-01" })
     ).toBe(true);

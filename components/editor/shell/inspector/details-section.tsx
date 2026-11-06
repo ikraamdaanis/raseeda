@@ -34,16 +34,16 @@ import {
   INVOICE_NUMBER_FORMATS
 } from "~/schema/invoice";
 import {
-  useCurrencyConversionSlice,
   useAmountFormatSlice,
+  useCurrencyConversionSlice,
   useCurrencySlice,
   useDetailsSlice,
   useMoneyFormat,
   useTheme
 } from "~/stores/invoice-selectors";
 import { isSameCurrency } from "~/utils/currency-conversion";
-import { formatNumber } from "~/utils/format-number";
 import { formatInvoiceDate } from "~/utils/format-invoice-date";
+import { formatNumber } from "~/utils/format-number";
 import {
   addDaysToIsoDate,
   dueDateForNewInvoiceDate,

@@ -1075,9 +1075,7 @@ function AmountCell({
       aria-label={label}
       data-field={`items.${item.id}.amount`}
       value={
-        draft === null
-          ? formattedAmount
-          : formatDecimalDraft(draft, money)
+        draft === null ? formattedAmount : formatDecimalDraft(draft, money)
       }
       onChange={handleChange}
       onFocus={() => setDraft(String(amount))}

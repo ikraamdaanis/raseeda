@@ -32,10 +32,7 @@ import {
   isSameCurrency,
   pickSecondCurrency
 } from "~/utils/currency-conversion";
-import {
-  getBrowserLanguage,
-  getLocaleDefaults
-} from "~/utils/locale-defaults";
+import { getBrowserLanguage, getLocaleDefaults } from "~/utils/locale-defaults";
 
 export const invoiceDefault: Invoice = {
   id: "1",

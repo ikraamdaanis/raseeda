@@ -77,8 +77,8 @@ function groupLinesByTax(
 }
 
 // Splits the discount across the groups that net positive, in proportion to
-// their subtotals, each share rounded to the currency's smallest unit. A group that nets negative
-// (a credit at its own rate) takes none. The rounded shares can miss the
+// their subtotals, each share rounded to the currency's smallest unit. A
+// group that nets negative (a credit at its own rate) takes none. The rounded shares can miss the
 // discount by a cent or so; the largest group takes the difference, so they
 // always add up to it exactly.
 function splitDiscount(
@@ -141,9 +141,7 @@ export function calculateInvoiceTotals(
 
   // Sum is rounded explicitly so floating-point drift from summing per-item
   // amounts never leaks into the subtotal.
-  const subtotal = round(
-    items.reduce((sum, item) => sum + item.amount, 0)
-  );
+  const subtotal = round(items.reduce((sum, item) => sum + item.amount, 0));
 
   // A percentage discount is taken off the subtotal; a fixed discount is the
   // entered amount. Either way it comes off the goods and services, so it is

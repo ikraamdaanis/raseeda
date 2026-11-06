@@ -1,13 +1,18 @@
 import { isEqual } from "lodash-es";
-import { STORED_INVOICE_THEME_FALLBACK } from "~/schema/invoice";
+import {
+  STORED_INVOICE_FORMATS,
+  STORED_INVOICE_THEME_FALLBACK
+} from "~/schema/invoice";
 import { invoiceDefault } from "~/stores/invoice-store";
 import type { Invoice } from "~/types";
 
-// The invoice with what's filled in for you (its dates and the line items'
-// ids) left out, so two blanks made on different days compare equal.
+// The invoice with what's filled in for you (its dates, the line items' ids
+// and the formats the browser's language picked) left out, so two blanks made
+// on different days, or in different countries, compare equal.
 function withoutAutoFilledValues(invoice: Invoice) {
   return {
     ...invoice,
+    ...STORED_INVOICE_FORMATS,
     invoiceDate: "",
     dueDate: "",
     items: invoice.items.map(item => ({ ...item, id: "" }))

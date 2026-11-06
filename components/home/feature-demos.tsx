@@ -17,9 +17,9 @@ import {
   getHomePreviewFontClass
 } from "~/consts/home-preview-fonts";
 import { INVOICE_FONTS } from "~/consts/invoice-fonts";
-import { STORED_INVOICE_FORMATS } from "~/schema/invoice";
 import { useOnScreen } from "~/hooks/use-on-screen";
 import { cn } from "~/lib/utils";
+import { STORED_INVOICE_FORMATS } from "~/schema/invoice";
 
 // The homepage cards' demos: each tile plays a short loop of the editor doing
 // that card's job, built from the editor's own pieces (its fields, inspector

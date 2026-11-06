@@ -5,6 +5,7 @@ import {
   calculateConvertedTotals,
   convertAmount,
   formatConvertedAmount,
+  formatExchangeRate,
   getCurrencyConversion,
   isSameCurrency
 } from "~/utils/currency-conversion";
@@ -301,5 +302,15 @@ describe("the second currency's column", () => {
         )
       );
     }
+  });
+});
+
+describe("formatExchangeRate", () => {
+  it("writes the rate in the invoice's decimal separator, trailing zeros off", () => {
+    expect(formatExchangeRate(1.2875, "comma-dot")).toBe("1.2875");
+    expect(formatExchangeRate(1.2875, "dot-comma")).toBe("1,2875");
+    expect(formatExchangeRate(1.2, "space-comma")).toBe("1,20");
+    expect(formatExchangeRate(187.4561234, "comma-dot")).toBe("187.456123");
+    expect(formatExchangeRate(2, "dot-comma")).toBe("2,00");
   });
 });

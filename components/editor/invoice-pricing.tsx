@@ -27,10 +27,10 @@ import {
   formatInvoiceTotal,
   withConvertedAmount
 } from "~/utils/currency-conversion";
-import { getRoleSettings } from "~/utils/get-role-settings";
-import { getTextStyles } from "~/utils/get-text-styles";
 import { formatDecimalDraft } from "~/utils/decimal-input";
 import { formatPlainNumber } from "~/utils/format-number";
+import { getRoleSettings } from "~/utils/get-role-settings";
+import { getTextStyles } from "~/utils/get-text-styles";
 import { handleCurrencyInput } from "~/utils/handle-currency-input";
 import { handlePercentageInput } from "~/utils/handle-percentage-input";
 import { reconcilePricingInput } from "~/utils/reconcile-pricing-input";
@@ -240,7 +240,13 @@ function SubtotalRow() {
         className="text-paper-foreground text-right whitespace-nowrap"
         style={getTextStyles({ settings: valueSettings })}
       >
-        {withConvertedAmount({ value: formatCurrency(subtotal, money), amount: subtotal, conversion, money, convertedAmount: converted.subtotal })}
+        {withConvertedAmount({
+          value: formatCurrency(subtotal, money),
+          amount: subtotal,
+          conversion,
+          money,
+          convertedAmount: converted.subtotal
+        })}
       </span>
     </div>
   );
@@ -482,7 +488,12 @@ function InvoiceTaxRow({ isDefault }: { isDefault: boolean }) {
           className="whitespace-nowrap"
           style={getTextStyles({ settings: valueSettings })}
         >
-          {withConvertedAmount({ value: formatCurrency(taxAmount, money), amount: taxAmount, conversion, money })}
+          {withConvertedAmount({
+            value: formatCurrency(taxAmount, money),
+            amount: taxAmount,
+            conversion,
+            money
+          })}
         </span>
       )}
     </div>
@@ -520,7 +531,12 @@ function FeesRow() {
           field="fees"
           input={feesInput}
           amount={fees}
-          display={withConvertedAmount({ value: formatCurrency(fees, money), amount: fees, conversion, money })}
+          display={withConvertedAmount({
+            value: formatCurrency(fees, money),
+            amount: fees,
+            conversion,
+            money
+          })}
           money={money}
           currencySymbol={currencySymbol}
           style={getTextStyles({ settings: valueSettings })}
@@ -636,7 +652,12 @@ function DiscountsRow() {
                     money,
                     conversion
                   })
-                : withConvertedAmount({ value: formatCurrency(discounts, money), amount: discounts, conversion, money })
+                : withConvertedAmount({
+                    value: formatCurrency(discounts, money),
+                    amount: discounts,
+                    conversion,
+                    money
+                  })
             }
             money={money}
             currencySymbol={currencySymbol}
@@ -770,7 +791,12 @@ function AmountPaidRow() {
           display={
             amountPaid > 0
               ? formatDeduction({ amount: amountPaid, money, conversion })
-              : withConvertedAmount({ value: formatCurrency(amountPaid, money), amount: amountPaid, conversion, money })
+              : withConvertedAmount({
+                  value: formatCurrency(amountPaid, money),
+                  amount: amountPaid,
+                  conversion,
+                  money
+                })
           }
           money={money}
           currencySymbol={currencySymbol}

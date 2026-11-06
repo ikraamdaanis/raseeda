@@ -72,7 +72,7 @@ export function getCurrencyConversion(
     rate: Math.max(0, Number(target.rate) || 0),
     fromCode: currencyLabel(invoice),
     toCurrency: target.currency,
-      toCode: currencyLabel(target),
+    toCode: currencyLabel(target),
     toMarker: getCurrencyMarker({
       currency: target.currency,
       currencyCode: target.currencyCode,
@@ -116,7 +116,10 @@ export function calculateConvertedTotals({
   const total = Math.max(
     0,
     round(
-      subtotal - convert(totals.discountAmount) + taxAmount + convert(totals.fees)
+      subtotal -
+        convert(totals.discountAmount) +
+        taxAmount +
+        convert(totals.fees)
     )
   );
   const balanceDue = Math.max(0, round(total - convert(totals.amountPaid)));
