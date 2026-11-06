@@ -103,6 +103,12 @@ const api = {
   // value (today's date, due in 30 days and so on). Returns its id. Tax is
   // `tax: { percentage, exempt, note, perLine }`; with `perLine` on, an item's
   // own `tax: { percentage, exempt }` overrides the invoice's rate.
+  // `numberFormat` ("comma-dot", "dot-comma", "space-comma", "apostrophe-dot",
+  // "indian"), `currencyPosition` ("before", "after") and `paperSize` ("A4",
+  // "Letter") are "comma-dot", "before" and "A4" when left out, whatever the
+  // browser's language. `paymentDetails.labels` renames the bank fields, and
+  // `paymentDetails.methods` (`{ id, name, detail }[]`) lists other ways to
+  // pay, printed below them.
   async createInvoice(data: unknown) {
     if (typeof data !== "object" || data === null || Array.isArray(data)) {
       throw new TypeError("Invoice data must be an object");
