@@ -370,3 +370,31 @@ test("a long figure takes room from the description rather than being cut off", 
 
   expect(clipped).toEqual([]);
 });
+
+test("tabbing through a yen price keeps the fraction it was stored with", async ({
+  page
+}) => {
+  await gotoEditorReady(page);
+  await createAndOpenInvoice(page, {
+    currency: "¥",
+    currencyCode: "JPY",
+    items: [
+      {
+        id: "a",
+        description: "Prints",
+        quantity: 3,
+        unit: "",
+        unitPrice: 10.5
+      }
+    ]
+  });
+
+  const price = page.getByLabel("Unit Price, item 1");
+  const amount = page.getByLabel("Net amount, item 1");
+
+  await expect(amount).toHaveText("¥32");
+  await price.focus();
+  await price.press("Tab");
+  await expect(amount).toHaveText("¥32");
+  await expect.poll(() => savedContains(page, '"unitPrice":10.5')).toBe(true);
+});

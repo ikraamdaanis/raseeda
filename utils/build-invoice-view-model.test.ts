@@ -543,6 +543,39 @@ describe("buildInvoiceViewModel with a second currency", () => {
     expect(valueById.total).toBe("£7,150.00 / $9,205.63");
   });
 
+  it("converts a yen invoice's fees and payment as they print, so it adds up", () => {
+    const { summaryRows } = buildInvoiceViewModel(
+      makeInvoice({
+        currency: "¥",
+        currencyCode: "JPY",
+        items: [makeItem({ quantity: 1, unitPrice: 1000 })],
+        fees: 10.5,
+        amountPaid: 100.5,
+        sections: {
+          ...DEFAULT_INVOICE_SECTIONS,
+          fees: true,
+          amountPaid: true,
+          currencyConversion: true
+        },
+        currencyConversion: {
+          ...DEFAULT_CURRENCY_CONVERSION,
+          currency: "£",
+          currencyCode: "GBP",
+          rate: 0.0052
+        }
+      })
+    );
+    const valueById = Object.fromEntries(
+      summaryRows.map(row => [row.id, row.value])
+    );
+
+    expect(valueById.subtotal).toBe("¥1,000 / £5.20");
+    expect(valueById.fees).toBe("¥11 / £0.06");
+    expect(valueById.total).toBe("¥1,011 / £5.26");
+    expect(valueById.amountPaid).toContain("£0.53");
+    expect(valueById.balanceDue).toBe("¥910 / £4.73");
+  });
+
   it("converts to any currency, a custom one included", () => {
     const { lineItems, conversion } = buildInvoiceViewModel(
       makeGbpInvoice({

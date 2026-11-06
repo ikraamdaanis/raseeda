@@ -818,6 +818,9 @@ function TableCell({
 }) {
   const [isEditingNumeric, setIsEditingNumeric] = useState(false);
   const [numericDraft, setNumericDraft] = useState("");
+  // Whether anything was typed since the field took focus. A yen price stored
+  // with a fraction shows whole, so tabbing through it mustn't write that back.
+  const [isNumericDirty, setIsNumericDirty] = useState(false);
   // A quantity reads the invoice's decimal separator, with up to two places
   // whatever the currency.
   const quantityFormat = { numberFormat: money.numberFormat, decimals: 2 };
@@ -869,6 +872,7 @@ function TableCell({
       );
 
       setNumericDraft(numericValue);
+      setIsNumericDirty(true);
       updateItem(index, itemField, parseDecimalDraft(numericValue));
       return;
     }
@@ -885,6 +889,9 @@ function TableCell({
 
     setIsEditingNumeric(false);
     setNumericDraft("");
+    setIsNumericDirty(false);
+
+    if (!isNumericDirty) return;
 
     // A leftover draft ("5.", "-") settles on its number; a credit keeps its
     // minus.

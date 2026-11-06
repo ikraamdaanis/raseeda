@@ -3,6 +3,7 @@ import type { Style } from "@react-pdf/types";
 import { clamp, mapValues, sum } from "lodash-es";
 import type { CurrencyConversion, Invoice, InvoiceLineItemRow } from "~/types";
 import { measurePdfText } from "~/utils/measure-pdf-text";
+import { breakBeforeCurrency } from "~/utils/pdf-money-breaks";
 import {
   PDF_PAGE_PADDING,
   PDF_PAGE_WIDTH,
@@ -303,7 +304,10 @@ export function InvoicePdfItemsTable({
             )}
             {columns.quantityAndPrice && (
               <View style={[styles.tableCell, columnWidths.unitPrice]}>
-                <Text style={pdfRoleStyle(theme, "tableRowCenter")}>
+                <Text
+                  style={pdfRoleStyle(theme, "tableRowCenter")}
+                  hyphenationCallback={breakBeforeCurrency}
+                >
                   {row.unitPrice}
                 </Text>
               </View>
@@ -316,13 +320,19 @@ export function InvoicePdfItemsTable({
               </View>
             )}
             <View style={[styles.tableCell, columnWidths.amount]}>
-              <Text style={pdfRoleStyle(theme, "tableRowRight")}>
+              <Text
+                style={pdfRoleStyle(theme, "tableRowRight")}
+                hyphenationCallback={breakBeforeCurrency}
+              >
                 {row.amount}
               </Text>
             </View>
             {conversion && (
               <View style={[styles.tableCell, columnWidths.convertedAmount]}>
-                <Text style={pdfRoleStyle(theme, "tableRowRight")}>
+                <Text
+                  style={pdfRoleStyle(theme, "tableRowRight")}
+                  hyphenationCallback={breakBeforeCurrency}
+                >
                   {row.convertedAmount}
                 </Text>
               </View>

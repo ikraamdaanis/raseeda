@@ -1,18 +1,26 @@
-import { isEqual } from "lodash-es";
+import { isEqual, pick } from "lodash-es";
 import {
   STORED_INVOICE_FORMATS,
   STORED_INVOICE_THEME_FALLBACK
 } from "~/schema/invoice";
 import { invoiceDefault } from "~/stores/invoice-store";
 import type { Invoice } from "~/types";
+import { getBrowserLanguage, getLocaleDefaults } from "~/utils/locale-defaults";
 
 // The invoice with what's filled in for you (its dates, the line items' ids
 // and the formats the browser's language picked) left out, so two blanks made
-// on different days, or in different countries, compare equal.
+// on different days compare equal. Formats someone chose aren't left out, so
+// changing only the number format still counts as an edit.
 function withoutAutoFilledValues(invoice: Invoice) {
+  const formats = pick(invoice, Object.keys(STORED_INVOICE_FORMATS));
+  const isAutoFilled = [
+    STORED_INVOICE_FORMATS,
+    getLocaleDefaults(getBrowserLanguage())
+  ].some(autoFilled => isEqual(formats, autoFilled));
+
   return {
     ...invoice,
-    ...STORED_INVOICE_FORMATS,
+    ...(isAutoFilled ? STORED_INVOICE_FORMATS : formats),
     invoiceDate: "",
     dueDate: "",
     items: invoice.items.map(item => ({ ...item, id: "" }))

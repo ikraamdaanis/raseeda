@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { STORED_INVOICE_THEME_FALLBACK } from "~/schema/invoice";
 import { createBlankInvoice, invoiceDefault } from "~/stores/invoice-store";
 import { isBlankInvoice, isLargeRemoval } from "~/utils/invoice-content";
@@ -7,9 +7,6 @@ import { getLocaleDefaults } from "~/utils/locale-defaults";
 describe("isBlankInvoice", () => {
   it("treats a new invoice as blank whatever day it was made", () => {
     expect(isBlankInvoice(createBlankInvoice())).toBe(true);
-    expect(isBlankInvoice(createBlankInvoice(getLocaleDefaults("de-DE")))).toBe(
-      true
-    );
     expect(
       isBlankInvoice({ ...createBlankInvoice(), invoiceDate: "2020-01-01" })
     ).toBe(true);
@@ -25,6 +22,35 @@ describe("isBlankInvoice", () => {
         theme: { ...invoiceDefault.theme, font: "lora" }
       })
     ).toBe(false);
+  });
+
+  describe("in a German browser", () => {
+    afterEach(() => {
+      vi.unstubAllGlobals();
+    });
+
+    it("treats the formats the language picked as filled in for you", () => {
+      vi.stubGlobal("navigator", { language: "de-DE" });
+
+      expect(
+        isBlankInvoice(createBlankInvoice(getLocaleDefaults("de-DE")))
+      ).toBe(true);
+      expect(isBlankInvoice(createBlankInvoice())).toBe(true);
+    });
+
+    it("keeps a format someone chose", () => {
+      vi.stubGlobal("navigator", { language: "de-DE" });
+
+      expect(
+        isBlankInvoice({
+          ...createBlankInvoice(getLocaleDefaults("de-DE")),
+          currencyPosition: "before"
+        })
+      ).toBe(false);
+      expect(
+        isBlankInvoice({ ...createBlankInvoice(), numberFormat: "space-comma" })
+      ).toBe(false);
+    });
   });
 
   it("still treats a blank from before the default font changed as blank", () => {

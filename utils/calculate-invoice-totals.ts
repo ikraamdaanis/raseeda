@@ -78,9 +78,9 @@ function groupLinesByTax(
 
 // Splits the discount across the groups that net positive, in proportion to
 // their subtotals, each share rounded to the currency's smallest unit. A
-// group that nets negative (a credit at its own rate) takes none. The rounded shares can miss the
-// discount by a cent or so; the largest group takes the difference, so they
-// always add up to it exactly.
+// group that nets negative (a credit at its own rate) takes none. The rounded
+// shares can miss the discount by a cent or so; the largest group takes the
+// difference, so they always add up to it exactly.
 function splitDiscount(
   subtotals: number[],
   discount: number,

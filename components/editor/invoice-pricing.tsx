@@ -28,7 +28,7 @@ import {
   withConvertedAmount
 } from "~/utils/currency-conversion";
 import { formatDecimalDraft } from "~/utils/decimal-input";
-import { formatPlainNumber } from "~/utils/format-number";
+import { formatPlainNumber, roundToDecimals } from "~/utils/format-number";
 import { getRoleSettings } from "~/utils/get-role-settings";
 import { getTextStyles } from "~/utils/get-text-styles";
 import { handleCurrencyInput } from "~/utils/handle-currency-input";
@@ -533,7 +533,9 @@ function FeesRow() {
           amount={fees}
           display={withConvertedAmount({
             value: formatCurrency(fees, money),
-            amount: fees,
+            // As the total counts it, whole on a yen invoice, so the second
+            // currency's column adds up.
+            amount: roundToDecimals(fees, money.decimals),
             conversion,
             money
           })}
@@ -790,10 +792,14 @@ function AmountPaidRow() {
           amount={amountPaid}
           display={
             amountPaid > 0
-              ? formatDeduction({ amount: amountPaid, money, conversion })
+              ? formatDeduction({
+                  amount: roundToDecimals(amountPaid, money.decimals),
+                  money,
+                  conversion
+                })
               : withConvertedAmount({
                   value: formatCurrency(amountPaid, money),
-                  amount: amountPaid,
+                  amount: roundToDecimals(amountPaid, money.decimals),
                   conversion,
                   money
                 })
