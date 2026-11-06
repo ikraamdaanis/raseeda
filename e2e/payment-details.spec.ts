@@ -59,3 +59,20 @@ test("Preview shows only the ways to pay that have a detail", async ({
     page.getByRole("button", { name: "Add a way to pay" })
   ).toHaveCount(0);
 });
+
+test("moves a way to pay down twice from the keyboard", async ({ page }) => {
+  await gotoEditorReady(page);
+
+  for (const name of ["Venmo", "Pix", "Wise"]) {
+    await page.getByRole("button", { name: "Add a way to pay" }).click();
+    await page.keyboard.type(name);
+  }
+
+  const moveDown = page.getByRole("button", { name: "Move Venmo down" });
+
+  await moveDown.focus();
+  await page.keyboard.press("Enter");
+  await expect(moveDown).toBeFocused();
+  await page.keyboard.press("Enter");
+  await expect(page.getByLabel("Way to pay 3 name")).toHaveValue("Venmo");
+});

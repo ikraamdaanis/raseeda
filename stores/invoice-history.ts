@@ -183,6 +183,11 @@ function describeAction(
       };
     case "paidDate":
       return { label: "Payment date", area: "pricing" };
+    case "paymentDetails":
+      return {
+        label: next.paymentDetails.label || "Payment details",
+        area: "paymentDetails"
+      };
     default:
       return { label: "Invoice", area: "page" };
   }

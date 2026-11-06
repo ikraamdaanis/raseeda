@@ -168,6 +168,16 @@ describe("invoice history", () => {
     expect(data().sections.logo).toBe(true);
   });
 
+  it("names a way to pay added by a button as payment details", () => {
+    blurAll();
+    store().setPaymentDetails(prev => ({
+      ...prev,
+      methods: [{ id: "m1", name: "Venmo", detail: "" }]
+    }));
+
+    expect(useInvoiceHistory.getState().undoLabel).toBe("Payment details");
+  });
+
   it("keeps changes made together, like a picked date, in one step", () => {
     blurAll();
     store().setInvoiceDate("2026-01-01");
