@@ -100,6 +100,9 @@ describe("handleCurrencyInput in the invoice's number format", () => {
     const yen = { numberFormat: "comma-dot", decimals: 0 } as const;
 
     expect(handleCurrencyInput("1,235", yen)).toBe("1235");
-    expect(handleCurrencyInput("12.5", yen)).toBe("125");
+    expect(handleCurrencyInput("12.5", yen)).toBe("12");
+    expect(handleCurrencyInput("¥10.55", { ...yen, currencySymbol: "¥" })).toBe(
+      "10"
+    );
   });
 });

@@ -82,5 +82,10 @@ export function useExchangeRateInput() {
     setDraft(formatRateInput(currencyConversion.rate));
   }
 
-  return { value: formatPlainNumber(draft, numberFormat), onChange, onBlur };
+  return {
+    value: formatPlainNumber(draft, numberFormat),
+    placeholder: formatPlainNumber("0.000000", numberFormat),
+    onChange,
+    onBlur
+  };
 }

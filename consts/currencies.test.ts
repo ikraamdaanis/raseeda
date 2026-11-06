@@ -5,7 +5,8 @@ import {
   getCurrencyDecimals,
   getCurrencyMarker,
   getMoneyFormat,
-  normalizeCurrency
+  normalizeCurrency,
+  resolveCurrencyCode
 } from "~/consts/currencies";
 import { INVOICE_FONTS } from "~/consts/invoice-fonts";
 import type { InvoiceFont, MoneyFormat } from "~/types";
@@ -222,6 +223,17 @@ describe("formatCurrency in every number format", () => {
 });
 
 describe("getCurrencyDecimals", () => {
+  it("reads a legacy stored code as that currency, not its symbol's first preset", () => {
+    expect(getCurrencyDecimals({ currency: "CNY", currencyCode: "" })).toBe(2);
+    expect(getCurrencyDecimals({ currency: "JPY", currencyCode: "" })).toBe(0);
+    expect(resolveCurrencyCode({ currency: "CNY", currencyCode: "" })).toBe(
+      "CNY"
+    );
+    expect(resolveCurrencyCode({ currency: "AUD", currencyCode: "" })).toBe(
+      "AUD"
+    );
+  });
+
   it("is 0 for ISO 4217's zero-decimal currencies, 2 otherwise", () => {
     expect(getCurrencyDecimals({ currency: "¥", currencyCode: "JPY" })).toBe(0);
     expect(getCurrencyDecimals({ currency: "¥", currencyCode: "" })).toBe(0);

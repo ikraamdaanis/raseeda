@@ -72,10 +72,15 @@ export function resolveCurrencyCode({
   currency: string;
   currencyCode: string;
 }): string {
-  return (
-    currencyCode.trim().toUpperCase() ||
-    getCurrencyCodeForSymbol(normalizeCurrency(currency))
-  );
+  const code = currencyCode.trim().toUpperCase();
+
+  if (code) return code;
+
+  // An invoice from before symbols stored its code as the currency ("CNY"),
+  // which is its code, though "¥" alone would read as yen.
+  if (Object.hasOwn(LEGACY_CODE_TO_SYMBOL, currency)) return currency;
+
+  return getCurrencyCodeForSymbol(normalizeCurrency(currency));
 }
 
 /**

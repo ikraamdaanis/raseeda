@@ -74,7 +74,7 @@ export function InvoiceExchangeRate() {
           onBlur={rateInput.onBlur}
           className="field-sizing-content w-auto min-w-4 text-right"
           style={style}
-          placeholder="0.000000"
+          placeholder={rateInput.placeholder}
         />
         <span>{conversion.toCode}</span>
         <span className="flex items-center">

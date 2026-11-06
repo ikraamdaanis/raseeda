@@ -181,7 +181,7 @@ function ExchangeRateRows() {
             value={rateInput.value}
             onChange={event => rateInput.onChange(event.target.value)}
             onBlur={rateInput.onBlur}
-            placeholder="0.000000"
+            placeholder={rateInput.placeholder}
             className="placeholder:text-muted-foreground min-w-0 flex-1 bg-transparent outline-none"
           />
           <span className="text-muted-foreground shrink-0">

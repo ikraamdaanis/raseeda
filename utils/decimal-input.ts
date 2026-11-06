@@ -1,13 +1,18 @@
 import { placeMarker } from "~/consts/currencies";
 import type { InvoiceNumberFormat, MoneyFormat } from "~/types";
-import { formatPlainNumber, getDecimalSeparator } from "~/utils/format-number";
+import {
+  formatPlainNumber,
+  getDecimalSeparator,
+  roundToDecimals
+} from "~/utils/format-number";
 
 // Reads a typed figure in the invoice's number format as a plain decimal with
 // a dot: the format's decimal separator is the decimal point, and its
 // grouping separator is dropped, so on a 1.234,56 invoice "12,50" reads
 // "12.50" and "1.250" reads "1250". On a 1,234.56 invoice that's a comma
-// dropped, as always. A currency with no decimals takes no decimal point at
-// all. Spaces, apostrophes and anything else are left for the caller to strip.
+// dropped, as always. A currency with no decimals ends the figure at its
+// decimal separator, so a pasted "10.5" on a yen invoice reads 10, never 105.
+// Spaces, apostrophes and anything else are left for the caller to strip.
 export function toPlainDecimal(
   value: string,
   {
@@ -20,7 +25,7 @@ export function toPlainDecimal(
     ? value.replace(/\./g, "").replace(/,/g, ".")
     : value.replace(/,/g, "");
 
-  return decimals === 0 ? plain.replace(/\./g, "") : plain;
+  return decimals === 0 ? plain.split(".")[0] : plain;
 }
 
 // Coerce raw input into a decimal draft string: read it in the invoice's
@@ -74,13 +79,18 @@ export function parseDecimalDraft(draft: string): number {
 // figure reads at rest.
 export function formatDecimalDraft(draft: string, money: MoneyFormat) {
   const isNegative = draft.startsWith("-");
+  // A zero-decimal invoice's stored amount can still have a fraction (a price
+  // set before the currency changed to yen), which it prints whole.
+  const shown =
+    money.decimals === 0 && draft.includes(".")
+      ? String(roundToDecimals(Math.abs(Number(draft)) || 0, 0))
+      : isNegative
+        ? draft.slice(1)
+        : draft;
 
   return placeMarker({
     sign: isNegative ? "-" : "",
-    figure: formatPlainNumber(
-      isNegative ? draft.slice(1) : draft,
-      money.numberFormat
-    ),
+    figure: formatPlainNumber(shown, money.numberFormat),
     marker: money.marker,
     position: money.position
   });

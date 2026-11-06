@@ -99,13 +99,19 @@ describe("normalizeDecimalInput in the invoice's number format", () => {
     expect(normalizeDecimalInput("12,34,567.89", indian)).toBe("1234567.89");
   });
 
-  it("takes no decimal separator for a zero-decimal currency", () => {
+  it("ends a zero-decimal figure at its decimal separator", () => {
     expect(
       normalizeDecimalInput("1,235.5", {
         numberFormat: "comma-dot",
         decimals: 0
       })
-    ).toBe("12355");
+    ).toBe("1235");
+    expect(
+      normalizeDecimalInput("10,5\u00a0¥", {
+        numberFormat: "dot-comma",
+        decimals: 0
+      })
+    ).toBe("10");
     expect(
       normalizeDecimalInput("1.235", { numberFormat: "dot-comma", decimals: 0 })
     ).toBe("1235");
@@ -113,6 +119,21 @@ describe("normalizeDecimalInput in the invoice's number format", () => {
 });
 
 describe("formatDecimalDraft in the invoice's format", () => {
+  it("shows a zero-decimal draft as the whole figure it prints as", () => {
+    const yen = money("¥", { decimals: 0 });
+
+    expect(formatDecimalDraft("10.5", yen)).toBe("¥11");
+    expect(formatDecimalDraft("-10.5", yen)).toBe("-¥11");
+    expect(formatDecimalDraft("1234", yen)).toBe("¥1234");
+    expect(formatDecimalDraft("-", yen)).toBe("-¥");
+    expect(
+      normalizeDecimalInput(formatDecimalDraft("10.5", yen), {
+        numberFormat: "comma-dot",
+        decimals: 0
+      })
+    ).toBe("11");
+  });
+
   it("shows the invoice's decimal separator and puts the currency after", () => {
     expect(
       formatDecimalDraft(
