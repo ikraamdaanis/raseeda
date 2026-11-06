@@ -15,7 +15,7 @@ import {
 import { createBlankInvoice, useInvoiceStore } from "~/stores/invoice-store";
 import type { InvoiceDocument } from "~/types";
 import { buildPdf } from "~/utils/build-pdf";
-import { ensureItemIds } from "~/utils/ensure-item-ids";
+import { ensureRowIds } from "~/utils/ensure-row-ids";
 import { executeImport, parseExportText } from "~/utils/import-data";
 import {
   getClientName,
@@ -115,7 +115,7 @@ const api = {
     }
 
     const known = pick(data, INVOICE_DATA_KEYS);
-    const invoiceData = ensureItemIds(
+    const invoiceData = ensureRowIds(
       migrateInvoiceData(
         { ...createBlankInvoice(STORED_INVOICE_FORMATS), ...known },
         CURRENT_INVOICE_SCHEMA_VERSION

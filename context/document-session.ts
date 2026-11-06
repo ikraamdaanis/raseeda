@@ -48,7 +48,7 @@ import type {
   InvoiceVersion,
   InvoiceVersionReason
 } from "~/types";
-import { ensureItemIds } from "~/utils/ensure-item-ids";
+import { ensureRowIds } from "~/utils/ensure-row-ids";
 import { downloadBackupFile } from "~/utils/export-data";
 import { isBlankInvoice, isLargeRemoval } from "~/utils/invoice-content";
 import { describeCopyReview, prepareInvoiceCopy } from "~/utils/invoice-copy";
@@ -498,7 +498,7 @@ function adopt(session: Session, document: InvoiceDocument) {
     runWithOrigin("load", () => {
       useInvoiceStore
         .getState()
-        .setInvoice(ensureItemIds(structuredClone(document.invoiceData)));
+        .setInvoice(ensureRowIds(structuredClone(document.invoiceData)));
     });
     clearInvoiceHistory();
   }
@@ -791,7 +791,7 @@ function show(session: Session, content: Invoice) {
   runWithOrigin("load", () => {
     useInvoiceStore
       .getState()
-      .setInvoice(ensureItemIds(structuredClone(content)));
+      .setInvoice(ensureRowIds(structuredClone(content)));
   });
 
   const normalized = liveContent();
@@ -940,7 +940,7 @@ function applyTemplate(template: InvoiceTemplate): Promise<void> {
   return enqueue(async () => {
     if (!(await leaveCurrent())) return;
 
-    const content = ensureItemIds(structuredClone(template.templateData));
+    const content = ensureRowIds(structuredClone(template.templateData));
 
     await switchTo(newSession(content, { templateId: template.id }), content);
   });
@@ -967,7 +967,7 @@ async function copyInvoice(
   const now = new Date();
   const library = await getAllInvoices();
   const invoiceData = prepareInvoiceCopy({
-    invoice: ensureItemIds(structuredClone(document.invoiceData)),
+    invoice: ensureRowIds(structuredClone(document.invoiceData)),
     takenNumbers: library.map(invoice => invoice.invoiceData.number),
     today: now
   });
@@ -1256,7 +1256,7 @@ function restoreVersion(version: InvoiceVersion): Promise<void> {
     recordHistoryAction("Restore version", "page", () => {
       useInvoiceStore
         .getState()
-        .setInvoice(ensureItemIds(structuredClone(version.invoiceData)));
+        .setInvoice(ensureRowIds(structuredClone(version.invoiceData)));
     });
   });
 }
@@ -1498,7 +1498,7 @@ async function recoverUnsaved(session: Session) {
   runWithOrigin("load", () => {
     useInvoiceStore
       .getState()
-      .setInvoice(ensureItemIds(structuredClone(stash.invoiceData)));
+      .setInvoice(ensureRowIds(structuredClone(stash.invoiceData)));
   });
   session.controller.schedule(liveContent());
 }

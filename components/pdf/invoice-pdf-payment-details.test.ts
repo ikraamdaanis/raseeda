@@ -1,3 +1,4 @@
+import { isValidElement } from "react";
 import { describe, expect, it } from "vitest";
 import { InvoicePdfPaymentDetails } from "~/components/pdf/invoice-pdf-payment-details";
 import { migrateInvoiceData } from "~/schema/migrations";
@@ -48,13 +49,9 @@ describe("InvoicePdfPaymentDetails", () => {
 function textOf(node: unknown): string[] {
   if (typeof node === "string") return [node];
   if (Array.isArray(node)) return node.flatMap(textOf);
-  if (node && typeof node === "object" && "props" in node) {
-    const { props } = node as { props: { children?: unknown } };
+  if (!isValidElement<{ children?: unknown }>(node)) return [];
 
-    return textOf(props.children);
-  }
-
-  return [];
+  return textOf(node.props.children);
 }
 
 describe("InvoicePdfPaymentDetails other ways to pay", () => {
