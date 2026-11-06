@@ -142,8 +142,21 @@ export const DEFAULT_INVOICE_SECTIONS = {
   latePayment: false
 } as const satisfies Record<(typeof INVOICE_SECTION_KEYS)[number], boolean>;
 
+// What each bank field is called on the page. Renameable, so "Routing number"
+// can read "BSB", "IFSC", "Transit number" or "CLABE".
+export const DEFAULT_PAYMENT_LABELS = {
+  bankName: "Bank name",
+  accountName: "Account name",
+  accountNumber: "Account number",
+  routingNumber: "Routing number",
+  iban: "IBAN",
+  bic: "BIC / SWIFT",
+  sortCode: "Sort code"
+} as const;
+
 const DEFAULT_PAYMENT_DETAILS = {
   label: "Payment details",
+  labels: DEFAULT_PAYMENT_LABELS,
   bankName: "",
   accountName: "",
   accountNumber: "",
@@ -206,14 +219,47 @@ function textSectionSchema(defaultLabel: string) {
     .catch({ label: defaultLabel, content: "" });
 }
 
+// Another way to be paid besides the bank (issue #117): a name ("PayPal",
+// "Venmo", "Pix", or anything typed) and the detail to pay to, as typed (a
+// handle, an email, a phone number, a Pix key). Printed below the bank
+// fields; a method with no detail isn't.
+const paymentMethodSchema = z.object({
+  id: z.string().catch(""),
+  name: z.string().catch(""),
+  detail: z.string().catch("")
+});
+
 // Payment details mirror the terms section: a customizable label plus content.
-// The content is a set of free-text fields so they work across banking
-// conventions (bank name, account name, account and routing numbers, IBAN,
-// BIC/SWIFT, sort code) alongside free-text instructions (e.g. "Net 30", a
-// PayPal address). An all-empty section is suppressed at render.
+// The content is a set of free-text bank fields, each with a renameable label,
+// so they work across banking conventions (bank name, account name, account
+// and routing numbers, IBAN, BIC/SWIFT, sort code), other ways to pay
+// (`methods`) and free-text instructions (e.g. "Net 30"). An all-empty section
+// is suppressed at render.
 const paymentDetailsSchema = z
   .object({
     label: z.string().catch(DEFAULT_PAYMENT_DETAILS.label),
+    labels: z
+      .object({
+        bankName: z.string().catch(DEFAULT_PAYMENT_LABELS.bankName),
+        accountName: z.string().catch(DEFAULT_PAYMENT_LABELS.accountName),
+        accountNumber: z.string().catch(DEFAULT_PAYMENT_LABELS.accountNumber),
+        routingNumber: z.string().catch(DEFAULT_PAYMENT_LABELS.routingNumber),
+        iban: z.string().catch(DEFAULT_PAYMENT_LABELS.iban),
+        bic: z.string().catch(DEFAULT_PAYMENT_LABELS.bic),
+        sortCode: z.string().catch(DEFAULT_PAYMENT_LABELS.sortCode)
+      })
+      .catch(DEFAULT_PAYMENT_LABELS),
+    // One bad entry drops only itself, as the line items do.
+    methods: z
+      .array(z.unknown())
+      .catch([])
+      .transform(methods =>
+        methods.flatMap(method => {
+          const parsed = paymentMethodSchema.safeParse(method);
+
+          return parsed.success ? [parsed.data] : [];
+        })
+      ),
     bankName: z.string().catch(""),
     accountName: z.string().catch(""),
     accountNumber: z.string().catch(""),
@@ -223,7 +269,7 @@ const paymentDetailsSchema = z
     sortCode: z.string().catch(""),
     terms: z.string().catch("")
   })
-  .catch(DEFAULT_PAYMENT_DETAILS);
+  .catch(() => ({ ...DEFAULT_PAYMENT_DETAILS, methods: [] }));
 
 const invoiceSectionsSchema = z
   .object({

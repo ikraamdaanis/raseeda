@@ -7,6 +7,7 @@ import {
   DEFAULT_INVOICE_DATE_FORMAT,
   DEFAULT_INVOICE_SECTIONS,
   DEFAULT_INVOICE_THEME,
+  DEFAULT_PAYMENT_LABELS,
   DEFAULT_TABLE_SETTINGS,
   STORED_INVOICE_FORMATS
 } from "~/schema/invoice";
@@ -117,6 +118,8 @@ export const invoiceDefault: Invoice = {
   },
   paymentDetails: {
     label: "Payment details",
+    labels: DEFAULT_PAYMENT_LABELS,
+    methods: [],
     bankName: "",
     accountName: "",
     accountNumber: "",

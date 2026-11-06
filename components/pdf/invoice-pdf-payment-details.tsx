@@ -1,5 +1,6 @@
 import { StyleSheet, Text, View } from "@react-pdf/renderer";
 import type { Invoice } from "~/types";
+import { getPaymentRows } from "~/utils/payment-details";
 import { pdfRoleStyle } from "~/utils/pdf-styles";
 
 const styles = StyleSheet.create({
@@ -28,19 +29,9 @@ const styles = StyleSheet.create({
   }
 });
 
-const FIELDS = [
-  { key: "bankName", label: "Bank name" },
-  { key: "accountName", label: "Account name" },
-  { key: "accountNumber", label: "Account number" },
-  { key: "routingNumber", label: "Routing number" },
-  { key: "iban", label: "IBAN" },
-  { key: "bic", label: "BIC / SWIFT" },
-  { key: "sortCode", label: "Sort code" }
-] as const;
-
 export function InvoicePdfPaymentDetails({ invoice }: { invoice: Invoice }) {
   const { theme, paymentDetails } = invoice;
-  const rows = FIELDS.filter(field => paymentDetails[field.key].trim());
+  const rows = getPaymentRows(paymentDetails);
 
   if (rows.length === 0 && !paymentDetails.terms.trim()) {
     return null;
@@ -59,10 +50,10 @@ export function InvoicePdfPaymentDetails({ invoice }: { invoice: Invoice }) {
       )}
       {rows.length > 0 && (
         <View style={styles.fields}>
-          {rows.map(field => (
-            <View key={field.key} style={styles.field}>
-              <Text style={labelStyle}>{field.label}</Text>
-              <Text style={valueStyle}>{paymentDetails[field.key]}</Text>
+          {rows.map(row => (
+            <View key={row.id} style={styles.field}>
+              <Text style={labelStyle}>{row.label}</Text>
+              <Text style={valueStyle}>{row.value}</Text>
             </View>
           ))}
         </View>

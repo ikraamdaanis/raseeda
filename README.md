@@ -9,7 +9,7 @@ raseeda makes the document and stops there: it isn't an invoice tracker, CRM or 
 ## Features
 
 - Create invoices with seller and client details, line items, tax, fees, discounts, and terms
-- Payment details section: bank name, account and routing numbers, IBAN, BIC / SWIFT, sort code, and payment notes
+- Payment details section: bank name, account and routing numbers, IBAN, BIC / SWIFT and sort code, each under a label you can rename ("BSB", "IFSC", "CLABE"), other ways to pay such as PayPal, Venmo, Pix or UPI, and payment notes
 - Set the whole invoice in any of eleven fonts, with your choice of size and weight
 - Save and load invoice documents locally in IndexedDB
 - Reusable templates for repeat work
@@ -64,6 +64,8 @@ await raseeda.createInvoice({
 The line items table is `tableSettings`: `{ columnLabels, columns, backgroundColor, borderColor }`. `columns` is `{ quantityAndPrice, unit }`, both on by default. With `quantityAndPrice: false`, the Quantity, Unit and Unit price columns are hidden and each item is a description and an amount, so give each one `quantity: 1` and the amount as its `unitPrice`. `columnLabels.tax` names the Tax column; left blank, it uses the tax row's label (`labels.tax`). `columnLabels.amount` names the Amount column; left blank, it reads "Net amount" while the tax section is on and "Amount" while it's off.
 
 How amounts are written is `numberFormat` and `currencyPosition`. `numberFormat` is one of `"comma-dot"` (1,234.56), `"dot-comma"` (1.234,56), `"space-comma"` (1 234,56), `"apostrophe-dot"` (1’234.56) or `"indian"` (12,34,567.89); `currencyPosition` is `"before"` ($1,234.56) or `"after"` (1.234,56 €). `paperSize` is `"A4"` or `"Letter"`, for the PDF, the page in the editor and print. A script's invoice left without them is `"comma-dot"`, `"before"` and `"A4"`, whatever the browser's language; a blank invoice made in the editor starts on the browser's. Currencies with no minor unit (JPY, KRW, VND and the rest of ISO 4217's zero-decimal list) are reckoned and printed in whole units.
+
+`paymentDetails.labels` names each bank field on the page (`{ bankName, accountName, accountNumber, routingNumber, iban, bic, sortCode }`, left out it reads "Bank name", "Routing number" and so on), and `paymentDetails.methods` lists other ways to pay, printed below the bank fields in order: `[{ id, name, detail }]`, such as `{ id: "venmo", name: "Venmo", detail: "@jane-designs" }`. A method with no `detail` doesn't print.
 
 ```js
 await raseeda.createInvoice({

@@ -98,3 +98,71 @@ describe("invoiceSchema paper size", () => {
     ).toBe("Letter");
   });
 });
+
+describe("invoiceSchema payment methods and labels", () => {
+  it("reads an invoice saved before them with no methods and the old labels", () => {
+    const {
+      labels: _labels,
+      methods: _methods,
+      ...old
+    } = invoiceDefault.paymentDetails;
+    const parsed = invoiceSchema.parse({
+      ...invoiceDefault,
+      paymentDetails: old
+    });
+
+    expect(parsed.paymentDetails.methods).toEqual([]);
+    expect(parsed.paymentDetails.labels).toEqual({
+      bankName: "Bank name",
+      accountName: "Account name",
+      accountNumber: "Account number",
+      routingNumber: "Routing number",
+      iban: "IBAN",
+      bic: "BIC / SWIFT",
+      sortCode: "Sort code"
+    });
+  });
+
+  it("keeps a renamed label and fills in a missing one", () => {
+    const parsed = invoiceSchema.parse({
+      ...invoiceDefault,
+      paymentDetails: {
+        ...invoiceDefault.paymentDetails,
+        labels: { routingNumber: "BSB", iban: 4 }
+      }
+    });
+
+    expect(parsed.paymentDetails.labels.routingNumber).toBe("BSB");
+    expect(parsed.paymentDetails.labels.iban).toBe("IBAN");
+    expect(parsed.paymentDetails.labels.bankName).toBe("Bank name");
+  });
+
+  it("drops only the unreadable methods and repairs a partial one", () => {
+    const parsed = invoiceSchema.parse({
+      ...invoiceDefault,
+      paymentDetails: {
+        ...invoiceDefault.paymentDetails,
+        methods: [
+          { id: "a", name: "Venmo", detail: "@jane-designs" },
+          null,
+          "PayPal",
+          { name: "Pix" }
+        ]
+      }
+    });
+
+    expect(parsed.paymentDetails.methods).toEqual([
+      { id: "a", name: "Venmo", detail: "@jane-designs" },
+      { id: "", name: "Pix", detail: "" }
+    ]);
+  });
+
+  it("recovers to no methods when methods isn't a list", () => {
+    const parsed = invoiceSchema.parse({
+      ...invoiceDefault,
+      paymentDetails: { ...invoiceDefault.paymentDetails, methods: "PayPal" }
+    });
+
+    expect(parsed.paymentDetails.methods).toEqual([]);
+  });
+});

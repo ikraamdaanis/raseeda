@@ -175,17 +175,9 @@ export type InvoiceTerms = {
   content: string;
 };
 
-export type InvoicePaymentDetails = {
-  label: string;
-  bankName: string;
-  accountName: string;
-  accountNumber: string;
-  routingNumber: string;
-  iban: string;
-  bic: string;
-  sortCode: string;
-  terms: string;
-};
+export type InvoicePaymentDetails = Invoice["paymentDetails"];
+
+export type InvoicePaymentMethod = InvoicePaymentDetails["methods"][number];
 
 export type PdfSettings = {
   backgroundColor: string;

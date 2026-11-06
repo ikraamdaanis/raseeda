@@ -53,7 +53,10 @@ function items(rows: [string, number, string, number][]): InvoiceItem[] {
 }
 
 function sampleInvoice(
-  overrides: Partial<Invoice> & Pick<Invoice, "seller" | "client" | "items">
+  overrides: Omit<Partial<Invoice>, "paymentDetails"> &
+    Pick<Invoice, "seller" | "client" | "items"> & {
+      paymentDetails?: Partial<Invoice["paymentDetails"]>;
+    }
 ): Invoice {
   const invoice: Invoice = {
     ...structuredClone(invoiceDefault),

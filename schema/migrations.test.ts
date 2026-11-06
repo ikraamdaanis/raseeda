@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   DEFAULT_INVOICE_THEME,
+  DEFAULT_PAYMENT_LABELS,
   STORED_INVOICE_THEME_FALLBACK
 } from "~/schema/invoice";
 import {
@@ -254,6 +255,8 @@ describe("migrateInvoiceData", () => {
 
     expect(normalized.paymentDetails).toEqual({
       label: "Payment details",
+      labels: DEFAULT_PAYMENT_LABELS,
+      methods: [],
       bankName: "",
       accountName: "",
       accountNumber: "",

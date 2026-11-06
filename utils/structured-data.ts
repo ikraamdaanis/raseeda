@@ -112,7 +112,7 @@ export const HOME_STRUCTURED_DATA = {
         `Upload your logo and choose from ${INVOICE_FONTS.length} fonts at three sizes`,
         "Any currency, with custom symbols",
         "VAT or sales tax, fees, and fixed or percentage discounts",
-        "Payment details: bank name, account and routing numbers, IBAN, BIC / SWIFT and sort code",
+        "Payment details: bank name, account and routing numbers, IBAN, BIC / SWIFT and sort code, plus other ways to pay such as PayPal, Venmo, Pix or UPI",
         "Templates for repeat clients",
         "Import and export backups",
         "No account, no uploads, no tracking cookies"

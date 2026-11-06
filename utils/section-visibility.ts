@@ -1,21 +1,11 @@
 import type { Invoice, InvoiceSectionKey } from "~/types";
 import { getCurrencyConversion } from "~/utils/currency-conversion";
 import { isPaidInFull } from "~/utils/is-paid-in-full";
+import { getPaymentRows } from "~/utils/payment-details";
 
 export function hasText(value: string): boolean {
   return value.trim().length > 0;
 }
-
-const PAYMENT_DETAIL_FIELDS = [
-  "bankName",
-  "accountName",
-  "accountNumber",
-  "routingNumber",
-  "iban",
-  "bic",
-  "sortCode",
-  "terms"
-] as const;
 
 // Whether each optional part of the invoice is printed: switched on, and with
 // something in it. The PDF and the editor's Preview both read this, so Preview
@@ -65,9 +55,8 @@ export function getPrintedSections(
     currencyConversion: conversion !== null && conversion.rate > 0,
     paymentDetails:
       sections.paymentDetails &&
-      PAYMENT_DETAIL_FIELDS.some(field =>
-        hasText(invoice.paymentDetails[field])
-      ),
+      (getPaymentRows(invoice.paymentDetails).length > 0 ||
+        hasText(invoice.paymentDetails.terms)),
     notes: sections.notes && hasText(invoice.notes.content),
     terms: sections.terms && hasText(invoice.terms.content),
     latePayment: sections.latePayment && hasText(invoice.latePayment.content)

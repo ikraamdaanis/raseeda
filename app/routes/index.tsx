@@ -143,7 +143,7 @@ const FEATURES: {
   {
     title: "Payment details clients can use",
     description:
-      "Bank name, account and routing numbers, IBAN, BIC / SWIFT and sort code, laid out so your client can pay without asking.",
+      "Bank details under labels you can rename, plus PayPal, Venmo, Pix, UPI or any other way to pay, laid out so your client can pay without asking.",
     demo: PaymentDemo,
     hues: [TILE_HUES.sky, TILE_HUES.sage]
   }

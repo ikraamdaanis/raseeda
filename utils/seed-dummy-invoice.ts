@@ -213,13 +213,21 @@ function buildPaymentDetails(sellerName: string): InvoicePaymentDetails {
   const iban = `GB${randomInt(10, 99)} ${bank.code} ${ibanBody}`;
   const bic = `${bank.code}GB2${pickRandom(["L", "A", "B"])}`;
   const handle = sellerName.toLowerCase().replace(/[^a-z0-9]+/g, "");
-  const terms =
+  const methods =
     Math.random() < 0.5
-      ? pickRandom(PAYMENT_INSTRUCTIONS)
-      : `Bank transfer or PayPal to pay@${handle}.com`;
+      ? [
+          {
+            id: crypto.randomUUID(),
+            name: "PayPal",
+            detail: `pay@${handle}.com`
+          }
+        ]
+      : [];
 
   return {
     label: "Payment details",
+    labels: invoiceDefault.paymentDetails.labels,
+    methods,
     bankName: bank.name,
     accountName: sellerName,
     accountNumber,
@@ -227,7 +235,7 @@ function buildPaymentDetails(sellerName: string): InvoicePaymentDetails {
     iban,
     bic,
     sortCode,
-    terms
+    terms: pickRandom(PAYMENT_INSTRUCTIONS)
   };
 }
 

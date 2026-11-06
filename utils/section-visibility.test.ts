@@ -112,3 +112,35 @@ describe("switched-off pricing", () => {
     expect(visible).not.toContain("balanceDue");
   });
 });
+
+describe("printed payment details", () => {
+  function withPayment(
+    paymentDetails: Partial<Invoice["paymentDetails"]>
+  ): Invoice {
+    const invoice = makeInvoice();
+
+    return {
+      ...invoice,
+      sections: { ...invoice.sections, paymentDetails: true },
+      paymentDetails: { ...invoice.paymentDetails, ...paymentDetails }
+    };
+  }
+
+  it("prints a section holding only another way to pay", () => {
+    const printed = getPrintedSections(
+      withPayment({
+        methods: [{ id: "m1", name: "Venmo", detail: "@jane-designs" }]
+      })
+    );
+
+    expect(printed.paymentDetails).toBe(true);
+  });
+
+  it("leaves out a section whose only way to pay has no detail", () => {
+    const printed = getPrintedSections(
+      withPayment({ methods: [{ id: "m1", name: "Venmo", detail: "" }] })
+    );
+
+    expect(printed.paymentDetails).toBe(false);
+  });
+});

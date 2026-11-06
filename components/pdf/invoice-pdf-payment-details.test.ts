@@ -43,3 +43,54 @@ describe("InvoicePdfPaymentDetails", () => {
     expect(InvoicePdfPaymentDetails({ invoice })).not.toBeNull();
   });
 });
+
+// Every string the rendered section holds, in order.
+function textOf(node: unknown): string[] {
+  if (typeof node === "string") return [node];
+  if (Array.isArray(node)) return node.flatMap(textOf);
+  if (node && typeof node === "object" && "props" in node) {
+    const { props } = node as { props: { children?: unknown } };
+
+    return textOf(props.children);
+  }
+
+  return [];
+}
+
+describe("InvoicePdfPaymentDetails other ways to pay", () => {
+  it("prints a section holding only a way to pay", () => {
+    const invoice = invoiceWithPayment({
+      methods: [{ id: "m1", name: "Venmo", detail: "@jane-designs" }]
+    });
+
+    expect(textOf(InvoicePdfPaymentDetails({ invoice }))).toEqual([
+      "Payment details",
+      "Venmo",
+      "@jane-designs"
+    ]);
+  });
+
+  it("prints a renamed bank label", () => {
+    const invoice = invoiceWithPayment({
+      routingNumber: "032-000",
+      labels: {
+        ...migrateInvoiceData({}).paymentDetails.labels,
+        routingNumber: "BSB"
+      }
+    });
+
+    expect(textOf(InvoicePdfPaymentDetails({ invoice }))).toEqual([
+      "Payment details",
+      "BSB",
+      "032-000"
+    ]);
+  });
+
+  it("suppresses a section whose only way to pay has no detail", () => {
+    const invoice = invoiceWithPayment({
+      methods: [{ id: "m1", name: "Venmo", detail: " " }]
+    });
+
+    expect(InvoicePdfPaymentDetails({ invoice })).toBeNull();
+  });
+});

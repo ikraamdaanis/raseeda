@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   DEFAULT_CURRENCY_CONVERSION,
-  DEFAULT_INVOICE_SECTIONS
+  DEFAULT_INVOICE_SECTIONS,
+  DEFAULT_PAYMENT_LABELS
 } from "~/schema/invoice";
 import type { Invoice, InvoiceItem } from "~/types";
 import { buildInvoiceViewModel } from "~/utils/build-invoice-view-model";
@@ -62,6 +63,8 @@ function makeInvoice(overrides: Partial<Invoice> = {}): Invoice {
     latePayment: { label: "Late payment", content: "" },
     paymentDetails: {
       label: "Payment details",
+      labels: DEFAULT_PAYMENT_LABELS,
+      methods: [],
       bankName: "",
       accountName: "",
       accountNumber: "",
