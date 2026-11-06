@@ -34,10 +34,15 @@ const SUBSETS = [
 const WEIGHTS = [400, 500, 600, 700];
 
 // Merges each job's subset files into one WOFF and prints, as JSON, the code
-// points every output maps, as [first, last] ranges.
+// points every output maps, as [first, last] ranges. Fontsource repeats some
+// characters across subsets (space, "A"); merged as they are, fontTools keeps
+// each copy and adds a locl swap to it, which fontkit applies, so pairs
+// with "A" lose their kerning. So each subset first drops the characters an
+// earlier one already has, and every character keeps its Latin glyph.
 const MERGE_PROGRAM = `
 import json, sys, os, tempfile
 from fontTools.merge import Merger
+from fontTools.subset import Options, Subsetter
 from fontTools.ttLib import TTFont
 
 jobs = json.load(sys.stdin)
@@ -45,9 +50,27 @@ coverage = {}
 with tempfile.TemporaryDirectory() as work:
     for job in jobs:
         paths = []
+        covered = set()
         for index, source in enumerate(job["inputs"]):
             font = TTFont(source)
             font.flavor = None
+            points = set(font.getBestCmap().keys())
+            fresh = points - covered
+            if not fresh:
+                continue
+            if fresh != points:
+                options = Options()
+                options.layout_features = ["*"]
+                options.name_IDs = ["*"]
+                options.name_languages = ["*"]
+                options.glyph_names = True
+                options.notdef_outline = True
+                options.hinting = True
+                options.legacy_kern = True
+                subsetter = Subsetter(options)
+                subsetter.populate(unicodes=fresh)
+                subsetter.subset(font)
+            covered |= fresh
             path = os.path.join(work, f"{index}.ttf")
             font.save(path)
             paths.append(path)
@@ -65,8 +88,6 @@ with tempfile.TemporaryDirectory() as work:
 json.dump(coverage, sys.stdout)
 `;
 
-type Job = { fontId: string; inputs: string[]; output: string };
-
 function fontsourceFile(fontId: string, subset: string, weight: number) {
   return join(
     ROOT,
@@ -78,15 +99,16 @@ function fontsourceFile(fontId: string, subset: string, weight: number) {
   );
 }
 
-const jobs: Job[] = INVOICE_FONTS.flatMap(font =>
-  WEIGHTS.map(weight => ({
-    fontId: font.id,
-    inputs: SUBSETS.map(subset =>
-      fontsourceFile(font.id, subset, weight)
-    ).filter(file => existsSync(file)),
-    output: join(OUT_DIR, `${font.id}-${weight}.woff`)
-  }))
-);
+const jobs: { fontId: string; inputs: string[]; output: string }[] =
+  INVOICE_FONTS.flatMap(font =>
+    WEIGHTS.map(weight => ({
+      fontId: font.id,
+      inputs: SUBSETS.map(subset =>
+        fontsourceFile(font.id, subset, weight)
+      ).filter(file => existsSync(file)),
+      output: join(OUT_DIR, `${font.id}-${weight}.woff`)
+    }))
+  );
 
 for (const job of jobs) {
   if (job.inputs.length === 0) {
@@ -106,6 +128,7 @@ if (result.status !== 0) {
   throw new Error(`fontTools merge failed\n${result.stderr}`);
 }
 
+// MERGE_PROGRAM prints this shape: each output path's [first, last] ranges.
 const coverageByFile: Record<string, [number, number][]> = JSON.parse(
   result.stdout
 );

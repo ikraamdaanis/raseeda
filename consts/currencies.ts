@@ -139,7 +139,7 @@ export function formatCurrencyWithCode(
   currencyCode: string
 ): string {
   const formatted = formatCurrency(amount, money);
-  const code = currencyCode.trim();
+  const code = currencyCode.trim().toUpperCase();
 
   if (!code || money.marker === code) return formatted;
 

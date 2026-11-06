@@ -8,11 +8,13 @@ function getRanges(font: InvoiceFont): [number, number][] {
 
   if (cached) return cached;
 
-  const ranges = FONT_COVERAGE[font].split(",").map(part => {
-    const [start, end = start] = part.split("-");
+  const ranges = FONT_COVERAGE[font]
+    .split(",")
+    .map((part): [number, number] => {
+      const [start, end = start] = part.split("-");
 
-    return [parseInt(start, 16), parseInt(end, 16)] as [number, number];
-  });
+      return [parseInt(start, 16), parseInt(end, 16)];
+    });
 
   rangesByFont.set(font, ranges);
 

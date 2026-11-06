@@ -106,6 +106,15 @@ describe("formatCurrencyWithCode", () => {
       "INR10.00"
     );
   });
+
+  it("reads a lower-case stored code as the code it is", () => {
+    expect(formatCurrencyWithCode(10, money("₹", "inr", "lora"), "inr")).toBe(
+      "INR10.00"
+    );
+    expect(formatCurrencyWithCode(10, money("₹", "inr", "inter"), "inr")).toBe(
+      "₹10.00 INR"
+    );
+  });
 });
 
 describe("normalizeCurrency", () => {
