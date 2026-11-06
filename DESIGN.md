@@ -612,7 +612,7 @@ Medium and meta drops to 12px. The homepage's pictures of the editor mirror
   `amber-600` warning icon sits right under the hero's buttons, in `ink` at
   80%, saying what still works and how to fix it, before anyone starts.
 - **Print is a first-class target.** `@page` is A4 with 16mm margins,
-  and a Letter invoice prints on the named `letter` page;
+  and a Letter invoice open in the editor adds `@page { size: letter }`;
   `.invoice-page` forces page breaks, `.avoid-break` prevents mid-block splits,
   `.no-print` hides chrome, and print colour-adjust is forced `exact`.
 

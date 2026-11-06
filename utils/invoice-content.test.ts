@@ -24,6 +24,21 @@ describe("isBlankInvoice", () => {
     ).toBe(false);
   });
 
+  describe("in an American browser", () => {
+    afterEach(() => {
+      vi.unstubAllGlobals();
+    });
+
+    it("keeps a switch to A4, though A4 is what stored invoices default to", () => {
+      vi.stubGlobal("navigator", { language: "en-US" });
+
+      expect(isBlankInvoice(createBlankInvoice())).toBe(true);
+      expect(isBlankInvoice({ ...createBlankInvoice(), paperSize: "A4" })).toBe(
+        false
+      );
+    });
+  });
+
   describe("in a German browser", () => {
     afterEach(() => {
       vi.unstubAllGlobals();
