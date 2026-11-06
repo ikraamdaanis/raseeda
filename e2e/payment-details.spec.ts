@@ -17,11 +17,11 @@ test("renames a bank label and adds, orders and removes ways to pay", async ({
 
   await page.getByRole("button", { name: "Add a way to pay" }).click();
   await expect(page.getByLabel("Way to pay 1 name")).toBeFocused();
-  await page.keyboard.type("Venmo");
+  await page.getByLabel("Way to pay 1 name").selectOption("Venmo");
   await page.getByLabel("Venmo detail").fill("@jane-designs");
 
   await page.getByRole("button", { name: "Add a way to pay" }).click();
-  await page.keyboard.type("Pix");
+  await page.getByLabel("Way to pay 2 name").selectOption("Pix");
   await page.getByLabel("Pix detail").fill("jane@example.com");
 
   await page.getByRole("button", { name: "Move Pix up" }).click();
@@ -43,9 +43,9 @@ test("Preview shows only the ways to pay that have a detail", async ({
   await gotoEditorReady(page);
 
   await page.getByRole("button", { name: "Add a way to pay" }).click();
-  await page.keyboard.type("Zelle");
+  await page.getByLabel("Way to pay 1 name").selectOption("Zelle");
   await page.getByRole("button", { name: "Add a way to pay" }).click();
-  await page.keyboard.type("Venmo");
+  await page.getByLabel("Way to pay 2 name").selectOption("Venmo");
   await page.getByLabel("Venmo detail").fill("@jane-designs");
 
   await page
@@ -63,9 +63,9 @@ test("Preview shows only the ways to pay that have a detail", async ({
 test("moves a way to pay down twice from the keyboard", async ({ page }) => {
   await gotoEditorReady(page);
 
-  for (const name of ["Venmo", "Pix", "Wise"]) {
+  for (const [index, name] of ["Venmo", "Pix", "Wise"].entries()) {
     await page.getByRole("button", { name: "Add a way to pay" }).click();
-    await page.keyboard.type(name);
+    await page.getByLabel(`Way to pay ${index + 1} name`).selectOption(name);
   }
 
   const moveDown = page.getByRole("button", { name: "Move Venmo down" });
@@ -75,4 +75,25 @@ test("moves a way to pay down twice from the keyboard", async ({ page }) => {
   await expect(moveDown).toBeFocused();
   await page.keyboard.press("Enter");
   await expect(page.getByLabel("Way to pay 3 name")).toHaveValue("Venmo");
+});
+
+test("names a way to pay that isn't in the list", async ({ page }) => {
+  await gotoEditorReady(page);
+
+  await page.getByRole("button", { name: "Add a way to pay" }).click();
+  await page.getByLabel("Way to pay 1 name").selectOption("Other…");
+
+  const name = page.getByRole("textbox", { name: "Way to pay 1 name" });
+
+  await expect(name).toBeFocused();
+  await page.keyboard.type("Lydia");
+  await page.getByLabel("Lydia detail").fill("+33 6 12 34 56 78");
+  await expect(
+    page.getByRole("combobox", { name: "Way to pay 1 name" })
+  ).toHaveValue("Lydia");
+  await expect
+    .poll(() =>
+      savedContains(page, '"name":"Lydia","detail":"+33 6 12 34 56 78"')
+    )
+    .toBe(true);
 });

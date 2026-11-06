@@ -202,6 +202,7 @@ export function SelectScrollDownButton({
 export function NativeSelect({
   className,
   children,
+  style,
   ...props
 }: ComponentProps<"select">) {
   return (
@@ -215,7 +216,8 @@ export function NativeSelect({
         backgroundSize: "16px 16px",
         backgroundPosition: "right 8px center",
         backgroundRepeat: "no-repeat",
-        appearance: "none"
+        appearance: "none",
+        ...style
       }}
       {...props}
     >

@@ -4,7 +4,8 @@ import {
   IconMinus,
   IconPlus
 } from "@tabler/icons-react";
-import { useRef } from "react";
+import type { CSSProperties } from "react";
+import { useRef, useState } from "react";
 import { InvoiceInput } from "~/components/editor/invoice-input";
 import {
   OptionalSection,
@@ -12,7 +13,9 @@ import {
 } from "~/components/editor/invoice-optional-section";
 import { InvoiceTextArea } from "~/components/editor/invoice-textarea";
 import { Button } from "~/components/ui/button";
+import { NativeSelect } from "~/components/ui/select";
 import { useIsPreview, useShownSections } from "~/hooks/use-shown-sections";
+import { cn } from "~/lib/utils";
 import { DEFAULT_PAYMENT_LABELS } from "~/schema/invoice";
 import {
   usePaymentDetailsSlice,
@@ -33,7 +36,7 @@ const PAYMENT_FIELDS = [
   { key: "sortCode", placeholder: "12-34-56" }
 ] as const;
 
-// Offered as the name of another way to pay. Any other name can be typed.
+// Offered as the name of another way to pay. "Other…" takes any other name.
 const PAYMENT_METHOD_SUGGESTIONS = [
   "PayPal",
   "Venmo",
@@ -52,7 +55,7 @@ const PAYMENT_METHOD_SUGGESTIONS = [
   "M-Pesa"
 ];
 
-const PAYMENT_METHOD_NAMES_ID = "invoice-payment-method-names";
+const OTHER_PAYMENT_METHOD = "__other";
 
 export function InvoicePaymentDetails() {
   const { setSection } = useSectionsSlice();
@@ -228,21 +231,14 @@ function PaymentMethods() {
         />
       ))}
       {!isPreview && (
-        <>
-          <datalist id={PAYMENT_METHOD_NAMES_ID}>
-            {PAYMENT_METHOD_SUGGESTIONS.map(name => (
-              <option key={name} value={name} />
-            ))}
-          </datalist>
-          <button
-            type="button"
-            onClick={addMethod}
-            className="text-paper-muted-foreground hover:bg-paper-muted hover:text-paper-foreground focus-visible:ring-ring rounded-control -mx-2 my-0.5 flex h-7 w-fit items-center gap-1.5 px-2 text-sm transition-colors outline-none focus-visible:ring-1 pointer-coarse:h-11"
-          >
-            <IconPlus aria-hidden="true" className="size-3.5" />
-            Add a way to pay
-          </button>
-        </>
+        <button
+          type="button"
+          onClick={addMethod}
+          className="text-paper-muted-foreground hover:bg-paper-muted hover:text-paper-foreground focus-visible:ring-ring rounded-control -mx-2 my-0.5 flex h-7 w-fit items-center gap-1.5 px-2 text-sm transition-colors outline-none focus-visible:ring-1 pointer-coarse:h-11"
+        >
+          <IconPlus aria-hidden="true" className="size-3.5" />
+          Add a way to pay
+        </button>
       )}
     </>
   );
@@ -260,7 +256,7 @@ function PaymentMethodRow({
   method: InvoicePaymentMethod;
   index: number;
   count: number;
-  nameRef: (element: HTMLInputElement | null) => void;
+  nameRef: (element: HTMLSelectElement | null) => void;
   onChange: (changes: Partial<InvoicePaymentMethod>) => void;
   onMove: (offset: number) => void;
   onRemove: () => void;
@@ -276,15 +272,11 @@ function PaymentMethodRow({
 
   return (
     <div className="group/method flex items-center gap-2">
-      <InvoiceInput
-        ref={nameRef}
-        aria-label={`Way to pay ${index + 1} name`}
-        data-field={`paymentDetails.methods.${method.id}.name`}
-        list={PAYMENT_METHOD_NAMES_ID}
-        value={method.name}
+      <PaymentMethodName
+        method={method}
+        index={index}
+        nameRef={nameRef}
         onChange={value => onChange({ name: value })}
-        placeholder="PayPal"
-        className="w-32 shrink-0"
         style={textStyle}
       />
       <InvoiceInput
@@ -330,6 +322,94 @@ function PaymentMethodRow({
       )}
     </div>
   );
+}
+
+// The name is picked from the suggestions in a native select. "Other…" swaps
+// in a text field for any other name until it loses focus, and the select then
+// lists that name too. Preview shows the name as plain text, as it prints.
+function PaymentMethodName({
+  method,
+  index,
+  nameRef,
+  onChange,
+  style
+}: {
+  method: InvoicePaymentMethod;
+  index: number;
+  nameRef: (element: HTMLSelectElement | null) => void;
+  onChange: (name: string) => void;
+  style: CSSProperties;
+}) {
+  const isPreview = useIsPreview();
+  const [isTyping, setIsTyping] = useState(false);
+  const label = `Way to pay ${index + 1} name`;
+  const field = `paymentDetails.methods.${method.id}.name`;
+  const isSuggested = PAYMENT_METHOD_SUGGESTIONS.includes(method.name);
+
+  if (isPreview || isTyping) {
+    return (
+      <InvoiceInput
+        ref={isTyping ? focusOnMount : undefined}
+        aria-label={label}
+        data-field={field}
+        value={method.name}
+        onChange={onChange}
+        onBlur={() => setIsTyping(false)}
+        placeholder="Name"
+        className="w-32 shrink-0"
+        style={style}
+      />
+    );
+  }
+
+  function handleChange(value: string) {
+    if (value !== OTHER_PAYMENT_METHOD) {
+      onChange(value);
+
+      return;
+    }
+
+    // A custom name stays to be edited; a suggested one is cleared for typing.
+    if (isSuggested) onChange("");
+    setIsTyping(true);
+  }
+
+  return (
+    <NativeSelect
+      ref={nameRef}
+      aria-label={label}
+      data-field={field}
+      value={method.name}
+      onChange={event => handleChange(event.target.value)}
+      className={cn(
+        "text-paper-foreground hover:bg-brand-50 focus-visible:border-brand-500 focus-visible:bg-brand-50 h-[unset] w-32 shrink-0 cursor-pointer border-transparent py-0 pr-5 pl-0 leading-(--text-sm--line-height) focus-visible:z-20",
+        !method.name && "text-paper-muted-foreground"
+      )}
+      style={{
+        ...style,
+        color: method.name ? style.color : undefined,
+        backgroundSize: "0.9em 0.9em",
+        backgroundPosition: "right 0.25em center"
+      }}
+    >
+      <option value="" disabled>
+        Choose…
+      </option>
+      {method.name && !isSuggested && (
+        <option value={method.name}>{method.name}</option>
+      )}
+      {PAYMENT_METHOD_SUGGESTIONS.map(name => (
+        <option key={name} value={name}>
+          {name}
+        </option>
+      ))}
+      <option value={OTHER_PAYMENT_METHOD}>Other…</option>
+    </NativeSelect>
+  );
+}
+
+function focusOnMount(element: HTMLInputElement | null) {
+  element?.focus();
 }
 
 function PaymentDetailsTerms() {
