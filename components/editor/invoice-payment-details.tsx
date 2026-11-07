@@ -36,6 +36,12 @@ const PAYMENT_FIELDS = [
   { key: "sortCode", placeholder: "12-34-56" }
 ] as const;
 
+// Printed after the other ways to pay; the PDF links it.
+const PAYMENT_LINK_FIELD = {
+  key: "paymentLink",
+  placeholder: "https://paypal.me/acme"
+} as const;
+
 // Offered as the name of another way to pay. "Other…" takes any other name.
 const PAYMENT_METHOD_SUGGESTIONS = [
   "PayPal",
@@ -81,6 +87,10 @@ export function InvoicePaymentDetails() {
           />
         ))}
         <PaymentMethods />
+        <PaymentDetailsField
+          fieldKey={PAYMENT_LINK_FIELD.key}
+          placeholder={PAYMENT_LINK_FIELD.placeholder}
+        />
       </div>
       <PaymentDetailsTerms />
     </OptionalSection>
@@ -110,7 +120,7 @@ function PaymentDetailsField({
   fieldKey,
   placeholder
 }: {
-  fieldKey: (typeof PAYMENT_FIELDS)[number]["key"];
+  fieldKey: keyof typeof DEFAULT_PAYMENT_LABELS;
   placeholder: string;
 }) {
   const { paymentDetails, setPaymentDetails } = usePaymentDetailsSlice();

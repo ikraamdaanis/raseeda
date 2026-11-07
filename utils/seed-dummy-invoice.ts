@@ -235,6 +235,7 @@ function buildPaymentDetails(sellerName: string): InvoicePaymentDetails {
     iban,
     bic,
     sortCode,
+    paymentLink: "",
     terms: pickRandom(PAYMENT_INSTRUCTIONS)
   };
 }

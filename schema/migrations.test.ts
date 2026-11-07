@@ -264,6 +264,7 @@ describe("migrateInvoiceData", () => {
       iban: "",
       bic: "",
       sortCode: "",
+      paymentLink: "",
       terms: ""
     });
   });

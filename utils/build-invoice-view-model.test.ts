@@ -72,6 +72,7 @@ function makeInvoice(overrides: Partial<Invoice> = {}): Invoice {
       iban: "",
       bic: "",
       sortCode: "",
+      paymentLink: "",
       terms: ""
     },
     pdfSettings: { backgroundColor: "#ffffff" },

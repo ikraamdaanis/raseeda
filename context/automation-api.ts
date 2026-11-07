@@ -108,7 +108,8 @@ const api = {
   // "Letter") are "comma-dot", "before" and "A4" when left out, whatever the
   // browser's language. `paymentDetails.labels` renames the bank fields, and
   // `paymentDetails.methods` (`{ id, name, detail }[]`) lists other ways to
-  // pay, printed below them.
+  // pay, printed below them. `paymentDetails.paymentLink` is a link to pay
+  // online, printed last and clickable in the PDF.
   async createInvoice(data: unknown) {
     if (typeof data !== "object" || data === null || Array.isArray(data)) {
       throw new TypeError("Invoice data must be an object");

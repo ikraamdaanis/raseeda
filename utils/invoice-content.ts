@@ -97,6 +97,7 @@ export function measureInvoiceContent(invoice: Invoice): number {
       paymentDetails.iban,
       paymentDetails.bic,
       paymentDetails.sortCode,
+      paymentDetails.paymentLink,
       paymentDetails.terms,
       ...paymentDetails.methods.flatMap(method => [method.name, method.detail])
     )

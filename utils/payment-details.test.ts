@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { invoiceDefault } from "~/stores/invoice-store";
 import type { InvoicePaymentDetails } from "~/types";
-import { getPaymentRows } from "~/utils/payment-details";
+import { getPaymentLinkHref, getPaymentRows } from "~/utils/payment-details";
 
 function paymentDetails(
   overrides: Partial<InvoicePaymentDetails>
@@ -73,5 +73,75 @@ describe("getPaymentRows", () => {
     );
 
     expect(rows).toEqual([{ id: "m3", label: "", value: "jane@example.com" }]);
+  });
+
+  it("prints the payment link last, linked to its address", () => {
+    const rows = getPaymentRows(
+      paymentDetails({
+        iban: "GB33 BUKB 2020 1555 5555 55",
+        methods: [{ id: "m1", name: "Venmo", detail: "@jane-designs" }],
+        paymentLink: " paypal.me/janedesigns "
+      })
+    );
+
+    expect(rows.map(row => row.id)).toEqual(["iban", "m1", "paymentLink"]);
+    expect(rows[2]).toEqual({
+      id: "paymentLink",
+      label: "Pay online",
+      value: "paypal.me/janedesigns",
+      href: "https://paypal.me/janedesigns"
+    });
+  });
+
+  it("prints a renamed payment link label, or the default when cleared", () => {
+    const labels = invoiceDefault.paymentDetails.labels;
+    const link = "https://buy.stripe.com/abc";
+
+    expect(
+      getPaymentRows(
+        paymentDetails({
+          paymentLink: link,
+          labels: { ...labels, paymentLink: "Pay by card" }
+        })
+      )[0]?.label
+    ).toBe("Pay by card");
+    expect(
+      getPaymentRows(
+        paymentDetails({
+          paymentLink: link,
+          labels: { ...labels, paymentLink: " " }
+        })
+      )[0]?.label
+    ).toBe("Pay online");
+  });
+
+  it("leaves out an empty payment link", () => {
+    expect(getPaymentRows(paymentDetails({ paymentLink: "  " }))).toEqual([]);
+  });
+});
+
+describe("getPaymentLinkHref", () => {
+  it("keeps a web address as typed", () => {
+    expect(getPaymentLinkHref("https://buy.stripe.com/abc")).toBe(
+      "https://buy.stripe.com/abc"
+    );
+    expect(getPaymentLinkHref("http://example.com/pay")).toBe(
+      "http://example.com/pay"
+    );
+  });
+
+  it("reads an address without a scheme as https", () => {
+    expect(getPaymentLinkHref("paypal.me/acme")).toBe("https://paypal.me/acme");
+    expect(getPaymentLinkHref("wise.com:443/pay/me")).toBe(
+      "https://wise.com/pay/me"
+    );
+  });
+
+  it("links nothing that isn't a web address", () => {
+    expect(getPaymentLinkHref("javascript:alert(1)")).toBeUndefined();
+    expect(getPaymentLinkHref("mailto:jane@example.com")).toBeUndefined();
+    expect(getPaymentLinkHref("Ask for a link")).toBeUndefined();
+    expect(getPaymentLinkHref("localhost")).toBeUndefined();
+    expect(getPaymentLinkHref("")).toBeUndefined();
   });
 });

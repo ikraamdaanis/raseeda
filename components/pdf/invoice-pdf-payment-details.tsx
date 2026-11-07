@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View } from "@react-pdf/renderer";
+import { Link, StyleSheet, Text, View } from "@react-pdf/renderer";
 import type { Invoice } from "~/types";
 import { getPaymentRows } from "~/utils/payment-details";
 import { pdfRoleStyle } from "~/utils/pdf-styles";
@@ -23,6 +23,9 @@ const styles = StyleSheet.create({
   },
   fieldValue: {
     flex: 1
+  },
+  link: {
+    textDecoration: "underline"
   },
   terms: {
     marginTop: 6
@@ -53,7 +56,13 @@ export function InvoicePdfPaymentDetails({ invoice }: { invoice: Invoice }) {
           {rows.map(row => (
             <View key={row.id} style={styles.field}>
               <Text style={labelStyle}>{row.label}</Text>
-              <Text style={valueStyle}>{row.value}</Text>
+              {row.href ? (
+                <Link src={row.href} style={[valueStyle, styles.link]}>
+                  {row.value}
+                </Link>
+              ) : (
+                <Text style={valueStyle}>{row.value}</Text>
+              )}
             </View>
           ))}
         </View>

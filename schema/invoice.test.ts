@@ -119,7 +119,8 @@ describe("invoiceSchema payment methods and labels", () => {
       routingNumber: "Routing number",
       iban: "IBAN",
       bic: "BIC / SWIFT",
-      sortCode: "Sort code"
+      sortCode: "Sort code",
+      paymentLink: "Pay online"
     });
   });
 

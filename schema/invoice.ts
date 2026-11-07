@@ -151,7 +151,8 @@ export const DEFAULT_PAYMENT_LABELS = {
   routingNumber: "Routing number",
   iban: "IBAN",
   bic: "BIC / SWIFT",
-  sortCode: "Sort code"
+  sortCode: "Sort code",
+  paymentLink: "Pay online"
 } as const;
 
 const DEFAULT_PAYMENT_DETAILS = {
@@ -164,6 +165,7 @@ const DEFAULT_PAYMENT_DETAILS = {
   iban: "",
   bic: "",
   sortCode: "",
+  paymentLink: "",
   terms: ""
 } as const;
 
@@ -246,7 +248,8 @@ const paymentDetailsSchema = z
         routingNumber: z.string().catch(DEFAULT_PAYMENT_LABELS.routingNumber),
         iban: z.string().catch(DEFAULT_PAYMENT_LABELS.iban),
         bic: z.string().catch(DEFAULT_PAYMENT_LABELS.bic),
-        sortCode: z.string().catch(DEFAULT_PAYMENT_LABELS.sortCode)
+        sortCode: z.string().catch(DEFAULT_PAYMENT_LABELS.sortCode),
+        paymentLink: z.string().catch(DEFAULT_PAYMENT_LABELS.paymentLink)
       })
       .catch(DEFAULT_PAYMENT_LABELS),
     // One bad entry drops only itself, as the line items do.
@@ -267,6 +270,9 @@ const paymentDetailsSchema = z
     iban: z.string().catch(""),
     bic: z.string().catch(""),
     sortCode: z.string().catch(""),
+    // A link to pay online (issue #136), typed in and printed after the other
+    // ways to pay; the PDF makes it clickable.
+    paymentLink: z.string().catch(""),
     terms: z.string().catch("")
   })
   .catch(() => ({ ...DEFAULT_PAYMENT_DETAILS, methods: [] }));

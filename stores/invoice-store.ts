@@ -127,6 +127,7 @@ export const invoiceDefault: Invoice = {
     iban: "",
     bic: "",
     sortCode: "",
+    paymentLink: "",
     terms: ""
   },
   pdfSettings: {
