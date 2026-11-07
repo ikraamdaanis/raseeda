@@ -235,8 +235,8 @@ const paymentMethodSchema = z.object({
 // The content is a set of free-text bank fields, each with a renameable label,
 // so they work across banking conventions (bank name, account name, account
 // and routing numbers, IBAN, BIC/SWIFT, sort code), other ways to pay
-// (`methods`) and free-text instructions (e.g. "Net 30"). An all-empty section
-// is suppressed at render.
+// (`methods`), a link to pay online (`paymentLink`) and free-text instructions
+// (e.g. "Net 30"). An all-empty section is suppressed at render.
 const paymentDetailsSchema = z
   .object({
     label: z.string().catch(DEFAULT_PAYMENT_DETAILS.label),

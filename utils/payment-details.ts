@@ -53,21 +53,24 @@ export function getPaymentRows(paymentDetails: InvoicePaymentDetails) {
 
 // The web address a typed payment link opens, or undefined when it isn't one.
 // "paypal.me/acme" is read as https; any scheme but http and https (such as
-// javascript:) prints as text without a link.
+// javascript:) prints as text without a link, and so does anything without a
+// real domain or with a user before the host, so an email address
+// ("jane@example.com") or "e.g." never links to a site.
 export function getPaymentLinkHref(link: string) {
   const trimmed = link.trim();
 
   if (!trimmed || /\s/.test(trimmed)) return undefined;
 
   const hasScheme = /^[a-z][a-z\d+.-]*:/i.test(trimmed);
-  const isHostAndPort = /^[^/:]+:\d+(\/|$)/.test(trimmed);
+  const isHostAndPort = /^[^/:]+:\d+([/?#]|$)/.test(trimmed);
   const address = hasScheme && !isHostAndPort ? trimmed : `https://${trimmed}`;
 
   try {
     const url = new URL(address);
 
     if (url.protocol !== "https:" && url.protocol !== "http:") return undefined;
-    if (!url.hostname.includes(".")) return undefined;
+    if (url.username || url.password) return undefined;
+    if (!/\.([a-z]{2,63}|xn--[a-z\d-]+)$/i.test(url.hostname)) return undefined;
 
     return url.href;
   } catch {

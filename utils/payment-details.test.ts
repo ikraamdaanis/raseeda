@@ -135,6 +135,9 @@ describe("getPaymentLinkHref", () => {
     expect(getPaymentLinkHref("wise.com:443/pay/me")).toBe(
       "https://wise.com/pay/me"
     );
+    expect(getPaymentLinkHref("example.com:8080?ref=1")).toBe(
+      "https://example.com:8080/?ref=1"
+    );
   });
 
   it("links nothing that isn't a web address", () => {
@@ -142,6 +145,12 @@ describe("getPaymentLinkHref", () => {
     expect(getPaymentLinkHref("mailto:jane@example.com")).toBeUndefined();
     expect(getPaymentLinkHref("Ask for a link")).toBeUndefined();
     expect(getPaymentLinkHref("localhost")).toBeUndefined();
+    expect(getPaymentLinkHref("jane@example.com")).toBeUndefined();
+    expect(
+      getPaymentLinkHref("https://jane:secret@example.com/pay")
+    ).toBeUndefined();
+    expect(getPaymentLinkHref("e.g.")).toBeUndefined();
+    expect(getPaymentLinkHref("1.234,56")).toBeUndefined();
     expect(getPaymentLinkHref("")).toBeUndefined();
   });
 });

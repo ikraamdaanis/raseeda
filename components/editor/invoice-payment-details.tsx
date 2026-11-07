@@ -25,6 +25,7 @@ import {
 import type { InvoicePaymentMethod } from "~/types";
 import { getRoleSettings } from "~/utils/get-role-settings";
 import { getTextStyles } from "~/utils/get-text-styles";
+import { getPaymentLinkHref } from "~/utils/payment-details";
 
 const PAYMENT_FIELDS = [
   { key: "bankName", placeholder: "Acme Bank" },
@@ -129,6 +130,11 @@ function PaymentDetailsField({
   const defaultLabel = DEFAULT_PAYMENT_LABELS[fieldKey];
   const label = paymentDetails.labels[fieldKey];
   const shownLabel = label.trim() || defaultLabel;
+  // Preview underlines a payment link that the PDF links, as the PDF does.
+  const isLinked =
+    isPreview &&
+    fieldKey === PAYMENT_LINK_FIELD.key &&
+    getPaymentLinkHref(paymentDetails[fieldKey]) !== undefined;
 
   if (isPreview && !paymentDetails[fieldKey].trim()) return null;
 
@@ -160,6 +166,7 @@ function PaymentDetailsField({
           setPaymentDetails(prev => ({ ...prev, [fieldKey]: value }))
         }
         placeholder={placeholder}
+        className={cn(isLinked && "underline")}
         style={getTextStyles({
           settings: getRoleSettings(theme, "termsContent")
         })}
