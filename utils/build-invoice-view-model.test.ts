@@ -82,7 +82,8 @@ function makeInvoice(overrides: Partial<Invoice> = {}): Invoice {
       font: "geist",
       fontWeight: "Normal",
       size: "medium",
-      accent: "#1a1a1a"
+      accent: "#1a1a1a",
+      textColor: "#1a1a1a"
     },
     sections: { ...DEFAULT_INVOICE_SECTIONS },
     dateFormat: "yyyy-MM-dd",

@@ -1,18 +1,18 @@
-import { IconRestore } from "@tabler/icons-react";
-import { useId, useState } from "react";
+import { useId } from "react";
 import {
+  ColourRow,
+  inspectorFieldClassName,
   InspectorGroupLabel,
   InspectorRow,
   InspectorSection,
   InspectorSwitch,
-  inspectorFieldClassName
+  ResetColoursButton
 } from "~/components/editor/shell/inspector/inspector-controls";
 import { cn } from "~/lib/utils";
 import { DEFAULT_TABLE_SETTINGS } from "~/schema/invoice";
 import { useTableSettingsSlice } from "~/stores/invoice-selectors";
 import type { TableSettings } from "~/types";
 import { getAmountColumnLabel } from "~/utils/table-columns";
-import { HEX_COLOUR, toSixDigitHex } from "~/utils/to-six-digit-hex";
 
 type ColumnLabelKey = keyof TableSettings["columnLabels"];
 
@@ -145,26 +145,15 @@ export function TableSection() {
           }
         />
         {!hasDefaultColours && (
-          <div className="grid grid-cols-[6rem_minmax(0,1fr)] gap-2">
-            <button
-              type="button"
-              onClick={() =>
-                setTableSettings(prev => ({
-                  ...prev,
-                  backgroundColor: DEFAULT_TABLE_SETTINGS.backgroundColor,
-                  borderColor: DEFAULT_TABLE_SETTINGS.borderColor
-                }))
-              }
-              className="text-muted-foreground hover:text-foreground focus-visible:ring-ring relative col-start-2 -mx-1 flex h-6 w-fit items-center gap-1 rounded-md px-1 text-xs outline-none focus-visible:ring-1"
-            >
-              <IconRestore aria-hidden="true" className="size-3.5 shrink-0" />
-              Reset colours
-              <span
-                aria-hidden="true"
-                className="absolute top-1/2 left-1/2 size-[max(100%,3rem)] -translate-1/2 pointer-fine:hidden"
-              />
-            </button>
-          </div>
+          <ResetColoursButton
+            onClick={() =>
+              setTableSettings(prev => ({
+                ...prev,
+                backgroundColor: DEFAULT_TABLE_SETTINGS.backgroundColor,
+                borderColor: DEFAULT_TABLE_SETTINGS.borderColor
+              }))
+            }
+          />
         )}
       </div>
     </InspectorSection>
@@ -201,78 +190,6 @@ function ColumnLabelRow({
           "placeholder:text-muted-foreground"
         )}
       />
-    </InspectorRow>
-  );
-}
-
-// A colour as a swatch that opens the system's picker, and its hex code,
-// which can be typed. A typed code takes once it's whole; leaving the field
-// puts back the colour in use, so a half-typed one never sticks. Both carry
-// the colour's path, so undo works from either and a drag through the picker
-// is one step.
-function ColourRow({
-  label,
-  field,
-  value,
-  onChange
-}: {
-  label: string;
-  field: string;
-  value: string;
-  onChange: (colour: string) => void;
-}) {
-  const id = useId();
-  // What's typed, with the colour in use when it was typed: once the colour
-  // changes from elsewhere (undo, Reset colours), the field shows that instead.
-  const [draft, setDraft] = useState<{ typed: string; colour: string } | null>(
-    null
-  );
-
-  function handleTyped(typed: string) {
-    const code = typed.trim();
-
-    if (!HEX_COLOUR.test(code)) {
-      setDraft({ typed, colour: value });
-
-      return;
-    }
-
-    const colour = `#${code.replace("#", "").toLowerCase()}`;
-
-    setDraft({ typed, colour });
-    onChange(colour);
-  }
-
-  return (
-    <InspectorRow label={label} htmlFor={id}>
-      <div
-        className={cn(
-          inspectorFieldClassName,
-          "focus-within:border-ring flex items-center gap-2 pl-1"
-        )}
-      >
-        <input
-          type="color"
-          name={`${field}-picker`}
-          aria-label={`${label} colour`}
-          data-field={field}
-          value={toSixDigitHex(value)}
-          onChange={event => onChange(event.target.value)}
-          className="size-6 shrink-0 cursor-pointer appearance-none rounded-sm border-0 bg-transparent p-0 [&::-moz-color-swatch]:rounded-sm [&::-moz-color-swatch]:border-black/10 [&::-webkit-color-swatch]:rounded-sm [&::-webkit-color-swatch]:border [&::-webkit-color-swatch]:border-black/10 dark:[&::-webkit-color-swatch]:border-white/15 [&::-webkit-color-swatch-wrapper]:p-0"
-        />
-        <input
-          id={id}
-          name={field}
-          aria-label={`${label} colour code`}
-          data-field={field}
-          value={draft?.colour === value ? draft.typed : value}
-          onChange={event => handleTyped(event.target.value)}
-          onBlur={() => setDraft(null)}
-          spellCheck={false}
-          autoComplete="off"
-          className="min-w-0 flex-1 bg-transparent tabular-nums outline-none"
-        />
-      </div>
     </InspectorRow>
   );
 }

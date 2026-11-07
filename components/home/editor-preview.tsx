@@ -40,7 +40,13 @@ export const PAGE_HEIGHT = 1122.5;
 const TOP_BAR_HEIGHT = 48;
 
 function getSampleTheme(font: InvoiceFont): InvoiceTheme {
-  return { font, fontWeight: "Normal", size: "medium", accent: "#1a1a1a" };
+  return {
+    font,
+    fontWeight: "Normal",
+    size: "medium",
+    accent: "#1a1a1a",
+    textColor: "#1a1a1a"
+  };
 }
 
 function roleStyle(

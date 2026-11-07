@@ -1,7 +1,9 @@
 import { IconChevronDown } from "@tabler/icons-react";
 import {
+  ColourRow,
   InspectorGroupLabel,
   InspectorSection,
+  ResetColoursButton,
   SegmentedControl
 } from "~/components/editor/shell/inspector/inspector-controls";
 import {
@@ -11,8 +13,10 @@ import {
 } from "~/consts/invoice-fonts";
 import { parseBoolean, usePersistentState } from "~/hooks/use-persistent-state";
 import { cn } from "~/lib/utils";
+import { DEFAULT_INVOICE_THEME } from "~/schema/invoice";
 import { useThemeSlice } from "~/stores/invoice-selectors";
 import type { InvoiceFont, InvoiceSize } from "~/types";
+import { getContrastWithWhite } from "~/utils/contrast";
 
 // Collapsed, the font grid is two rows.
 const COLLAPSED_FONT_COUNT = 4;
@@ -22,6 +26,11 @@ const SIZE_OPTIONS: { value: InvoiceSize; label: string }[] = [
   { value: "medium", label: "Medium" },
   { value: "large", label: "Large" }
 ];
+
+// Below these ratios against the white page, WCAG calls text hard to read:
+// 4.5 for body text, 3 for the large accent text (title and total).
+const MIN_TEXT_CONTRAST = 4.5;
+const MIN_ACCENT_CONTRAST = 3;
 
 export function StyleSection() {
   const { theme, setTheme } = useThemeSlice();
@@ -42,6 +51,12 @@ export function StyleSection() {
       ? firstFonts
       : [...firstFonts.slice(0, -1), chosenFont];
   const fonts = showAllFonts ? INVOICE_FONTS : collapsedFonts;
+  const hasDefaultColours =
+    theme.accent === DEFAULT_INVOICE_THEME.accent &&
+    theme.textColor === DEFAULT_INVOICE_THEME.textColor;
+  const isHardToRead =
+    getContrastWithWhite(theme.textColor) < MIN_TEXT_CONTRAST ||
+    getContrastWithWhite(theme.accent) < MIN_ACCENT_CONTRAST;
 
   // A font that lacks the current weight falls back to Regular.
   function selectFont(font: InvoiceFont) {
@@ -133,6 +148,39 @@ export function StyleSection() {
           options={SIZE_OPTIONS}
           onChange={size => setTheme(previous => ({ ...previous, size }))}
         />
+      </div>
+      <div className="flex flex-col gap-1.5">
+        <InspectorGroupLabel>Colours</InspectorGroupLabel>
+        <ColourRow
+          label="Accent"
+          field="theme.accent"
+          value={theme.accent}
+          onChange={accent => setTheme(previous => ({ ...previous, accent }))}
+        />
+        <ColourRow
+          label="Text"
+          field="theme.textColor"
+          value={theme.textColor}
+          onChange={textColor =>
+            setTheme(previous => ({ ...previous, textColor }))
+          }
+        />
+        <p className="text-muted-foreground text-xs">
+          {isHardToRead
+            ? "This colour is light enough to be hard to read on paper."
+            : "The accent colours the title, the table's header and the total."}
+        </p>
+        {!hasDefaultColours && (
+          <ResetColoursButton
+            onClick={() =>
+              setTheme(previous => ({
+                ...previous,
+                accent: DEFAULT_INVOICE_THEME.accent,
+                textColor: DEFAULT_INVOICE_THEME.textColor
+              }))
+            }
+          />
+        )}
       </div>
     </InspectorSection>
   );

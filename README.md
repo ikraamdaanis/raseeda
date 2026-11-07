@@ -11,6 +11,7 @@ raseeda makes the document and stops there: it isn't an invoice tracker, CRM or 
 - Create invoices with seller and client details, line items, tax, fees, discounts, and terms
 - Payment details section: bank name, account and routing numbers, IBAN, BIC / SWIFT and sort code, each under a label you can rename ("BSB", "IFSC", "CLABE"), other ways to pay such as PayPal, Venmo, Pix or UPI, and payment notes
 - Set the whole invoice in any of eleven fonts, with your choice of size and weight
+- Pick an accent colour for the title, table header and total, and a colour for the rest of the text
 - Save and load invoice documents locally in IndexedDB
 - Reusable templates for repeat work
 - Upload your logo

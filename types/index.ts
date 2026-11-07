@@ -120,6 +120,7 @@ export type InvoiceTheme = {
   fontWeight: TextSettings["weight"];
   size: InvoiceSize;
   accent: string;
+  textColor: string;
 };
 
 export type TextRole =

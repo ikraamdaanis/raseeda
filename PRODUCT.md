@@ -70,14 +70,13 @@ raseeda's job ends when the PDF is saved. A feature belongs if it makes the docu
 - Seller and client details, line items, tax (one rate or a rate per line), fees, discounts, terms, and payment details (bank name, account number, IBAN, BIC/SWIFT, sort code, each under a renameable label, other ways to pay such as PayPal or Pix, notes).
 - Every amount can also show in a second currency, at a rate the user types in.
 - Autosave with no Save step, undo and redo, and a version history per invoice.
-- Customisable look: eleven invoice fonts, font weight, three sizes, and logo upload. The invoice font library is a user-facing feature, separate from the app's own typography.
+- Customisable look: eleven invoice fonts, font weight, three sizes, an accent and a text colour, and logo upload. The invoice font library is a user-facing feature, separate from the app's own typography.
 - Any currency, with custom symbols.
 - Save/load documents and templates in IndexedDB; full data import/export.
 - PDF export via @react-pdf/renderer; print is a first-class target (A4 or Letter).
 - No backend for data; deployed as static assets on Cloudflare Workers. The only request the app makes is the anonymous usage beacon to its own origin.
 - Every page sends a Content-Security-Policy that refuses requests to any other origin. The homepage names it as a check visitors can make, so it must stay.
 - A service worker saves the whole app once the editor has been opened, so later visits work offline.
-- The editor has no accent-colour control today (the theme's accent is fixed at its default); do not advertise one.
 - Must work for international users: any currency, multiple scripts and fonts, varied name and address formats.
 - Mobile editing is a real scenario, not a desktop-only afterthought.
 

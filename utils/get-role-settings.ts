@@ -5,8 +5,6 @@ import {
 import type { InvoiceTheme, TextRole, TextSettings } from "~/types";
 import type { FontWeight } from "~/utils/get-font-weight";
 
-const DEFAULT_FONT_COLOUR = "#1a1a1a";
-
 const WEIGHT_STEPS: FontWeight[] = ["Normal", "Medium", "Semibold", "Bold"];
 
 const ROLE_WEIGHT_OFFSET: Record<FontWeight, number> = {
@@ -26,7 +24,7 @@ const SIZE_FACTOR: Record<InvoiceTheme["size"], number> = {
 
 // Every text-role's baseline, mirroring the styling that used to live in
 // per-field TextSettings. `accent: true` roles pick up the theme accent colour
-// (title, table header, grand total); everything else uses the body colour.
+// (title, table header, grand total); everything else uses the text colour.
 type RoleBase = {
   align: TextSettings["align"];
   size: number;
@@ -101,7 +99,7 @@ export function getRoleSettings(
     align: base.align,
     size: String(Math.round(base.size * SIZE_FACTOR[theme.size])),
     weight: resolvedWeight,
-    color: base.accent ? theme.accent : DEFAULT_FONT_COLOUR,
+    color: base.accent ? theme.accent : theme.textColor,
     fontFamily: font.cssFamily,
     pdfFontFamily: font.pdfFamily,
     letterSpacing: font.letterSpacing

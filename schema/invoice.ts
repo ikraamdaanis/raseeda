@@ -33,7 +33,8 @@ export const DEFAULT_INVOICE_THEME = {
   font: "schibsted-grotesk",
   fontWeight: "Normal",
   size: "medium",
-  accent: "#1a1a1a"
+  accent: "#1a1a1a",
+  textColor: "#1a1a1a"
 } as const;
 
 // A stored invoice with no usable theme was drawn in Geist, the default
@@ -324,7 +325,10 @@ const invoiceThemeSchema = z
       .enum(FONT_WEIGHTS)
       .catch(STORED_INVOICE_THEME_FALLBACK.fontWeight),
     size: z.enum(INVOICE_SIZES).catch(STORED_INVOICE_THEME_FALLBACK.size),
-    accent: z.string().catch(STORED_INVOICE_THEME_FALLBACK.accent)
+    // The title, table header and grand total take the accent (issue #129);
+    // every other piece of text takes the text colour.
+    accent: z.string().catch(STORED_INVOICE_THEME_FALLBACK.accent),
+    textColor: z.string().catch(STORED_INVOICE_THEME_FALLBACK.textColor)
   })
   // A stored weight may not be offered by the chosen font; fall back if so.
   .transform(theme => ({
