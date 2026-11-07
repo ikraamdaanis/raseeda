@@ -27,10 +27,10 @@ const SIZE_OPTIONS: { value: InvoiceSize; label: string }[] = [
   { value: "large", label: "Large" }
 ];
 
-// Below these ratios against the white page, WCAG calls text hard to read:
-// 4.5 for body text, 3 for the large accent text (title and total).
-const MIN_TEXT_CONTRAST = 4.5;
-const MIN_ACCENT_CONTRAST = 3;
+// Below this ratio against the white page, WCAG calls text of the body's size
+// hard to read. The accent is held to it too: only the title is large enough
+// for WCAG's lower bar, the table's header and the total aren't.
+const MIN_CONTRAST = 4.5;
 
 export function StyleSection() {
   const { theme, setTheme } = useThemeSlice();
@@ -54,9 +54,10 @@ export function StyleSection() {
   const hasDefaultColours =
     theme.accent === DEFAULT_INVOICE_THEME.accent &&
     theme.textColor === DEFAULT_INVOICE_THEME.textColor;
-  const isHardToRead =
-    getContrastWithWhite(theme.textColor) < MIN_TEXT_CONTRAST ||
-    getContrastWithWhite(theme.accent) < MIN_ACCENT_CONTRAST;
+  const lightColours = [
+    getContrastWithWhite(theme.accent) < MIN_CONTRAST && "accent",
+    getContrastWithWhite(theme.textColor) < MIN_CONTRAST && "text colour"
+  ].filter(Boolean);
 
   // A font that lacks the current weight falls back to Regular.
   function selectFont(font: InvoiceFont) {
@@ -166,9 +167,9 @@ export function StyleSection() {
           }
         />
         <p className="text-muted-foreground text-xs">
-          {isHardToRead
-            ? "This colour is light enough to be hard to read on paper."
-            : "The accent colours the title, the table's header and the total."}
+          {lightColours.length === 0
+            ? "The accent colours the title, the table's header and the total."
+            : `The ${lightColours.join(" and ")} ${lightColours.length === 1 ? "is" : "are"} light enough to be hard to read on paper.`}
         </p>
         {!hasDefaultColours && (
           <ResetColoursButton
