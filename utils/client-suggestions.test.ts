@@ -89,14 +89,27 @@ describe("getClientSuggestions", () => {
     ).toEqual([]);
   });
 
-  it("suggests nothing once a second line is typed", () => {
-    expect(
-      getClientSuggestions({
-        documents: library,
-        typed: "Acme Ltd\n1",
-        excludeId: null
-      })
-    ).toEqual([]);
+  it("suggests nothing once a second line is started", () => {
+    for (const typed of ["Acme Ltd\n1", "Acme Ltd\n", "\n\nAc"]) {
+      expect(
+        getClientSuggestions({ documents: library, typed, excludeId: null })
+      ).toEqual([]);
+    }
+  });
+
+  it("matches without case or accents", () => {
+    const accented = [
+      libraryDocument("f", "Café Noir\nParis", "2026-05-01"),
+      libraryDocument("g", "Cafe\u0301 Noir\nLyon", "2026-04-01"),
+      libraryDocument("h", "İstanbul Tekstil", "2026-03-01")
+    ];
+    const names = (typed: string) =>
+      getClientSuggestions({ documents: accented, typed, excludeId: null }).map(
+        suggestion => suggestion.name
+      );
+
+    expect(names("cafe")).toEqual(["Café Noir"]);
+    expect(names("ist")).toEqual(["İstanbul Tekstil"]);
   });
 
   it("suggests nothing from an empty library", () => {

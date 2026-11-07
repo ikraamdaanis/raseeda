@@ -454,7 +454,7 @@ function isInteractive(target: EventTarget | null) {
   return (
     target instanceof Element &&
     target.closest(
-      "input:not([readonly]), textarea:not([readonly]), button, a, label, [role=button]"
+      "input:not([readonly]), textarea:not([readonly]), button, a, label, [role=button], [role=option]"
     ) !== null
   );
 }

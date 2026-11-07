@@ -17,11 +17,10 @@ export function getClientSuggestions({
   excludeId: string | null;
   limit?: number;
 }) {
+  if (typed.includes("\n")) return [];
+
   const query = typed.trim();
-
-  if (query.includes("\n")) return [];
-
-  const words = query.toLocaleLowerCase().split(/\s+/).filter(Boolean);
+  const words = toMatchable(query).split(/\s+/).filter(Boolean);
   const newestFirst = [...documents].sort(
     (a, b) => b.updatedAt.getTime() - a.updatedAt.getTime()
   );
@@ -37,7 +36,7 @@ export function getClientSuggestions({
 
     if (!name) continue;
 
-    const key = name.toLocaleLowerCase();
+    const key = toMatchable(name);
 
     if (seen.has(key)) continue;
 
@@ -59,6 +58,13 @@ function getFirstLine(content: string) {
       .map(line => line.trim())
       .find(Boolean) ?? ""
   );
+}
+
+// A name as it's compared: lower case, without accents, so "cafe" finds
+// "Café", a pasted decomposed "Café" is the same client, and "ist" finds
+// "İstanbul".
+function toMatchable(text: string) {
+  return text.normalize("NFKD").replace(/\p{M}/gu, "").toLocaleLowerCase();
 }
 
 // Every typed word starts one of the name's words, so "ac" finds "Acme Ltd"
