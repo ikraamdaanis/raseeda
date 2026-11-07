@@ -24,7 +24,8 @@ const SIZE_FACTOR: Record<InvoiceTheme["size"], number> = {
 
 // Every text-role's baseline, mirroring the styling that used to live in
 // per-field TextSettings. `accent: true` roles pick up the theme accent colour
-// (title, table header, grand total); everything else uses the text colour.
+// (title, section headings, table header, grand total); everything else uses
+// the text colour.
 type RoleBase = {
   align: TextSettings["align"];
   size: number;
@@ -34,7 +35,7 @@ type RoleBase = {
 
 const ROLE_BASE: Record<TextRole, RoleBase> = {
   title: { align: "left", size: 36, weight: "Semibold", accent: true },
-  sectionLabel: { align: "left", size: 14, weight: "Medium" },
+  sectionLabel: { align: "left", size: 14, weight: "Medium", accent: true },
   sectionContent: { align: "left", size: 14, weight: "Normal" },
   termsContent: { align: "left", size: 13, weight: "Normal" },
   detailLabel: { align: "left", size: 14, weight: "Medium" },

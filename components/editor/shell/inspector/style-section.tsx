@@ -29,7 +29,7 @@ const SIZE_OPTIONS: { value: InvoiceSize; label: string }[] = [
 
 // Below this ratio against the white page, WCAG calls text of the body's size
 // hard to read. The accent is held to it too: only the title is large enough
-// for WCAG's lower bar, the table's header and the total aren't.
+// for WCAG's lower bar, the headings, the table's header and the total aren't.
 const MIN_CONTRAST = 4.5;
 
 export function StyleSection() {
@@ -168,7 +168,7 @@ export function StyleSection() {
         />
         <p className="text-muted-foreground text-xs">
           {lightColours.length === 0
-            ? "The accent colours the title, the table's header and the total."
+            ? "The accent colours the title, headings, table header and total."
             : `The ${lightColours.join(" and ")} ${lightColours.length === 1 ? "is" : "are"} light enough to be hard to read on paper.`}
         </p>
         {!hasDefaultColours && (
