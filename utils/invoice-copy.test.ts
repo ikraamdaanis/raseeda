@@ -273,22 +273,98 @@ describe("prepareInvoiceCopy", () => {
     ).toBe("");
   });
 
-  it("leaves what a credit note refers to when it isn't made from an invoice", () => {
-    const fromQuote = prepareInvoiceCopy({
-      invoice: quoteWith({ number: "QUO-0007" }),
-      documentType: "credit-note",
-      library: [],
-      today: new Date(2026, 10, 2)
-    });
-    const typed = prepareInvoiceCopy({
-      invoice: invoiceWith({ number: "INV-0042", refersTo: "INV-0040" }),
+  it("names no invoice on a credit note made from a quote", () => {
+    const copy = prepareInvoiceCopy({
+      invoice: quoteWith({ number: "QUO-0007", refersTo: "INV-0040" }),
       documentType: "credit-note",
       library: [],
       today: new Date(2026, 10, 2)
     });
 
-    expect(fromQuote.refersTo).toBe("");
-    expect(typed.refersTo).toBe("INV-0040");
+    expect(copy.refersTo).toBe("");
+  });
+
+  it("keeps what a credit note refers to on a copy of it", () => {
+    const copy = prepareInvoiceCopy({
+      invoice: {
+        ...createBlankDocument("credit-note"),
+        number: "CN-0003",
+        refersTo: "INV-0040"
+      },
+      documentType: "credit-note",
+      library: [],
+      today: new Date(2026, 10, 2)
+    });
+
+    expect(copy.refersTo).toBe("INV-0040");
+  });
+
+  it("names the invoice it's made from over a hidden one an earlier credit note left", () => {
+    const copy = prepareInvoiceCopy({
+      invoice: invoiceWith({
+        number: "INV-0010",
+        invoiceDate: "2026-10-03",
+        dateFormat: "d MMM yyyy",
+        refersTo: "INV-0003, 1 Oct 2026"
+      }),
+      documentType: "credit-note",
+      library: [],
+      today: new Date(2026, 10, 2)
+    });
+
+    expect(copy.refersTo).toBe("INV-0010, 3 Oct 2026");
+  });
+
+  it("clears a hidden Paid by when a receipt is made from another type", () => {
+    const copy = prepareInvoiceCopy({
+      invoice: invoiceWith({ paidBy: "Card" }),
+      documentType: "receipt",
+      library: [],
+      today: new Date(2026, 10, 2)
+    });
+
+    expect(copy.paidBy).toBe("");
+  });
+
+  it("restarts the due date from a credit note, which has no due date row", () => {
+    const copy = prepareInvoiceCopy({
+      invoice: {
+        ...createBlankDocument("credit-note"),
+        invoiceDate: "2026-10-01",
+        dueDate: ""
+      },
+      documentType: "invoice",
+      library: [],
+      today: new Date(2026, 10, 2)
+    });
+
+    expect(copy.dueDate).toBe("2026-12-02");
+  });
+
+  it("prefers the type's own series over the original's when both hold that type", () => {
+    const copy = prepareInvoiceCopy({
+      invoice: quoteWith({ number: "QUO-0006" }),
+      documentType: "invoice",
+      library: [
+        stored("QUO-0006", "quote", 1),
+        stored("INV-0010", "invoice", 9),
+        stored("QUO-0007", "invoice")
+      ],
+      today: new Date(2026, 10, 2)
+    });
+
+    expect(copy.number).toBe("INV-0011");
+  });
+
+  it("starts the sample series rather than repeat a number with no digits", () => {
+    const copy = prepareInvoiceCopy({
+      invoice: quoteWith({ number: "QUO-0007" }),
+      documentType: "invoice",
+      library: [stored("QUO-0007", "quote"), stored("ACME", "invoice")],
+      today: new Date(2026, 10, 2)
+    });
+
+    expect(copy.number).toBe("INV-0001");
   });
 
   it("doesn't change the document it copies", () => {

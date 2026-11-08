@@ -2,7 +2,8 @@ import { differenceInCalendarDays, format } from "date-fns";
 import { maxBy } from "lodash-es";
 import {
   DOCUMENT_TYPE_DEFAULTS,
-  DOCUMENT_TYPE_NAMES
+  DOCUMENT_TYPE_NAMES,
+  DOCUMENT_TYPE_ROWS
 } from "~/consts/document-types";
 import type { DocumentType, Invoice } from "~/types";
 import { applyDocumentType } from "~/utils/document-type";
@@ -68,27 +69,56 @@ export function nextInvoiceNumber(
   return `${prefix}${String(highest + 1).padStart(digits.length, "0")}${suffix}`;
 }
 
+// Whether two numbers are in the same series: the same text around their
+// last run of digits, ignoring case ("FRL-0014" and "frl-0002").
+function isSameSeries(number: string, other: string) {
+  const parts = NUMBER_PARTS.exec(number.trim());
+  const otherParts = NUMBER_PARTS.exec(other.trim());
+
+  if (!parts || !otherParts) return false;
+
+  return (
+    parts[1].toLowerCase() === otherParts[1].toLowerCase() &&
+    parts[3].toLowerCase() === otherParts[3].toLowerCase()
+  );
+}
+
 // The number a copy of another type starts with: the next one in the series
 // of the newest document of that type, since each type keeps its own series
-// (a quote's number on an invoice would break the invoices' sequence). With
-// none of that type yet, the type's sample number, moved on past any taken.
+// (a quote's number on an invoice would break the invoices' sequence). A
+// document of that type still numbered in the original's series (a quote
+// switched to an invoice in the inspector keeps QUO-0007) is passed over for
+// one in a series of its own, when there is one. With none of that type yet,
+// or a newest one whose number has no digits to count on, the type's sample
+// number, moved on past any taken.
 function nextNumberOfType({
+  original,
   documentType,
   library
 }: {
+  original: string;
   documentType: DocumentType;
   library: { number: string; documentType: DocumentType; createdAt: Date }[];
 }) {
   const takenNumbers = library.map(document => document.number);
-  const newest = maxBy(
-    library.filter(
-      document =>
-        document.documentType === documentType && document.number.trim()
-    ),
-    document => document.createdAt.getTime()
+  const ofType = library.filter(
+    document => document.documentType === documentType && document.number.trim()
   );
+  const ownSeries = ofType.filter(
+    document => !isSameSeries(document.number, original)
+  );
+  const newest = maxBy(ownSeries.length > 0 ? ownSeries : ofType, document =>
+    document.createdAt.getTime()
+  );
+  const next = newest && nextInvoiceNumber(newest.number, takenNumbers);
 
-  if (newest) return nextInvoiceNumber(newest.number, takenNumbers);
+  if (
+    newest &&
+    next &&
+    next.trim().toLowerCase() !== newest.number.trim().toLowerCase()
+  ) {
+    return next;
+  }
 
   const sample = DOCUMENT_TYPE_DEFAULTS[documentType].number;
   const taken = new Set(
@@ -103,7 +133,8 @@ function nextNumberOfType({
 // The copy's due date. Between types whose due date means the same thing (an
 // invoice's and a proforma's "Due date") it keeps the original's span from
 // today; otherwise it starts as a new blank of the type would, since a
-// quote's "Valid until" isn't a receipt's "Date paid" or an invoice's terms.
+// quote's "Valid until" isn't a receipt's "Date paid" or an invoice's terms,
+// and a credit note prints no due date to keep.
 function copyDueDate({
   invoice,
   documentType,
@@ -115,8 +146,12 @@ function copyDueDate({
 }) {
   const before = DOCUMENT_TYPE_DEFAULTS[invoice.documentType];
   const after = DOCUMENT_TYPE_DEFAULTS[documentType];
+  const isSameMeaning =
+    before.labels.paymentDue === after.labels.paymentDue &&
+    DOCUMENT_TYPE_ROWS[invoice.documentType].dueDate &&
+    DOCUMENT_TYPE_ROWS[documentType].dueDate;
 
-  if (before.labels.paymentDue !== after.labels.paymentDue) {
+  if (!isSameMeaning) {
     return addDaysToIsoDate(invoiceDate, after.dueDays) ?? invoice.dueDate;
   }
 
@@ -152,7 +187,8 @@ function describeInvoiceReference(invoice: Invoice) {
  * it takes that type's title and labels where they're still on the old type's
  * defaults (`applyDocumentType`) and the next number in that type's series;
  * an invoice made into a credit note names the invoice it refers to (its
- * number and date) as printed text. Nothing in the copy points back at the original.
+ * number and date) as printed text. Nothing in the copy points back at the
+ * original.
  */
 export function prepareInvoiceCopy({
   invoice,
@@ -168,12 +204,18 @@ export function prepareInvoiceCopy({
   const invoiceDate = format(today, "yyyy-MM-dd");
   const isSameType = documentType === invoice.documentType;
   const typed = isSameType ? invoice : applyDocumentType(invoice, documentType);
+  const before = DOCUMENT_TYPE_ROWS[invoice.documentType];
+  const after = DOCUMENT_TYPE_ROWS[documentType];
+  // A field the original's type doesn't print is left over from another type
+  // (a credit note made into an invoice keeps its "Refers to invoice"), so a
+  // type that prints it starts it afresh rather than show a stale value.
   const refersTo =
-    documentType === "credit-note" &&
-    invoice.documentType === "invoice" &&
-    !invoice.refersTo.trim()
-      ? describeInvoiceReference(invoice)
-      : invoice.refersTo;
+    before.refersTo || !after.refersTo
+      ? invoice.refersTo
+      : invoice.documentType === "invoice"
+        ? describeInvoiceReference(invoice)
+        : "";
+  const paidBy = before.paidBy || !after.paidBy ? invoice.paidBy : "";
 
   return {
     ...typed,
@@ -182,10 +224,15 @@ export function prepareInvoiceCopy({
           invoice.number,
           library.map(document => document.number)
         )
-      : nextNumberOfType({ documentType, library }),
+      : nextNumberOfType({
+          original: invoice.number,
+          documentType,
+          library
+        }),
     invoiceDate,
     dueDate: copyDueDate({ invoice, documentType, invoiceDate }),
     refersTo,
+    paidBy,
     amountPaid: 0,
     paidDate: ""
   };

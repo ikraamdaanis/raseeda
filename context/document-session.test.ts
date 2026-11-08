@@ -536,7 +536,10 @@ describe("autosave", () => {
       })
     );
 
-    const listed = (await page.getInvoice("listed")) as InvoiceDocument;
+    const listed = await page.getInvoice("listed");
+
+    if (!listed) throw new Error("The invoice wasn't stored");
+
     const copy = await page.duplicateInvoice(listed, "credit-note");
 
     expect(copy.invoiceData).toMatchObject({
