@@ -6,6 +6,7 @@ import {
 } from "~/consts/document-types";
 import type { DocumentType, Invoice } from "~/types";
 import { applyDocumentType } from "~/utils/document-type";
+import { formatInvoiceDate } from "~/utils/format-invoice-date";
 import { addDaysToIsoDate } from "~/utils/payment-terms";
 import { readInvoiceDate } from "~/utils/read-invoice-date";
 
@@ -130,14 +131,28 @@ function copyDueDate({
   );
 }
 
+// How a credit note names the invoice it's made from: its number and date, as
+// a VAT credit note must (HMRC VAT Notice 700, 18.2.3), in the invoice's own
+// date format. Empty when the invoice has no number to name.
+function describeInvoiceReference(invoice: Invoice) {
+  const number = invoice.number.trim();
+  const date = invoice.invoiceDate.trim()
+    ? formatInvoiceDate(invoice.invoiceDate, invoice.dateFormat)
+    : "";
+
+  if (!number) return "";
+
+  return date ? `${number}, ${date}` : number;
+}
+
 /**
  * A duplicated document set up as the next one, as `documentType`: dated
  * `today`, with no payment typed (so nothing paid yet, or a receipt's total).
  * Of the same type, it takes the next number in its series. Of another type,
  * it takes that type's title and labels where they're still on the old type's
  * defaults (`applyDocumentType`) and the next number in that type's series;
- * an invoice made into a credit note names the invoice it refers to, as
- * printed text. Nothing in the copy points back at the original.
+ * an invoice made into a credit note names the invoice it refers to (its
+ * number and date) as printed text. Nothing in the copy points back at the original.
  */
 export function prepareInvoiceCopy({
   invoice,
@@ -157,7 +172,7 @@ export function prepareInvoiceCopy({
     documentType === "credit-note" &&
     invoice.documentType === "invoice" &&
     !invoice.refersTo.trim()
-      ? invoice.number.trim()
+      ? describeInvoiceReference(invoice)
       : invoice.refersTo;
 
   return {

@@ -236,16 +236,41 @@ describe("prepareInvoiceCopy", () => {
     ).toBe("2026-12-02");
   });
 
-  it("names the invoice a credit note made from it refers to", () => {
+  it("names the invoice a credit note made from it refers to by number and date", () => {
     const copy = prepareInvoiceCopy({
-      invoice: invoiceWith({ number: " INV-0042 " }),
+      invoice: invoiceWith({
+        number: " INV-0042 ",
+        invoiceDate: "2026-10-03",
+        dateFormat: "d MMM yyyy"
+      }),
       documentType: "credit-note",
       library: [],
       today: new Date(2026, 10, 2)
     });
 
-    expect(copy.refersTo).toBe("INV-0042");
+    expect(copy.refersTo).toBe("INV-0042, 3 Oct 2026");
     expect(copy.labels.total).toBe("Total credit");
+  });
+
+  it("names the invoice by number alone when it has no date, and not at all without a number", () => {
+    const today = new Date(2026, 10, 2);
+
+    expect(
+      prepareInvoiceCopy({
+        invoice: invoiceWith({ number: "INV-0042", invoiceDate: "" }),
+        documentType: "credit-note",
+        library: [],
+        today
+      }).refersTo
+    ).toBe("INV-0042");
+    expect(
+      prepareInvoiceCopy({
+        invoice: invoiceWith({ number: " ", invoiceDate: "2026-10-03" }),
+        documentType: "credit-note",
+        library: [],
+        today
+      }).refersTo
+    ).toBe("");
   });
 
   it("leaves what a credit note refers to when it isn't made from an invoice", () => {

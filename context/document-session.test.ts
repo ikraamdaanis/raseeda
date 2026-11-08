@@ -527,7 +527,12 @@ describe("autosave", () => {
       storedInvoice({
         id: "listed",
         nameSource: "auto",
-        invoiceData: { ...structuredClone(invoiceDefault), number: "INV-0042" }
+        invoiceData: {
+          ...structuredClone(invoiceDefault),
+          number: "INV-0042",
+          invoiceDate: "2026-10-03",
+          dateFormat: "d MMM yyyy"
+        }
       })
     );
 
@@ -538,7 +543,7 @@ describe("autosave", () => {
       documentType: "credit-note",
       title: "Credit note",
       number: "CN-0001",
-      refersTo: "INV-0042"
+      refersTo: "INV-0042, 3 Oct 2026"
     });
     expect(copy.name).toBe("CN-0001");
     expect(page.documentState().documentId).not.toBe(copy.id);
