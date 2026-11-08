@@ -1155,3 +1155,51 @@ describe("starting from a link before the editor has attached", () => {
     expect((await page.getInvoice("stored"))?.invoiceData.title).toBe("Typed");
   });
 });
+
+describe("after another tab upgrades the database", () => {
+  beforeEach(async () => {
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout", "Date"] });
+    await Dexie.delete("InvoiceDatabase");
+  });
+
+  afterEach(async () => {
+    await closePages();
+    vi.useRealTimers();
+  });
+
+  async function loadPageAwayFromTheEditor() {
+    const page = await loadPage();
+
+    page.db.on.versionchange.fire(
+      new IDBVersionChangeEvent("versionchange", {
+        newVersion: 999,
+        oldVersion: 1
+      })
+    );
+    await page.detachEditor();
+
+    return page;
+  }
+
+  it("keeps asking for a reload when the editor comes back", async () => {
+    const page = await loadPageAwayFromTheEditor();
+
+    await page.attachEditor();
+    await settle();
+
+    expect(page.documentState().status).toBe("reloadRequired");
+  });
+
+  it("won't start a template until the page is reloaded", async () => {
+    const page = await loadPageAwayFromTheEditor();
+    const { documentId } = page.documentState();
+
+    await page.startSiteTemplate("quote");
+    await settle();
+
+    expect(page.documentState()).toMatchObject({
+      documentId,
+      status: "reloadRequired"
+    });
+  });
+});

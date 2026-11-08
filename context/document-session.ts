@@ -682,7 +682,13 @@ async function attach(session: Session) {
       console.error("[DocumentSession] Failed to follow the invoice", error)
   );
 
-  if (session.status === "unavailable" || session.status === "deleted") return;
+  if (
+    session.status === "unavailable" ||
+    session.status === "deleted" ||
+    session.status === "reloadRequired"
+  ) {
+    return;
+  }
 
   if (!locksSupported()) {
     await startEditing(session);
