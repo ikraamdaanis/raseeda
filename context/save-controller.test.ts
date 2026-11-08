@@ -232,4 +232,40 @@ describe("the save controller", () => {
     expect(write).not.toHaveBeenCalled();
     expect(controller.isPending()).toBe(false);
   });
+
+  it("doesn't report dropped content as saved when stopped", () => {
+    const onChange = vi.fn();
+    const controller = createSaveController({
+      write: async (_content: string) => {},
+      onChange
+    });
+
+    controller.schedule("x");
+    onChange.mockClear();
+    controller.stop();
+
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it("reports nothing when a write outlives the stop", async () => {
+    const onChange = vi.fn();
+    let finishWrite = () => {};
+    const controller = createSaveController({
+      write: (_content: string) =>
+        new Promise<void>(resolve => {
+          finishWrite = resolve;
+        }),
+      onChange
+    });
+
+    controller.schedule("x");
+    await vi.advanceTimersByTimeAsync(500);
+    onChange.mockClear();
+    controller.stop();
+    finishWrite();
+    await vi.advanceTimersByTimeAsync(0);
+
+    expect(onChange).not.toHaveBeenCalled();
+    expect(controller.isPending()).toBe(false);
+  });
 });

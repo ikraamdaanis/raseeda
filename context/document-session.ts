@@ -491,6 +491,10 @@ function markDeleted(session: Session) {
   session.status = "deleted";
   session.shownContent = liveContent();
   session.controller.stop();
+
+  // Edits that failed to write stay stashed and come back as a new invoice.
+  if (!session.controller.hasFailed()) clearStash(session.id);
+
   clearInvoiceHistory();
   publish(session);
 }

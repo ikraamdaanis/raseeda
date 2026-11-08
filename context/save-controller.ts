@@ -117,11 +117,7 @@ export function createSaveController<TContent>({
     return running.then(saved => {
       running = null;
 
-      if (stopped) {
-        report();
-
-        return saved;
-      }
+      if (stopped) return saved;
 
       if (!saved) {
         scheduleRetry();
@@ -196,13 +192,13 @@ export function createSaveController<TContent>({
       return writeNext();
     },
     // Drops what hasn't been written and stops for good, leaving any write
-    // already running to finish.
+    // already running to finish. It reports nothing from here on: what it
+    // dropped wasn't written, so an empty queue no longer means saved.
     stop() {
       stopped = true;
       unsaved = null;
       writeWhenDone = false;
       clearTimers();
-      report();
     },
     isPending,
     hasFailed() {

@@ -92,6 +92,16 @@ async function settle(ms = 600) {
   }
 }
 
+function memoryStorage(entries: Record<string, string> = {}) {
+  const items = new Map(Object.entries(entries));
+
+  return {
+    getItem: (key: string) => items.get(key) ?? null,
+    setItem: (key: string, value: string) => void items.set(key, value),
+    removeItem: (key: string) => void items.delete(key)
+  };
+}
+
 function storedInvoice(overrides: Partial<InvoiceDocument>): InvoiceDocument {
   const now = new Date();
 
@@ -1087,16 +1097,6 @@ describe("starting from a link before the editor has attached", () => {
     vi.useRealTimers();
   });
 
-  function memoryStorage(entries: Record<string, string> = {}) {
-    const items = new Map(Object.entries(entries));
-
-    return {
-      getItem: (key: string) => items.get(key) ?? null,
-      setItem: (key: string, value: string) => void items.set(key, value),
-      removeItem: (key: string) => void items.delete(key)
-    };
-  }
-
   // The last open invoice has edits stashed at page exit that never reached
   // the database. A start link's effect runs before the provider's attach, so
   // this page is left unattached, as the link finds it.
@@ -1164,22 +1164,161 @@ describe("after another tab upgrades the database", () => {
 
   afterEach(async () => {
     await closePages();
+    vi.unstubAllGlobals();
     vi.useRealTimers();
   });
 
-  async function loadPageAwayFromTheEditor() {
-    const page = await loadPage();
-
+  function upgradeElsewhere(page: Awaited<ReturnType<typeof loadPage>>) {
     page.db.on.versionchange.fire(
       new IDBVersionChangeEvent("versionchange", {
         newVersion: 999,
         oldVersion: 1
       })
     );
+  }
+
+  async function loadPageAwayFromTheEditor() {
+    const page = await loadPage();
+
+    upgradeElsewhere(page);
     await page.detachEditor();
 
     return page;
   }
+
+  // The browser's storage, which outlives a page, so a reload in the test
+  // finds what the page before it stashed.
+  function stubBrowser() {
+    const localStorage = memoryStorage();
+    const listeners = new Map<string, () => void>();
+
+    vi.stubGlobal("window", {
+      sessionStorage: memoryStorage(),
+      localStorage,
+      addEventListener: (type: string, listener: () => void) =>
+        void listeners.set(type, listener),
+      removeEventListener: vi.fn()
+    });
+    vi.stubGlobal("document", {
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      visibilityState: "visible"
+    });
+
+    return {
+      stash: () => localStorage.getItem("unsaved:stored"),
+      hidePage: () => listeners.get("pagehide")?.()
+    };
+  }
+
+  async function loadStoredInvoice(options?: {
+    failWrites: { current: Error | null };
+  }) {
+    const earlierPage = await loadPage();
+
+    await earlierPage.createInvoice(storedInvoice({}));
+    await earlierPage.setLastOpenedInvoiceId("stored");
+
+    const browser = stubBrowser();
+
+    return { browser, page: await loadPage(options) };
+  }
+
+  async function reload(page: Awaited<ReturnType<typeof loadPage>>) {
+    await page.detachEditor();
+
+    const reloaded = await loadPage();
+
+    await settle();
+
+    return reloaded;
+  }
+
+  it("brings back an edit made inside the save delay", async () => {
+    const { page } = await loadStoredInvoice();
+
+    page.edit().setTitle("Typed");
+    upgradeElsewhere(page);
+
+    const reloaded = await reload(page);
+
+    expect(reloaded.invoice().title).toBe("Typed");
+    expect((await reloaded.getInvoice("stored"))?.invoiceData.title).toBe(
+      "Typed"
+    );
+  });
+
+  it("brings back an edit made while a write was running", async () => {
+    const { page } = await loadStoredInvoice();
+
+    page.edit().setTitle("Written");
+    await vi.advanceTimersByTimeAsync(500);
+    page.edit().setTitle("Typed after");
+    upgradeElsewhere(page);
+    await settle(0);
+
+    const reloaded = await reload(page);
+
+    expect(reloaded.invoice().title).toBe("Typed after");
+  });
+
+  it("brings back the first edit of a new invoice", async () => {
+    stubBrowser();
+
+    const page = await loadPage();
+
+    page.edit().setTitle("Typed");
+    upgradeElsewhere(page);
+
+    const reloaded = await reload(page);
+
+    expect(reloaded.invoice().title).toBe("Typed");
+  });
+
+  it("still clears the stash once a save completes", async () => {
+    const { browser, page } = await loadStoredInvoice();
+
+    page.edit().setTitle("Typed");
+    browser.hidePage();
+
+    expect(browser.stash()).not.toBeNull();
+
+    await settle(0);
+
+    expect(browser.stash()).toBeNull();
+  });
+
+  it("clears the stash of an invoice deleted elsewhere", async () => {
+    const { browser, page } = await loadStoredInvoice();
+
+    page.edit().setTitle("Typed");
+
+    const deleted = page.db.invoices.delete("stored");
+
+    browser.hidePage();
+    await deleted;
+    await settle(0);
+
+    expect(page.documentState().status).toBe("deleted");
+    expect(browser.stash()).toBeNull();
+  });
+
+  it("keeps the stash of a failed write when deleted elsewhere", async () => {
+    const failWrites: { current: Error | null } = { current: null };
+    const { browser, page } = await loadStoredInvoice({ failWrites });
+
+    failWrites.current = new DOMException("Full", "QuotaExceededError");
+    page.edit().setTitle("Typed");
+    await settle();
+    browser.hidePage();
+    await settle(0);
+    failWrites.current = null;
+    await page.db.invoices.delete("stored");
+    await settle(0);
+
+    expect(page.documentState().status).toBe("deleted");
+    expect(browser.stash()).not.toBeNull();
+  });
 
   it("keeps asking for a reload when the editor comes back", async () => {
     const page = await loadPageAwayFromTheEditor();
