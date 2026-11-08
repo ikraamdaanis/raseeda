@@ -19,6 +19,7 @@ const { raseeda } = globalThis as unknown as {
     createInvoice: (data: unknown) => Promise<string>;
     getInvoice: (id: string) => Promise<{
       documentType: string;
+      dueDate: string;
       title: string;
       labels: Record<string, string>;
     }>;
@@ -76,6 +77,31 @@ describe("automation API document types", () => {
     expect(invoice.title).toBe("Quote");
     expect(invoice.labels.paymentDue).toBe("Valid until");
     expect(invoice.labels.total).toBe("Sum");
+  });
+
+  it("treats a key given as null as left out", async () => {
+    const id = await raseeda.createInvoice({
+      documentType: "quote",
+      title: null,
+      labels: { paymentDue: null }
+    });
+    const invoice = await raseeda.getInvoice(id);
+
+    expect(invoice.title).toBe("Quote");
+    expect(invoice.labels.paymentDue).toBe("Valid until");
+  });
+
+  it("dates the due date from the issue date given", async () => {
+    const receiptId = await raseeda.createInvoice({
+      documentType: "receipt",
+      invoiceDate: "2026-01-05"
+    });
+    const invoiceId = await raseeda.createInvoice({
+      invoiceDate: "2026-01-05"
+    });
+
+    expect((await raseeda.getInvoice(receiptId)).dueDate).toBe("2026-01-05");
+    expect((await raseeda.getInvoice(invoiceId)).dueDate).toBe("2026-02-04");
   });
 
   it("lists each invoice's type", async () => {

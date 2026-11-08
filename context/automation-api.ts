@@ -1,5 +1,6 @@
-import { isUndefined, omitBy, pick } from "lodash-es";
+import { isNil, omitBy, pick } from "lodash-es";
 import { APP_NAME } from "~/consts/app";
+import { DOCUMENT_TYPE_DEFAULTS } from "~/consts/document-types";
 import { documentActions } from "~/context/document-session";
 import { createInvoice, getAllInvoices, getInvoice } from "~/db";
 import { STORED_INVOICE_FORMATS } from "~/schema/invoice";
@@ -24,6 +25,7 @@ import {
   getInvoiceTotal
 } from "~/utils/invoice-library";
 import { deriveInvoiceName } from "~/utils/invoice-name";
+import { addDaysToIsoDate } from "~/utils/payment-terms";
 import { saveFile, toPdfFileName } from "~/utils/save-file";
 import { track, trackInvoice } from "~/utils/track";
 
@@ -101,8 +103,9 @@ const api = {
     return structuredClone((await requireInvoice(id)).invoiceData);
   },
   // Adds an invoice to the library and opens it. Takes invoice data as an
-  // export's `invoiceData` has it; anything left out takes a new invoice's
-  // value (today's date, due in 30 days and so on). Returns its id. Tax is
+  // export's `invoiceData` has it; anything left out (or given as null) takes
+  // a new document's value (today's date, due 30 days after the issue date,
+  // or on it for a receipt, and so on). Returns its id. Tax is
   // `tax: { percentage, exempt, note, perLine }`; with `perLine` on, an item's
   // own `tax: { percentage, exempt }` overrides the invoice's rate.
   // `numberFormat` ("comma-dot", "dot-comma", "space-comma", "apostrophe-dot",
@@ -120,14 +123,21 @@ const api = {
       throw new TypeError("Invoice data must be an object");
     }
 
-    // A key given as undefined counts as left out, as it would in JSON.
-    const known = omitBy(pick(data, INVOICE_DATA_KEYS), isUndefined);
+    // A key given as undefined or null counts as left out.
+    const known = omitBy(pick(data, INVOICE_DATA_KEYS), isNil);
+    const documentType = readDocumentType(Reflect.get(data, "documentType"));
     // A blank of the type asked for, so a quote left without a title or
     // labels takes the quote's.
-    const blank = createBlankDocument(
-      readDocumentType(Reflect.get(data, "documentType")),
-      STORED_INVOICE_FORMATS
-    );
+    const blank = createBlankDocument(documentType, STORED_INVOICE_FORMATS);
+    // An issue date given with no due date moves the due date with it, the
+    // type's days after.
+    const dueDate =
+      typeof known.invoiceDate === "string" && known.dueDate === undefined
+        ? (addDaysToIsoDate(
+            known.invoiceDate,
+            DOCUMENT_TYPE_DEFAULTS[documentType].dueDays
+          ) ?? blank.dueDate)
+        : blank.dueDate;
     // Labels given are laid over the type's, so `labels: { total }` on a
     // receipt keeps its "Date paid".
     const givenLabels: unknown = Reflect.get(data, "labels");
@@ -135,11 +145,11 @@ const api = {
       typeof givenLabels === "object" &&
       givenLabels !== null &&
       !Array.isArray(givenLabels)
-        ? { ...blank.labels, ...omitBy(givenLabels, isUndefined) }
+        ? { ...blank.labels, ...omitBy(givenLabels, isNil) }
         : blank.labels;
     const invoiceData = ensureRowIds(
       migrateInvoiceData(
-        { ...blank, ...known, labels },
+        { ...blank, dueDate, ...known, labels },
         CURRENT_INVOICE_SCHEMA_VERSION
       )
     );

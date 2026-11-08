@@ -64,7 +64,7 @@ await raseeda.createInvoice({
 });
 ```
 
-`documentType` is what the document is: `"invoice"` (the default), `"quote"`, `"proforma-invoice"`, `"receipt"` or `"credit-note"`. It sets the defaults for the title and three labels: a quote is titled "Quote" with "Quote No." and "Valid until" for the due date, a proforma invoice "Proforma invoice" with "Proforma No.", a receipt "Receipt" with "Receipt No." and "Date paid", and a credit note "Credit note" with "Credit note No." and "Total credit". A `title` or `labels.invoiceNumber`, `labels.paymentDue` or `labels.total` given in the data is kept as given. Invoices saved or exported before document types existed read as invoices.
+`documentType` is what the document is: `"invoice"` (the default), `"quote"`, `"proforma-invoice"`, `"receipt"` or `"credit-note"`. It sets the defaults for the title and three labels: a quote is titled "Quote" with "Quote No." and "Valid until" for the due date, a proforma invoice "Proforma invoice" with "Proforma No.", a receipt "Receipt" with "Receipt No." and "Date paid", and a credit note "Credit note" with "Credit note No." and "Total credit". A `title` or `labels.invoiceNumber`, `labels.paymentDue` or `labels.total` given in the data is kept as given. A receipt left without a `dueDate` (its "Date paid") is dated on its `invoiceDate`; the other types are due 30 days after it. Invoices saved or exported before document types existed read as invoices.
 
 ```js
 await raseeda.createInvoice({
