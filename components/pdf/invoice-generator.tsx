@@ -6,6 +6,7 @@ import { InvoicePdfPaymentDetails } from "~/components/pdf/invoice-pdf-payment-d
 import { InvoicePdfTerms } from "~/components/pdf/invoice-pdf-terms";
 import { InvoicePdfTextSection } from "~/components/pdf/invoice-pdf-text-section";
 import { InvoicePdfTotals } from "~/components/pdf/invoice-pdf-totals";
+import { DOCUMENT_TYPE_DEFAULTS } from "~/consts/document-types";
 import { getInvoiceFontDefinition } from "~/consts/invoice-fonts";
 import type { Invoice } from "~/types";
 import { buildInvoiceViewModel } from "~/utils/build-invoice-view-model";
@@ -22,9 +23,10 @@ export function InvoicePDF({ invoice }: { invoice: Invoice }) {
   // Sets the PDF's /Title metadata, which the browser's viewer uses as the
   // default filename when the user saves. Without it, saving from the preview
   // tab defaults to the blob URL's UUID (e.g. b3d1c2a8-….pdf).
+  const typeName = DOCUMENT_TYPE_DEFAULTS[invoice.documentType].title;
   const documentTitle = invoice.number
-    ? `Invoice ${invoice.number}`
-    : invoice.title || "Invoice";
+    ? `${typeName} ${invoice.number}`
+    : invoice.title || typeName;
   const baseFont = getInvoiceFontDefinition(invoice.theme.font);
   const { detailRows, lineItems, summaryRows, conversion, hasTaxColumn } =
     buildInvoiceViewModel(invoice);

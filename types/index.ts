@@ -11,6 +11,9 @@ import type { Invoice } from "~/schema/invoice";
 // type while making it usable by the document/template types below.
 export type { Invoice };
 
+// Invoice, quote, proforma invoice, receipt or credit note (issue #132).
+export type DocumentType = Invoice["documentType"];
+
 export type InvoiceNumberFormat = Invoice["numberFormat"];
 
 export type CurrencyPosition = Invoice["currencyPosition"];

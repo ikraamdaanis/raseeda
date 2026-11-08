@@ -40,6 +40,7 @@ import {
 import type { InvoiceStore } from "~/stores/invoice-store";
 import { createBlankInvoice, useInvoiceStore } from "~/stores/invoice-store";
 import type {
+  DocumentType,
   Invoice,
   InvoiceDocument,
   InvoiceFont,
@@ -48,6 +49,7 @@ import type {
   InvoiceVersion,
   InvoiceVersionReason
 } from "~/types";
+import { applyDocumentType } from "~/utils/document-type";
 import { ensureRowIds } from "~/utils/ensure-row-ids";
 import { downloadBackupFile } from "~/utils/export-data";
 import { isBlankInvoice, isLargeRemoval } from "~/utils/invoice-content";
@@ -923,15 +925,21 @@ function openInvoice(documentId: string): Promise<void> {
   });
 }
 
-// Starts a new, blank invoice. It joins the library on its first edit.
-function newInvoice(): Promise<void> {
+// Starts a new, blank document of the type given, with that type's title and
+// labels. It joins the library on its first edit.
+function newDocument(documentType: DocumentType): Promise<void> {
   return enqueue(async () => {
     if (!(await leaveCurrent())) return;
 
-    const blank = createBlankInvoice();
+    const blank = applyDocumentType(createBlankInvoice(), documentType);
 
     await switchTo(newSession(blank), blank);
   });
+}
+
+// Starts a new, blank invoice.
+function newInvoice(): Promise<void> {
+  return newDocument("invoice");
 }
 
 // Starts a new invoice from a template. Like a blank, it joins the library
@@ -1712,6 +1720,7 @@ export function detachEditor(): Promise<void> {
 export const documentActions = {
   openInvoice,
   newInvoice,
+  newDocument,
   applyTemplate,
   duplicateInvoice,
   duplicateCurrent,

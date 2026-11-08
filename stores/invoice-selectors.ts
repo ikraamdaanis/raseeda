@@ -14,6 +14,9 @@ import {
 // a key, so adding a field to Invoice forces adding it here (or the build fails).
 export const INVOICE_DATA_KEYS = [
   "id",
+  // Ahead of the title and labels it changes, so undo names a type change
+  // after the type (stores/invoice-history.ts takes the first key changed).
+  "documentType",
   "title",
   "image",
   "number",
@@ -380,6 +383,19 @@ export function useCurrencySlice() {
 }
 
 // The invoice's paper size, for the inspector's Paper row.
+export function useDocumentTypeSlice() {
+  return useInvoiceStore(
+    useShallow(state => ({
+      documentType: state.documentType,
+      setDocumentType: state.setDocumentType
+    }))
+  );
+}
+
+export function useDocumentType() {
+  return useInvoiceStore(state => state.documentType);
+}
+
 export function usePaperSizeSlice() {
   return useInvoiceStore(
     useShallow(state => ({

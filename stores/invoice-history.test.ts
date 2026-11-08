@@ -168,6 +168,20 @@ describe("invoice history", () => {
     expect(data().sections.logo).toBe(true);
   });
 
+  it("makes a type change one step that puts the labels back", () => {
+    blurAll();
+    store().setDocumentType("quote");
+
+    expect(useInvoiceHistory.getState().undoLabel).toBe("Document type");
+    expect(data().title).toBe("Quote");
+    expect(data().labels.paymentDue).toBe("Valid until");
+
+    undoInvoiceChange();
+    expect(data().documentType).toBe("invoice");
+    expect(data().title).toBe("Invoice");
+    expect(data().labels.paymentDue).toBe("Due date");
+  });
+
   it("names a way to pay added by a button as payment details", () => {
     blurAll();
     store().setPaymentDetails(prev => ({

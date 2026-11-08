@@ -336,6 +336,18 @@ class InvoiceDatabase extends Dexie {
       versions: "id, invoiceId, imageId",
       meta: "key"
     });
+    // Version 10: No schema change. Invoice data gained a document type
+    // (schema v4, issue #132), which an older build drops as it reads, so
+    // the bump stops a tab still running one before it saves a quote back as
+    // an invoice.
+    this.version(10).stores({
+      templates: "id, name, createdAt, updatedAt",
+      invoices: "id, name, createdAt, updatedAt",
+      images: "id",
+      drafts: "id",
+      versions: "id, invoiceId, imageId",
+      meta: "key"
+    });
   }
 }
 

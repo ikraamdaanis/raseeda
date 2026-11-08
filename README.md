@@ -9,6 +9,7 @@ raseeda makes the document and stops there: it isn't an invoice tracker, CRM or 
 ## Features
 
 - Create invoices with seller and client details, line items, tax, fees, discounts, and terms
+- Make quotes, proforma invoices, receipts and credit notes too, each with its own title and labels ("Valid until", "Date paid", "Total credit"), all renameable
 - Payment details section: bank name, account and routing numbers, IBAN, BIC / SWIFT and sort code, each under a label you can rename ("BSB", "IFSC", "CLABE"), other ways to pay such as PayPal, Venmo, Pix or UPI, and payment notes
 - Set the whole invoice in any of eleven fonts, with your choice of size and weight
 - Pick an accent colour for the title, section headings, table header and total, and a colour for the rest of the text
@@ -31,7 +32,7 @@ While the editor (`/create`) is open, `window.raseeda` lets a script or an AI as
 | Call | What it does |
 | --- | --- |
 | `version` | The API version, currently `1` |
-| `listInvoices()` | Every invoice: `id`, `name`, `number`, `client`, `total`, `currency`, `currencyCode`, `invoiceDate`, `dueDate`, `updatedAt` |
+| `listInvoices()` | Every invoice: `id`, `name`, `documentType`, `number`, `client`, `total`, `currency`, `currencyCode`, `invoiceDate`, `dueDate`, `updatedAt` |
 | `getInvoice(id)` | An invoice's data, in the shape an export's `invoiceData` has |
 | `createInvoice(data)` | Adds an invoice and opens it, returning its id. Takes the same shape; anything left out takes a new invoice's value |
 | `openInvoice(id)` | Opens an invoice in the editor |
@@ -60,6 +61,16 @@ await raseeda.createInvoice({
     { description: "Printed books", quantity: 2, unitPrice: 15, tax: { percentage: 0, exempt: false } },
     { description: "Training", quantity: 1, unitPrice: 300, tax: { percentage: 0, exempt: true } }
   ]
+});
+```
+
+`documentType` is what the document is: `"invoice"` (the default), `"quote"`, `"proforma-invoice"`, `"receipt"` or `"credit-note"`. It sets the defaults for the title and three labels: a quote is titled "Quote" with "Quote No." and "Valid until" for the due date, a proforma invoice "Proforma invoice" with "Proforma No.", a receipt "Receipt" with "Receipt No." and "Date paid", and a credit note "Credit note" with "Credit note No." and "Total credit". A `title` or `labels.invoiceNumber`, `labels.paymentDue` or `labels.total` given in the data is kept as given. Invoices saved or exported before document types existed read as invoices.
+
+```js
+await raseeda.createInvoice({
+  documentType: "quote",
+  number: "Q-0007",
+  items: [{ description: "Website redesign", quantity: 1, unitPrice: 4800 }]
 });
 ```
 

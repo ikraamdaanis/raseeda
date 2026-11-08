@@ -11,6 +11,7 @@ import {
 } from "~/db";
 import { invoiceDefault } from "~/stores/invoice-store";
 import type { ExportFile } from "~/types";
+import { applyDocumentType } from "~/utils/document-type";
 import { buildExportData } from "~/utils/export-data";
 import {
   analyzeImport,
@@ -144,6 +145,62 @@ describe("data backup/restore", () => {
       nameSource: "auto",
       rev: 1
     });
+  });
+
+  it("carries each document's type and labels through export and import", async () => {
+    const now = new Date();
+    const quote = applyDocumentType(structuredClone(invoiceDefault), "quote");
+
+    await saveInvoice({
+      id: "quote-1",
+      name: "Q-0001",
+      nameSource: "auto",
+      rev: 1,
+      invoiceData: { ...quote, number: "Q-0001" },
+      templateId: null,
+      createdAt: now,
+      updatedAt: now
+    });
+
+    const exported = await buildExportData();
+
+    await resetDb();
+    await executeImport(exported);
+
+    const [imported] = await getAllInvoices();
+
+    expect(imported.invoiceData.documentType).toBe("quote");
+    expect(imported.invoiceData.title).toBe("Quote");
+    expect(imported.invoiceData.labels.paymentDue).toBe("Valid until");
+  });
+
+  it("imports an export from before document types as invoices", async () => {
+    const { documentType: _documentType, ...before } =
+      structuredClone(invoiceDefault);
+    const exported = await buildExportData();
+    const legacy = {
+      ...exported,
+      invoices: [
+        {
+          id: "old-1",
+          name: "Old",
+          nameSource: "user",
+          invoiceData: { ...before, number: "INV-0003" },
+          templateId: null,
+          schemaVersion: 3,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        }
+      ]
+    };
+
+    await executeImport(await parseExportFile(toFile(legacy)));
+
+    const [imported] = await getAllInvoices();
+
+    expect(imported.invoiceData.documentType).toBe("invoice");
+    expect(imported.invoiceData.title).toBe("Invoice");
+    expect(imported.invoiceData.labels).toEqual(invoiceDefault.labels);
   });
 
   it("imports an older profile-bearing export, ignoring the profile", async () => {

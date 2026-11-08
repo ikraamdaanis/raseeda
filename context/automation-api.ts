@@ -15,6 +15,7 @@ import {
 import { createBlankInvoice, useInvoiceStore } from "~/stores/invoice-store";
 import type { InvoiceDocument } from "~/types";
 import { buildPdf } from "~/utils/build-pdf";
+import { applyDocumentType, readDocumentType } from "~/utils/document-type";
 import { ensureRowIds } from "~/utils/ensure-row-ids";
 import { executeImport, parseExportText } from "~/utils/import-data";
 import {
@@ -39,6 +40,7 @@ function summarize(document: InvoiceDocument) {
   return {
     id: document.id,
     name: document.name,
+    documentType: invoiceData.documentType,
     number: invoiceData.number,
     client: getClientName(document),
     total: getInvoiceTotal(document),
@@ -109,18 +111,24 @@ const api = {
   // browser's language. `paymentDetails.labels` renames the bank fields, and
   // `paymentDetails.methods` (`{ id, name, detail }[]`) lists other ways to
   // pay, printed below them. `paymentDetails.paymentLink` is a link to pay
-  // online, printed last and clickable in the PDF.
+  // online, printed last and clickable in the PDF. `documentType` ("invoice",
+  // "quote", "proforma-invoice", "receipt", "credit-note") is "invoice" when
+  // left out; the title and the number, due date and total labels left out
+  // take that type's ("Quote", "Valid until" and so on).
   async createInvoice(data: unknown) {
     if (typeof data !== "object" || data === null || Array.isArray(data)) {
       throw new TypeError("Invoice data must be an object");
     }
 
     const known = pick(data, INVOICE_DATA_KEYS);
+    // A blank of the type asked for, so a quote left without a title or
+    // labels takes the quote's.
+    const blank = applyDocumentType(
+      createBlankInvoice(STORED_INVOICE_FORMATS),
+      readDocumentType(Reflect.get(data, "documentType"))
+    );
     const invoiceData = ensureRowIds(
-      migrateInvoiceData(
-        { ...createBlankInvoice(STORED_INVOICE_FORMATS), ...known },
-        CURRENT_INVOICE_SCHEMA_VERSION
-      )
+      migrateInvoiceData({ ...blank, ...known }, CURRENT_INVOICE_SCHEMA_VERSION)
     );
     const now = new Date();
     const document: InvoiceDocument = {

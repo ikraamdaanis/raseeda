@@ -16,6 +16,7 @@ import {
   migrateInvoiceData
 } from "~/schema/migrations";
 import type {
+  DocumentType,
   Invoice,
   InvoiceClient,
   InvoiceItem,
@@ -33,10 +34,12 @@ import {
   isSameCurrency,
   pickSecondCurrency
 } from "~/utils/currency-conversion";
+import { applyDocumentType } from "~/utils/document-type";
 import { getBrowserLanguage, getLocaleDefaults } from "~/utils/locale-defaults";
 
 export const invoiceDefault: Invoice = {
   id: "1",
+  documentType: "invoice",
   title: "Invoice",
   image: "",
   number: "INV-0001",
@@ -198,6 +201,10 @@ interface InvoiceActions {
   setNumberFormat: (numberFormat: Invoice["numberFormat"]) => void;
   setCurrencyPosition: (currencyPosition: Invoice["currencyPosition"]) => void;
   setPaperSize: (paperSize: Invoice["paperSize"]) => void;
+
+  // Document type: swaps the title and labels still on the old type's
+  // defaults for the new type's.
+  setDocumentType: (documentType: DocumentType) => void;
 
   // Title
   setTitle: (title: string) => void;
@@ -361,6 +368,22 @@ export const useInvoiceStore = create<InvoiceStore>()(
       setPaperSize: paperSize =>
         set(state => {
           state.paperSize = paperSize;
+        }),
+
+      setDocumentType: documentType =>
+        set(state => {
+          const next = applyDocumentType(
+            {
+              documentType: state.documentType,
+              title: state.title,
+              labels: state.labels
+            },
+            documentType
+          );
+
+          state.documentType = next.documentType;
+          state.title = next.title;
+          state.labels = next.labels;
         }),
 
       // Title

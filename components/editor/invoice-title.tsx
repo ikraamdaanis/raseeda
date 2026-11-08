@@ -1,5 +1,10 @@
 import { InvoiceInput } from "~/components/editor/invoice-input";
-import { useTheme, useTitleSlice } from "~/stores/invoice-selectors";
+import { DOCUMENT_TYPE_DEFAULTS } from "~/consts/document-types";
+import {
+  useDocumentType,
+  useTheme,
+  useTitleSlice
+} from "~/stores/invoice-selectors";
 import { useInvoiceStore } from "~/stores/invoice-store";
 import { getRoleSettings } from "~/utils/get-role-settings";
 import { getTextStyles } from "~/utils/get-text-styles";
@@ -8,6 +13,7 @@ import { isPaidInFull } from "~/utils/is-paid-in-full";
 export function InvoiceTitle() {
   const { title, setTitle } = useTitleSlice();
   const theme = useTheme();
+  const documentType = useDocumentType();
   const showsPaidStamp = useInvoiceStore(
     state => state.sections.paidStamp && isPaidInFull(state)
   );
@@ -22,7 +28,7 @@ export function InvoiceTitle() {
         onChange={setTitle}
         className="w-full min-w-0 flex-1 text-5xl font-semibold"
         style={getTextStyles({ settings: getRoleSettings(theme, "title") })}
-        placeholder="Invoice"
+        placeholder={DOCUMENT_TYPE_DEFAULTS[documentType].title}
       />
       {showsPaidStamp && (
         <span

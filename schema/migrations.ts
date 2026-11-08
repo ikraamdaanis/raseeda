@@ -102,13 +102,20 @@ function migrateV2ToV3(raw: Record<string, unknown>): Record<string, unknown> {
   };
 }
 
+// v3 -> v4: document types (issue #132). Everything stored before them is an
+// invoice, labels and all.
+function migrateV3ToV4(raw: Record<string, unknown>): Record<string, unknown> {
+  return { ...raw, documentType: "invoice" };
+}
+
 const migrations: {
   to: number;
   up: (raw: Record<string, unknown>) => Record<string, unknown>;
 }[] = [
   { to: 1, up: migrateV0ToV1 },
   { to: 2, up: migrateV1ToV2 },
-  { to: 3, up: migrateV2ToV3 }
+  { to: 3, up: migrateV2ToV3 },
+  { to: 4, up: migrateV3ToV4 }
 ];
 
 /**

@@ -17,6 +17,7 @@ import { OpenTemplateDialog } from "~/components/dialogs/open-template-dialog";
 import { RenameInvoiceDialog } from "~/components/dialogs/rename-invoice-dialog";
 import { SaveTemplateModal } from "~/components/dialogs/save-template-modal";
 import { VersionHistoryDialog } from "~/components/dialogs/version-history-dialog";
+import { DOCUMENT_TYPE_NAMES } from "~/consts/document-types";
 import {
   DocumentNotFoundError,
   useInvoiceDocument
@@ -29,7 +30,7 @@ import {
 } from "~/db";
 import { useDocumentStore } from "~/stores/document-store";
 import { useInvoiceDataAndActions } from "~/stores/invoice-selectors";
-import type { InvoiceDocument, InvoiceTemplate } from "~/types";
+import type { DocumentType, InvoiceDocument, InvoiceTemplate } from "~/types";
 import { exportAllData } from "~/utils/export-data";
 import { hasOpenModal } from "~/utils/open-overlay";
 import { hasPrimaryModifier } from "~/utils/shortcut-label";
@@ -44,6 +45,8 @@ import { track } from "~/utils/track";
 const FileActionsContext = createContext<{
   pending: boolean;
   newInvoice: () => void;
+  // A new quote, receipt and so on: a blank of that type.
+  newDocument: (documentType: DocumentType) => void;
   showOpenInvoice: () => void;
   openInvoice: (documentId: string) => void;
   // ⌘S: writes the open invoice now and says it's saved.
@@ -87,6 +90,7 @@ export function FileActionsProvider({ children }: { children: ReactNode }) {
     status,
     openInvoice,
     newInvoice,
+    newDocument,
     applyTemplate,
     duplicateInvoice,
     duplicateCurrent,
@@ -296,6 +300,11 @@ export function FileActionsProvider({ children }: { children: ReactNode }) {
   const value = {
     pending,
     newInvoice: () => run(newInvoice, "Failed to start a new invoice"),
+    newDocument: (documentType: DocumentType) =>
+      run(
+        () => newDocument(documentType),
+        `Failed to start a new ${DOCUMENT_TYPE_NAMES[documentType].toLowerCase()}`
+      ),
     showOpenInvoice: () => setOpenDialogOpen(true),
     openInvoice: handleOpenInvoice,
     saveNow: () => void handleSaveNow(),

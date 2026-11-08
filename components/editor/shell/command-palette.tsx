@@ -40,6 +40,10 @@ import {
   getCurrencyMarker,
   normalizeCurrency
 } from "~/consts/currencies";
+import {
+  DOCUMENT_TYPE_NAMES,
+  OTHER_DOCUMENT_TYPES
+} from "~/consts/document-types";
 import { EDITOR_THEME_OPTIONS } from "~/consts/editor-theme-options";
 import { INVOICE_FONTS } from "~/consts/invoice-fonts";
 import { useCanvasView } from "~/context/canvas-view-context";
@@ -156,6 +160,16 @@ function PaletteCommands() {
         <PaletteItem icon={<IconFilePlus />} onSelect={run(actions.newInvoice)}>
           New invoice
         </PaletteItem>
+        {OTHER_DOCUMENT_TYPES.map(documentType => (
+          <PaletteItem
+            key={documentType}
+            icon={<IconFilePlus />}
+            onSelect={run(() => actions.newDocument(documentType))}
+            keywords={["document", "type"]}
+          >
+            {`New ${DOCUMENT_TYPE_NAMES[documentType].toLowerCase()}`}
+          </PaletteItem>
+        ))}
         <PaletteItem
           icon={<IconFolderOpen />}
           onSelect={run(actions.showOpenInvoice)}

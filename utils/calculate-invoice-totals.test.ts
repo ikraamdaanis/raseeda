@@ -14,6 +14,7 @@ import { calculateInvoiceTotals } from "~/utils/calculate-invoice-totals";
 function makeInvoice(overrides: Partial<Invoice> = {}): Invoice {
   return {
     id: "test",
+    documentType: "invoice",
     title: "Invoice",
     image: "",
     number: "1",

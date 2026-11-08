@@ -1,9 +1,11 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
+  DOCUMENT_TYPES,
   STORED_INVOICE_FORMATS,
   STORED_INVOICE_THEME_FALLBACK
 } from "~/schema/invoice";
 import { createBlankInvoice, invoiceDefault } from "~/stores/invoice-store";
+import { applyDocumentType } from "~/utils/document-type";
 import { isBlankInvoice, isLargeRemoval } from "~/utils/invoice-content";
 import { getLocaleDefaults } from "~/utils/locale-defaults";
 
@@ -25,6 +27,45 @@ describe("isBlankInvoice", () => {
         theme: { ...invoiceDefault.theme, font: "lora" }
       })
     ).toBe(false);
+  });
+
+  it.each(DOCUMENT_TYPES)("treats a new blank %s as blank", documentType => {
+    expect(
+      isBlankInvoice(applyDocumentType(createBlankInvoice(), documentType))
+    ).toBe(true);
+  });
+
+  it("notices an edit to a document of another type", () => {
+    const quote = applyDocumentType(createBlankInvoice(), "quote");
+
+    expect(isBlankInvoice({ ...quote, number: "Q-0001" })).toBe(false);
+    expect(isBlankInvoice({ ...quote, title: "Estimate" })).toBe(false);
+    expect(
+      isBlankInvoice({
+        ...quote,
+        labels: { ...quote.labels, paymentDue: "Due date" }
+      })
+    ).toBe(false);
+  });
+
+  it("notices an invoice given another type's labels by hand", () => {
+    const invoice = createBlankInvoice();
+
+    expect(
+      isBlankInvoice({
+        ...invoice,
+        labels: { ...invoice.labels, paymentDue: "Valid until" }
+      })
+    ).toBe(false);
+  });
+
+  it("still treats a blank in Geist as blank whatever its type", () => {
+    const receipt = applyDocumentType(
+      { ...createBlankInvoice(), theme: STORED_INVOICE_THEME_FALLBACK },
+      "receipt"
+    );
+
+    expect(isBlankInvoice(receipt)).toBe(true);
   });
 
   describe("in an American browser", () => {

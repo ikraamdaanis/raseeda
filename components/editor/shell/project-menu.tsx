@@ -9,6 +9,7 @@ import {
   IconDeviceFloppy,
   IconDownload,
   IconFilePlus,
+  IconFiles,
   IconFolderOpen,
   IconHistory,
   IconPalette,
@@ -16,6 +17,7 @@ import {
   IconUpload
 } from "@tabler/icons-react";
 import { useNavigate } from "@tanstack/react-router";
+import { startCase } from "lodash-es";
 import { EditorThemeRadioGroup } from "~/components/editor/editor-theme-menu";
 import {
   redoLabel,
@@ -32,6 +34,10 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger
 } from "~/components/ui/dropdown-menu";
+import {
+  DOCUMENT_TYPE_NAMES,
+  OTHER_DOCUMENT_TYPES
+} from "~/consts/document-types";
 import { useEditorUi } from "~/context/editor-ui-context";
 import { useFileActions } from "~/context/file-actions-context";
 import { useInvoiceDocument } from "~/context/invoice-document-context";
@@ -75,6 +81,23 @@ export function ProjectMenu() {
           <IconFilePlus aria-hidden="true" />
           New Invoice
         </DropdownMenuItem>
+        <DropdownMenuSub>
+          <DropdownMenuSubTrigger disabled={actions.pending}>
+            <IconFiles aria-hidden="true" />
+            New Document
+          </DropdownMenuSubTrigger>
+          <DropdownMenuSubContent className="w-44">
+            {OTHER_DOCUMENT_TYPES.map(documentType => (
+              <DropdownMenuItem
+                key={documentType}
+                onClick={() => actions.newDocument(documentType)}
+                disabled={actions.pending}
+              >
+                {startCase(DOCUMENT_TYPE_NAMES[documentType])}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuSubContent>
+        </DropdownMenuSub>
         <DropdownMenuItem
           onClick={actions.showOpenInvoice}
           disabled={actions.pending}

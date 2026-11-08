@@ -24,12 +24,14 @@ import {
   getCurrencyMarker,
   normalizeCurrency
 } from "~/consts/currencies";
+import { DOCUMENT_TYPE_NAMES } from "~/consts/document-types";
 import { useCurrencyConversion } from "~/hooks/use-currency-conversion";
 import { useExchangeRateInput } from "~/hooks/use-exchange-rate-input";
 import { useSecondCurrency } from "~/hooks/use-second-currency";
 import { cn } from "~/lib/utils";
 import {
   CURRENCY_POSITIONS,
+  DOCUMENT_TYPES,
   INVOICE_DATE_FORMATS,
   INVOICE_NUMBER_FORMATS,
   INVOICE_PAPER_SIZES
@@ -39,6 +41,7 @@ import {
   useCurrencyConversionSlice,
   useCurrencySlice,
   useDetailsSlice,
+  useDocumentTypeSlice,
   useMoneyFormat,
   usePaperSizeSlice,
   useTheme
@@ -61,6 +64,7 @@ const SECOND_CURRENCY_ID = "inspector-second-currency";
 export function DetailsSection() {
   return (
     <InspectorSection id="details" title="Details">
+      <DocumentTypeRow />
       <CurrencyRows />
       <DatesRows />
       <DateFormatRow />
@@ -396,6 +400,35 @@ function CurrencyPositionRow() {
         {CURRENCY_POSITIONS.map(position => (
           <option key={position} value={position}>
             {`${position === "before" ? "Before" : "After"}: ${formatCurrency(1234.5, { ...money, position })}`}
+          </option>
+        ))}
+      </NativeSelect>
+    </InspectorRow>
+  );
+}
+
+// What kind of document it is. Changing it swaps the title and the labels
+// still on the old type's defaults; renamed ones stay as typed.
+function DocumentTypeRow() {
+  const { documentType, setDocumentType } = useDocumentTypeSlice();
+
+  return (
+    <InspectorRow label="Type" htmlFor="inspector-document-type">
+      <NativeSelect
+        id="inspector-document-type"
+        value={documentType}
+        onChange={event => {
+          const next = DOCUMENT_TYPES.find(
+            option => option === event.target.value
+          );
+
+          if (next) setDocumentType(next);
+        }}
+        className={cn(inspectorFieldClassName, "pr-7")}
+      >
+        {DOCUMENT_TYPES.map(option => (
+          <option key={option} value={option}>
+            {DOCUMENT_TYPE_NAMES[option]}
           </option>
         ))}
       </NativeSelect>

@@ -5,6 +5,7 @@ import {
 } from "~/schema/invoice";
 import { invoiceDefault } from "~/stores/invoice-store";
 import type { Invoice } from "~/types";
+import { applyDocumentType } from "~/utils/document-type";
 import { getBrowserLanguage, getLocaleDefaults } from "~/utils/locale-defaults";
 
 type BlankFormats = Pick<
@@ -43,7 +44,9 @@ const GEIST_BLANK: Invoice = {
 // the default font changed, so blanks saved then are still cleared up. Today's
 // date is filled in for you, so it doesn't count as an edit. A new blank takes
 // the browser's formats; one from before they existed (a pre-autosave draft)
-// read as the stored ones, so it's compared in those.
+// read as the stored ones, so it's compared in those. A quote or a receipt is
+// compared with a blank of its own type, so its own title and labels don't
+// count as an edit either.
 export function isBlankInvoice(
   invoice: Invoice,
   blankFormats: BlankFormats = getLocaleDefaults(getBrowserLanguage())
@@ -53,7 +56,10 @@ export function isBlankInvoice(
   return [invoiceDefault, GEIST_BLANK].some(blank =>
     isEqual(
       content,
-      withoutAutoFilledValues({ ...blank, ...blankFormats }, blankFormats)
+      withoutAutoFilledValues(
+        applyDocumentType({ ...blank, ...blankFormats }, invoice.documentType),
+        blankFormats
+      )
     )
   );
 }

@@ -166,6 +166,8 @@ function describeAction(
       return { label: "Currency position", area: "page" };
     case "paperSize":
       return { label: "Paper size", area: "page" };
+    case "documentType":
+      return { label: "Document type", area: "title" };
     case "currency":
     case "currencyCode":
       return { label: "Currency", area: "page" };

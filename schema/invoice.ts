@@ -9,7 +9,7 @@ import "~/lib/configure-zod";
 // fields (subtotal, total, per-item amount, tax.amount) are intentionally absent
 // and stripped on parse, since totals are computed at render.
 
-export const CURRENT_INVOICE_SCHEMA_VERSION = 3;
+export const CURRENT_INVOICE_SCHEMA_VERSION = 4;
 
 const INVOICE_FONTS = [
   "schibsted-grotesk",
@@ -23,6 +23,16 @@ const INVOICE_FONTS = [
   "geist-mono",
   "jetbrains-mono",
   "ibm-plex-mono"
+] as const;
+
+// What kind of document it is (issue #132). The type sets the default title
+// and a few labels (consts/document-types.ts); everything else is shared.
+export const DOCUMENT_TYPES = [
+  "invoice",
+  "quote",
+  "proforma-invoice",
+  "receipt",
+  "credit-note"
 ] as const;
 
 const FONT_WEIGHTS = ["Normal", "Medium", "Semibold", "Bold"] as const;
@@ -384,6 +394,7 @@ const invoiceLabelsSchema = z
 
 export const invoiceSchema = z.object({
   id: z.string().catch("1"),
+  documentType: z.enum(DOCUMENT_TYPES).catch("invoice"),
   title: z.string().catch("Invoice"),
   image: z.string().catch(""),
   number: z.string().catch("1"),

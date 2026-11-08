@@ -11,6 +11,7 @@ import { buildExchangeRateLine } from "~/utils/currency-conversion";
 function makeInvoice(overrides: Partial<Invoice> = {}): Invoice {
   return {
     id: "test",
+    documentType: "invoice",
     title: "Invoice",
     image: "",
     number: "INV-001",
