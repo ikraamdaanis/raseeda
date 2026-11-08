@@ -127,8 +127,20 @@ const api = {
       createBlankInvoice(STORED_INVOICE_FORMATS),
       readDocumentType(Reflect.get(data, "documentType"))
     );
+    // Labels given are laid over the type's, so `labels: { total }` on a
+    // receipt keeps its "Date paid".
+    const givenLabels: unknown = Reflect.get(data, "labels");
+    const labels =
+      typeof givenLabels === "object" &&
+      givenLabels !== null &&
+      !Array.isArray(givenLabels)
+        ? { ...blank.labels, ...givenLabels }
+        : blank.labels;
     const invoiceData = ensureRowIds(
-      migrateInvoiceData({ ...blank, ...known }, CURRENT_INVOICE_SCHEMA_VERSION)
+      migrateInvoiceData(
+        { ...blank, ...known, labels },
+        CURRENT_INVOICE_SCHEMA_VERSION
+      )
     );
     const now = new Date();
     const document: InvoiceDocument = {
