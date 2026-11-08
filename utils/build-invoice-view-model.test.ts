@@ -16,6 +16,7 @@ function makeInvoice(overrides: Partial<Invoice> = {}): Invoice {
     image: "",
     number: "INV-001",
     refersTo: "",
+    paidBy: "",
     poNumber: "",
     invoiceDate: "2026-01-01",
     dueDate: "2026-01-31",
@@ -52,7 +53,8 @@ function makeInvoice(overrides: Partial<Invoice> = {}): Invoice {
       total: "Total",
       amountPaid: "Amount paid",
       balanceDue: "Balance due",
-      refersTo: "Refers to invoice"
+      refersTo: "Refers to invoice",
+      paidBy: "Paid by"
     },
     tax: { percentage: 0, exempt: false, note: "", perLine: false },
     fees: 0,
@@ -142,7 +144,8 @@ describe("buildInvoiceViewModel", () => {
             total: "Total",
             amountPaid: "Amount paid",
             balanceDue: "Balance due",
-            refersTo: "Refers to invoice"
+            refersTo: "Refers to invoice",
+            paidBy: "Paid by"
           }
         })
       );

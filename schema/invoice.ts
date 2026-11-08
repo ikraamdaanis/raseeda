@@ -69,7 +69,8 @@ const DEFAULT_LABELS = {
   total: "Total",
   amountPaid: "Amount paid",
   balanceDue: "Balance due",
-  refersTo: "Refers to invoice"
+  refersTo: "Refers to invoice",
+  paidBy: "Paid by"
 } as const;
 
 // How the invoice and due dates are written on the invoice (date-fns
@@ -390,7 +391,8 @@ const invoiceLabelsSchema = z
     total: z.string().catch(DEFAULT_LABELS.total),
     amountPaid: z.string().catch(DEFAULT_LABELS.amountPaid),
     balanceDue: z.string().catch(DEFAULT_LABELS.balanceDue),
-    refersTo: z.string().catch(DEFAULT_LABELS.refersTo)
+    refersTo: z.string().catch(DEFAULT_LABELS.refersTo),
+    paidBy: z.string().catch(DEFAULT_LABELS.paidBy)
   })
   .catch(DEFAULT_LABELS);
 
@@ -406,6 +408,9 @@ export const invoiceSchema = z.object({
   poNumber: z.string().catch(""),
   invoiceDate: z.string().catch(""),
   dueDate: z.string().catch(""),
+  // How a receipt was paid ("Card", "Bank transfer"), as printed text. Only a
+  // receipt prints it, under its date paid.
+  paidBy: z.string().catch(""),
   servicePeriod: z.string().catch(""),
   supplyDate: z.string().catch(""),
   seller: contactSchema("From"),

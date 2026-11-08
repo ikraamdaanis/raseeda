@@ -150,6 +150,8 @@ function describeAction(
       return { label: next.labels.invoiceDate || "Date", area: "details" };
     case "dueDate":
       return { label: next.labels.paymentDue || "Due date", area: "details" };
+    case "paidBy":
+      return { label: next.labels.paidBy || "Paid by", area: "details" };
     case "supplyDate":
       return {
         label: next.labels.supplyDate || "Date of supply",

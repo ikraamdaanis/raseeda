@@ -52,6 +52,7 @@ export const invoiceDefault: Invoice = {
   // client's local date and trigger a hydration mismatch.
   invoiceDate: "",
   dueDate: "",
+  paidBy: "",
   servicePeriod: "",
   supplyDate: "",
   seller: {
@@ -96,7 +97,8 @@ export const invoiceDefault: Invoice = {
     total: "Total",
     amountPaid: "Amount paid",
     balanceDue: "Balance due",
-    refersTo: "Refers to invoice"
+    refersTo: "Refers to invoice",
+    paidBy: "Paid by"
   },
   tax: {
     percentage: 0,
@@ -257,6 +259,7 @@ interface InvoiceActions {
   setPoNumber: (poNumber: string) => void;
   setInvoiceDate: (date: string) => void;
   setDueDate: (date: string) => void;
+  setPaidBy: (paidBy: string) => void;
   setServicePeriod: (servicePeriod: string) => void;
   setSupplyDate: (date: string) => void;
 
@@ -482,6 +485,11 @@ export const useInvoiceStore = create<InvoiceStore>()(
       setDueDate: date =>
         set(state => {
           state.dueDate = date;
+        }),
+
+      setPaidBy: paidBy =>
+        set(state => {
+          state.paidBy = paidBy;
         }),
 
       setServicePeriod: servicePeriod =>

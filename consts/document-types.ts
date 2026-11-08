@@ -80,50 +80,69 @@ export const DOCUMENT_TYPE_DEFAULTS = {
 // The closing rows and fields that differ between types (issue #133), which
 // the type settles whatever the switches say. `sections` overrides a switch
 // while the document is that type: a quote has nothing paid and no PAID stamp,
-// a proforma invoice isn't paid yet, and a receipt is for what was paid. The
-// switches keep what was chosen, so switching back to an invoice brings the
-// rows back with what was typed in them. `dueDate` is whether the due date
-// row prints (a credit note has nothing to pay by a date), `paymentTerms`
-// whether the inspector offers Net 7 to 60 for it, and `refersTo` whether the
-// "Refers to invoice" row is there.
+// a proforma invoice isn't paid yet, a receipt is for what was paid, and a
+// credit note is money owed to the customer, so it ends on its total credit.
+// Nothing is owed on a receipt or a credit note, so neither says how to pay
+// or what paying late costs. The switches keep what was chosen, so switching
+// back to an invoice brings the rows back with what was typed in them.
+// `dueDate` is whether the due date row prints (a credit note has nothing to
+// pay by a date), `paymentTerms` whether the inspector offers Net 7 to 60 for
+// it, `refersTo` whether the "Refers to invoice" row is there and `paidBy`
+// whether the "Paid by" row is.
 export const DOCUMENT_TYPE_ROWS = {
   invoice: {
     sections: {},
     dueDate: true,
     paymentTerms: true,
-    refersTo: false
+    refersTo: false,
+    paidBy: false
   },
   quote: {
     sections: { amountPaid: false, paidStamp: false },
     dueDate: true,
     paymentTerms: true,
-    refersTo: false
+    refersTo: false,
+    paidBy: false
   },
   "proforma-invoice": {
     sections: { paidStamp: false },
     dueDate: true,
     paymentTerms: true,
-    refersTo: false
+    refersTo: false,
+    paidBy: false
   },
   receipt: {
-    sections: { amountPaid: true },
+    sections: { amountPaid: true, paymentDetails: false, latePayment: false },
     dueDate: true,
     paymentTerms: false,
-    refersTo: false
+    refersTo: false,
+    paidBy: true
   },
   "credit-note": {
-    sections: {},
+    sections: {
+      amountPaid: false,
+      paidStamp: false,
+      paymentDetails: false,
+      latePayment: false
+    },
     dueDate: false,
     paymentTerms: false,
-    refersTo: true
+    refersTo: true,
+    paidBy: false
   }
 } as const satisfies Record<
   DocumentType,
   {
-    sections: Partial<Pick<InvoiceSections, "amountPaid" | "paidStamp">>;
+    sections: Partial<
+      Pick<
+        InvoiceSections,
+        "amountPaid" | "paidStamp" | "paymentDetails" | "latePayment"
+      >
+    >;
     dueDate: boolean;
     paymentTerms: boolean;
     refersTo: boolean;
+    paidBy: boolean;
   }
 >;
 

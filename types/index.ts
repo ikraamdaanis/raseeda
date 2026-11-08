@@ -65,6 +65,7 @@ export type InvoiceLabels = {
   amountPaid: string;
   balanceDue: string;
   refersTo: string;
+  paidBy: string;
 };
 
 export type InvoiceFont =
@@ -196,6 +197,7 @@ export type InvoiceDetailRow = {
     | "invoiceDate"
     | "supplyDate"
     | "dueDate"
+    | "paidBy"
     | "servicePeriod";
   labelKey:
     | "invoiceNumber"
@@ -204,6 +206,7 @@ export type InvoiceDetailRow = {
     | "invoiceDate"
     | "supplyDate"
     | "paymentDue"
+    | "paidBy"
     | "servicePeriod";
   label: string;
   value: string;

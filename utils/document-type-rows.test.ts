@@ -24,6 +24,19 @@ function documentOf(
   };
 }
 
+// The document with payment details and a late payment fee typed in and
+// switched on.
+function withFooter(documentType: DocumentType): Invoice {
+  const document = documentOf(documentType);
+
+  return {
+    ...document,
+    sections: { ...document.sections, paymentDetails: true, latePayment: true },
+    paymentDetails: { ...document.paymentDetails, accountName: "Jo Bloggs" },
+    latePayment: { ...document.latePayment, content: "2% a month" }
+  };
+}
+
 function visibleSummaryIds(invoice: Invoice) {
   return buildInvoiceViewModel(invoice)
     .summaryRows.filter(row => row.isVisible)
@@ -109,13 +122,13 @@ describe("totals by document type", () => {
     expect(totals.balanceDue).toBe(0);
   });
 
-  it("counts a credit note's payment as an invoice's", () => {
+  it("counts no payment on a credit note", () => {
     const totals = calculateInvoiceTotals(
       documentOf("credit-note", { amountPaid: 40 })
     );
 
-    expect(totals.amountPaid).toBe(40);
-    expect(totals.balanceDue).toBe(60);
+    expect(totals.amountPaid).toBe(0);
+    expect(totals.balanceDue).toBe(100);
   });
 });
 
@@ -154,14 +167,36 @@ describe("printed sections by document type", () => {
     expect(printed.paidStamp).toBe(false);
   });
 
-  it("prints a credit note's payment and stamp as an invoice's", () => {
+  it("prints no payment or stamp on a credit note", () => {
     const printed = getPrintedSections(
       documentOf("credit-note", { amountPaid: 100 })
     );
 
-    expect(printed.amountPaid).toBe(true);
-    expect(printed.paidStamp).toBe(true);
+    expect(printed.amountPaid).toBe(false);
+    expect(printed.paidStamp).toBe(false);
   });
+
+  // Nothing is owed on either, so neither says how to pay or what a late
+  // payment costs.
+  it.each(["receipt", "credit-note"] as const)(
+    "prints no payment details or late payment fee on a %s",
+    documentType => {
+      const printed = getPrintedSections(withFooter(documentType));
+
+      expect(printed.paymentDetails).toBe(false);
+      expect(printed.latePayment).toBe(false);
+    }
+  );
+
+  it.each(["invoice", "quote", "proforma-invoice"] as const)(
+    "prints a %s's payment details and late payment fee",
+    documentType => {
+      const printed = getPrintedSections(withFooter(documentType));
+
+      expect(printed.paymentDetails).toBe(true);
+      expect(printed.latePayment).toBe(true);
+    }
+  );
 
   it("prints an invoice's stamp as before", () => {
     const printed = getPrintedSections(
@@ -228,6 +263,16 @@ describe("closing rows by document type", () => {
     );
   });
 
+  it("ends a credit note on its total credit", () => {
+    const ids = visibleSummaryIds(
+      documentOf("credit-note", { amountPaid: 40 })
+    );
+
+    expect(ids.at(-1)).toBe("total");
+    expect(ids).not.toContain("amountPaid");
+    expect(ids).not.toContain("balanceDue");
+  });
+
   it("brings a quote's payment back when it's an invoice again", () => {
     const quote = applyDocumentType(
       documentOf("invoice", { amountPaid: 40 }),
@@ -252,6 +297,17 @@ describe("refers to invoice", () => {
 
     expect(parsed.refersTo).toBe("");
     expect(parsed.labels.refersTo).toBe("Refers to invoice");
+  });
+});
+
+describe("paid by", () => {
+  it("reads as empty, under its default label, on a stored invoice", () => {
+    const { paidBy: _paidBy, ...stored } = documentOf("receipt");
+    const { paidBy: _label, ...labels } = stored.labels;
+    const parsed = invoiceSchema.parse({ ...stored, labels });
+
+    expect(parsed.paidBy).toBe("");
+    expect(parsed.labels.paidBy).toBe("Paid by");
   });
 });
 
@@ -287,6 +343,30 @@ describe("detail rows by document type", () => {
 
       expect(ids).toContain("dueDate");
       expect(ids).not.toContain("refersTo");
+    }
+  );
+
+  it("says how a receipt was paid under the date it was paid", () => {
+    const receipt = documentOf("receipt", { paidBy: "Bank transfer" });
+    const rows = buildInvoiceViewModel(receipt).detailRows;
+    const ids = rows.map(row => row.id);
+
+    expect(ids.indexOf("paidBy")).toBe(ids.indexOf("dueDate") + 1);
+    expect(rows.find(row => row.id === "paidBy")).toEqual(
+      expect.objectContaining({
+        label: "Paid by",
+        value: "Bank transfer",
+        isOptional: true
+      })
+    );
+  });
+
+  it.each(["invoice", "quote", "proforma-invoice", "credit-note"] as const)(
+    "gives a %s no paid by row",
+    documentType => {
+      const ids = detailIds(documentOf(documentType, { paidBy: "Card" }));
+
+      expect(ids).not.toContain("paidBy");
     }
   );
 });

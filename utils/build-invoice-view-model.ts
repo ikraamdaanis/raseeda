@@ -44,7 +44,8 @@ import { getPrintedSections } from "~/utils/section-visibility";
 // Optional rows (PO number, date of supply, service period) whose section is
 // switched off are left out altogether; switched-on ones are marked optional
 // so the PDF skips them while empty. A credit note names the invoice it
-// refers to under its number (optional too) and has no due date row.
+// refers to under its number (optional too) and has no due date row; a
+// receipt says how it was paid under its date paid (optional too).
 export function buildDetailRows(input: {
   documentType: DocumentType;
   labels: InvoiceLabels;
@@ -54,6 +55,7 @@ export function buildDetailRows(input: {
   invoiceDate: string;
   supplyDate: string;
   dueDate: string;
+  paidBy: string;
   servicePeriod: string;
   sections: Pick<InvoiceSections, "poNumber" | "supplyDate" | "servicePeriod">;
   dateFormat: Invoice["dateFormat"];
@@ -103,6 +105,13 @@ export function buildDetailRows(input: {
       isOptional: false
     },
     {
+      id: "paidBy",
+      labelKey: "paidBy",
+      label: input.labels.paidBy,
+      value: input.paidBy,
+      isOptional: true
+    },
+    {
       id: "servicePeriod",
       labelKey: "servicePeriod",
       label: input.labels.servicePeriod,
@@ -115,6 +124,7 @@ export function buildDetailRows(input: {
     row =>
       (row.id !== "refersTo" || typeRows.refersTo) &&
       (row.id !== "dueDate" || typeRows.dueDate) &&
+      (row.id !== "paidBy" || typeRows.paidBy) &&
       (row.id !== "poNumber" || input.sections.poNumber) &&
       (row.id !== "supplyDate" || input.sections.supplyDate) &&
       (row.id !== "servicePeriod" || input.sections.servicePeriod)

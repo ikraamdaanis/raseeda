@@ -24,7 +24,10 @@ function buildDetailPlaceholders(
 
   return {
     number: { label: labels.invoiceNumber, value: "########" },
-    refersTo: { label: "Refers to invoice", value: "Add the invoice number" },
+    refersTo: {
+      label: "Refers to invoice",
+      value: "Add the invoice's number and date"
+    },
     poNumber: { label: "PO number", value: "Add a PO / reference" },
     invoiceDate: { label: "Date", value: "Pick a date" },
     supplyDate: { label: "Date of supply", value: "Pick the supply date" },
@@ -32,6 +35,7 @@ function buildDetailPlaceholders(
       label: labels.paymentDue,
       value: documentType === "invoice" ? "Pick a due date" : "Pick a date"
     },
+    paidBy: { label: "Paid by", value: "Card, bank transfer, cash" },
     servicePeriod: { label: "Service period", value: "Pick the period" }
   };
 }
@@ -44,6 +48,7 @@ export function InvoiceDetails() {
     invoiceDate,
     supplyDate,
     dueDate,
+    paidBy,
     servicePeriod,
     dateFormat,
     labels
@@ -52,7 +57,8 @@ export function InvoiceDetails() {
   const isPreview = useIsPreview();
   const documentType = useDocumentType();
   const placeholders = buildDetailPlaceholders(documentType);
-  // Preview leaves out an empty "Refers to invoice", as the PDF does.
+  // Preview leaves out an empty "Refers to invoice" or "Paid by", as the PDF
+  // does.
   const rows = buildDetailRows({
     documentType,
     labels,
@@ -62,10 +68,16 @@ export function InvoiceDetails() {
     invoiceDate,
     supplyDate,
     dueDate,
+    paidBy,
     servicePeriod,
     sections,
     dateFormat
-  }).filter(row => row.id !== "refersTo" || !isPreview || hasText(row.value));
+  }).filter(
+    row =>
+      (row.id !== "refersTo" && row.id !== "paidBy") ||
+      !isPreview ||
+      hasText(row.value)
+  );
 
   return (
     <div data-field-area="details" className="flex flex-col">
@@ -94,6 +106,7 @@ function DetailRow({
     setInvoiceDate,
     setSupplyDate,
     setDueDate,
+    setPaidBy,
     setServicePeriod,
     setLabels
   } = useDetailsSlice();
@@ -112,6 +125,7 @@ function DetailRow({
     invoiceDate: setInvoiceDate,
     supplyDate: setSupplyDate,
     dueDate: setDueDate,
+    paidBy: setPaidBy,
     servicePeriod: setServicePeriod
   }[row.id];
   const dateValues = { invoiceDate, supplyDate, dueDate, servicePeriod };

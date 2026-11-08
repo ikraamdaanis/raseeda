@@ -118,8 +118,9 @@ const api = {
   // "quote", "proforma-invoice", "receipt", "credit-note") is "invoice" when
   // left out; a title, number, or number, due date or total label left out
   // takes that type's ("Quote", "QUO-0001", "Valid until" and so on). A
-  // receipt with no `amountPaid` is paid in full, and `refersTo` is the
-  // invoice a credit note refers to, printed as text.
+  // receipt with no `amountPaid` is paid in full, `paidBy` is how a receipt
+  // was paid and `refersTo` the invoice a credit note refers to, both printed
+  // as text.
   async createInvoice(data: unknown) {
     if (typeof data !== "object" || data === null || Array.isArray(data)) {
       throw new TypeError("Invoice data must be an object");

@@ -178,6 +178,16 @@ describe("invoice history", () => {
     expect(data().refersTo).toBe("");
   });
 
+  it("names how a receipt was paid", () => {
+    blurAll();
+    store().setPaidBy("Card");
+
+    expect(useInvoiceHistory.getState().undoLabel).toBe("Paid by");
+
+    undoInvoiceChange();
+    expect(data().paidBy).toBe("");
+  });
+
   it("makes a type change one step that puts the labels back", () => {
     blurAll();
     store().setDocumentType("quote");
