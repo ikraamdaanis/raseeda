@@ -1,6 +1,8 @@
 import { INVOICE_TEMPLATES } from "~/components/templates/invoice-templates";
 import { APP_NAME } from "~/consts/app";
 import { INVOICE_FONTS } from "~/consts/invoice-fonts";
+import { SITE_TEMPLATES } from "~/consts/site-templates";
+import type { SiteTemplateId } from "~/types";
 import {
   MAKER_PERSON_NAME,
   MAKER_URL,
@@ -193,6 +195,67 @@ export const TEMPLATES_STRUCTURED_DATA = {
     }
   ] as const
 };
+
+// A site template page (consts/site-templates.ts): the page, what it offers,
+// and the trail through the template gallery to it.
+export function siteTemplateStructuredData(id: SiteTemplateId) {
+  const meta = PAGE_META[id];
+  const url = absoluteUrl(meta.path);
+  const template = SITE_TEMPLATES.find(siteTemplate => siteTemplate.id === id);
+
+  return {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "WebPage",
+        "@id": `${url}#webpage`,
+        url,
+        name: meta.title,
+        description: meta.description,
+        inLanguage: "en",
+        isPartOf: { "@id": WEBSITE_ID },
+        publisher: { "@id": ORGANIZATION_ID },
+        breadcrumb: { "@id": `${url}#breadcrumb` },
+        primaryImageOfPage: {
+          "@type": "ImageObject",
+          url: meta.image,
+          width: 1200,
+          height: 630
+        },
+        mainEntity: {
+          "@type": "CreativeWork",
+          name: template?.name,
+          description: template?.summary,
+          image: template && absoluteUrl(template.src)
+        }
+      },
+      {
+        "@type": "BreadcrumbList",
+        "@id": `${url}#breadcrumb`,
+        itemListElement: [
+          {
+            "@type": "ListItem",
+            position: 1,
+            name: "Home",
+            item: absoluteUrl("/")
+          },
+          {
+            "@type": "ListItem",
+            position: 2,
+            name: "Invoice templates",
+            item: TEMPLATES_URL
+          },
+          {
+            "@type": "ListItem",
+            position: 3,
+            name: template?.name,
+            item: url
+          }
+        ]
+      }
+    ]
+  };
+}
 
 const PRIVACY_URL = absoluteUrl(PAGE_META.privacy.path);
 

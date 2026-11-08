@@ -97,12 +97,32 @@ const PAGE_FILES = {
     "public/templates",
     "utils/structured-data.ts"
   ],
+  siteTemplates: [
+    "components/templates",
+    "consts/site-templates.ts",
+    "components/home/site-chrome.tsx",
+    "public/templates",
+    "utils/structured-data.ts"
+  ],
   privacy: [
     "app/routes/privacy.tsx",
     "components/home/site-chrome.tsx",
     "utils/structured-data.ts"
   ]
 };
+
+// The pages that open the editor ready for one job, each pre-rendered and in
+// the sitemap (consts/site-templates.ts is their list; a unit test keeps this
+// one in step).
+const SITE_TEMPLATE_PAGES = [
+  "/quote-template",
+  "/proforma-invoice-template",
+  "/receipt-template",
+  "/credit-note-template",
+  "/freelance-invoice-template",
+  "/contractor-invoice-template",
+  "/retail-invoice-template"
+];
 
 export default defineConfig({
   server: {
@@ -114,7 +134,7 @@ export default defineConfig({
   plugins: [
     cloudflare({ viteEnvironment: { name: "ssr" } }),
     tailwindcss(),
-    // The homepage, the template gallery and the privacy page are the same
+    // The homepage, the template pages and the privacy page are the same
     // for every visitor, so they are rendered once at build time and served as
     // static files instead of by the Worker on each request. Their security
     // headers then come from public/_headers. The other pages are written as
@@ -153,6 +173,16 @@ export default defineConfig({
           prerender: { enabled: true, autoSubfolderIndex: false },
           sitemap: { lastmod: lastChanged(PAGE_FILES.templates) }
         },
+        ...SITE_TEMPLATE_PAGES.map(path => ({
+          path,
+          prerender: { enabled: true, autoSubfolderIndex: false },
+          sitemap: {
+            lastmod: lastChanged([
+              `app/routes${path}.tsx`,
+              ...PAGE_FILES.siteTemplates
+            ])
+          }
+        })),
         {
           path: "/privacy",
           prerender: { enabled: true, autoSubfolderIndex: false },

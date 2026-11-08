@@ -17,8 +17,10 @@ import {
   TEMPLATE_RENDER_WIDTHS,
   templateSrc
 } from "~/components/templates/invoice-templates";
+import { SITE_TEMPLATES } from "~/consts/site-templates";
 import { invoiceDefault } from "~/stores/invoice-store";
-import type { Invoice, InvoiceItem } from "~/types";
+import type { Invoice, InvoiceItem, SiteTemplateId } from "~/types";
+import { applyDocumentType } from "~/utils/document-type";
 import { loadInvoicePdfFonts } from "~/utils/measure-pdf-text";
 import { PDF_FONT_FAMILIES } from "~/utils/register-invoice-pdf-fonts";
 import { PAGE_META } from "~/utils/site-meta";
@@ -385,6 +387,229 @@ async function run(command: string[]) {
   }
 }
 
+// The site template pages' finished examples (consts/site-templates.ts): each
+// shows its template in use, so a page's picture matches what it opens.
+function party(label: string, content: string) {
+  return { label, content, placeholder: "" };
+}
+
+const POUNDS = { currency: "\u00a3", currencyCode: "GBP" };
+
+const NET_30 = { terms: "Payment due within 30 days." };
+
+const SITE_TEMPLATE_INVOICES: Record<SiteTemplateId, Invoice> = {
+  // A Bristol landscaper's price for a block of flats' courtyard.
+  quote: applyDocumentType(
+    sampleInvoice({
+      ...POUNDS,
+      number: "QUO-0312",
+      invoiceDate: "2026-10-12",
+      dueDate: "2026-11-11",
+      seller: party(
+        "From",
+        "Fernway Landscapes Ltd\n18 Mina Road\nBristol BS2 9XJ"
+      ),
+      client: party(
+        "Quote for",
+        "Harbour Row Apartments\n2 Canons Way\nBristol BS1 5LF"
+      ),
+      items: items([
+        ["Courtyard design and planting plan", 1, "ea", 850],
+        ["Paving, supplied and laid", 64, "sq m", 92],
+        ["Raised beds and planting", 6, "ea", 340]
+      ]),
+      tax: { percentage: 20, exempt: false, note: "", perLine: false },
+      notes: {
+        label: "Notes",
+        content: "Price includes removal of the existing paving."
+      }
+    }),
+    "quote"
+  ),
+  // A Lisbon tile maker's order for a Danish interiors firm, paid up front.
+  "proforma-invoice": applyDocumentType(
+    sampleInvoice({
+      currency: "\u20ac",
+      currencyCode: "EUR",
+      number: "PRO-0088",
+      sections: { ...invoiceDefault.sections, tax: false },
+      invoiceDate: "2026-10-05",
+      dueDate: "2026-10-19",
+      seller: party(
+        "From",
+        "Tessera Ceramics Lda\nRua da Boavista 84\n1200-066 Lisbon, Portugal"
+      ),
+      client: party(
+        "To",
+        "Nordhavn Interiors ApS\nSundkrogsgade 21\n2100 Copenhagen, Denmark"
+      ),
+      items: items([
+        ["Hand-glazed wall tiles, sage", 48, "sq m", 74],
+        ["Hand-glazed floor tiles, slate", 30, "sq m", 88],
+        ["Crating and freight to Copenhagen", 1, "ea", 620]
+      ]),
+      paymentDetails: {
+        label: "Payment details",
+        bankName: "Millennium BCP",
+        accountName: "Tessera Ceramics Lda",
+        iban: "PT50 0033 0000 4553 8901 2345 6",
+        bic: "BCOMPTPL",
+        terms: "Payment up front releases the order for firing."
+      }
+    }),
+    "proforma-invoice"
+  ),
+  // A Toronto studio's class pass, paid at the desk.
+  receipt: applyDocumentType(
+    sampleInvoice({
+      currency: "$",
+      currencyCode: "CAD",
+      number: "REC-2207",
+      invoiceDate: "2026-10-17",
+      dueDate: "2026-10-17",
+      paidBy: "Visa ending 4417",
+      seller: party(
+        "From",
+        "Copperleaf Yoga\n912 Queen Street West\nToronto, ON M6J 1G6"
+      ),
+      client: party("Received from", "Priya Nair"),
+      items: items([
+        ["Ten-class pass", 1, "ea", 180],
+        ["Yoga mat", 1, "ea", 62]
+      ]),
+      tax: { percentage: 13, exempt: false, note: "", perLine: false }
+    }),
+    "receipt"
+  ),
+  // A Leeds office supplier's credit for two chairs sent back.
+  "credit-note": applyDocumentType(
+    sampleInvoice({
+      ...POUNDS,
+      number: "CN-0041",
+      invoiceDate: "2026-10-21",
+      dueDate: "2026-10-21",
+      refersTo: "INV-1187, 2 Oct 2026",
+      seller: party(
+        "From",
+        "Oakline Office Supply Ltd\n7 Kirkstall Road\nLeeds LS3 1LH"
+      ),
+      client: party(
+        "Credit to",
+        "Brightwater Dental\n40 Park Row\nLeeds LS1 5JL"
+      ),
+      items: items([
+        ["Task chair, returned undamaged", 2, "ea", 189],
+        ["Return delivery charge refunded", 1, "ea", 18]
+      ]),
+      tax: { percentage: 20, exempt: false, note: "", perLine: false },
+      notes: { label: "Notes", content: "Returned goods received 19 Oct 2026." }
+    }),
+    "credit-note"
+  ),
+  // A Manchester developer's month of hours for a studio.
+  freelance: sampleInvoice({
+    ...POUNDS,
+    number: "TA-0064",
+    theme: { ...invoiceDefault.theme, font: "dm-sans" },
+    sections: { ...invoiceDefault.sections, tax: false },
+    invoiceDate: "2026-10-31",
+    dueDate: "2026-11-30",
+    servicePeriod: "1 to 31 Oct 2026",
+    tableSettings: {
+      ...invoiceDefault.tableSettings,
+      columnLabels: {
+        ...invoiceDefault.tableSettings.columnLabels,
+        quantity: "Hours",
+        unitPrice: "Rate"
+      }
+    },
+    seller: party("From", "Tom Adeyemi\n31 Hilton Street\nManchester M1 2EH"),
+    client: party("To", "Lark Studio\n5 Jordan Street\nManchester M15 4PY"),
+    items: items([
+      ["Checkout rebuild", 46, "hrs", 65],
+      ["Planning meetings and calls", 5, "hrs", 65],
+      ["Revisions after review", 9, "hrs", 65]
+    ]),
+    paymentDetails: {
+      label: "Payment details",
+      bankName: "Monzo Bank",
+      accountNumber: "20418863",
+      sortCode: "04-00-04",
+      ...NET_30
+    }
+  }),
+  // A Sheffield joiner's loft conversion, less the deposit.
+  contractor: sampleInvoice({
+    ...POUNDS,
+    number: "RJ-0219",
+    theme: { ...invoiceDefault.theme, font: "ibm-plex-sans" },
+    invoiceDate: "2026-10-23",
+    dueDate: "2026-11-06",
+    seller: party(
+      "From",
+      "Ridgeway Joinery Ltd\n12 Mowbray Street\nSheffield S3 8EN"
+    ),
+    client: party(
+      "To",
+      "Sam and Alex Whitlock\n9 Thornsett Road\nSheffield S7 1NB"
+    ),
+    shipping: party(
+      "Job site",
+      "Loft conversion\n9 Thornsett Road\nSheffield S7 1NB"
+    ),
+    items: items([
+      ["Labour, joinery and first fix", 96, "hrs", 38],
+      ["Labour, second fix", 34, "hrs", 38],
+      ["Materials, timber and insulation", 1, "ea", 3180],
+      ["Materials, staircase kit", 1, "ea", 1240],
+      ["Disposal and site clean-up", 1, "ea", 260]
+    ]),
+    amountPaid: 2500,
+    labels: { ...invoiceDefault.labels, amountPaid: "Deposit paid" },
+    tax: { percentage: 20, exempt: false, note: "", perLine: false },
+    paymentDetails: {
+      label: "Payment details",
+      bankName: "Lloyds Bank",
+      accountNumber: "61240775",
+      sortCode: "30-96-26",
+      terms: "Balance due within 14 days of completion."
+    }
+  }),
+  // A Cardiff grocer's wholesale order: goods taxed at different rates.
+  retail: (() => {
+    const invoice = sampleInvoice({
+      ...POUNDS,
+      number: "GG-1450",
+      theme: { ...invoiceDefault.theme, font: "geist" },
+      invoiceDate: "2026-10-26",
+      dueDate: "2026-11-09",
+      seller: party(
+        "From",
+        "Greengage Grocers Ltd\n23 Pontcanna Street\nCardiff CF11 9HQ"
+      ),
+      client: party("To", "The Copper Kettle\n4 High Street\nCardiff CF10 1AX"),
+      items: items([
+        ["Bottled sparkling water, case of 12", 10, "ea", 9.6],
+        ["Home-compostable coffee cups, 500", 4, "ea", 38],
+        ["Children's car seat liners", 2, "ea", 22],
+        ["Sourdough loaves", 24, "ea", 3.4]
+      ]),
+      tax: { percentage: 20, exempt: false, note: "", perLine: true },
+      fees: 12,
+      labels: { ...invoiceDefault.labels, fees: "Delivery" }
+    });
+    const rates = [20, 20, 5, 0];
+
+    return {
+      ...invoice,
+      items: invoice.items.map((item, index) => ({
+        ...item,
+        tax: { percentage: rates[index] ?? 0, exempt: false }
+      }))
+    };
+  })()
+};
+
 // Renders the invoice's first page to a PNG at the homepage's render scale.
 async function renderPage(directory: string, name: string, invoice: Invoice) {
   const pdfPath = join(directory, `${name}.pdf`);
@@ -446,6 +671,46 @@ async function writeWebp({
 // homepage's card (public/og-image.jpg).
 const SHARE_CARD = { width: 1200, height: 630, margin: 40, gap: 28 };
 
+// The sky every share card sits on, with the paper's shadows drawn on it.
+function skyBackground(sheets: string) {
+  const { width, height } = SHARE_CARD;
+
+  return Buffer.from(
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">
+      <defs>
+        <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#8ad5db"/>
+          <stop offset="0.5" stop-color="#bdebeb"/>
+          <stop offset="1" stop-color="#e2fbf8"/>
+        </linearGradient>
+        <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+          <feGaussianBlur stdDeviation="8"/>
+        </filter>
+      </defs>
+      <rect width="${width}" height="${height}" fill="url(#sky)"/>
+      ${sheets}
+    </svg>`
+  );
+}
+
+// A site template page's share card: the top of its one page on the sky.
+async function writeSiteTemplateShareCard(pngPath: string, image: string) {
+  const { width, height, margin } = SHARE_CARD;
+  const sheetWidth = 560;
+  const sheetHeight = height - margin * 2;
+  const left = Math.round((width - sheetWidth) / 2);
+  const shadow = `<rect x="${left}" y="${margin + 4}" width="${sheetWidth}" height="${sheetHeight}" rx="4" fill="rgb(16 60 90 / 0.18)" filter="url(#shadow)"/>`;
+  const sheet = await sharp(pngPath)
+    .resize({ width: sheetWidth })
+    .extract({ left: 0, top: 0, width: sheetWidth, height: sheetHeight })
+    .toBuffer();
+
+  await sharp(skyBackground(shadow))
+    .composite([{ input: sheet, left, top: margin }])
+    .jpeg({ quality: 85, mozjpeg: true })
+    .toFile(join(OUTPUT_DIR, new URL(image).pathname));
+}
+
 async function writeTemplatesShareCard(pngPaths: string[]) {
   const { width, height, margin, gap } = SHARE_CARD;
   const cellWidth = Math.floor((width - margin * 2 - gap * 2) / 3);
@@ -463,22 +728,7 @@ async function writeTemplatesShareCard(pngPaths: string[]) {
         `<rect x="${cell.left}" y="${cell.top + 4}" width="${cellWidth}" height="${cellHeight}" rx="4" fill="rgb(16 60 90 / 0.18)" filter="url(#shadow)"/>`
     )
     .join("");
-  const background = Buffer.from(
-    `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">
-      <defs>
-        <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stop-color="#8ad5db"/>
-          <stop offset="0.5" stop-color="#bdebeb"/>
-          <stop offset="1" stop-color="#e2fbf8"/>
-        </linearGradient>
-        <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
-          <feGaussianBlur stdDeviation="8"/>
-        </filter>
-      </defs>
-      <rect width="${width}" height="${height}" fill="url(#sky)"/>
-      ${sheets}
-    </svg>`
-  );
+  const background = skyBackground(sheets);
   const pages = await Promise.all(
     cells.map(async cell => ({
       input: await sharp(cell.pngPath)
@@ -545,6 +795,17 @@ try {
   }
 
   await writeTemplatesShareCard(templatePngPaths);
+
+  for (const template of SITE_TEMPLATES) {
+    const invoice = SITE_TEMPLATE_INVOICES[template.id];
+    const pngPath = await renderPage(directory, template.id, invoice);
+
+    for (const width of TEMPLATE_RENDER_WIDTHS) {
+      await writeWebp({ pngPath, src: templateSrc(template, width), width });
+    }
+
+    await writeSiteTemplateShareCard(pngPath, PAGE_META[template.id].image);
+  }
 
   process.stdout.write(
     `Wrote the invoice renders to ${join(OUTPUT_DIR, "home")} and ${join(OUTPUT_DIR, "templates")}, and the template gallery's share card\n`

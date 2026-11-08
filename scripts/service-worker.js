@@ -18,7 +18,19 @@ const PRECACHE = PRECACHE_PREFIX + BUILD.version;
 const RUNTIME = "runtime";
 const LEGACY_PRECACHE_PREFIX = "billsend-precache-";
 const LEGACY_RUNTIME = "billsend-runtime";
-const PAGES = ["/", "/invoice-template", "/privacy", "/create"];
+const PAGES = [
+  "/",
+  "/invoice-template",
+  "/quote-template",
+  "/proforma-invoice-template",
+  "/receipt-template",
+  "/credit-note-template",
+  "/freelance-invoice-template",
+  "/contractor-invoice-template",
+  "/retail-invoice-template",
+  "/privacy",
+  "/create"
+];
 
 self.addEventListener("install", event => {
   // Where the browser supports it, pictures skip the worker altogether rather

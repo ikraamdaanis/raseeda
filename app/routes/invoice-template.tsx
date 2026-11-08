@@ -15,6 +15,7 @@ import {
 } from "~/components/templates/invoice-templates";
 import { APP_NAME } from "~/consts/app";
 import { getInvoiceFontDefinition } from "~/consts/invoice-fonts";
+import { SITE_TEMPLATES } from "~/consts/site-templates";
 import { typeClass } from "~/lib/type-scale";
 import { cn } from "~/lib/utils";
 import { canonicalLink, PAGE_META, siteMeta } from "~/utils/site-meta";
@@ -112,6 +113,30 @@ function InvoiceTemplatePage() {
               ))}
             </ul>
           </div>
+        </section>
+        <section
+          className={cn(CONTAINER, "flex flex-col gap-8 pt-16 sm:pt-24")}
+        >
+          <h2 className={cn(HEADING, typeClass("title"))}>
+            Other documents and trades
+          </h2>
+          <ul className="grid gap-x-8 gap-y-6 sm:grid-cols-2 lg:grid-cols-3">
+            {SITE_TEMPLATES.map(template => (
+              <li key={template.id} className="flex flex-col gap-1">
+                <Link
+                  to={template.path}
+                  className={cn(
+                    "hover:text-brand-600 w-fit rounded-sm font-medium",
+                    typeClass("body"),
+                    FOCUS_RING
+                  )}
+                >
+                  {template.name}
+                </Link>
+                <p className={BODY_TEXT}>{template.summary}</p>
+              </li>
+            ))}
+          </ul>
         </section>
         <section className={cn(CONTAINER, "py-16 sm:py-24")}>
           <div className="flex flex-col gap-8 sm:flex-row sm:items-end sm:justify-between">

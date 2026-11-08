@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { CONTENT_SECURITY_POLICY } from "~/consts/content-security-policy";
 import { SECURITY_HEADERS } from "~/consts/security-headers";
+import { SITE_TEMPLATES } from "~/consts/site-templates";
 
 // The pre-rendered pages are static files, so their headers come from
 // public/_headers rather than the Worker; the two copies must match.
@@ -37,6 +38,7 @@ describe("Content-Security-Policy", () => {
     "/index.html",
     "/invoice-template",
     "/invoice-template.html",
+    ...SITE_TEMPLATES.flatMap(({ path }) => [path, `${path}.html`]),
     "/privacy",
     "/privacy.html"
   ])("public/_headers sends the Worker's policy for %s", path => {

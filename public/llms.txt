@@ -7,6 +7,8 @@
 - [Home](https://raseeda.com/): what raseeda does, how it compares with other invoice generators and accounting software, what goes on the invoice, and common questions
 - [Invoice editor](https://raseeda.com/create): create, edit and download an invoice as an A4 or Letter PDF (requires JavaScript)
 - [Invoice templates](https://raseeda.com/invoice-template): sample invoices for freelance, consulting, small business, contractor, photography and web development work, each opening the editor in its font
+- [Quote template](https://raseeda.com/quote-template), [proforma invoice template](https://raseeda.com/proforma-invoice-template), [receipt template](https://raseeda.com/receipt-template) and [credit note template](https://raseeda.com/credit-note-template): each opens the editor with that document type ready
+- [Freelance](https://raseeda.com/freelance-invoice-template), [contractor](https://raseeda.com/contractor-invoice-template) and [retail](https://raseeda.com/retail-invoice-template) invoice templates: each opens the editor laid out for that trade (hours and a rate; labour, materials and a job site; a tax rate on each line)
 - [Privacy](https://raseeda.com/privacy): what raseeda stores, where, and what never leaves the device
 
 ## Facts

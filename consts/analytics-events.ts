@@ -19,6 +19,13 @@ export const PAGE_VIEW_PATHS = [
   "/",
   "/create",
   "/invoice-template",
+  "/quote-template",
+  "/proforma-invoice-template",
+  "/receipt-template",
+  "/credit-note-template",
+  "/freelance-invoice-template",
+  "/contractor-invoice-template",
+  "/retail-invoice-template",
   "/privacy"
 ] as const;
 

@@ -53,6 +53,62 @@ export const PAGE_META = {
     image: `${SITE_URL}/og-invoice-template.jpg`,
     imageAlt: `Six ${APP_NAME} invoice templates: freelance, consulting, small business, contractor, photography and web development`
   },
+  quote: {
+    path: "/quote-template",
+    title: `Free Quote Template: Fill In Online, Download PDF | ${APP_NAME}`,
+    description:
+      "Free quote template with a valid-until date. Fill it in online, download a PDF, and turn it into an invoice when it's agreed.",
+    image: `${SITE_URL}/og-quote-template.jpg`,
+    imageAlt: `A quote made in ${APP_NAME}, on a pale blue sky`
+  },
+  "proforma-invoice": {
+    path: "/proforma-invoice-template",
+    title: `Free Proforma Invoice Template, Download PDF | ${APP_NAME}`,
+    description:
+      "Free proforma invoice template for payment up front or customs. Fill it in online and download a PDF, with no account.",
+    image: `${SITE_URL}/og-proforma-invoice-template.jpg`,
+    imageAlt: `A proforma invoice made in ${APP_NAME}, on a pale blue sky`
+  },
+  receipt: {
+    path: "/receipt-template",
+    title: `Free Receipt Template: Fill In Online, Download PDF | ${APP_NAME}`,
+    description:
+      "Free receipt template showing the date paid and who paid. Fill it in online and download a PDF, with no account.",
+    image: `${SITE_URL}/og-receipt-template.jpg`,
+    imageAlt: `A receipt made in ${APP_NAME}, on a pale blue sky`
+  },
+  "credit-note": {
+    path: "/credit-note-template",
+    title: `Free Credit Note Template: Fill In Online, Download PDF | ${APP_NAME}`,
+    description:
+      "Free credit note template that names the invoice it corrects. Fill it in online and download a PDF, with no account.",
+    image: `${SITE_URL}/og-credit-note-template.jpg`,
+    imageAlt: `A credit note made in ${APP_NAME}, on a pale blue sky`
+  },
+  freelance: {
+    path: "/freelance-invoice-template",
+    title: `Free Freelance Invoice Template for Hourly Work | ${APP_NAME}`,
+    description:
+      "Free freelance invoice template with Hours and Rate columns. Fill it in online and download a PDF, with no account.",
+    image: `${SITE_URL}/og-freelance-invoice-template.jpg`,
+    imageAlt: `A freelance invoice made in ${APP_NAME}, on a pale blue sky`
+  },
+  contractor: {
+    path: "/contractor-invoice-template",
+    title: `Free Contractor Invoice Template: Labour and Materials | ${APP_NAME}`,
+    description:
+      "Free contractor invoice template with labour, materials, a job site and a deposit. Fill it in online and download a PDF.",
+    image: `${SITE_URL}/og-contractor-invoice-template.jpg`,
+    imageAlt: `A contractor invoice made in ${APP_NAME}, on a pale blue sky`
+  },
+  retail: {
+    path: "/retail-invoice-template",
+    title: `Free Retail Invoice Template with Per-Line Tax | ${APP_NAME}`,
+    description:
+      "Free retail invoice template with a tax rate on each line. Fill it in online and download a PDF, with no account.",
+    image: `${SITE_URL}/og-retail-invoice-template.jpg`,
+    imageAlt: `A retail invoice made in ${APP_NAME}, on a pale blue sky`
+  },
   create: {
     path: "/create",
     title: `Create an Invoice Online, Free PDF | ${APP_NAME}`,

@@ -1,6 +1,7 @@
 import { readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { CONTENT_SECURITY_POLICY } from "~/consts/content-security-policy";
+import { SITE_TEMPLATES } from "~/consts/site-templates";
 import { EDITOR_THEME_SCRIPT } from "~/utils/editor-theme";
 import {
   hashInlineScripts,
@@ -8,7 +9,7 @@ import {
 } from "~/utils/prerendered-csp";
 
 // Runs after `vite build` (the build script). The homepage, the template
-// gallery and the privacy page are rendered at build time, so their inline
+// pages and the privacy page are rendered at build time, so their inline
 // scripts are known: this writes their hashes into the built _headers in place
 // of 'unsafe-inline', so those pages run their own inline scripts and no
 // others. public/_headers keeps the base policy, which the Worker's pages
@@ -28,6 +29,10 @@ const PAGES = [
     file: "invoice-template.html",
     paths: ["/invoice-template", "/invoice-template.html"]
   },
+  ...SITE_TEMPLATES.map(({ path }) => ({
+    file: `${path.slice(1)}.html`,
+    paths: [path, `${path}.html`]
+  })),
   { file: "privacy.html", paths: ["/privacy", "/privacy.html"] }
 ];
 
