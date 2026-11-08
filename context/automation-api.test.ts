@@ -12,6 +12,8 @@ vi.stubGlobal("window", globalThis);
 
 exposeAutomationApi();
 
+// Nothing declares the API on the global, since only scripts in the page
+// call it, so the test names the calls it uses.
 const { raseeda } = globalThis as unknown as {
   raseeda: {
     createInvoice: (data: unknown) => Promise<string>;
@@ -61,6 +63,19 @@ describe("automation API document types", () => {
     expect(invoice.labels.invoiceNumber).toBe("Receipt No.");
     expect(invoice.labels.paymentDue).toBe("Date paid");
     expect(invoice.labels.subtotal).toBe("Subtotal");
+  });
+
+  it("treats a key given as undefined as left out", async () => {
+    const id = await raseeda.createInvoice({
+      documentType: "quote",
+      title: undefined,
+      labels: { paymentDue: undefined, total: "Sum" }
+    });
+    const invoice = await raseeda.getInvoice(id);
+
+    expect(invoice.title).toBe("Quote");
+    expect(invoice.labels.paymentDue).toBe("Valid until");
+    expect(invoice.labels.total).toBe("Sum");
   });
 
   it("lists each invoice's type", async () => {

@@ -2,6 +2,7 @@ import { addDays, format } from "date-fns";
 import { create } from "zustand";
 import { subscribeWithSelector } from "zustand/middleware";
 import { immer } from "zustand/middleware/immer";
+import { DOCUMENT_TYPE_DEFAULTS } from "~/consts/document-types";
 import {
   DEFAULT_CURRENCY_CONVERSION,
   DEFAULT_INVOICE_DATE_FORMAT,
@@ -44,7 +45,7 @@ export const invoiceDefault: Invoice = {
   image: "",
   number: "INV-0001",
   poNumber: "",
-  // Dates are stamped per invoice in createBlankInvoice(), not baked in here.
+  // Dates are stamped per document in createBlankDocument(), not baked in here.
   // Keeping the module-level default static (empty) means every isolate renders
   // the same first paint, so a server crossing midnight can't disagree with the
   // client's local date and trigger a hydration mismatch.
@@ -145,34 +146,48 @@ export const invoiceDefault: Invoice = {
 };
 
 /**
- * The single factory that seeds a fresh, blank invoice. Every new invoice is
- * created here. A new invoice always starts blank (including a static default
- * number the user edits inline); the returned invoice is a fully independent
- * snapshot, never sharing nested objects with the default. The invoice and due
- * dates are stamped from the clock at call time (due 30 days out), so an invoice
+ * The single factory that seeds a fresh, blank document of a type (issue
+ * #132), with that type's title and labels. Every new document is created
+ * here. A new document always starts blank (including a static default number
+ * the user edits inline); the returned invoice is a fully independent
+ * snapshot, never sharing nested objects with the default. The issue and due
+ * dates are stamped from the clock at call time (due the type's `dueDays`
+ * out: 30 days, or the same day for a receipt's date paid), so a document
  * created today is dated today rather than whenever the module was loaded.
  * Its number format, currency position and paper size come from the browser's
  * language (issue #117) unless given, as the automation API gives the
  * stored-invoice defaults so the same data always makes the same invoice.
  */
-export function createBlankInvoice(
+export function createBlankDocument(
+  documentType: DocumentType,
   formats: Pick<
     Invoice,
     "numberFormat" | "currencyPosition" | "paperSize"
   > = getLocaleDefaults(getBrowserLanguage())
 ): Invoice {
   const now = new Date();
+  const { dueDays } = DOCUMENT_TYPE_DEFAULTS[documentType];
 
-  return {
-    ...structuredClone(invoiceDefault),
-    ...formats,
-    invoiceDate: format(now, "yyyy-MM-dd"),
-    dueDate: format(addDays(now, 30), "yyyy-MM-dd"),
-    items: invoiceDefault.items.map(item => ({
-      ...item,
-      id: crypto.randomUUID()
-    }))
-  };
+  return applyDocumentType(
+    {
+      ...structuredClone(invoiceDefault),
+      ...formats,
+      invoiceDate: format(now, "yyyy-MM-dd"),
+      dueDate: format(addDays(now, dueDays), "yyyy-MM-dd"),
+      items: invoiceDefault.items.map(item => ({
+        ...item,
+        id: crypto.randomUUID()
+      }))
+    },
+    documentType
+  );
+}
+
+// A new blank invoice, the document most start from.
+export function createBlankInvoice(
+  formats?: Pick<Invoice, "numberFormat" | "currencyPosition" | "paperSize">
+): Invoice {
+  return createBlankDocument("invoice", formats);
 }
 
 // Helper to apply updater (value or function)

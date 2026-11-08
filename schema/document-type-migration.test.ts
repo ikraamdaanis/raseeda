@@ -47,6 +47,12 @@ describe("document type migration (v3 -> v4)", () => {
     expect(invoice.documentType).toBe("invoice");
   });
 
+  it("keeps a type already in data with no version", () => {
+    const quote = applyDocumentType(createBlankInvoice(), "quote");
+
+    expect(migrateInvoiceData(quote, 0).documentType).toBe("quote");
+  });
+
   it("reads data with no version at all as an invoice", () => {
     expect(migrateInvoiceData({}, 0).documentType).toBe("invoice");
   });

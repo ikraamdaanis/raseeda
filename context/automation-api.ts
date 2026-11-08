@@ -1,4 +1,4 @@
-import { pick } from "lodash-es";
+import { isUndefined, omitBy, pick } from "lodash-es";
 import { APP_NAME } from "~/consts/app";
 import { documentActions } from "~/context/document-session";
 import { createInvoice, getAllInvoices, getInvoice } from "~/db";
@@ -12,10 +12,10 @@ import {
   INVOICE_DATA_KEYS,
   selectInvoiceData
 } from "~/stores/invoice-selectors";
-import { createBlankInvoice, useInvoiceStore } from "~/stores/invoice-store";
+import { createBlankDocument, useInvoiceStore } from "~/stores/invoice-store";
 import type { InvoiceDocument } from "~/types";
 import { buildPdf } from "~/utils/build-pdf";
-import { applyDocumentType, readDocumentType } from "~/utils/document-type";
+import { readDocumentType } from "~/utils/document-type";
 import { ensureRowIds } from "~/utils/ensure-row-ids";
 import { executeImport, parseExportText } from "~/utils/import-data";
 import {
@@ -120,12 +120,13 @@ const api = {
       throw new TypeError("Invoice data must be an object");
     }
 
-    const known = pick(data, INVOICE_DATA_KEYS);
+    // A key given as undefined counts as left out, as it would in JSON.
+    const known = omitBy(pick(data, INVOICE_DATA_KEYS), isUndefined);
     // A blank of the type asked for, so a quote left without a title or
     // labels takes the quote's.
-    const blank = applyDocumentType(
-      createBlankInvoice(STORED_INVOICE_FORMATS),
-      readDocumentType(Reflect.get(data, "documentType"))
+    const blank = createBlankDocument(
+      readDocumentType(Reflect.get(data, "documentType")),
+      STORED_INVOICE_FORMATS
     );
     // Labels given are laid over the type's, so `labels: { total }` on a
     // receipt keeps its "Date paid".
@@ -134,7 +135,7 @@ const api = {
       typeof givenLabels === "object" &&
       givenLabels !== null &&
       !Array.isArray(givenLabels)
-        ? { ...blank.labels, ...givenLabels }
+        ? { ...blank.labels, ...omitBy(givenLabels, isUndefined) }
         : blank.labels;
     const invoiceData = ensureRowIds(
       migrateInvoiceData(

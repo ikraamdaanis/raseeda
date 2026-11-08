@@ -12,10 +12,13 @@ export const DOCUMENT_TYPE_NAMES = {
 
 // The title and labels that differ between document types (issue #132). Every
 // other label is the same whatever the type. Each is only a default: renamed,
-// it stays as typed when the type changes.
+// it stays as typed when the type changes. `dueDays` is how far after its
+// issue date a new blank's due date starts: a receipt's reads "Date paid", so
+// it starts on the day. Changing the type never moves a date.
 export const DOCUMENT_TYPE_DEFAULTS = {
   invoice: {
     title: "Invoice",
+    dueDays: 30,
     labels: {
       invoiceNumber: "Invoice No.",
       paymentDue: "Due date",
@@ -24,6 +27,7 @@ export const DOCUMENT_TYPE_DEFAULTS = {
   },
   quote: {
     title: "Quote",
+    dueDays: 30,
     labels: {
       invoiceNumber: "Quote No.",
       paymentDue: "Valid until",
@@ -32,6 +36,7 @@ export const DOCUMENT_TYPE_DEFAULTS = {
   },
   "proforma-invoice": {
     title: "Proforma invoice",
+    dueDays: 30,
     labels: {
       invoiceNumber: "Proforma No.",
       paymentDue: "Due date",
@@ -40,6 +45,7 @@ export const DOCUMENT_TYPE_DEFAULTS = {
   },
   receipt: {
     title: "Receipt",
+    dueDays: 0,
     labels: {
       invoiceNumber: "Receipt No.",
       paymentDue: "Date paid",
@@ -48,6 +54,7 @@ export const DOCUMENT_TYPE_DEFAULTS = {
   },
   "credit-note": {
     title: "Credit note",
+    dueDays: 30,
     labels: {
       invoiceNumber: "Credit note No.",
       paymentDue: "Due date",
@@ -58,6 +65,7 @@ export const DOCUMENT_TYPE_DEFAULTS = {
   DocumentType,
   {
     title: string;
+    dueDays: number;
     labels: { invoiceNumber: string; paymentDue: string; total: string };
   }
 >;

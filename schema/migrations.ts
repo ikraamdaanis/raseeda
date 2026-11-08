@@ -103,9 +103,10 @@ function migrateV2ToV3(raw: Record<string, unknown>): Record<string, unknown> {
 }
 
 // v3 -> v4: document types (issue #132). Everything stored before them is an
-// invoice, labels and all.
+// invoice, labels and all. A type already there (hand-made data with no
+// version reads as v0) is kept.
 function migrateV3ToV4(raw: Record<string, unknown>): Record<string, unknown> {
-  return { ...raw, documentType: "invoice" };
+  return { documentType: "invoice", ...raw };
 }
 
 const migrations: {

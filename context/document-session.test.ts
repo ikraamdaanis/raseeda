@@ -872,6 +872,20 @@ describe("starting in a font", () => {
     ]);
   });
 
+  it("starts an invoice rather than restyling an untouched blank quote", async () => {
+    const page = await loadPage();
+
+    await page.newDocument("quote");
+
+    const quoteId = page.documentState().documentId;
+
+    await page.startInFont("lora");
+
+    expect(page.documentState().documentId).not.toBe(quoteId);
+    expect(page.invoice().documentType).toBe("invoice");
+    expect(page.invoice().theme.font).toBe("lora");
+  });
+
   it("sets an untouched blank in the font rather than replacing it", async () => {
     const page = await loadPage();
     const blankId = page.documentState().documentId;

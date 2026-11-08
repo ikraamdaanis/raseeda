@@ -38,7 +38,11 @@ import {
   selectInvoiceData
 } from "~/stores/invoice-selectors";
 import type { InvoiceStore } from "~/stores/invoice-store";
-import { createBlankInvoice, useInvoiceStore } from "~/stores/invoice-store";
+import {
+  createBlankDocument,
+  createBlankInvoice,
+  useInvoiceStore
+} from "~/stores/invoice-store";
 import type {
   DocumentType,
   Invoice,
@@ -49,7 +53,6 @@ import type {
   InvoiceVersion,
   InvoiceVersionReason
 } from "~/types";
-import { applyDocumentType } from "~/utils/document-type";
 import { ensureRowIds } from "~/utils/ensure-row-ids";
 import { downloadBackupFile } from "~/utils/export-data";
 import { isBlankInvoice, isLargeRemoval } from "~/utils/invoice-content";
@@ -931,7 +934,7 @@ function newDocument(documentType: DocumentType): Promise<void> {
   return enqueue(async () => {
     if (!(await leaveCurrent())) return;
 
-    const blank = applyDocumentType(createBlankInvoice(), documentType);
+    const blank = createBlankDocument(documentType);
 
     await switchTo(newSession(blank), blank);
   });
@@ -1313,15 +1316,17 @@ function applyStartingFont(font: InvoiceFont): void {
 }
 
 // Starts a new invoice in a font, as the template gallery's links do, leaving
-// the open one in the library. An untouched blank takes the font instead, so
-// following a link twice never leaves a spare blank behind; one started from
-// a saved template isn't blank, so it's replaced.
+// the open one in the library. An untouched blank invoice takes the font
+// instead, so following a link twice never leaves a spare blank behind; one
+// started from a saved template isn't blank, so it's replaced, and neither is
+// a blank quote or receipt, since the link asked for an invoice.
 function startInFont(font: InvoiceFont): Promise<void> {
   return enqueue(async () => {
     if (
       current &&
       !current.disposed &&
       current.templateId === null &&
+      liveContent().documentType === "invoice" &&
       isUntouchedBlank(current)
     ) {
       applyStartingFont(font);

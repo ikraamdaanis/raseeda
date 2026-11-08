@@ -8,11 +8,13 @@ import {
   TooltipTrigger
 } from "~/components/ui/tooltip";
 import { formatCurrency } from "~/consts/currencies";
+import { DOCUMENT_TYPE_DEFAULTS } from "~/consts/document-types";
 import { useCurrencyConversion } from "~/hooks/use-currency-conversion";
 import { useIsPreview, useShownSections } from "~/hooks/use-shown-sections";
 import { cn } from "~/lib/utils";
 import {
   useConvertedTotals,
+  useDocumentType,
   useInvoiceTotals,
   useMoneyFormat,
   usePricingSlice,
@@ -676,6 +678,7 @@ function DiscountsRow() {
 // counts while its row is switched on, as in the PDF.
 function TotalRow() {
   const { currencyCode, amountPaid, labels, setLabels } = usePricingSlice();
+  const documentType = useDocumentType();
   const money = useMoneyFormat();
   const { total } = useInvoiceTotals();
   const converted = useConvertedTotals();
@@ -699,7 +702,7 @@ function TotalRow() {
         onChange={value => setLabels(prev => ({ ...prev, total: value }))}
         className="field-sizing-content w-full"
         style={getTextStyles({ settings: labelSettings })}
-        placeholder="Total"
+        placeholder={DOCUMENT_TYPE_DEFAULTS[documentType].labels.total}
       />
       <span
         data-testid="total-value"

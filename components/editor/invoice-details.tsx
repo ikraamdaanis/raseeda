@@ -1,24 +1,35 @@
 import { InvoiceDateField } from "~/components/editor/invoice-date-field";
 import { InvoiceInput } from "~/components/editor/invoice-input";
+import { DOCUMENT_TYPE_DEFAULTS } from "~/consts/document-types";
 import { useShownSections } from "~/hooks/use-shown-sections";
-import { useDetailsSlice, useTheme } from "~/stores/invoice-selectors";
-import type { InvoiceDetailRow } from "~/types";
+import {
+  useDetailsSlice,
+  useDocumentType,
+  useTheme
+} from "~/stores/invoice-selectors";
+import type { DocumentType, InvoiceDetailRow } from "~/types";
 import { buildDetailRows } from "~/utils/build-invoice-view-model";
 import { formatServicePeriod } from "~/utils/format-invoice-date";
 import { getRoleSettings } from "~/utils/get-role-settings";
 import { getTextStyles } from "~/utils/get-text-styles";
 import { dueDateForNewInvoiceDate } from "~/utils/payment-terms";
 
-function buildDetailPlaceholders(): Record<
-  InvoiceDetailRow["id"],
-  { label: string; value: string }
-> {
+// The number and due date are named for the document's type, so an emptied
+// "Valid until" on a quote suggests that, not "Due date".
+function buildDetailPlaceholders(
+  documentType: DocumentType
+): Record<InvoiceDetailRow["id"], { label: string; value: string }> {
+  const { labels } = DOCUMENT_TYPE_DEFAULTS[documentType];
+
   return {
-    number: { label: "Invoice No.", value: "########" },
+    number: { label: labels.invoiceNumber, value: "########" },
     poNumber: { label: "PO number", value: "Add a PO / reference" },
     invoiceDate: { label: "Date", value: "Pick a date" },
     supplyDate: { label: "Date of supply", value: "Pick the supply date" },
-    dueDate: { label: "Due date", value: "Pick a due date" },
+    dueDate: {
+      label: labels.paymentDue,
+      value: documentType === "invoice" ? "Pick a due date" : "Pick a date"
+    },
     servicePeriod: { label: "Service period", value: "Pick the period" }
   };
 }
@@ -35,7 +46,8 @@ export function InvoiceDetails() {
     labels
   } = useDetailsSlice();
   const sections = useShownSections();
-  const placeholders = buildDetailPlaceholders();
+  const documentType = useDocumentType();
+  const placeholders = buildDetailPlaceholders(documentType);
   const rows = buildDetailRows({
     labels,
     number,

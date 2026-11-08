@@ -382,7 +382,7 @@ export function useCurrencySlice() {
   );
 }
 
-// The invoice's paper size, for the inspector's Paper row.
+// The document's type, for the inspector's Type row.
 export function useDocumentTypeSlice() {
   return useInvoiceStore(
     useShallow(state => ({
@@ -396,6 +396,7 @@ export function useDocumentType() {
   return useInvoiceStore(state => state.documentType);
 }
 
+// The invoice's paper size, for the inspector's Paper row.
 export function usePaperSizeSlice() {
   return useInvoiceStore(
     useShallow(state => ({

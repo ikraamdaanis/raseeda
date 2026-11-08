@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { DOCUMENT_TYPE_DEFAULTS } from "~/consts/document-types";
 import { DOCUMENT_TYPES } from "~/schema/invoice";
-import { createBlankInvoice } from "~/stores/invoice-store";
+import {
+  createBlankDocument,
+  createBlankInvoice
+} from "~/stores/invoice-store";
 import type { DocumentType, Invoice } from "~/types";
 import { applyDocumentType, readDocumentType } from "~/utils/document-type";
 
@@ -132,5 +135,21 @@ describe("readDocumentType", () => {
     expect(readDocumentType("Credit note")).toBe("invoice");
     expect(readDocumentType(undefined)).toBe("invoice");
     expect(readDocumentType(3)).toBe("invoice");
+  });
+});
+
+describe("createBlankDocument", () => {
+  it("starts a receipt's date paid on its issue date", () => {
+    const receipt = createBlankDocument("receipt");
+
+    expect(receipt.labels.paymentDue).toBe("Date paid");
+    expect(receipt.dueDate).toBe(receipt.invoiceDate);
+  });
+
+  it("gives the other types 30 days, as an invoice has", () => {
+    const quote = createBlankDocument("quote");
+
+    expect(quote.dueDate).toBe(createBlankInvoice().dueDate);
+    expect(quote.title).toBe("Quote");
   });
 });
