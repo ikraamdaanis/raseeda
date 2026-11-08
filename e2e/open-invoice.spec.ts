@@ -67,6 +67,30 @@ test("a library of invoices and quotes narrows to quotes only", async ({
   await expect(alpha).toBeHidden();
 });
 
+test("an all-invoice library shows no document types", async ({ page }) => {
+  await gotoEditorReady(page, "Alpha title");
+  await nameInvoice(page, "Alpha");
+
+  const panel = page.getByRole("complementary", { name: "Invoices" });
+
+  // The meta line starts with the number, as before types were shown.
+  await expect(panel.getByRole("button", { name: /^Alpha/ })).toContainText(
+    /\$0\.00No\. INV-0001 · Edited/
+  );
+
+  await clickFileMenuItem(page, "Open Invoice");
+
+  const dialog = page.getByRole("dialog", { name: "Open Invoice" });
+  const alpha = dialog.getByRole("row", { name: /Alpha/ });
+
+  await expect(alpha).toBeVisible();
+  await expect(alpha).not.toContainText("Invoice");
+
+  await dialog.getByRole("button", { name: "View options" }).click();
+  await expect(page.locator("#library-date")).toBeVisible();
+  await expect(page.locator("#library-type")).toHaveCount(0);
+});
+
 test("deleting the current invoice starts a new one [R]", async ({ page }) => {
   await gotoEditorReady(page, "Solo title");
   await nameInvoice(page, "Solo doc");

@@ -39,8 +39,8 @@ const fieldClassName =
 
 // Sort, group and filter for a saved-invoice list, behind one button with a
 // badge counting the filters that are on. The Type and Currency filters only
-// show once the library holds more than one, or one is chosen. Grouping is optional, for lists that
-// can't show groups (the Open Invoice table).
+// show once the library holds more than one, or one is chosen. Grouping is
+// optional, for lists that can't show groups (the Open Invoice table).
 export function LibraryViewOptions({
   view,
   onViewChange,
