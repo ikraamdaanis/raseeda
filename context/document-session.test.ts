@@ -1361,7 +1361,7 @@ describe("after another tab upgrades the database", () => {
     expect(browser.stash()).toBeNull();
   });
 
-  it("keeps the stash of a failed write when deleted elsewhere", async () => {
+  async function loadFailedWriteDeletedElsewhere() {
     const failWrites: { current: Error | null } = { current: null };
     const { browser, page } = await loadStoredInvoice({ failWrites });
 
@@ -1374,8 +1374,52 @@ describe("after another tab upgrades the database", () => {
     await page.db.invoices.delete("stored");
     await settle(0);
 
+    return { browser, page };
+  }
+
+  it("keeps the stash of a failed write when deleted elsewhere", async () => {
+    const { browser, page } = await loadFailedWriteDeletedElsewhere();
+
     expect(page.documentState().status).toBe("deleted");
     expect(browser.stash()).not.toBeNull();
+  });
+
+  it("clears that stash once the deleted invoice is kept as a copy", async () => {
+    const { browser, page } = await loadFailedWriteDeletedElsewhere();
+
+    await page.keepDeletedCopy();
+
+    expect(browser.stash()).toBeNull();
+  });
+
+  it("keeps what it shows when a late blur changes the invoice", async () => {
+    const { page } = await loadStoredInvoice();
+
+    page.edit().setTitle("Typed");
+    await settle();
+    upgradeElsewhere(page);
+    page.edit().setTax(tax => ({ ...tax, percentage: 12 }));
+    await settle();
+
+    expect(page.invoice().title).toBe("Typed");
+  });
+
+  it("keeps the stash when a late blur follows a failed write", async () => {
+    const failWrites: { current: Error | null } = { current: null };
+    const { browser, page } = await loadStoredInvoice({ failWrites });
+
+    failWrites.current = new DOMException("Full", "QuotaExceededError");
+    page.edit().setTitle("Typed");
+    await settle();
+    upgradeElsewhere(page);
+    page.edit().setTax(tax => ({ ...tax, percentage: 12 }));
+    await settle();
+    browser.hidePage();
+    failWrites.current = null;
+
+    const reloaded = await reload(page);
+
+    expect(reloaded.invoice().title).toBe("Typed");
   });
 
   it("keeps asking for a reload when the editor comes back", async () => {

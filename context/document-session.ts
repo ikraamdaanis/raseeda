@@ -1282,6 +1282,7 @@ function keepDeletedCopy(): Promise<void> {
     const content = liveContent();
     const name = session.nameSource === "user" ? session.name : "";
 
+    clearStash(session.id);
     dispose(session);
 
     const copy = newSession(content, { pristine: false });
@@ -1513,6 +1514,7 @@ function onUpgradeElsewhere() {
   session.controller.stop();
   session.stopWaitingForLock?.();
   session.status = "reloadRequired";
+  session.shownContent = liveContent();
   publish(session);
 }
 
