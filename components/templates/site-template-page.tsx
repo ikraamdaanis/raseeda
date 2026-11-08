@@ -151,7 +151,7 @@ function TemplateLink({
     <Link
       to={to}
       className={cn(
-        "hover:text-brand-600 w-fit rounded-sm font-medium",
+        "hover:text-brand-600 inline-flex min-h-11 w-fit items-center rounded-sm font-medium sm:min-h-9",
         typeClass("body"),
         FOCUS_RING
       )}

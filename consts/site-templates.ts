@@ -161,7 +161,7 @@ export const SITE_TEMPLATES = [
       "Discounts and a delivery fee"
     ],
     src: "/templates/retail-template.webp",
-    alt: "A retail invoice from Greengage Grocers in Cardiff to The Copper Kettle, with a different tax rate on each line of goods"
+    alt: "A retail invoice from Greengage Grocers in Cardiff to The Copper Kettle, with tax rates of 20%, 5% and 0% across its lines of goods"
   }
 ] as const satisfies readonly {
   id: SiteTemplateId;
