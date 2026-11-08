@@ -30,8 +30,9 @@ async function closePages() {
 // The session is module state (one open invoice per page), so every test
 // loads a fresh copy of it, as a page load would, over a fresh database.
 async function loadPage({
-  failWrites
-}: { failWrites?: { current: Error | null } } = {}) {
+  failWrites,
+  attachEditor = true
+}: { failWrites?: { current: Error | null }; attachEditor?: boolean } = {}) {
   vi.resetModules();
 
   const database = await import("~/db");
@@ -65,7 +66,9 @@ async function loadPage({
   const history = await import("~/stores/invoice-history");
 
   await session.hydrateDocument();
-  await session.attachEditor();
+
+  if (attachEditor) await session.attachEditor();
+
   openPages.push({ detachEditor: session.detachEditor, db: database.db });
 
   return {
@@ -1040,6 +1043,20 @@ describe("starting from a site template", () => {
     expect(await page.getAllInvoices()).toEqual([]);
   });
 
+  it("starts a new invoice rather than restyling an untouched trade template", async () => {
+    const page = await loadPage();
+
+    await page.startSiteTemplate("contractor");
+
+    const templateDocumentId = page.documentState().documentId;
+
+    await page.startInFont("lora");
+
+    expect(page.documentState().documentId).not.toBe(templateDocumentId);
+    expect(page.invoice().theme.font).toBe("lora");
+    expect(page.invoice().shipping.label).toBe(invoiceDefault.shipping.label);
+  });
+
   it("keeps the invoice under way in the library", async () => {
     const page = await loadPage();
 
@@ -1055,5 +1072,86 @@ describe("starting from a site template", () => {
     expect(await page.getAllInvoices()).toMatchObject([
       { id: previousId, invoiceData: { title: "Half-finished invoice" } }
     ]);
+  });
+});
+
+describe("starting from a link before the editor has attached", () => {
+  beforeEach(async () => {
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout", "Date"] });
+    await Dexie.delete("InvoiceDatabase");
+  });
+
+  afterEach(async () => {
+    await closePages();
+    vi.unstubAllGlobals();
+    vi.useRealTimers();
+  });
+
+  function memoryStorage(entries: Record<string, string> = {}) {
+    const items = new Map(Object.entries(entries));
+
+    return {
+      getItem: (key: string) => items.get(key) ?? null,
+      setItem: (key: string, value: string) => void items.set(key, value),
+      removeItem: (key: string) => void items.delete(key)
+    };
+  }
+
+  // The last open invoice has edits stashed at page exit that never reached
+  // the database. A start link's effect runs before the provider's attach, so
+  // this page is left unattached, as the link finds it.
+  async function loadPageWithStashedEdits() {
+    const earlierPage = await loadPage();
+
+    await earlierPage.createInvoice(
+      storedInvoice({
+        invoiceData: { ...structuredClone(invoiceDefault), title: "Stored" }
+      })
+    );
+    await earlierPage.setLastOpenedInvoiceId("stored");
+
+    const stash = {
+      rev: 1,
+      writingRev: 2,
+      isRecord: true,
+      name: "Stored invoice",
+      nameSource: "user",
+      templateId: null,
+      invoiceData: { ...structuredClone(invoiceDefault), title: "Typed" }
+    };
+
+    vi.stubGlobal("window", {
+      sessionStorage: memoryStorage(),
+      localStorage: memoryStorage({ "unsaved:stored": JSON.stringify(stash) }),
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn()
+    });
+    vi.stubGlobal("document", {
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      visibilityState: "visible"
+    });
+
+    return loadPage({ attachEditor: false });
+  }
+
+  it("keeps stashed edits when a site template starts", async () => {
+    const page = await loadPageWithStashedEdits();
+
+    await page.startSiteTemplate("receipt");
+    await settle();
+
+    expect(page.invoice().documentType).toBe("receipt");
+    expect((await page.getInvoice("stored"))?.invoiceData.title).toBe("Typed");
+  });
+
+  it("keeps stashed edits when a font link starts a new invoice", async () => {
+    const page = await loadPageWithStashedEdits();
+
+    await page.startInFont("lora");
+    await settle();
+
+    expect(page.invoice().theme.font).toBe("lora");
+    expect((await page.getInvoice("stored"))?.invoiceData.title).toBe("Typed");
   });
 });

@@ -41,6 +41,7 @@ import type { InvoiceStore } from "~/stores/invoice-store";
 import {
   createBlankDocument,
   createBlankInvoice,
+  invoiceDefault,
   useInvoiceStore
 } from "~/stores/invoice-store";
 import type {
@@ -853,6 +854,11 @@ async function leaveCurrent(): Promise<boolean> {
 
   if (!session) return true;
 
+  // A start link's effect runs before the editor attaches. Attaching first
+  // brings back edits stashed at page exit, so they're written rather than
+  // cleared below, and takes the lock another tab may be editing under.
+  await attach(session);
+
   if (session.status === "reloadRequired") {
     toast.error("Reload the page to open another invoice", {
       description: `${APP_NAME} was updated in another tab.`
@@ -1351,11 +1357,20 @@ function applyStartingFont(font: InvoiceFont): void {
   session.shownContent = session.pristine;
 }
 
+// A blank invoice, whatever font an earlier link gave it.
+function isBlankInAnyFont(invoice: Invoice) {
+  return isBlankInvoice({
+    ...invoice,
+    theme: { ...invoice.theme, font: invoiceDefault.theme.font }
+  });
+}
+
 // Starts a new invoice in a font, as the template gallery's links do, leaving
 // the open one in the library. An untouched blank invoice takes the font
 // instead, so following a link twice never leaves a spare blank behind; one
-// started from a saved template isn't blank, so it's replaced, and neither is
-// a blank quote or receipt, since the link asked for an invoice.
+// started from a saved template or a trade's page isn't blank, so it's
+// replaced, and neither is a blank quote or receipt, since the link asked for
+// an invoice.
 function startInFont(font: InvoiceFont): Promise<void> {
   return enqueue(async () => {
     if (
@@ -1363,6 +1378,7 @@ function startInFont(font: InvoiceFont): Promise<void> {
       !current.disposed &&
       current.templateId === null &&
       liveContent().documentType === "invoice" &&
+      isBlankInAnyFont(liveContent()) &&
       isUntouchedBlank(current)
     ) {
       applyStartingFont(font);

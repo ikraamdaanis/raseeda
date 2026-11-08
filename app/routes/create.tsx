@@ -137,7 +137,7 @@ function StartingFont() {
 }
 
 // Starts a site template page's document once hydration has settled, then
-// clears the param so a reload keeps what's open rather than starting over.
+// clears the param so a reload doesn't start it again.
 function StartingTemplate() {
   const { template } = Route.useSearch();
   const navigate = useNavigate();
