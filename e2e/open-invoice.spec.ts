@@ -6,7 +6,8 @@ import {
   gotoEditorReady,
   gotoEditorSettled,
   invoiceNameField,
-  nameInvoice
+  nameInvoice,
+  openFileMenu
 } from "./helpers";
 
 // Group H: the Open Invoice dialog.
@@ -37,6 +38,33 @@ test("lists a saved invoice and opens it into the editor", async ({ page }) => {
 
   await expect(invoiceNameField(page)).toHaveValue("Alpha");
   await expect(page.getByLabel("Invoice title")).toHaveValue("Alpha title");
+});
+
+test("a library of invoices and quotes narrows to quotes only", async ({
+  page
+}) => {
+  await gotoEditorReady(page, "Alpha title");
+  await nameInvoice(page, "Alpha");
+  await openFileMenu(page);
+  await page.getByRole("menuitem", { name: "New Document" }).hover();
+  await page.getByRole("menuitem", { name: "Quote", exact: true }).click();
+  await expect(page.getByLabel("Invoice title")).toHaveValue("Quote");
+  await nameInvoice(page, "Beta");
+
+  await clickFileMenuItem(page, "Open Invoice");
+
+  const dialog = page.getByRole("dialog", { name: "Open Invoice" });
+  const alpha = dialog.getByRole("row", { name: /Alpha/ });
+  const beta = dialog.getByRole("row", { name: /Beta/ });
+
+  await expect(beta).toContainText("Quote");
+  await expect(alpha).not.toContainText("Quote");
+
+  await dialog.getByRole("button", { name: "View options" }).click();
+  await page.locator("#library-type").selectOption({ label: "Quote" });
+
+  await expect(beta).toBeVisible();
+  await expect(alpha).toBeHidden();
 });
 
 test("deleting the current invoice starts a new one [R]", async ({ page }) => {

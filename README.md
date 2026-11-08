@@ -9,7 +9,7 @@ raseeda makes the document and stops there: it isn't an invoice tracker, CRM or 
 ## Features
 
 - Create invoices with seller and client details, line items, tax, fees, discounts, and terms
-- Make quotes, proforma invoices, receipts and credit notes too, each with its own title, labels ("Valid until", "Date paid", "Total credit"), all renameable, and closing rows: a quote ends on its total, a receipt shows its total as paid, and a credit note names the invoice it refers to
+- Make quotes, proforma invoices, receipts and credit notes too, each with its own title, labels ("Valid until", "Date paid", "Total credit"), all renameable, and closing rows: a quote ends on its total, a receipt shows its total as paid, and a credit note names the invoice it refers to. Duplicate any of them as another type (a quote as an invoice), and find each type in the library by its filter or its name
 - Payment details section: bank name, account and routing numbers, IBAN, BIC / SWIFT and sort code, each under a label you can rename ("BSB", "IFSC", "CLABE"), other ways to pay such as PayPal, Venmo, Pix or UPI, and payment notes
 - Set the whole invoice in any of eleven fonts, with your choice of size and weight
 - Pick an accent colour for the title, section headings, table header and total, and a colour for the rest of the text

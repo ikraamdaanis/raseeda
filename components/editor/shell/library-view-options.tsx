@@ -14,6 +14,7 @@ import {
 } from "~/components/ui/popover";
 import { NativeSelect } from "~/components/ui/select";
 import { getCurrencyMarker } from "~/consts/currencies";
+import { DOCUMENT_TYPE_NAMES } from "~/consts/document-types";
 import { cn } from "~/lib/utils";
 import type { InvoiceDocument, InvoiceFont, InvoiceLibraryView } from "~/types";
 import {
@@ -23,7 +24,8 @@ import {
   LIBRARY_GROUPS,
   LIBRARY_SORTS,
   listClients,
-  listCurrencies
+  listCurrencies,
+  listDocumentTypes
 } from "~/utils/invoice-library";
 
 // The currency filter is a native select, drawn in the system's font, which
@@ -36,7 +38,8 @@ const fieldClassName =
   "bg-muted dark:bg-muted dark:hover:bg-muted hover:border-input focus-visible:border-ring text-foreground h-8 w-full min-w-0 rounded-md border border-transparent pr-7 pl-2 text-[13px] outline-none";
 
 // Sort, group and filter for a saved-invoice list, behind one button with a
-// badge counting the filters that are on. Grouping is optional, for lists that
+// badge counting the filters that are on. The Type and Currency filters only
+// show once the library holds more than one, or one is chosen. Grouping is optional, for lists that
 // can't show groups (the Open Invoice table).
 export function LibraryViewOptions({
   view,
@@ -60,6 +63,10 @@ export function LibraryViewOptions({
   // what it is set to and can be cleared.
   const clients = withChosen(listClients(invoices), view.client);
   const currencies = withChosen(listCurrencies(invoices), view.currency);
+  const documentTypes = withChosen(
+    listDocumentTypes(invoices),
+    view.documentType
+  );
   const defaultView = showGroup
     ? DEFAULT_LIBRARY_VIEW
     : { ...DEFAULT_LIBRARY_VIEW, group: view.group };
@@ -151,6 +158,30 @@ export function LibraryViewOptions({
           </OptionGroup>
         )}
         <div className="border-border -mx-3 border-t" />
+        {(documentTypes.length > 1 || view.documentType !== null) && (
+          <OptionGroup label="Type" htmlFor="library-type">
+            <NativeSelect
+              id="library-type"
+              value={view.documentType ?? ""}
+              onChange={event =>
+                update({
+                  documentType:
+                    documentTypes.find(
+                      documentType => documentType === event.target.value
+                    ) ?? null
+                })
+              }
+              className={fieldClassName}
+            >
+              <option value="">Any type</option>
+              {documentTypes.map(documentType => (
+                <option key={documentType} value={documentType}>
+                  {DOCUMENT_TYPE_NAMES[documentType]}
+                </option>
+              ))}
+            </NativeSelect>
+          </OptionGroup>
+        )}
         <OptionGroup label="Invoice date" htmlFor="library-date">
           <NativeSelect
             id="library-date"
@@ -245,7 +276,10 @@ function OptionGroup({
   );
 }
 
-function withChosen(options: string[], chosen: string | null) {
+function withChosen<TOption extends string>(
+  options: TOption[],
+  chosen: TOption | null
+) {
   return chosen !== null && !options.includes(chosen)
     ? [chosen, ...options]
     : options;

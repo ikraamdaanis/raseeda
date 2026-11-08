@@ -12,7 +12,10 @@ import {
   subYears
 } from "date-fns";
 import { normalizeCurrency } from "~/consts/currencies";
+import { DOCUMENT_TYPE_NAMES } from "~/consts/document-types";
+import { DOCUMENT_TYPES } from "~/schema/invoice";
 import type {
+  DocumentType,
   InvoiceDocument,
   InvoiceLibraryDateRange,
   InvoiceLibraryGroup,
@@ -35,7 +38,8 @@ export const DEFAULT_LIBRARY_VIEW: InvoiceLibraryView = {
   group: "client",
   dateRange: "all",
   client: null,
-  currency: null
+  currency: null,
+  documentType: null
 };
 
 export const LIBRARY_SORTS: {
@@ -160,8 +164,9 @@ function inDateRange(
   }
 }
 
-// Search matches the name, client, invoice and PO numbers, line items and the
-// "To" block, case-insensitively; every word typed has to match somewhere.
+// Search matches the name, client, invoice and PO numbers, line items, the
+// "To" block and the document's type ("quote"), case-insensitively; every
+// word typed has to match somewhere.
 function matchesSearch(document: InvoiceDocument, query: string): boolean {
   const words = query.toLowerCase().split(/\s+/).filter(Boolean);
 
@@ -173,6 +178,7 @@ function matchesSearch(document: InvoiceDocument, query: string): boolean {
     invoiceData.client.content,
     invoiceData.number,
     invoiceData.poNumber,
+    DOCUMENT_TYPE_NAMES[invoiceData.documentType],
     ...invoiceData.items.map(item => item.description)
   ]
     .join(" ")
@@ -191,7 +197,9 @@ export function filterInvoices(
       inDateRange(getInvoiceDate(document), view.dateRange, now) &&
       (view.client === null || getClientName(document) === view.client) &&
       (view.currency === null ||
-        normalizeCurrency(document.invoiceData.currency) === view.currency)
+        normalizeCurrency(document.invoiceData.currency) === view.currency) &&
+      (view.documentType === null ||
+        document.invoiceData.documentType === view.documentType)
   );
 }
 
@@ -322,11 +330,23 @@ export function listCurrencies(documents: InvoiceDocument[]): string[] {
   ].sort((a, b) => textCollator.compare(a, b));
 }
 
+// The types the library holds, in the order the New menu lists them.
+export function listDocumentTypes(
+  documents: InvoiceDocument[]
+): DocumentType[] {
+  const held = new Set(
+    documents.map(document => document.invoiceData.documentType)
+  );
+
+  return DOCUMENT_TYPES.filter(documentType => held.has(documentType));
+}
+
 export function countActiveFilters(view: InvoiceLibraryView): number {
   return [
     view.dateRange !== "all",
     view.client !== null,
-    view.currency !== null
+    view.currency !== null,
+    view.documentType !== null
   ].filter(Boolean).length;
 }
 
@@ -361,6 +381,10 @@ export function parseLibraryView(
       DEFAULT_LIBRARY_VIEW.dateRange
     ),
     client: typeof record.client === "string" ? record.client : null,
-    currency: typeof record.currency === "string" ? record.currency : null
+    currency: typeof record.currency === "string" ? record.currency : null,
+    documentType:
+      DOCUMENT_TYPES.find(
+        documentType => documentType === record.documentType
+      ) ?? null
   };
 }

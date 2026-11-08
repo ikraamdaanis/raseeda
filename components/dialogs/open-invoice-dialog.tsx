@@ -119,7 +119,13 @@ export function OpenInvoiceDialog({
 
   function clearFilters() {
     setQuery("");
-    setView({ ...view, dateRange: "all", client: null, currency: null });
+    setView({
+      ...view,
+      dateRange: "all",
+      client: null,
+      currency: null,
+      documentType: null
+    });
   }
 
   useEffect(() => {

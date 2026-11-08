@@ -16,6 +16,7 @@ import {
   ContextMenuTrigger
 } from "~/components/ui/context-menu";
 import { formatCurrency, getMoneyFormat } from "~/consts/currencies";
+import { DOCUMENT_TYPE_NAMES } from "~/consts/document-types";
 import { cn } from "~/lib/utils";
 import type {
   InvoiceDocument,
@@ -442,6 +443,12 @@ export function InvoiceListTable({
           const secondaryTextClass = isDeleting
             ? "text-destructive/70"
             : "text-muted-foreground";
+          // Only a document that isn't an invoice says what it is.
+          const { documentType } = invoice.invoiceData;
+          const typeName =
+            documentType === "invoice"
+              ? null
+              : DOCUMENT_TYPE_NAMES[documentType];
 
           return (
             <ContextMenu
@@ -522,6 +529,16 @@ export function InvoiceListTable({
                         <span className="min-w-0 truncate font-medium">
                           {invoice.name}
                         </span>
+                        {typeName && (
+                          <span
+                            className={cn(
+                              "shrink-0 text-xs",
+                              secondaryTextClass
+                            )}
+                          >
+                            {typeName}
+                          </span>
+                        )}
                         {isCurrent && (
                           <span
                             className={cn(

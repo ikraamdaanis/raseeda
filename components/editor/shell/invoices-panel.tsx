@@ -137,7 +137,8 @@ export function InvoicesPanel() {
               ...view,
               dateRange: "all",
               client: null,
-              currency: null
+              currency: null,
+              documentType: null
             });
           }}
         />
@@ -339,10 +340,11 @@ function InvoiceList({
   );
 }
 
-// The second line of a row: its number, then the date the sort is about (when
-// it's due for a due-date sort, when it was edited for the default sort).
+// The second line of a row: its type when it isn't an invoice, its number,
+// then the date the sort is about (when it's due for a due-date sort, when it
+// was edited for the default sort).
 function invoiceMeta(document: InvoiceDocument, view: InvoiceLibraryView) {
-  const { number, dueDate } = document.invoiceData;
+  const { documentType, number, dueDate } = document.invoiceData;
   const due = formatLibraryDate(readInvoiceDate(dueDate));
   const edited = formatLibraryDate(document.updatedAt);
   const date =
@@ -352,7 +354,13 @@ function invoiceMeta(document: InvoiceDocument, view: InvoiceLibraryView) {
         ? edited && `Edited ${edited}`
         : formatLibraryDate(getInvoiceDate(document));
 
-  return [number && `No. ${number}`, date].filter(Boolean).join(" · ");
+  return [
+    documentType !== "invoice" && DOCUMENT_TYPE_NAMES[documentType],
+    number && `No. ${number}`,
+    date
+  ]
+    .filter(Boolean)
+    .join(" · ");
 }
 
 function templateMeta(template: InvoiceTemplate) {

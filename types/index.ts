@@ -112,6 +112,8 @@ export type InvoiceLibraryView = {
   dateRange: InvoiceLibraryDateRange;
   client: string | null;
   currency: string | null;
+  // Only documents of this type (issue #135); null for every type.
+  documentType: DocumentType | null;
 };
 
 // The editor chrome's colour scheme. The preference is what the person chose

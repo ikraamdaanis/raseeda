@@ -2,10 +2,12 @@ import { describe, expect, it } from "vitest";
 import { createBlankInvoice } from "~/stores/invoice-store";
 import type { Invoice, InvoiceDocument } from "~/types";
 import {
+  countActiveFilters,
   DEFAULT_LIBRARY_VIEW,
   filterInvoices,
   groupInvoices,
   listClients,
+  listDocumentTypes,
   NO_CLIENT,
   parseLibraryView,
   sortInvoices
@@ -222,5 +224,91 @@ describe("invoice library", () => {
       parseLibraryView({ sort: "amount", group: "weekday", client: 4 })
     ).toEqual({ ...DEFAULT_LIBRARY_VIEW, sort: "amount" });
     expect(parseLibraryView("nonsense")).toBeUndefined();
+  });
+});
+
+describe("document types in the library", () => {
+  const mixed = [
+    ...documents,
+    makeDocument({
+      id: "q",
+      client: "Pembee Ltd",
+      invoiceDate: "2026-10-05",
+      price: 900,
+      number: "QUO-0001",
+      overrides: { documentType: "quote" }
+    }),
+    makeDocument({
+      id: "p",
+      client: "Notus GmbH",
+      invoiceDate: "2026-10-06",
+      price: 200,
+      number: "PRO-0001",
+      overrides: { documentType: "proforma-invoice" }
+    }),
+    makeDocument({
+      id: "n",
+      client: "Notus GmbH",
+      invoiceDate: "2026-10-07",
+      price: 100,
+      number: "CN-0001",
+      overrides: { documentType: "credit-note" }
+    })
+  ];
+
+  function filter(query: string, view: Partial<typeof DEFAULT_LIBRARY_VIEW>) {
+    return filterInvoices(mixed, {
+      query,
+      view: { ...DEFAULT_LIBRARY_VIEW, ...view },
+      now: NOW
+    }).map(entry => entry.id);
+  }
+
+  it("narrows the library to one type", () => {
+    expect(filter("", { documentType: "quote" })).toEqual(["q"]);
+    expect(filter("", { documentType: "invoice" })).toEqual([
+      "a",
+      "b",
+      "c",
+      "d"
+    ]);
+    expect(filter("", { documentType: null })).toHaveLength(mixed.length);
+  });
+
+  it("finds a document by its type's name", () => {
+    expect(filter("quote", {})).toEqual(["q"]);
+    expect(filter("Credit note", {})).toEqual(["n"]);
+    expect(filter("proforma notus", {})).toEqual(["p"]);
+    expect(filter("pembee quote", {})).toEqual(["q"]);
+  });
+
+  it("lists the types the library holds, in the order they're made", () => {
+    expect(listDocumentTypes(mixed)).toEqual([
+      "invoice",
+      "quote",
+      "proforma-invoice",
+      "credit-note"
+    ]);
+    expect(listDocumentTypes(documents)).toEqual(["invoice"]);
+  });
+
+  it("counts the type filter with the others", () => {
+    expect(countActiveFilters(DEFAULT_LIBRARY_VIEW)).toBe(0);
+    expect(
+      countActiveFilters({ ...DEFAULT_LIBRARY_VIEW, documentType: "quote" })
+    ).toBe(1);
+  });
+
+  it("reads a stored type, and any type from a view stored before it or a bad one", () => {
+    const { documentType: _documentType, ...before } = DEFAULT_LIBRARY_VIEW;
+
+    expect(DEFAULT_LIBRARY_VIEW.documentType).toBeNull();
+    expect(parseLibraryView(before)).toEqual(DEFAULT_LIBRARY_VIEW);
+    expect(
+      parseLibraryView({ ...DEFAULT_LIBRARY_VIEW, documentType: "receipt" })
+    ).toEqual({ ...DEFAULT_LIBRARY_VIEW, documentType: "receipt" });
+    expect(
+      parseLibraryView({ ...DEFAULT_LIBRARY_VIEW, documentType: "estimate" })
+    ).toEqual(DEFAULT_LIBRARY_VIEW);
   });
 });
