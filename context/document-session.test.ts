@@ -994,3 +994,66 @@ describe("starting in a font", () => {
     expect(await page.getAllInvoices()).toEqual([]);
   });
 });
+
+describe("starting from a site template", () => {
+  beforeEach(async () => {
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout", "Date"] });
+    await Dexie.delete("InvoiceDatabase");
+  });
+
+  afterEach(async () => {
+    await closePages();
+    vi.useRealTimers();
+  });
+
+  it("opens the template and saves nothing until it's edited", async () => {
+    const page = await loadPage();
+
+    await page.startSiteTemplate("contractor");
+    await settle(5000);
+
+    expect(page.invoice().shipping.label).toBe("Job site");
+    expect(page.documentState()).toMatchObject({ isRecord: false });
+    expect(await page.getAllInvoices()).toEqual([]);
+  });
+
+  it("joins the library on its first edit", async () => {
+    const page = await loadPage();
+
+    await page.startSiteTemplate("freelance");
+    page.edit().setNumber("HRS-1");
+    await settle();
+
+    expect(await page.getAllInvoices()).toMatchObject([
+      { templateId: null, invoiceData: { number: "HRS-1" } }
+    ]);
+    expect(page.documentState()).toMatchObject({ isRecord: true });
+  });
+
+  it("opens a document type's page as a blank of that type", async () => {
+    const page = await loadPage();
+
+    await page.startSiteTemplate("receipt");
+    await settle(5000);
+
+    expect(page.invoice().documentType).toBe("receipt");
+    expect(await page.getAllInvoices()).toEqual([]);
+  });
+
+  it("keeps the invoice under way in the library", async () => {
+    const page = await loadPage();
+
+    page.edit().setTitle("Half-finished invoice");
+    await settle();
+
+    const previousId = page.documentState().documentId;
+
+    await page.startSiteTemplate("retail");
+
+    expect(page.documentState().documentId).not.toBe(previousId);
+    expect(page.invoice().tax.perLine).toBe(true);
+    expect(await page.getAllInvoices()).toMatchObject([
+      { id: previousId, invoiceData: { title: "Half-finished invoice" } }
+    ]);
+  });
+});

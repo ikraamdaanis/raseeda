@@ -51,13 +51,15 @@ import type {
   InvoiceNameSource,
   InvoiceTemplate,
   InvoiceVersion,
-  InvoiceVersionReason
+  InvoiceVersionReason,
+  SiteTemplateId
 } from "~/types";
 import { ensureRowIds } from "~/utils/ensure-row-ids";
 import { downloadBackupFile } from "~/utils/export-data";
 import { isBlankInvoice, isLargeRemoval } from "~/utils/invoice-content";
 import { describeCopy, prepareInvoiceCopy } from "~/utils/invoice-copy";
 import { deriveInvoiceName } from "~/utils/invoice-name";
+import { createSiteTemplateInvoice } from "~/utils/site-template";
 import { trackInvoice } from "~/utils/track";
 
 // The editor session: which invoice is open, saving it as it's edited, and
@@ -957,6 +959,18 @@ function applyTemplate(template: InvoiceTemplate): Promise<void> {
   });
 }
 
+// Starts what a site template page offers: a new document that, like a blank,
+// joins the library once it's edited, leaving the open one in the library.
+function startSiteTemplate(id: SiteTemplateId): Promise<void> {
+  return enqueue(async () => {
+    if (!(await leaveCurrent())) return;
+
+    const content = createSiteTemplateInvoice(id);
+
+    await switchTo(newSession(content), content);
+  });
+}
+
 // "Name copy", or "Name copy 2" and so on when that's taken.
 function nextCopyName(name: string, takenNames: string[]) {
   const taken = new Set(takenNames.map(takenName => takenName.toLowerCase()));
@@ -1763,5 +1777,6 @@ export const documentActions = {
   dismissBackupReminder,
   dismissCopyReview,
   applyStartingFont,
-  startInFont
+  startInFont,
+  startSiteTemplate
 } as const;

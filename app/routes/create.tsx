@@ -9,21 +9,23 @@ import { toast } from "sonner";
 import { InvoiceEditor } from "~/components/editor/invoice-editor";
 import { APP_NAME } from "~/consts/app";
 import { INVOICE_FONTS } from "~/consts/invoice-fonts";
+import { SITE_TEMPLATES } from "~/consts/site-templates";
 import {
   InvoiceDocumentProvider,
   useInvoiceDocument
 } from "~/context/invoice-document-context";
 import { useApplyEditorTheme } from "~/hooks/use-editor-theme";
-import type { InvoiceFont } from "~/types";
+import type { InvoiceFont, SiteTemplateId } from "~/types";
 import { EDITOR_THEME_SCRIPT } from "~/utils/editor-theme";
 import { canonicalLink, PAGE_META, siteMeta } from "~/utils/site-meta";
 import { track } from "~/utils/track";
 
 // Optional hand-offs from the homepage and the template gallery: `font` sets
 // an untouched invoice in the face picked there (one already under way keeps
-// its own), `font` with `new` starts a new invoice in it, and `open=invoices`
-// opens the saved-invoice list. Anything unrecognised is dropped rather than
-// trusted.
+// its own), `font` with `new` starts a new invoice in it, `template` starts
+// what a site template page offers (a font beside it is dropped) and
+// `open=invoices` opens the saved-invoice list. Anything unrecognised is
+// dropped rather than trusted.
 export const Route = createFileRoute("/create")({
   component: RouteComponent,
   head: () => ({
@@ -44,11 +46,25 @@ export const Route = createFileRoute("/create")({
   }),
   validateSearch: (
     search: Record<string, unknown>
-  ): { font?: InvoiceFont; new?: true; open?: "invoices" } => ({
-    font: INVOICE_FONTS.find(definition => definition.id === search.font)?.id,
-    new: search.new === true ? true : undefined,
-    open: search.open === "invoices" ? "invoices" : undefined
-  })
+  ): {
+    font?: InvoiceFont;
+    new?: true;
+    open?: "invoices";
+    template?: SiteTemplateId;
+  } => {
+    const template = SITE_TEMPLATES.find(
+      siteTemplate => siteTemplate.id === search.template
+    )?.id;
+
+    return {
+      font: template
+        ? undefined
+        : INVOICE_FONTS.find(definition => definition.id === search.font)?.id,
+      new: !template && search.new === true ? true : undefined,
+      open: search.open === "invoices" ? "invoices" : undefined,
+      template
+    };
+  }
 });
 
 // The editor is entirely client-state-driven (Zustand + IndexedDB), so it is
@@ -70,6 +86,7 @@ function RouteComponent() {
         <EditorThemeSync />
         <InvoiceDocumentProvider fallback={<EditorLoading />}>
           <StartingFont />
+          <StartingTemplate />
           <InvoiceEditor />
         </InvoiceDocumentProvider>
       </ClientOnly>
@@ -115,6 +132,31 @@ function StartingFont() {
       replace: true
     });
   }, [font, isNew, applyStartingFont, startInFont, navigate]);
+
+  return null;
+}
+
+// Starts a site template page's document once hydration has settled, then
+// clears the param so a reload keeps what's open rather than starting over.
+function StartingTemplate() {
+  const { template } = Route.useSearch();
+  const navigate = useNavigate();
+  const { startSiteTemplate } = useInvoiceDocument();
+
+  useEffect(() => {
+    if (!template) return;
+
+    startSiteTemplate(template).catch((error: unknown) => {
+      toast.error(
+        error instanceof Error ? error.message : "Failed to start the template"
+      );
+    });
+    void navigate({
+      to: "/create",
+      search: previous => ({ ...previous, template: undefined }),
+      replace: true
+    });
+  }, [template, startSiteTemplate, navigate]);
 
   return null;
 }
