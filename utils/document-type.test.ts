@@ -42,6 +42,7 @@ describe("applyDocumentType", () => {
 
       expect(next.documentType).toBe(to);
       expect(next.title).toBe(expected.title);
+      expect(next.number).toBe(expected.number);
       expect(next.labels).toEqual({
         ...createBlankInvoice().labels,
         ...expected.labels
@@ -55,6 +56,7 @@ describe("applyDocumentType", () => {
       const renamed = {
         ...blankOf(from),
         title: "Statement of work",
+        number: "2026-017",
         labels: {
           ...blankOf(from).labels,
           invoiceNumber: "Ref.",
@@ -65,6 +67,7 @@ describe("applyDocumentType", () => {
       const next = applyDocumentType(renamed, to);
 
       expect(next.title).toBe("Statement of work");
+      expect(next.number).toBe("2026-017");
       expect(next.labels.invoiceNumber).toBe("Ref.");
       expect(next.labels.paymentDue).toBe("Pay by");
       expect(next.labels.total).toBe("Amount owed");
@@ -93,6 +96,20 @@ describe("applyDocumentType", () => {
     expect(applyDocumentType(receipt, "quote").labels.paymentDue).toBe(
       "Due date"
     );
+  });
+
+  it("gives each type its own sample number", () => {
+    expect(createBlankInvoice().number).toBe("INV-0001");
+    expect(blankOf("quote").number).toBe("QUO-0001");
+    expect(blankOf("proforma-invoice").number).toBe("PRO-0001");
+    expect(blankOf("receipt").number).toBe("REC-0001");
+    expect(blankOf("credit-note").number).toBe("CN-0001");
+  });
+
+  it("keeps a number typed to match another type's sample", () => {
+    const quote = { ...blankOf("quote"), number: "INV-0001" };
+
+    expect(applyDocumentType(quote, "receipt").number).toBe("INV-0001");
   });
 
   it("keeps a title typed to match another type's default", () => {

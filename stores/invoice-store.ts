@@ -217,8 +217,8 @@ interface InvoiceActions {
   setCurrencyPosition: (currencyPosition: Invoice["currencyPosition"]) => void;
   setPaperSize: (paperSize: Invoice["paperSize"]) => void;
 
-  // Document type: swaps the title and labels still on the old type's
-  // defaults for the new type's.
+  // Document type: swaps the title, sample number and labels still on the
+  // old type's defaults for the new type's.
   setDocumentType: (documentType: DocumentType) => void;
 
   // Title
@@ -391,6 +391,7 @@ export const useInvoiceStore = create<InvoiceStore>()(
             {
               documentType: state.documentType,
               title: state.title,
+              number: state.number,
               labels: state.labels
             },
             documentType
@@ -398,6 +399,7 @@ export const useInvoiceStore = create<InvoiceStore>()(
 
           state.documentType = next.documentType;
           state.title = next.title;
+          state.number = next.number;
           state.labels = next.labels;
         }),
 

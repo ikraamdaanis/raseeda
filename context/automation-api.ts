@@ -116,8 +116,8 @@ const api = {
   // pay, printed below them. `paymentDetails.paymentLink` is a link to pay
   // online, printed last and clickable in the PDF. `documentType` ("invoice",
   // "quote", "proforma-invoice", "receipt", "credit-note") is "invoice" when
-  // left out; the title and the number, due date and total labels left out
-  // take that type's ("Quote", "Valid until" and so on).
+  // left out; a title, number, or number, due date or total label left out
+  // takes that type's ("Quote", "QUO-0001", "Valid until" and so on).
   async createInvoice(data: unknown) {
     if (typeof data !== "object" || data === null || Array.isArray(data)) {
       throw new TypeError("Invoice data must be an object");

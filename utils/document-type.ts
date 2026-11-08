@@ -10,13 +10,13 @@ function follow(value: string, oldDefault: string, newDefault: string) {
 }
 
 /**
- * The invoice as another document type. The title and the labels that differ
- * between types swap to the new type's defaults only where they're still on
- * the old type's defaults; a renamed one (an emptied one included) stays as
- * typed, even when it matches some other type's default.
+ * The invoice as another document type. The title, the sample number and the
+ * labels that differ between types swap to the new type's defaults only where
+ * they're still on the old type's defaults; a changed one (an emptied one
+ * included) stays as typed, even when it matches some other type's default.
  */
 export function applyDocumentType<
-  T extends Pick<Invoice, "documentType" | "title" | "labels">
+  T extends Pick<Invoice, "documentType" | "title" | "number" | "labels">
 >(invoice: T, documentType: DocumentType): T {
   const before = DOCUMENT_TYPE_DEFAULTS[invoice.documentType];
   const after = DOCUMENT_TYPE_DEFAULTS[documentType];
@@ -30,6 +30,7 @@ export function applyDocumentType<
     ...invoice,
     documentType,
     title: follow(invoice.title, before.title, after.title),
+    number: follow(invoice.number, before.number, after.number),
     labels
   };
 }
