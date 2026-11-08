@@ -141,6 +141,11 @@ function describeAction(
         ? { label: SECTION_NAMES[section], area: SECTION_AREAS[section] }
         : { label: "Sections", area: "page" };
     }
+    case "refersTo":
+      return {
+        label: next.labels.refersTo || "Refers to invoice",
+        area: "details"
+      };
     case "invoiceDate":
       return { label: next.labels.invoiceDate || "Date", area: "details" };
     case "dueDate":

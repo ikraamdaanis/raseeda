@@ -44,6 +44,7 @@ export const invoiceDefault: Invoice = {
   title: "Invoice",
   image: "",
   number: "INV-0001",
+  refersTo: "",
   poNumber: "",
   // Dates are stamped per document in createBlankDocument(), not baked in here.
   // Keeping the module-level default static (empty) means every isolate renders
@@ -94,7 +95,8 @@ export const invoiceDefault: Invoice = {
     discounts: "Discounts",
     total: "Total",
     amountPaid: "Amount paid",
-    balanceDue: "Balance due"
+    balanceDue: "Balance due",
+    refersTo: "Refers to invoice"
   },
   tax: {
     percentage: 0,
@@ -251,6 +253,7 @@ interface InvoiceActions {
 
   // Details
   setNumber: (number: string) => void;
+  setRefersTo: (refersTo: string) => void;
   setPoNumber: (poNumber: string) => void;
   setInvoiceDate: (date: string) => void;
   setDueDate: (date: string) => void;
@@ -459,6 +462,11 @@ export const useInvoiceStore = create<InvoiceStore>()(
       setNumber: number =>
         set(state => {
           state.number = number;
+        }),
+
+      setRefersTo: refersTo =>
+        set(state => {
+          state.refersTo = refersTo;
         }),
 
       setPoNumber: poNumber =>

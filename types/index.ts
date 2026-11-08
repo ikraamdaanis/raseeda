@@ -64,6 +64,7 @@ export type InvoiceLabels = {
   total: string;
   amountPaid: string;
   balanceDue: string;
+  refersTo: string;
 };
 
 export type InvoiceFont =
@@ -190,6 +191,7 @@ export type PdfSettings = {
 export type InvoiceDetailRow = {
   id:
     | "number"
+    | "refersTo"
     | "poNumber"
     | "invoiceDate"
     | "supplyDate"
@@ -197,6 +199,7 @@ export type InvoiceDetailRow = {
     | "servicePeriod";
   labelKey:
     | "invoiceNumber"
+    | "refersTo"
     | "poNumber"
     | "invoiceDate"
     | "supplyDate"

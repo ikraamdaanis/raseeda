@@ -9,7 +9,7 @@ raseeda makes the document and stops there: it isn't an invoice tracker, CRM or 
 ## Features
 
 - Create invoices with seller and client details, line items, tax, fees, discounts, and terms
-- Make quotes, proforma invoices, receipts and credit notes too, each with its own title and labels ("Valid until", "Date paid", "Total credit"), all renameable
+- Make quotes, proforma invoices, receipts and credit notes too, each with its own title, labels ("Valid until", "Date paid", "Total credit"), all renameable, and closing rows: a quote ends on its total, a receipt shows its total as paid, and a credit note names the invoice it refers to
 - Payment details section: bank name, account and routing numbers, IBAN, BIC / SWIFT and sort code, each under a label you can rename ("BSB", "IFSC", "CLABE"), other ways to pay such as PayPal, Venmo, Pix or UPI, and payment notes
 - Set the whole invoice in any of eleven fonts, with your choice of size and weight
 - Pick an accent colour for the title, section headings, table header and total, and a colour for the rest of the text
@@ -64,7 +64,7 @@ await raseeda.createInvoice({
 });
 ```
 
-`documentType` is what the document is: `"invoice"` (the default), `"quote"`, `"proforma-invoice"`, `"receipt"` or `"credit-note"`. It sets the defaults for the title, the sample number and three labels: a quote is titled "Quote", numbered "QUO-0001", with "Quote No." and "Valid until" for the due date; a proforma invoice "Proforma invoice", "PRO-0001", with "Proforma No."; a receipt "Receipt", "REC-0001", with "Receipt No." and "Date paid"; and a credit note "Credit note", "CN-0001", with "Credit note No." and "Total credit". A `title`, `number` or `labels.invoiceNumber`, `labels.paymentDue` or `labels.total` given in the data is kept as given. A receipt left without a `dueDate` (its "Date paid") is dated on its `invoiceDate`; the other types are due 30 days after it. Invoices saved or exported before document types existed read as invoices.
+`documentType` is what the document is: `"invoice"` (the default), `"quote"`, `"proforma-invoice"`, `"receipt"` or `"credit-note"`. It sets the defaults for the title, the sample number and three labels: a quote is titled "Quote", numbered "QUO-0001", with "Quote No." and "Valid until" for the due date; a proforma invoice "Proforma invoice", "PRO-0001", with "Proforma No."; a receipt "Receipt", "REC-0001", with "Receipt No." and "Date paid"; and a credit note "Credit note", "CN-0001", with "Credit note No." and "Total credit". A `title`, `number` or `labels.invoiceNumber`, `labels.paymentDue` or `labels.total` given in the data is kept as given. A receipt left without a `dueDate` (its "Date paid") is dated on its `invoiceDate`; the other types are due 30 days after it. The type also settles the closing rows: a quote prints no amount paid, balance due or PAID stamp, a proforma invoice no PAID stamp, and a receipt always prints its amount paid, which is the total while `amountPaid` is `0`. A credit note prints `refersTo` (the invoice it refers to, as plain text, under `labels.refersTo`, "Refers to invoice") below its number, and no due date. Switching type keeps every value, so an invoice switched to a quote and back prints its payment again. Invoices saved or exported before document types existed read as invoices.
 
 ```js
 await raseeda.createInvoice({

@@ -1,6 +1,9 @@
-import { DOCUMENT_TYPE_DEFAULTS } from "~/consts/document-types";
-import { DOCUMENT_TYPES } from "~/schema/invoice";
-import type { DocumentType, Invoice } from "~/types";
+import {
+  DOCUMENT_TYPE_DEFAULTS,
+  DOCUMENT_TYPE_ROWS
+} from "~/consts/document-types";
+import { DOCUMENT_TYPES, INVOICE_SECTION_KEYS } from "~/schema/invoice";
+import type { DocumentType, Invoice, InvoiceSectionKey } from "~/types";
 
 const TYPED_LABEL_KEYS = ["invoiceNumber", "paymentDue", "total"] as const;
 
@@ -41,4 +44,35 @@ export function readDocumentType(value: unknown): DocumentType {
   return (
     DOCUMENT_TYPES.find(documentType => documentType === value) ?? "invoice"
   );
+}
+
+/**
+ * The section switches as a document of this type reads them: the ones its
+ * type settles (a quote's amount paid, a receipt's) set as the type says,
+ * the rest as chosen. Totals, Preview and the PDF all read the switches
+ * through this, so they agree; the stored switches are never changed.
+ */
+export function getTypeSections<T extends Partial<Invoice["sections"]>>(
+  sections: T,
+  documentType: DocumentType
+): T {
+  const settled: Partial<Record<InvoiceSectionKey, boolean>> =
+    DOCUMENT_TYPE_ROWS[documentType].sections;
+  const result = { ...sections };
+
+  for (const [key, isOn] of Object.entries(settled)) {
+    if (key in result) Object.assign(result, { [key]: isOn });
+  }
+
+  return result;
+}
+
+// The switches a type settles, which the inspector and the command palette
+// don't offer while the document is that type.
+export function getTypeSettledSections(
+  documentType: DocumentType
+): InvoiceSectionKey[] {
+  const settled = DOCUMENT_TYPE_ROWS[documentType].sections;
+
+  return INVOICE_SECTION_KEYS.filter(key => key in settled);
 }

@@ -168,6 +168,16 @@ describe("invoice history", () => {
     expect(data().sections.logo).toBe(true);
   });
 
+  it("names the invoice a credit note refers to", () => {
+    blurAll();
+    store().setRefersTo("INV-0042");
+
+    expect(useInvoiceHistory.getState().undoLabel).toBe("Refers to invoice");
+
+    undoInvoiceChange();
+    expect(data().refersTo).toBe("");
+  });
+
   it("makes a type change one step that puts the labels back", () => {
     blurAll();
     store().setDocumentType("quote");

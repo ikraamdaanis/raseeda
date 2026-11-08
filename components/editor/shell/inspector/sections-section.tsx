@@ -4,10 +4,12 @@ import {
   InspectorSwitch
 } from "~/components/editor/shell/inspector/inspector-controls";
 import {
+  useDocumentType,
   useSectionsSlice,
   useTaxExemptSlice
 } from "~/stores/invoice-selectors";
 import type { InvoiceSectionKey } from "~/types";
+import { getTypeSettledSections } from "~/utils/document-type";
 
 const SECTION_GROUPS: {
   label: string;
@@ -46,23 +48,29 @@ const SECTION_GROUPS: {
 
 // Turns the invoice's optional parts on and off. Off hides a part from the
 // page and the PDF (and its money from the totals) but keeps what was typed.
+// A switch the document's type settles (a quote's amount paid) isn't offered.
 export function SectionsSection() {
+  const documentType = useDocumentType();
+  const settled = getTypeSettledSections(documentType);
+
   return (
     <InspectorSection id="sections" title="Sections">
       {SECTION_GROUPS.map(group => (
         <div key={group.label} className="flex flex-col gap-0.5">
           <InspectorGroupLabel>{group.label}</InspectorGroupLabel>
-          {group.items.map(item =>
-            item.key === "tax" ? (
-              <TaxSwitches key={item.key} label={item.label} />
-            ) : (
-              <SectionSwitch
-                key={item.key}
-                section={item.key}
-                label={item.label}
-              />
-            )
-          )}
+          {group.items
+            .filter(item => !settled.includes(item.key))
+            .map(item =>
+              item.key === "tax" ? (
+                <TaxSwitches key={item.key} label={item.label} />
+              ) : (
+                <SectionSwitch
+                  key={item.key}
+                  section={item.key}
+                  label={item.label}
+                />
+              )
+            )}
         </div>
       ))}
     </InspectorSection>

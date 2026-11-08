@@ -6,6 +6,7 @@ import {
   useTitleSlice
 } from "~/stores/invoice-selectors";
 import { useInvoiceStore } from "~/stores/invoice-store";
+import { getTypeSections } from "~/utils/document-type";
 import { getRoleSettings } from "~/utils/get-role-settings";
 import { getTextStyles } from "~/utils/get-text-styles";
 import { isPaidInFull } from "~/utils/is-paid-in-full";
@@ -14,8 +15,11 @@ export function InvoiceTitle() {
   const { title, setTitle } = useTitleSlice();
   const theme = useTheme();
   const documentType = useDocumentType();
+  // As the PDF reads the switch: a quote or a proforma invoice never shows it.
   const showsPaidStamp = useInvoiceStore(
-    state => state.sections.paidStamp && isPaidInFull(state)
+    state =>
+      getTypeSections(state.sections, state.documentType).paidStamp &&
+      isPaidInFull(state)
   );
 
   return (

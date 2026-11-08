@@ -8,6 +8,7 @@ import type {
   InvoiceTaxGroup,
   InvoiceTotals
 } from "~/types";
+import { getTypeSections } from "~/utils/document-type";
 import { roundToDecimals } from "~/utils/format-number";
 
 // Rounds a single line amount to the currency's decimals (two, or none for
@@ -112,10 +113,13 @@ function splitDiscount(
 // stale numbers. A pricing row whose section is switched off counts as zero,
 // so what the totals add up always matches the rows on the page.
 // Sums round to the currency's decimals, so a yen invoice's lines add up to
-// its printed total in whole yen.
+// its printed total in whole yen. The switches are read as the document's
+// type settles them (a quote counts no payment), and a receipt with no
+// amount typed is paid in full.
 export function calculateInvoiceTotals(
   invoice: Pick<
     Invoice,
+    | "documentType"
     | "items"
     | "tax"
     | "fees"
@@ -131,7 +135,8 @@ export function calculateInvoiceTotals(
     >;
   }
 ): InvoiceTotals {
-  const sections = invoice.sections;
+  const sections =
+    invoice.sections && getTypeSections(invoice.sections, invoice.documentType);
   const decimals = getCurrencyDecimals(invoice);
   const round = (value: number) => roundToDecimals(value, decimals);
   const items = invoice.items.map(item => ({
@@ -195,11 +200,15 @@ export function calculateInvoiceTotals(
   const total = Math.max(0, round(taxableAmount + taxAmount + fees));
 
   // The balance due nets off any recorded payment/deposit. An overpayment
-  // reads as a zero balance rather than a negative one.
+  // reads as a zero balance rather than a negative one. A receipt is for what
+  // was paid, so until an amount is typed it's the total.
+  const typedPaid = Math.max(0, round(Number(invoice.amountPaid) || 0));
   const amountPaid =
     sections?.amountPaid === false
       ? 0
-      : Math.max(0, round(Number(invoice.amountPaid) || 0));
+      : invoice.documentType === "receipt" && typedPaid === 0
+        ? total
+        : typedPaid;
   const balanceDue = Math.max(0, round(total - amountPaid));
 
   return {

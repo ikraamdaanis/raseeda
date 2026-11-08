@@ -137,6 +137,7 @@ describe("calculateConvertedTotals", () => {
   // £500 paid, at 1.1734. Converting the total on its own gives €1,452.70,
   // a cent short of the converted rows above it.
   const totals = calculateInvoiceTotals({
+    documentType: "invoice",
     items: [
       { id: "a", description: "", unit: "", quantity: 3, unitPrice: 333.33 },
       {
@@ -244,6 +245,7 @@ describe("the second currency's column", () => {
     for (let run = 0; run < 2000; run++) {
       const rate = Number((random() * 200).toFixed(pick([2, 4, 6])));
       const totals = calculateInvoiceTotals({
+        documentType: "invoice",
         items: Array.from(
           { length: 1 + Math.floor(random() * 6) },
           (_, index) => ({

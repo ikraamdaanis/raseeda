@@ -24,7 +24,10 @@ import {
   getCurrencyMarker,
   normalizeCurrency
 } from "~/consts/currencies";
-import { DOCUMENT_TYPE_NAMES } from "~/consts/document-types";
+import {
+  DOCUMENT_TYPE_NAMES,
+  DOCUMENT_TYPE_ROWS
+} from "~/consts/document-types";
 import { useCurrencyConversion } from "~/hooks/use-currency-conversion";
 import { useExchangeRateInput } from "~/hooks/use-exchange-rate-input";
 import { useSecondCurrency } from "~/hooks/use-second-currency";
@@ -41,6 +44,7 @@ import {
   useCurrencyConversionSlice,
   useCurrencySlice,
   useDetailsSlice,
+  useDocumentType,
   useDocumentTypeSlice,
   useMoneyFormat,
   usePaperSizeSlice,
@@ -540,9 +544,12 @@ function InspectorDatePicker({
   );
 }
 
+// Payment terms are for a date to pay by, so a receipt (paid on its date) and
+// a credit note (no due date) leave them out.
 function DatesRows() {
   const { invoiceDate, dueDate, setInvoiceDate, setDueDate } =
     useDetailsSlice();
+  const documentType = useDocumentType();
   const termsDays = getPaymentTermsDays(invoiceDate, dueDate);
   // Terms count from the issue date, so they wait until there is one.
   const hasIssueDate = readInvoiceDate(invoiceDate) !== null;
@@ -576,25 +583,27 @@ function DatesRows() {
           onChange={handleInvoiceDateChange}
         />
       </InspectorRow>
-      <InspectorRow label="Payment terms" htmlFor="inspector-terms">
-        <NativeSelect
-          id="inspector-terms"
-          disabled={!hasIssueDate}
-          title={hasIssueDate ? undefined : "Pick an issue date first"}
-          value={termsDays === null ? CUSTOM_TERMS : String(termsDays)}
-          onChange={event => handleTermsChange(event.target.value)}
-          className={cn(inspectorFieldClassName, "pr-7")}
-        >
-          {PAYMENT_TERMS.map(term => (
-            <option key={term.days} value={String(term.days)}>
-              {term.label}
-            </option>
-          ))}
-          {termsDays === null && (
-            <option value={CUSTOM_TERMS}>Custom due date</option>
-          )}
-        </NativeSelect>
-      </InspectorRow>
+      {DOCUMENT_TYPE_ROWS[documentType].paymentTerms && (
+        <InspectorRow label="Payment terms" htmlFor="inspector-terms">
+          <NativeSelect
+            id="inspector-terms"
+            disabled={!hasIssueDate}
+            title={hasIssueDate ? undefined : "Pick an issue date first"}
+            value={termsDays === null ? CUSTOM_TERMS : String(termsDays)}
+            onChange={event => handleTermsChange(event.target.value)}
+            className={cn(inspectorFieldClassName, "pr-7")}
+          >
+            {PAYMENT_TERMS.map(term => (
+              <option key={term.days} value={String(term.days)}>
+                {term.label}
+              </option>
+            ))}
+            {termsDays === null && (
+              <option value={CUSTOM_TERMS}>Custom due date</option>
+            )}
+          </NativeSelect>
+        </InspectorRow>
+      )}
     </>
   );
 }

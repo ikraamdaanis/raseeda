@@ -2,11 +2,12 @@ import type { Invoice } from "~/types";
 import { calculateInvoiceTotals } from "~/utils/calculate-invoice-totals";
 
 // Whether the invoice records a payment that leaves nothing to pay, for the
-// PAID stamp. Only what's typed on the invoice counts; raseeda doesn't track
-// payments.
+// PAID stamp. Only what's on the invoice counts (a receipt with no amount
+// typed is paid in full); raseeda doesn't track payments.
 export function isPaidInFull(
   invoice: Pick<
     Invoice,
+    | "documentType"
     | "items"
     | "tax"
     | "fees"
@@ -17,12 +18,7 @@ export function isPaidInFull(
     | "currencyCode"
   > & { sections: Invoice["sections"] }
 ): boolean {
-  const { total, balanceDue } = calculateInvoiceTotals(invoice);
+  const { total, amountPaid, balanceDue } = calculateInvoiceTotals(invoice);
 
-  return (
-    invoice.sections.amountPaid &&
-    invoice.amountPaid > 0 &&
-    total > 0 &&
-    balanceDue <= 0
-  );
+  return amountPaid > 0 && total > 0 && balanceDue <= 0;
 }

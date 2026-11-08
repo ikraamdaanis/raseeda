@@ -18,6 +18,7 @@ function makeInvoice(overrides: Partial<Invoice> = {}): Invoice {
     title: "Invoice",
     image: "",
     number: "1",
+    refersTo: "",
     poNumber: "",
     invoiceDate: "2026-01-01",
     dueDate: "2026-01-31",
@@ -53,7 +54,8 @@ function makeInvoice(overrides: Partial<Invoice> = {}): Invoice {
       discounts: "Discounts",
       total: "Total",
       amountPaid: "Amount paid",
-      balanceDue: "Balance due"
+      balanceDue: "Balance due",
+      refersTo: "Refers to invoice"
     },
     tax: { percentage: 0, exempt: false, note: "", perLine: false },
     fees: 0,

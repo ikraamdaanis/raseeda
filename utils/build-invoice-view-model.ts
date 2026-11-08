@@ -1,6 +1,8 @@
 import { formatCurrency, getMoneyFormat } from "~/consts/currencies";
+import { DOCUMENT_TYPE_ROWS } from "~/consts/document-types";
 import type {
   CurrencyConversion,
+  DocumentType,
   Invoice,
   InvoiceDetailRow,
   InvoiceItem,
@@ -25,6 +27,7 @@ import {
   getCurrencyConversion,
   withConvertedAmount
 } from "~/utils/currency-conversion";
+import { getTypeSections } from "~/utils/document-type";
 import {
   formatInvoiceDate,
   formatServicePeriod
@@ -40,10 +43,13 @@ import { getPrintedSections } from "~/utils/section-visibility";
 
 // Optional rows (PO number, date of supply, service period) whose section is
 // switched off are left out altogether; switched-on ones are marked optional
-// so the PDF skips them while empty.
+// so the PDF skips them while empty. A credit note names the invoice it
+// refers to under its number (optional too) and has no due date row.
 export function buildDetailRows(input: {
+  documentType: DocumentType;
   labels: InvoiceLabels;
   number: string;
+  refersTo: string;
   poNumber: string;
   invoiceDate: string;
   supplyDate: string;
@@ -52,6 +58,7 @@ export function buildDetailRows(input: {
   sections: Pick<InvoiceSections, "poNumber" | "supplyDate" | "servicePeriod">;
   dateFormat: Invoice["dateFormat"];
 }): InvoiceDetailRow[] {
+  const typeRows = DOCUMENT_TYPE_ROWS[input.documentType];
   const rows: InvoiceDetailRow[] = [
     {
       id: "number",
@@ -59,6 +66,13 @@ export function buildDetailRows(input: {
       label: input.labels.invoiceNumber,
       value: input.number,
       isOptional: false
+    },
+    {
+      id: "refersTo",
+      labelKey: "refersTo",
+      label: input.labels.refersTo,
+      value: input.refersTo,
+      isOptional: true
     },
     {
       id: "poNumber",
@@ -99,6 +113,8 @@ export function buildDetailRows(input: {
 
   return rows.filter(
     row =>
+      (row.id !== "refersTo" || typeRows.refersTo) &&
+      (row.id !== "dueDate" || typeRows.dueDate) &&
       (row.id !== "poNumber" || input.sections.poNumber) &&
       (row.id !== "supplyDate" || input.sections.supplyDate) &&
       (row.id !== "servicePeriod" || input.sections.servicePeriod)
@@ -338,6 +354,8 @@ function buildSummaryRows(input: {
 
 export function buildInvoiceViewModel(invoice: Invoice): InvoiceViewModel {
   const totals = calculateInvoiceTotals(invoice);
+  // As the document's type reads them, so a quote's amount paid stays off.
+  const sections = getTypeSections(invoice.sections, invoice.documentType);
   const conversion = getPrintedSections(invoice).currencyConversion
     ? getCurrencyConversion(invoice)
     : null;
@@ -380,7 +398,7 @@ export function buildInvoiceViewModel(invoice: Invoice): InvoiceViewModel {
       }),
       money,
       currencyCode: invoice.currencyCode,
-      sections: invoice.sections,
+      sections,
       conversion
     }),
     conversion,

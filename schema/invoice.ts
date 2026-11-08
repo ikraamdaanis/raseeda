@@ -68,7 +68,8 @@ const DEFAULT_LABELS = {
   discounts: "Discounts",
   total: "Total",
   amountPaid: "Amount paid",
-  balanceDue: "Balance due"
+  balanceDue: "Balance due",
+  refersTo: "Refers to invoice"
 } as const;
 
 // How the invoice and due dates are written on the invoice (date-fns
@@ -388,7 +389,8 @@ const invoiceLabelsSchema = z
     discounts: z.string().catch(DEFAULT_LABELS.discounts),
     total: z.string().catch(DEFAULT_LABELS.total),
     amountPaid: z.string().catch(DEFAULT_LABELS.amountPaid),
-    balanceDue: z.string().catch(DEFAULT_LABELS.balanceDue)
+    balanceDue: z.string().catch(DEFAULT_LABELS.balanceDue),
+    refersTo: z.string().catch(DEFAULT_LABELS.refersTo)
   })
   .catch(DEFAULT_LABELS);
 
@@ -398,6 +400,9 @@ export const invoiceSchema = z.object({
   title: z.string().catch("Invoice"),
   image: z.string().catch(""),
   number: z.string().catch("1"),
+  // The invoice a credit note refers to, as printed text (issue #133);
+  // nothing links the two documents. Only a credit note prints it.
+  refersTo: z.string().catch(""),
   poNumber: z.string().catch(""),
   invoiceDate: z.string().catch(""),
   dueDate: z.string().catch(""),

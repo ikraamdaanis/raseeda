@@ -1,5 +1,5 @@
 import { DOCUMENT_TYPES } from "~/schema/invoice";
-import type { DocumentType } from "~/types";
+import type { DocumentType, InvoiceSections } from "~/types";
 
 // What each document type is called in menus and the inspector.
 export const DOCUMENT_TYPE_NAMES = {
@@ -74,6 +74,56 @@ export const DOCUMENT_TYPE_DEFAULTS = {
     number: string;
     dueDays: number;
     labels: { invoiceNumber: string; paymentDue: string; total: string };
+  }
+>;
+
+// The closing rows and fields that differ between types (issue #133), which
+// the type settles whatever the switches say. `sections` overrides a switch
+// while the document is that type: a quote has nothing paid and no PAID stamp,
+// a proforma invoice isn't paid yet, and a receipt is for what was paid. The
+// switches keep what was chosen, so switching back to an invoice brings the
+// rows back with what was typed in them. `dueDate` is whether the due date
+// row prints (a credit note has nothing to pay by a date), `paymentTerms`
+// whether the inspector offers Net 7 to 60 for it, and `refersTo` whether the
+// "Refers to invoice" row is there.
+export const DOCUMENT_TYPE_ROWS = {
+  invoice: {
+    sections: {},
+    dueDate: true,
+    paymentTerms: true,
+    refersTo: false
+  },
+  quote: {
+    sections: { amountPaid: false, paidStamp: false },
+    dueDate: true,
+    paymentTerms: true,
+    refersTo: false
+  },
+  "proforma-invoice": {
+    sections: { paidStamp: false },
+    dueDate: true,
+    paymentTerms: true,
+    refersTo: false
+  },
+  receipt: {
+    sections: { amountPaid: true },
+    dueDate: true,
+    paymentTerms: false,
+    refersTo: false
+  },
+  "credit-note": {
+    sections: {},
+    dueDate: false,
+    paymentTerms: false,
+    refersTo: true
+  }
+} as const satisfies Record<
+  DocumentType,
+  {
+    sections: Partial<Pick<InvoiceSections, "amountPaid" | "paidStamp">>;
+    dueDate: boolean;
+    paymentTerms: boolean;
+    refersTo: boolean;
   }
 >;
 

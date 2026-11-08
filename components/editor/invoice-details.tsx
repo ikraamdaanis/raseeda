@@ -1,7 +1,7 @@
 import { InvoiceDateField } from "~/components/editor/invoice-date-field";
 import { InvoiceInput } from "~/components/editor/invoice-input";
 import { DOCUMENT_TYPE_DEFAULTS } from "~/consts/document-types";
-import { useShownSections } from "~/hooks/use-shown-sections";
+import { useIsPreview, useShownSections } from "~/hooks/use-shown-sections";
 import {
   useDetailsSlice,
   useDocumentType,
@@ -13,6 +13,7 @@ import { formatServicePeriod } from "~/utils/format-invoice-date";
 import { getRoleSettings } from "~/utils/get-role-settings";
 import { getTextStyles } from "~/utils/get-text-styles";
 import { dueDateForNewInvoiceDate } from "~/utils/payment-terms";
+import { hasText } from "~/utils/section-visibility";
 
 // The number and due date are named for the document's type, so an emptied
 // "Valid until" on a quote suggests that, not "Due date".
@@ -23,6 +24,7 @@ function buildDetailPlaceholders(
 
   return {
     number: { label: labels.invoiceNumber, value: "########" },
+    refersTo: { label: "Refers to invoice", value: "Add the invoice number" },
     poNumber: { label: "PO number", value: "Add a PO / reference" },
     invoiceDate: { label: "Date", value: "Pick a date" },
     supplyDate: { label: "Date of supply", value: "Pick the supply date" },
@@ -37,6 +39,7 @@ function buildDetailPlaceholders(
 export function InvoiceDetails() {
   const {
     number,
+    refersTo,
     poNumber,
     invoiceDate,
     supplyDate,
@@ -46,11 +49,15 @@ export function InvoiceDetails() {
     labels
   } = useDetailsSlice();
   const sections = useShownSections();
+  const isPreview = useIsPreview();
   const documentType = useDocumentType();
   const placeholders = buildDetailPlaceholders(documentType);
+  // Preview leaves out an empty "Refers to invoice", as the PDF does.
   const rows = buildDetailRows({
+    documentType,
     labels,
     number,
+    refersTo,
     poNumber,
     invoiceDate,
     supplyDate,
@@ -58,7 +65,7 @@ export function InvoiceDetails() {
     servicePeriod,
     sections,
     dateFormat
-  });
+  }).filter(row => row.id !== "refersTo" || !isPreview || hasText(row.value));
 
   return (
     <div data-field-area="details" className="flex flex-col">
@@ -82,6 +89,7 @@ function DetailRow({
     dueDate,
     servicePeriod,
     setNumber,
+    setRefersTo,
     setPoNumber,
     setInvoiceDate,
     setSupplyDate,
@@ -99,6 +107,7 @@ function DetailRow({
 
   const setValue = {
     number: setNumber,
+    refersTo: setRefersTo,
     poNumber: setPoNumber,
     invoiceDate: setInvoiceDate,
     supplyDate: setSupplyDate,

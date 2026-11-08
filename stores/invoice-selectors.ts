@@ -20,6 +20,7 @@ export const INVOICE_DATA_KEYS = [
   "title",
   "image",
   "number",
+  "refersTo",
   "poNumber",
   "invoiceDate",
   "dueDate",
@@ -133,6 +134,7 @@ export function useDetailsSlice() {
   return useInvoiceStore(
     useShallow(state => ({
       number: state.number,
+      refersTo: state.refersTo,
       poNumber: state.poNumber,
       invoiceDate: state.invoiceDate,
       dueDate: state.dueDate,
@@ -141,6 +143,7 @@ export function useDetailsSlice() {
       dateFormat: state.dateFormat,
       labels: state.labels,
       setNumber: state.setNumber,
+      setRefersTo: state.setRefersTo,
       setPoNumber: state.setPoNumber,
       setInvoiceDate: state.setInvoiceDate,
       setDueDate: state.setDueDate,
@@ -242,7 +245,7 @@ export function useCurrencyConversionSlice() {
 }
 
 // Derived money totals (subtotal, tax amount, discount amount, grand total,
-// balance due), recomputed from the pricing inputs. Returns plain numbers so
+// amount paid, balance due), recomputed from the pricing inputs. Returns plain numbers so
 // shallow equality only fires a re-render when a total actually changes, not on
 // every unrelated edit.
 export function useInvoiceTotals(): {
@@ -250,11 +253,13 @@ export function useInvoiceTotals(): {
   taxAmount: number;
   discountAmount: number;
   total: number;
+  amountPaid: number;
   balanceDue: number;
 } {
   return useInvoiceStore(
     useShallow(state => {
       const totals = calculateInvoiceTotals({
+        documentType: state.documentType,
         items: state.items,
         tax: state.tax,
         fees: state.fees,
@@ -271,6 +276,7 @@ export function useInvoiceTotals(): {
         taxAmount: totals.taxAmount,
         discountAmount: totals.discountAmount,
         total: totals.total,
+        amountPaid: totals.amountPaid,
         balanceDue: totals.balanceDue
       };
     })
@@ -305,6 +311,7 @@ export function useConvertedTotals(): {
 export function useTaxGroups(): Pick<InvoiceTotals, "taxGroups" | "taxAmount"> {
   const pricing = useInvoiceStore(
     useShallow(state => ({
+      documentType: state.documentType,
       items: state.items,
       tax: state.tax,
       fees: state.fees,

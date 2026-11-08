@@ -61,10 +61,12 @@ import {
 } from "~/stores/invoice-history";
 import {
   useCurrencySlice,
+  useDocumentType,
   useSectionsSlice,
   useThemeSlice
 } from "~/stores/invoice-selectors";
 import type { InvoiceDocument, InvoiceSectionKey, InvoiceSize } from "~/types";
+import { getTypeSettledSections } from "~/utils/document-type";
 import { shortcutLabel } from "~/utils/shortcut-label";
 
 const SECTION_LABELS: Record<InvoiceSectionKey, string> = {
@@ -123,6 +125,9 @@ function PaletteCommands() {
   const { theme, setTheme } = useThemeSlice();
   const { currency, setCurrency } = useCurrencySlice();
   const { sections, setSection } = useSectionsSlice();
+  // The switches the document's type settles aren't offered, as in the
+  // inspector.
+  const settledSections = getTypeSettledSections(useDocumentType());
   const secondCurrency = useSecondCurrency();
   const { libraryDocumentId, isRecord, status } = useInvoiceDocument();
   const history = useInvoiceHistory();
@@ -305,7 +310,11 @@ function PaletteCommands() {
       {canEdit && (
         <CommandGroup heading="Sections">
           {(Object.keys(SECTION_LABELS) as InvoiceSectionKey[])
-            .filter(section => section !== "currencyConversion")
+            .filter(
+              section =>
+                section !== "currencyConversion" &&
+                !settledSections.includes(section)
+            )
             .map(section => (
               <PaletteItem
                 key={section}

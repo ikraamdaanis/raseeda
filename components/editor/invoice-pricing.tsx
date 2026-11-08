@@ -675,12 +675,13 @@ function DiscountsRow() {
 
 // The grand total suppresses its emphasis when a payment has been recorded, so
 // the balance-due row below reads as the figure to pay instead. A payment only
-// counts while its row is switched on, as in the PDF.
+// counts while its row is switched on, as in the PDF (a receipt's always is,
+// paid in full until an amount is typed; a quote's never is).
 function TotalRow() {
-  const { currencyCode, amountPaid, labels, setLabels } = usePricingSlice();
+  const { currencyCode, labels, setLabels } = usePricingSlice();
   const documentType = useDocumentType();
   const money = useMoneyFormat();
-  const { total } = useInvoiceTotals();
+  const { total, amountPaid } = useInvoiceTotals();
   const converted = useConvertedTotals();
   const conversion = useCurrencyConversion();
   const theme = useTheme();
@@ -725,7 +726,8 @@ function TotalRow() {
 }
 
 // The payment's date sits in brackets after the label, as it prints:
-// "Amount paid (1 Oct 2026)".
+// "Amount paid (1 Oct 2026)". On a receipt with no amount typed it reads the
+// total, as it prints.
 function AmountPaidRow() {
   const {
     amountPaid,
@@ -742,6 +744,7 @@ function AmountPaidRow() {
   const valueSettings = getRoleSettings(theme, "totalsValue");
   const labelStyle = getTextStyles({ settings: labelSettings });
   const conversion = useCurrencyConversion();
+  const totals = useInvoiceTotals();
   const [amountPaidInput, setAmountPaidInput] = usePricingInput(amountPaid);
 
   return (
@@ -786,9 +789,9 @@ function AmountPaidRow() {
           input={amountPaidInput}
           amount={amountPaid}
           display={
-            amountPaid > 0
+            totals.amountPaid > 0
               ? formatDeduction({
-                  amount: roundToDecimals(amountPaid, money.decimals),
+                  amount: totals.amountPaid,
                   money,
                   conversion
                 })
@@ -815,9 +818,9 @@ function AmountPaidRow() {
 }
 
 function BalanceDueRow() {
-  const { amountPaid, currencyCode, labels, setLabels } = usePricingSlice();
+  const { currencyCode, labels, setLabels } = usePricingSlice();
   const money = useMoneyFormat();
-  const { balanceDue } = useInvoiceTotals();
+  const { amountPaid, balanceDue } = useInvoiceTotals();
   const converted = useConvertedTotals();
   const conversion = useCurrencyConversion();
   const theme = useTheme();
