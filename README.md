@@ -15,6 +15,7 @@ raseeda makes the document and stops there: it isn't an invoice tracker, CRM or 
 - Pick an accent colour for the title, section headings, table header and total, and a colour for the rest of the text
 - Save and load invoice documents locally in IndexedDB
 - Reusable templates for repeat work
+- Start from a page for each document type or trade: quote, proforma invoice, receipt, credit note, and freelance, contractor and retail invoices
 - Fill in a client from your past invoices as you type their name
 - Upload your logo
 - Any currency, with custom symbols when you need them
