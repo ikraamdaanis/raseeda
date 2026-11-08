@@ -73,7 +73,7 @@ export const PAGE_META = {
     path: "/receipt-template",
     title: `Free Receipt Template: Fill In Online, Download PDF | ${APP_NAME}`,
     description:
-      "Free receipt template showing the date paid and who paid. Fill it in online and download a PDF, with no account.",
+      "Free receipt template showing the date paid and how it was paid. Fill it in online and download a PDF, with no account.",
     image: `${SITE_URL}/og-receipt-template.jpg`,
     imageAlt: `A receipt made in ${APP_NAME}, on a pale blue sky`
   },

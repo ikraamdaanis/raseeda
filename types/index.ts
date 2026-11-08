@@ -437,7 +437,8 @@ export type OperatingSystem =
 
 export type DeviceType = "mobile" | "tablet" | "desktop";
 
-// A site page that opens the editor ready for one job (consts/site-templates.ts).
+// A site page that opens the editor ready for one job
+// (consts/site-templates.ts).
 export type SiteTemplateId =
   | "quote"
   | "proforma-invoice"

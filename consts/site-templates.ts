@@ -48,7 +48,7 @@ export const SITE_TEMPLATES = [
       "A due date for payment up front",
       "Line items, tax, discounts and fees",
       "Your bank details, or other ways to pay",
-      "No PAID stamp, since this isn't the final bill"
+      "No PAID stamp, since this isn’t the final bill"
     ],
     src: "/templates/proforma-invoice-template.webp",
     alt: "A proforma invoice from Tessera Ceramics in Lisbon to Nordhavn Interiors in Copenhagen for an order of glazed tiles"
@@ -59,16 +59,16 @@ export const SITE_TEMPLATES = [
     group: "document",
     name: "Receipt template",
     heading: "Free receipt template",
-    summary: "Proof of a payment, with the date paid and who paid.",
+    summary: "Proof of a payment, with the date paid and how it was paid.",
     intro:
-      "Show that a payment came in. Fill in what was bought and who paid, then download your receipt as a PDF. Free, with no account.",
+      "Show that a payment came in. Fill in what was bought and how it was paid, then download your receipt as a PDF. Free, with no account.",
     startLabel: "Start a receipt",
     whenHeading: "When to give a receipt",
-    when: "After you've been paid. A receipt starts out paid in full, so it has no payment details or late fees to print.",
+    when: "After you’ve been paid. A receipt starts out paid in full, so it has no payment details or late fees to print.",
     includes: [
       "A receipt number, starting at REC-0001",
       "The date paid, set to today to begin with",
-      "Who paid, printed under the date",
+      "How it was paid, printed under the date",
       "What was bought, with tax, discounts and fees",
       "The amount paid, in full unless you type less"
     ],
@@ -81,16 +81,16 @@ export const SITE_TEMPLATES = [
     group: "document",
     name: "Credit note template",
     heading: "Free credit note template",
-    summary: "Money back off an invoice you've already sent.",
+    summary: "Money back off an invoice you’ve already sent.",
     intro:
-      "Take money off an invoice you've already sent, for a return, an overcharge or a mistake. Name the invoice, list the credit and download a PDF. Free, with no account.",
+      "Take money off an invoice you’ve already sent, for a return, an overcharge or a mistake. Name the invoice, list the credit and download a PDF. Free, with no account.",
     startLabel: "Start a credit note",
     whenHeading: "When to issue a credit note",
     when: "When an invoice needs correcting after it has gone out. Leave the invoice as it is, and issue a credit note that names it.",
     includes: [
       "A credit note number, starting at CN-0001",
       "A Refers to invoice line naming the invoice it corrects",
-      "What's being credited, with tax, discounts and fees",
+      "What’s being credited, with tax, discounts and fees",
       "A Total credit in place of a balance due",
       "No due date or payment details, since nothing is owed to you"
     ],
@@ -108,12 +108,12 @@ export const SITE_TEMPLATES = [
       "Bill by the hour. The columns already read Hours and Rate, with lines ready for the work you did. Add your details and download a PDF. Free, with no account.",
     startLabel: "Start a freelance invoice",
     whenHeading: "When it fits",
-    when: "For work charged by the hour, such as design, writing, development or consulting. Each line says what you did, how long it took and your rate, so a client can see what they're paying for.",
+    when: "For work charged by the hour, such as design, writing, development or consulting. Each line says what you did, how long it took and your rate, so a client can see what they’re paying for.",
     includes: [
       "Hours and Rate columns in place of Quantity and Unit Price",
       "Lines for project work, meetings and revisions, ready to rename",
       "A service period for the dates the work covers",
-      "Each line's amount worked out from its hours and rate",
+      "Each line’s amount worked out from its hours and rate",
       "Your bank details, or other ways to pay"
     ],
     src: "/templates/freelance-template.webp",
@@ -133,7 +133,7 @@ export const SITE_TEMPLATES = [
     when: "For building, trade and repair work billed at the end of a job or in stages. Separate lines for labour and materials head off arguments over a single lump sum, and the job site sits apart from the billing address.",
     includes: [
       "Separate lines for labour by the hour and materials by the piece",
-      "A job site address beside the client's",
+      "A job site address under the client’s",
       "The deposit already paid, taken off the balance due",
       "Tax, discounts and fees",
       "Your bank details, or other ways to pay"
@@ -149,15 +149,15 @@ export const SITE_TEMPLATES = [
     heading: "Free retail invoice template",
     summary: "A tax rate on each line, for goods not all taxed the same.",
     intro:
-      "Put a different tax rate on each line, for sellers whose goods aren't all taxed the same. Type your products and rates, then download a PDF. Free, with no account.",
+      "Put a different tax rate on each line, for sellers whose goods aren’t all taxed the same. Type your products and rates, then download a PDF. Free, with no account.",
     startLabel: "Start a retail invoice",
     whenHeading: "When it fits",
-    when: "For sales where some goods are taxed at a different rate or not at all. Type each line's rate, or mark a line exempt, and the totals follow.",
+    when: "For sales where some goods are taxed at a different rate or not at all. Type each line’s rate, or mark a line exempt, and the totals follow.",
     includes: [
       "A tax rate on every line, with a Tax column on the page",
       "Lines by the piece, ready for your products",
       "Exempt lines, with room for a tax note",
-      "Each rate's tax added up into the total",
+      "Each rate’s tax added up into the total",
       "Discounts and a delivery fee"
     ],
     src: "/templates/retail-template.webp",

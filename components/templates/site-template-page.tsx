@@ -4,6 +4,7 @@ import { Picture } from "~/components/home/picture";
 import {
   CONTAINER,
   FOCUS_RING,
+  INK_PILL,
   PageHeader,
   SiteFooter
 } from "~/components/home/site-chrome";
@@ -57,11 +58,7 @@ export function SiteTemplatePage({ id }: { id: SiteTemplateId }) {
             <Link
               to="/create"
               search={{ template: template.id }}
-              className={cn(
-                "bg-ink hover:bg-ink/85 inline-flex min-h-11 items-center gap-1.5 rounded-full px-5 font-medium text-white",
-                typeClass("body", "compact"),
-                FOCUS_RING
-              )}
+              className={INK_PILL}
             >
               {template.startLabel}
               <IconArrowRight className="size-4 shrink-0" aria-hidden="true" />
