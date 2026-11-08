@@ -745,6 +745,7 @@ function AmountPaidRow() {
   const labelStyle = getTextStyles({ settings: labelSettings });
   const conversion = useCurrencyConversion();
   const totals = useInvoiceTotals();
+  const converted = useConvertedTotals();
   const [amountPaidInput, setAmountPaidInput] = usePricingInput(amountPaid);
 
   return (
@@ -793,7 +794,8 @@ function AmountPaidRow() {
               ? formatDeduction({
                   amount: totals.amountPaid,
                   money,
-                  conversion
+                  conversion,
+                  convertedAmount: converted.amountPaid
                 })
               : withConvertedAmount({
                   value: formatCurrency(amountPaid, money),

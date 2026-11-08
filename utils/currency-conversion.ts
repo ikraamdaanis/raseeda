@@ -91,12 +91,19 @@ export function convertAmount(
   return roundToDecimals(amount * conversion.rate, conversion.toDecimals);
 }
 
-const NO_CONVERTED_TOTALS = { subtotal: 0, total: 0, balanceDue: 0 };
+const NO_CONVERTED_TOTALS = {
+  subtotal: 0,
+  total: 0,
+  amountPaid: 0,
+  balanceDue: 0
+};
 
 // The second currency's sums, each added up from the converted figures above
 // it, so its column adds up on the page the way the first currency's does.
 // Converting a sum on its own, like every other figure, can leave it a cent
-// from its rows. All 0 without a conversion.
+// from its rows. A payment of exactly the total (a receipt's, until another
+// amount is typed) pays the second currency's total too, for the same reason;
+// any other payment is converted on its own. All 0 without a conversion.
 export function calculateConvertedTotals({
   totals,
   conversion
@@ -122,9 +129,13 @@ export function calculateConvertedTotals({
         convert(totals.fees)
     )
   );
-  const balanceDue = Math.max(0, round(total - convert(totals.amountPaid)));
+  const amountPaid =
+    totals.amountPaid > 0 && totals.amountPaid === totals.total
+      ? total
+      : convert(totals.amountPaid);
+  const balanceDue = Math.max(0, round(total - amountPaid));
 
-  return { subtotal, total, balanceDue };
+  return { subtotal, total, amountPaid, balanceDue };
 }
 
 // The second currency's amounts are written in the invoice's number format and
@@ -177,21 +188,26 @@ export function withConvertedAmount({
 }
 
 // A deduction (a discount, a payment), in both currencies beside a second
-// one: "-£500.00 / -$643.75".
+// one: "-£500.00 / -$643.75". A payment passes its converted figure from
+// calculateConvertedTotals.
 export function formatDeduction({
   amount,
   money,
-  conversion
+  conversion,
+  convertedAmount
 }: {
   amount: number;
   money: MoneyFormat;
   conversion: CurrencyConversion | null;
+  convertedAmount?: number;
 }): string {
   const value = `-${formatCurrency(amount, money)}`;
 
   if (!conversion) return value;
 
-  return `${value} / -${formatConvertedAmount(amount, conversion, money)}`;
+  const converted = convertedAmount ?? convertAmount(amount, conversion);
+
+  return `${value} / -${formatCurrency(converted, secondCurrencyFormat(conversion, money))}`;
 }
 
 // The grand total, and the balance due that takes its place once a payment is

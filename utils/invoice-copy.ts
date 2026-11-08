@@ -63,7 +63,7 @@ export function nextInvoiceNumber(
 
 // A duplicated invoice set up as the next one: the next number in its series,
 // dated `today` and due the same number of days later as the original, with
-// nothing paid yet.
+// no payment typed (so nothing paid yet, or a receipt's total).
 export function prepareInvoiceCopy({
   invoice,
   takenNumbers,

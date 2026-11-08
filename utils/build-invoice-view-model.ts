@@ -255,9 +255,14 @@ function buildSummaryRows(input: {
   paidDate: string;
   dateFormat: Invoice["dateFormat"];
   balanceDue: number;
-  // The subtotal, total and balance due in the second currency, added up
-  // from its rows.
-  converted: { subtotal: number; total: number; balanceDue: number };
+  // The subtotal, total, amount paid and balance due in the second
+  // currency, added up from its rows.
+  converted: {
+    subtotal: number;
+    total: number;
+    amountPaid: number;
+    balanceDue: number;
+  };
   money: MoneyFormat;
   currencyCode: string;
   sections: Pick<InvoiceSections, "discounts" | "tax" | "fees" | "amountPaid">;
@@ -331,7 +336,8 @@ function buildSummaryRows(input: {
       value: formatDeduction({
         amount: input.amountPaid,
         money,
-        conversion
+        conversion,
+        convertedAmount: input.converted.amountPaid
       }),
       isVisible: hasPayment,
       isTotal: false

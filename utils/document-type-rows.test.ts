@@ -139,7 +139,7 @@ describe("printed sections by document type", () => {
     expect(printed.paidStamp).toBe(false);
   });
 
-  it("prints a new receipt as paid", () => {
+  it("prints a receipt with nothing typed as paid in full", () => {
     const receipt = documentOf("receipt");
 
     expect(getPrintedSections(receipt).amountPaid).toBe(true);
@@ -152,6 +152,15 @@ describe("printed sections by document type", () => {
 
     expect(printed.amountPaid).toBe(false);
     expect(printed.paidStamp).toBe(false);
+  });
+
+  it("prints a credit note's payment and stamp as an invoice's", () => {
+    const printed = getPrintedSections(
+      documentOf("credit-note", { amountPaid: 100 })
+    );
+
+    expect(printed.amountPaid).toBe(true);
+    expect(printed.paidStamp).toBe(true);
   });
 
   it("prints an invoice's stamp as before", () => {
@@ -182,6 +191,41 @@ describe("closing rows by document type", () => {
     expect(amountPaid?.value).toBe("-$100.00");
     expect(balanceDue?.isVisible).toBe(true);
     expect(balanceDue?.value).toBe("$0.00 USD");
+  });
+
+  // Three lines of £1.03 are $3.99 at 1.2875, though £3.09 on its own is
+  // $3.98.
+  it("pays a receipt's second currency in full too", () => {
+    const receipt = documentOf("receipt", {
+      currency: "£",
+      currencyCode: "GBP",
+      items: ["a", "b", "c"].map(id => ({
+        id,
+        description: "",
+        unit: "",
+        quantity: 1,
+        unitPrice: 1.03
+      })),
+      sections: {
+        ...documentOf("receipt").sections,
+        currencyConversion: true
+      },
+      currencyConversion: {
+        ...documentOf("receipt").currencyConversion,
+        currency: "$",
+        currencyCode: "USD",
+        rate: 1.2875
+      }
+    });
+    const rows = buildInvoiceViewModel(receipt).summaryRows;
+
+    expect(rows.find(row => row.id === "total")?.value).toBe("£3.09 / $3.99");
+    expect(rows.find(row => row.id === "amountPaid")?.value).toBe(
+      "-£3.09 / -$3.99"
+    );
+    expect(rows.find(row => row.id === "balanceDue")?.value).toBe(
+      "£0.00 / $0.00"
+    );
   });
 
   it("brings a quote's payment back when it's an invoice again", () => {

@@ -136,7 +136,7 @@ describe("calculateConvertedTotals", () => {
   // £1,070.00 of lines at 20%, 5% and exempt, less £50, plus £25 in fees,
   // £500 paid, at 1.1734. Converting the total on its own gives €1,452.70,
   // a cent short of the converted rows above it.
-  const totals = calculateInvoiceTotals({
+  const totalsInput: Parameters<typeof calculateInvoiceTotals>[0] = {
     documentType: "invoice",
     items: [
       { id: "a", description: "", unit: "", quantity: 3, unitPrice: 333.33 },
@@ -164,7 +164,8 @@ describe("calculateConvertedTotals", () => {
     amountPaid: 500,
     currency: "£",
     currencyCode: "GBP"
-  });
+  };
+  const totals = calculateInvoiceTotals(totalsInput);
 
   it("adds each sum up from the converted rows above it", () => {
     expect(
@@ -175,6 +176,7 @@ describe("calculateConvertedTotals", () => {
     ).toEqual({
       subtotal: 1255.54,
       total: 1452.71,
+      amountPaid: 586.7,
       balanceDue: 866.01
     });
   });
@@ -188,6 +190,7 @@ describe("calculateConvertedTotals", () => {
     ).toEqual({
       subtotal: 0,
       total: 0,
+      amountPaid: 0,
       balanceDue: 0
     });
   });
@@ -196,6 +199,7 @@ describe("calculateConvertedTotals", () => {
     expect(calculateConvertedTotals({ totals, conversion: null })).toEqual({
       subtotal: 0,
       total: 0,
+      amountPaid: 0,
       balanceDue: 0
     });
   });
@@ -213,6 +217,44 @@ describe("calculateConvertedTotals", () => {
 
     expect(Number.isInteger(converted.total)).toBe(true);
     expect(converted.subtotal).toBe(lines);
+  });
+
+  // Converted on its own, £1,238.03 is €1,452.70, a cent short of the
+  // €1,452.71 the rows add up to.
+  it("pays the second currency's total when the whole total is paid", () => {
+    const converted = calculateConvertedTotals({
+      totals: { ...totals, amountPaid: totals.total },
+      conversion: { rate: 1.1734, toDecimals: 2 }
+    });
+
+    expect(converted.amountPaid).toBe(converted.total);
+    expect(converted.balanceDue).toBe(0);
+  });
+
+  it("leaves nothing due in the second currency on a receipt", () => {
+    const receipt = calculateInvoiceTotals({
+      ...totalsInput,
+      documentType: "receipt",
+      amountPaid: 0
+    });
+
+    expect(
+      calculateConvertedTotals({
+        totals: receipt,
+        conversion: { rate: 1.1734, toDecimals: 2 }
+      }).balanceDue
+    ).toBe(0);
+  });
+
+  it("converts a part payment on its own, as its row prints it", () => {
+    const converted = calculateConvertedTotals({
+      totals,
+      conversion: { rate: 1.1734, toDecimals: 2 }
+    });
+
+    expect(converted.amountPaid).toBe(
+      convertAmount(500, { rate: 1.1734, toDecimals: 2 })
+    );
   });
 
   it("never reads a negative balance", () => {

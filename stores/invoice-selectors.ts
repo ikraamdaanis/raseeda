@@ -245,9 +245,9 @@ export function useCurrencyConversionSlice() {
 }
 
 // Derived money totals (subtotal, tax amount, discount amount, grand total,
-// amount paid, balance due), recomputed from the pricing inputs. Returns plain numbers so
-// shallow equality only fires a re-render when a total actually changes, not on
-// every unrelated edit.
+// amount paid, balance due), recomputed from the pricing inputs. Returns plain
+// numbers so shallow equality only fires a re-render when a total actually
+// changes, not on every unrelated edit.
 export function useInvoiceTotals(): {
   subtotal: number;
   taxAmount: number;
@@ -283,13 +283,19 @@ export function useInvoiceTotals(): {
   );
 }
 
-const NO_CONVERTED_TOTALS = { subtotal: 0, total: 0, balanceDue: 0 };
+const NO_CONVERTED_TOTALS = {
+  subtotal: 0,
+  total: 0,
+  amountPaid: 0,
+  balanceDue: 0
+};
 
-// The subtotal, total and balance due in the second currency, each added up
-// from the converted rows above it. All 0 while there's no conversion.
+// The subtotal, total, amount paid and balance due in the second currency,
+// each added up from the converted rows above it. All 0 while there's no conversion.
 export function useConvertedTotals(): {
   subtotal: number;
   total: number;
+  amountPaid: number;
   balanceDue: number;
 } {
   return useInvoiceStore(
