@@ -341,6 +341,21 @@ describe("prepareInvoiceCopy", () => {
     expect(copy.dueDate).toBe("2026-12-02");
   });
 
+  it("keeps a credit note's due date span on a copy of the same type", () => {
+    const copy = prepareInvoiceCopy({
+      invoice: {
+        ...createBlankDocument("credit-note"),
+        invoiceDate: "2026-10-01",
+        dueDate: "2026-10-15"
+      },
+      documentType: "credit-note",
+      library: [],
+      today: new Date(2026, 10, 8)
+    });
+
+    expect(copy.dueDate).toBe("2026-11-22");
+  });
+
   it("prefers the type's own series over the original's when both hold that type", () => {
     const copy = prepareInvoiceCopy({
       invoice: quoteWith({ number: "QUO-0006" }),
@@ -354,6 +369,21 @@ describe("prepareInvoiceCopy", () => {
     });
 
     expect(copy.number).toBe("INV-0011");
+  });
+
+  it("passes over a number left in another type's sample series", () => {
+    const copy = prepareInvoiceCopy({
+      invoice: quoteWith({ number: "QUO-0005" }),
+      documentType: "invoice",
+      library: [
+        stored("QUO-0005", "quote", 1),
+        stored("INV-0009", "invoice", 40),
+        stored("PRO-0003", "invoice", 30)
+      ],
+      today: new Date(2026, 10, 2)
+    });
+
+    expect(copy.number).toBe("INV-0010");
   });
 
   it("starts the sample series rather than repeat a number with no digits", () => {

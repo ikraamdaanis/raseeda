@@ -5,6 +5,7 @@ import {
   DOCUMENT_TYPE_NAMES,
   DOCUMENT_TYPE_ROWS
 } from "~/consts/document-types";
+import { DOCUMENT_TYPES } from "~/schema/invoice";
 import type { DocumentType, Invoice } from "~/types";
 import { applyDocumentType } from "~/utils/document-type";
 import { formatInvoiceDate } from "~/utils/format-invoice-date";
@@ -86,11 +87,11 @@ function isSameSeries(number: string, other: string) {
 // The number a copy of another type starts with: the next one in the series
 // of the newest document of that type, since each type keeps its own series
 // (a quote's number on an invoice would break the invoices' sequence). A
-// document of that type still numbered in the original's series (a quote
-// switched to an invoice in the inspector keeps QUO-0007) is passed over for
-// one in a series of its own, when there is one. With none of that type yet,
-// or a newest one whose number has no digits to count on, the type's sample
-// number, moved on past any taken.
+// document of that type still numbered in the original's series or another
+// type's sample series (a quote switched to an invoice in the inspector keeps
+// QUO-0007) is passed over for one in a series of its own, when there is
+// one. With none of that type yet, or a newest one whose number has no digits
+// to count on, the type's sample number, moved on past any taken.
 function nextNumberOfType({
   original,
   documentType,
@@ -104,8 +105,16 @@ function nextNumberOfType({
   const ofType = library.filter(
     document => document.documentType === documentType && document.number.trim()
   );
+  // The original's series, and every other type's sample series.
+  const otherSeries = [
+    original,
+    ...DOCUMENT_TYPES.filter(otherType => otherType !== documentType).map(
+      otherType => DOCUMENT_TYPE_DEFAULTS[otherType].number
+    )
+  ];
   const ownSeries = ofType.filter(
-    document => !isSameSeries(document.number, original)
+    document =>
+      !otherSeries.some(number => isSameSeries(document.number, number))
   );
   const newest = maxBy(ownSeries.length > 0 ? ownSeries : ofType, document =>
     document.createdAt.getTime()
@@ -147,9 +156,10 @@ function copyDueDate({
   const before = DOCUMENT_TYPE_DEFAULTS[invoice.documentType];
   const after = DOCUMENT_TYPE_DEFAULTS[documentType];
   const isSameMeaning =
-    before.labels.paymentDue === after.labels.paymentDue &&
-    DOCUMENT_TYPE_ROWS[invoice.documentType].dueDate &&
-    DOCUMENT_TYPE_ROWS[documentType].dueDate;
+    documentType === invoice.documentType ||
+    (before.labels.paymentDue === after.labels.paymentDue &&
+      DOCUMENT_TYPE_ROWS[invoice.documentType].dueDate &&
+      DOCUMENT_TYPE_ROWS[documentType].dueDate);
 
   if (!isSameMeaning) {
     return addDaysToIsoDate(invoiceDate, after.dueDays) ?? invoice.dueDate;
