@@ -133,7 +133,10 @@ export function calculateConvertedTotals({
     totals.amountPaid > 0 && totals.amountPaid === totals.total
       ? total
       : convert(totals.amountPaid);
-  const balanceDue = Math.max(0, round(total - amountPaid));
+  // Nothing due in the first currency is nothing due in the second, even
+  // when an overpayment converted on its own falls short of the total.
+  const balanceDue =
+    totals.balanceDue === 0 ? 0 : Math.max(0, round(total - amountPaid));
 
   return { subtotal, total, amountPaid, balanceDue };
 }

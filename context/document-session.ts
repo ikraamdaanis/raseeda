@@ -970,8 +970,9 @@ function nextCopyName(name: string, takenNames: string[]) {
 }
 
 // Copies a library invoice as the next one: the next number in its series,
-// dated today with no payment typed (utils/invoice-copy.ts). A copy of an invoice with an
-// automatic name keeps an automatic name; a named one becomes "Name copy".
+// dated today with no payment typed (utils/invoice-copy.ts). A copy of an
+// invoice with an automatic name keeps an automatic name; a named one becomes
+// "Name copy".
 async function copyInvoice(
   document: InvoiceDocument
 ): Promise<InvoiceDocument> {

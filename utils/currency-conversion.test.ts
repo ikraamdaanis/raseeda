@@ -246,6 +246,32 @@ describe("calculateConvertedTotals", () => {
     ).toBe(0);
   });
 
+  // Ten $1.00 lines are €10.10 at 1.005, though $10.01 on its own is only
+  // €10.06.
+  it("leaves nothing due in the second currency on an overpayment", () => {
+    const overpaid = calculateInvoiceTotals({
+      ...totalsInput,
+      items: Array.from({ length: 10 }, (_, index) => ({
+        id: String(index),
+        description: "",
+        unit: "",
+        quantity: 1,
+        unitPrice: 1
+      })),
+      tax: { percentage: 0, exempt: false, note: "", perLine: false },
+      discounts: 0,
+      fees: 0,
+      amountPaid: 10.01
+    });
+
+    expect(
+      calculateConvertedTotals({
+        totals: overpaid,
+        conversion: { rate: 1.005, toDecimals: 2 }
+      }).balanceDue
+    ).toBe(0);
+  });
+
   it("converts a part payment on its own, as its row prints it", () => {
     const converted = calculateConvertedTotals({
       totals,

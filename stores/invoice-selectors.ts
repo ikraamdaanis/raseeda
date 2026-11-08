@@ -291,7 +291,8 @@ const NO_CONVERTED_TOTALS = {
 };
 
 // The subtotal, total, amount paid and balance due in the second currency,
-// each added up from the converted rows above it. All 0 while there's no conversion.
+// each added up from the converted rows above it. All 0 while there's no
+// conversion.
 export function useConvertedTotals(): {
   subtotal: number;
   total: number;
