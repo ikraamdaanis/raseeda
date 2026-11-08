@@ -1,5 +1,11 @@
 import { differenceInCalendarDays, format } from "date-fns";
-import type { Invoice } from "~/types";
+import { maxBy } from "lodash-es";
+import {
+  DOCUMENT_TYPE_DEFAULTS,
+  DOCUMENT_TYPE_NAMES
+} from "~/consts/document-types";
+import type { DocumentType, Invoice } from "~/types";
+import { applyDocumentType } from "~/utils/document-type";
 import { addDaysToIsoDate } from "~/utils/payment-terms";
 import { readInvoiceDate } from "~/utils/read-invoice-date";
 
@@ -61,35 +67,144 @@ export function nextInvoiceNumber(
   return `${prefix}${String(highest + 1).padStart(digits.length, "0")}${suffix}`;
 }
 
-// A duplicated invoice set up as the next one: the next number in its series,
-// dated `today` and due the same number of days later as the original, with
-// no payment typed (so nothing paid yet, or a receipt's total).
+// The number a copy of another type starts with: the next one in the series
+// of the newest document of that type, since each type keeps its own series
+// (a quote's number on an invoice would break the invoices' sequence). With
+// none of that type yet, the type's sample number, moved on past any taken.
+function nextNumberOfType({
+  documentType,
+  library
+}: {
+  documentType: DocumentType;
+  library: { number: string; documentType: DocumentType; createdAt: Date }[];
+}) {
+  const takenNumbers = library.map(document => document.number);
+  const newest = maxBy(
+    library.filter(
+      document =>
+        document.documentType === documentType && document.number.trim()
+    ),
+    document => document.createdAt.getTime()
+  );
+
+  if (newest) return nextInvoiceNumber(newest.number, takenNumbers);
+
+  const sample = DOCUMENT_TYPE_DEFAULTS[documentType].number;
+  const taken = new Set(
+    takenNumbers.map(number => number.trim().toLowerCase())
+  );
+
+  return taken.has(sample.toLowerCase())
+    ? nextInvoiceNumber(sample, takenNumbers)
+    : sample;
+}
+
+// The copy's due date. Between types whose due date means the same thing (an
+// invoice's and a proforma's "Due date") it keeps the original's span from
+// today; otherwise it starts as a new blank of the type would, since a
+// quote's "Valid until" isn't a receipt's "Date paid" or an invoice's terms.
+function copyDueDate({
+  invoice,
+  documentType,
+  invoiceDate
+}: {
+  invoice: Invoice;
+  documentType: DocumentType;
+  invoiceDate: string;
+}) {
+  const before = DOCUMENT_TYPE_DEFAULTS[invoice.documentType];
+  const after = DOCUMENT_TYPE_DEFAULTS[documentType];
+
+  if (before.labels.paymentDue !== after.labels.paymentDue) {
+    return addDaysToIsoDate(invoiceDate, after.dueDays) ?? invoice.dueDate;
+  }
+
+  const start = readInvoiceDate(invoice.invoiceDate);
+  const end = readInvoiceDate(invoice.dueDate);
+
+  if (!start || !end) return invoice.dueDate;
+
+  return (
+    addDaysToIsoDate(invoiceDate, differenceInCalendarDays(end, start)) ??
+    invoice.dueDate
+  );
+}
+
+/**
+ * A duplicated document set up as the next one, as `documentType`: dated
+ * `today`, with no payment typed (so nothing paid yet, or a receipt's total).
+ * Of the same type, it takes the next number in its series. Of another type,
+ * it takes that type's title and labels where they're still on the old type's
+ * defaults (`applyDocumentType`) and the next number in that type's series;
+ * an invoice made into a credit note names the invoice it refers to, as
+ * printed text. Nothing in the copy points back at the original.
+ */
 export function prepareInvoiceCopy({
   invoice,
-  takenNumbers,
+  documentType,
+  library,
   today
 }: {
   invoice: Invoice;
-  takenNumbers: string[];
+  documentType: DocumentType;
+  library: { number: string; documentType: DocumentType; createdAt: Date }[];
   today: Date;
 }): Invoice {
   const invoiceDate = format(today, "yyyy-MM-dd");
-  const start = readInvoiceDate(invoice.invoiceDate);
-  const end = readInvoiceDate(invoice.dueDate);
-  const dueDate =
-    start && end
-      ? (addDaysToIsoDate(invoiceDate, differenceInCalendarDays(end, start)) ??
-        invoice.dueDate)
-      : invoice.dueDate;
+  const isSameType = documentType === invoice.documentType;
+  const typed = isSameType ? invoice : applyDocumentType(invoice, documentType);
+  const refersTo =
+    documentType === "credit-note" &&
+    invoice.documentType === "invoice" &&
+    !invoice.refersTo.trim()
+      ? invoice.number.trim()
+      : invoice.refersTo;
 
   return {
-    ...invoice,
-    number: nextInvoiceNumber(invoice.number, takenNumbers),
+    ...typed,
+    number: isSameType
+      ? nextInvoiceNumber(
+          invoice.number,
+          library.map(document => document.number)
+        )
+      : nextNumberOfType({ documentType, library }),
     invoiceDate,
-    dueDate,
+    dueDate: copyDueDate({ invoice, documentType, invoiceDate }),
+    refersTo,
     amountPaid: 0,
     paidDate: ""
   };
+}
+
+// "an invoice", "a quote".
+function withArticle(name: string) {
+  return `${/^[aeiou]/i.test(name) ? "an" : "a"} ${name}`;
+}
+
+/**
+ * The banner a copy opens with: what it was copied from (`original`, its
+ * number or name), the type it was made as when that's another one than the
+ * original's type, and what it carried over that probably needs
+ * changing.
+ */
+export function describeCopy({
+  original,
+  copy,
+  originalType = copy.documentType
+}: {
+  original: string;
+  copy: Invoice;
+  originalType?: DocumentType;
+}): string {
+  const source =
+    originalType === copy.documentType
+      ? `Copied from ${original}`
+      : `Copied from ${original} as ${withArticle(
+          DOCUMENT_TYPE_NAMES[copy.documentType].toLowerCase()
+        )}`;
+  const review = describeCopyReview(copy);
+
+  return review ? `${source}. Check ${review}.` : `${source} and dated today.`;
 }
 
 // The first date or period a piece of text mentions, if any.

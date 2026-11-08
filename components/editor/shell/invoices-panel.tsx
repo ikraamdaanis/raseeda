@@ -1,5 +1,6 @@
 import {
   IconCopy,
+  IconCopyPlus,
   IconDots,
   IconFolderOpen,
   IconPencil,
@@ -8,6 +9,7 @@ import {
   IconTrash,
   IconX
 } from "@tabler/icons-react";
+import { startCase } from "lodash-es";
 import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
 import { SegmentedControl } from "~/components/editor/shell/inspector/inspector-controls";
@@ -18,14 +20,19 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger
 } from "~/components/ui/dropdown-menu";
 import { formatCurrency, getMoneyFormat } from "~/consts/currencies";
+import { DOCUMENT_TYPE_NAMES } from "~/consts/document-types";
 import { useFileActions } from "~/context/file-actions-context";
 import { useInvoiceDocument } from "~/context/invoice-document-context";
 import { watchInvoices, watchTemplates } from "~/db";
 import { usePersistentState } from "~/hooks/use-persistent-state";
 import { cn } from "~/lib/utils";
+import { DOCUMENT_TYPES } from "~/schema/invoice";
 import type {
   InvoiceDocument,
   InvoiceLibraryView,
@@ -292,6 +299,27 @@ function InvoiceList({
                       <IconCopy aria-hidden="true" />
                       Duplicate
                     </DropdownMenuItem>
+                    <DropdownMenuSub>
+                      <DropdownMenuSubTrigger>
+                        <IconCopyPlus aria-hidden="true" />
+                        Duplicate As
+                      </DropdownMenuSubTrigger>
+                      <DropdownMenuSubContent className="w-44">
+                        {DOCUMENT_TYPES.filter(
+                          otherType =>
+                            otherType !== document.invoiceData.documentType
+                        ).map(otherType => (
+                          <DropdownMenuItem
+                            key={otherType}
+                            onClick={() =>
+                              actions.duplicateInvoice(document, otherType)
+                            }
+                          >
+                            {startCase(DOCUMENT_TYPE_NAMES[otherType])}
+                          </DropdownMenuItem>
+                        ))}
+                      </DropdownMenuSubContent>
+                    </DropdownMenuSub>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem
                       variant="destructive"

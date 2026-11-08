@@ -459,6 +459,91 @@ describe("autosave", () => {
       message: "Copied from FRL-0014. Check the service period."
     });
   });
+
+  it("duplicates a quote as an invoice and leaves the quote as it was", async () => {
+    const page = await loadPage();
+
+    await page.newDocument("quote");
+    page.edit().setClient(client => ({ ...client, content: "Acme Ltd" }));
+    page.edit().updateItem(0, "description", "Website");
+    page.edit().updateItem(0, "unitPrice", 900);
+    await page.flushNow();
+
+    const quoteId = page.documentState().documentId ?? "";
+    const quote = await page.getInvoice(quoteId);
+    const copy = await page.duplicateCurrent("invoice");
+
+    expect(copy?.id).not.toBe(quoteId);
+    expect(page.documentState().documentId).toBe(copy?.id);
+    expect(page.invoice()).toMatchObject({
+      documentType: "invoice",
+      title: "Invoice",
+      number: "INV-0001",
+      client: quote?.invoiceData.client,
+      items: quote?.invoiceData.items
+    });
+    expect(page.invoice().labels.paymentDue).toBe("Due date");
+    expect(page.documentState().copyReview?.message).toBe(
+      "Copied from QUO-0001 as an invoice and dated today."
+    );
+    expect(await page.getInvoice(quoteId)).toEqual(quote);
+  });
+
+  it("starts the copy's undo history afresh, so undo can't reach the original", async () => {
+    const page = await loadPage();
+
+    await page.newDocument("quote");
+    page.edit().setClient(client => ({ ...client, content: "Acme Ltd" }));
+    await page.flushNow();
+
+    const quoteId = page.documentState().documentId ?? "";
+    const quote = await page.getInvoice(quoteId);
+
+    await page.duplicateCurrent("invoice");
+
+    expect(page.history.useInvoiceHistory.getState().canUndo).toBe(false);
+    expect(page.history.undoInvoiceChange()).toBe(false);
+
+    page.edit().setTitle("Final invoice");
+    await settle();
+    page.history.undoInvoiceChange();
+    page.history.undoInvoiceChange();
+
+    expect(page.invoice()).toMatchObject({
+      documentType: "invoice",
+      title: "Invoice"
+    });
+    expect(page.invoice().client.content).toBe("Acme Ltd");
+
+    await settle();
+
+    expect(await page.getInvoice(quoteId)).toEqual(quote);
+  });
+
+  it("duplicates a library invoice as another type without opening it", async () => {
+    const page = await loadPage();
+
+    await page.createInvoice(
+      storedInvoice({
+        id: "listed",
+        nameSource: "auto",
+        invoiceData: { ...structuredClone(invoiceDefault), number: "INV-0042" }
+      })
+    );
+
+    const listed = (await page.getInvoice("listed")) as InvoiceDocument;
+    const copy = await page.duplicateInvoice(listed, "credit-note");
+
+    expect(copy.invoiceData).toMatchObject({
+      documentType: "credit-note",
+      title: "Credit note",
+      number: "CN-0001",
+      refersTo: "INV-0042"
+    });
+    expect(copy.name).toBe("CN-0001");
+    expect(page.documentState().documentId).not.toBe(copy.id);
+    expect(await page.getInvoice("listed")).toEqual(listed);
+  });
 });
 
 describe("save failures", () => {

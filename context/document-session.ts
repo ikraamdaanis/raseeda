@@ -56,7 +56,7 @@ import type {
 import { ensureRowIds } from "~/utils/ensure-row-ids";
 import { downloadBackupFile } from "~/utils/export-data";
 import { isBlankInvoice, isLargeRemoval } from "~/utils/invoice-content";
-import { describeCopyReview, prepareInvoiceCopy } from "~/utils/invoice-copy";
+import { describeCopy, prepareInvoiceCopy } from "~/utils/invoice-copy";
 import { deriveInvoiceName } from "~/utils/invoice-name";
 import { trackInvoice } from "~/utils/track";
 
@@ -969,18 +969,24 @@ function nextCopyName(name: string, takenNames: string[]) {
   return candidate;
 }
 
-// Copies a library invoice as the next one: the next number in its series,
-// dated today with no payment typed (utils/invoice-copy.ts). A copy of an
-// invoice with an automatic name keeps an automatic name; a named one becomes
-// "Name copy".
+// Copies a library invoice as the next one, as `documentType`: the next number
+// in that type's series, dated today with no payment typed
+// (utils/invoice-copy.ts). A copy of an invoice with an automatic name keeps
+// an automatic name; a named one becomes "Name copy".
 async function copyInvoice(
-  document: InvoiceDocument
+  document: InvoiceDocument,
+  documentType: DocumentType
 ): Promise<InvoiceDocument> {
   const now = new Date();
   const library = await getAllInvoices();
   const invoiceData = prepareInvoiceCopy({
     invoice: ensureRowIds(structuredClone(document.invoiceData)),
-    takenNumbers: library.map(invoice => invoice.invoiceData.number),
+    documentType,
+    library: library.map(invoice => ({
+      number: invoice.invoiceData.number,
+      documentType: invoice.invoiceData.documentType,
+      createdAt: invoice.createdAt
+    })),
     today: now
   });
   const name =
@@ -1007,9 +1013,13 @@ async function copyInvoice(
   return copy;
 }
 
-// Duplicates a library invoice. The open one is written first and copied as
-// stored then, so edits still in the save delay come along.
-function duplicateInvoice(document: InvoiceDocument): Promise<InvoiceDocument> {
+// Duplicates a library invoice, as `documentType` or else as its own type. The
+// open one is written first and copied as stored then, so edits still in the
+// save delay come along.
+function duplicateInvoice(
+  document: InvoiceDocument,
+  documentType?: DocumentType
+): Promise<InvoiceDocument> {
   return enqueue(async () => {
     const session = current;
 
@@ -1018,7 +1028,10 @@ function duplicateInvoice(document: InvoiceDocument): Promise<InvoiceDocument> {
       // first, the copy's number counts it.
       if (session?.status === "editing") await session.controller.flush();
 
-      return copyInvoice(document);
+      return copyInvoice(
+        document,
+        documentType ?? document.invoiceData.documentType
+      );
     }
 
     if (!(await session.controller.flush())) {
@@ -1027,13 +1040,19 @@ function duplicateInvoice(document: InvoiceDocument): Promise<InvoiceDocument> {
       );
     }
 
-    return copyInvoice((await getInvoice(document.id)) ?? document);
+    const stored = (await getInvoice(document.id)) ?? document;
+
+    return copyInvoice(stored, documentType ?? stored.invoiceData.documentType);
   });
 }
 
-// Duplicates the open invoice and opens the copy (Apple's autosaving apps do
-// the same; it takes Save As's place and its ⇧⌘S).
-function duplicateCurrent(): Promise<InvoiceDocument | null> {
+// Duplicates the open invoice, as `documentType` or else as its own type, and
+// opens the copy (Apple's autosaving apps do the same; it takes Save As's
+// place and its ⇧⌘S). The copy is a document of its own: it starts with its
+// own undo history, and nothing in it points back at the original.
+function duplicateCurrent(
+  documentType?: DocumentType
+): Promise<InvoiceDocument | null> {
   return enqueue(async () => {
     const session = current;
 
@@ -1052,21 +1071,23 @@ function duplicateCurrent(): Promise<InvoiceDocument | null> {
 
     if (!document) return null;
 
-    const copy = await copyInvoice(document);
+    const copy = await copyInvoice(
+      document,
+      documentType ?? document.invoiceData.documentType
+    );
 
     if (!(await leaveCurrent())) return copy;
 
     await switchTo(sessionFromDocument(copy), copy.invoiceData);
 
-    const original = document.invoiceData.number.trim() || document.name;
-    const review = describeCopyReview(copy.invoiceData);
-
     useDocumentStore.setState({
       copyReview: {
         documentId: copy.id,
-        message: review
-          ? `Copied from ${original}. Check ${review}.`
-          : `Copied from ${original} and dated today.`
+        message: describeCopy({
+          original: document.invoiceData.number.trim() || document.name,
+          copy: copy.invoiceData,
+          originalType: document.invoiceData.documentType
+        })
       }
     });
 

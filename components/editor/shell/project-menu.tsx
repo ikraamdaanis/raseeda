@@ -6,6 +6,7 @@ import {
   IconChevronDown,
   IconCommand,
   IconCopy,
+  IconCopyPlus,
   IconDeviceFloppy,
   IconDownload,
   IconFilePlus,
@@ -41,22 +42,28 @@ import {
 import { useEditorUi } from "~/context/editor-ui-context";
 import { useFileActions } from "~/context/file-actions-context";
 import { useInvoiceDocument } from "~/context/invoice-document-context";
+import { DOCUMENT_TYPES } from "~/schema/invoice";
 import {
   redoInvoiceChange,
   undoInvoiceChange,
   useInvoiceHistory
 } from "~/stores/invoice-history";
+import { useDocumentType } from "~/stores/invoice-selectors";
 import { shortcutLabel } from "~/utils/shortcut-label";
 
 // The logo opens one menu with everything the old File menu had, plus undo
 // and redo and the way back to the homepage, like the project menu in Framer.
 // It also carries the theme choice, which phones have no canvas pill for.
 // Invoices save themselves, so there's no Save: Duplicate takes Save As's
-// place, as in Apple's autosaving apps.
+// place, as in Apple's autosaving apps. Duplicate copies the document as its
+// own type; Duplicate As makes it another type, as turning a quote into an
+// invoice does.
 export function ProjectMenu() {
   const actions = useFileActions();
   const { setPaletteOpen } = useEditorUi();
   const { isRecord, status } = useInvoiceDocument();
+  const documentType = useDocumentType();
+  const canDuplicate = !actions.pending && isRecord && status === "editing";
   const history = useInvoiceHistory();
   const navigate = useNavigate();
 
@@ -87,13 +94,13 @@ export function ProjectMenu() {
             New Document
           </DropdownMenuSubTrigger>
           <DropdownMenuSubContent className="w-44">
-            {OTHER_DOCUMENT_TYPES.map(documentType => (
+            {OTHER_DOCUMENT_TYPES.map(newType => (
               <DropdownMenuItem
-                key={documentType}
-                onClick={() => actions.newDocument(documentType)}
+                key={newType}
+                onClick={() => actions.newDocument(newType)}
                 disabled={actions.pending}
               >
-                {startCase(DOCUMENT_TYPE_NAMES[documentType])}
+                {startCase(DOCUMENT_TYPE_NAMES[newType])}
               </DropdownMenuItem>
             ))}
           </DropdownMenuSubContent>
@@ -107,13 +114,32 @@ export function ProjectMenu() {
           <DropdownMenuShortcut>{shortcutLabel("⌘O")}</DropdownMenuShortcut>
         </DropdownMenuItem>
         <DropdownMenuItem
-          onClick={actions.duplicateCurrent}
-          disabled={actions.pending || !isRecord || status !== "editing"}
+          onClick={() => actions.duplicateCurrent()}
+          disabled={!canDuplicate}
         >
           <IconCopy aria-hidden="true" />
           Duplicate
           <DropdownMenuShortcut>{shortcutLabel("⇧⌘S")}</DropdownMenuShortcut>
         </DropdownMenuItem>
+        <DropdownMenuSub>
+          <DropdownMenuSubTrigger disabled={!canDuplicate}>
+            <IconCopyPlus aria-hidden="true" />
+            Duplicate As
+          </DropdownMenuSubTrigger>
+          <DropdownMenuSubContent className="w-44">
+            {DOCUMENT_TYPES.filter(otherType => otherType !== documentType).map(
+              otherType => (
+                <DropdownMenuItem
+                  key={otherType}
+                  onClick={() => actions.duplicateCurrent(otherType)}
+                  disabled={!canDuplicate}
+                >
+                  {startCase(DOCUMENT_TYPE_NAMES[otherType])}
+                </DropdownMenuItem>
+              )
+            )}
+          </DropdownMenuSubContent>
+        </DropdownMenuSub>
         <DropdownMenuItem
           onClick={actions.showVersionHistory}
           disabled={!isRecord}

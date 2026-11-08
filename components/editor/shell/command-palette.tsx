@@ -2,6 +2,7 @@ import {
   IconArrowBackUp,
   IconArrowForwardUp,
   IconCopy,
+  IconCopyPlus,
   IconCurrencyDollar,
   IconDeviceFloppy,
   IconDownload,
@@ -54,6 +55,7 @@ import { watchInvoices } from "~/db";
 import { useEditorTheme } from "~/hooks/use-editor-theme";
 import { useInvoicePdf } from "~/hooks/use-invoice-pdf";
 import { useSecondCurrency } from "~/hooks/use-second-currency";
+import { DOCUMENT_TYPES } from "~/schema/invoice";
 import {
   redoInvoiceChange,
   undoInvoiceChange,
@@ -127,7 +129,8 @@ function PaletteCommands() {
   const { sections, setSection } = useSectionsSlice();
   // The switches the document's type settles aren't offered, as in the
   // inspector.
-  const settledSections = getTypeSettledSections(useDocumentType());
+  const documentType = useDocumentType();
+  const settledSections = getTypeSettledSections(documentType);
   const secondCurrency = useSecondCurrency();
   const { libraryDocumentId, isRecord, status } = useInvoiceDocument();
   const history = useInvoiceHistory();
@@ -165,14 +168,14 @@ function PaletteCommands() {
         <PaletteItem icon={<IconFilePlus />} onSelect={run(actions.newInvoice)}>
           New invoice
         </PaletteItem>
-        {OTHER_DOCUMENT_TYPES.map(documentType => (
+        {OTHER_DOCUMENT_TYPES.map(newType => (
           <PaletteItem
-            key={documentType}
+            key={newType}
             icon={<IconFilePlus />}
-            onSelect={run(() => actions.newDocument(documentType))}
+            onSelect={run(() => actions.newDocument(newType))}
             keywords={["document", "type"]}
           >
-            {`New ${DOCUMENT_TYPE_NAMES[documentType].toLowerCase()}`}
+            {`New ${DOCUMENT_TYPE_NAMES[newType].toLowerCase()}`}
           </PaletteItem>
         ))}
         <PaletteItem
@@ -189,9 +192,23 @@ function PaletteCommands() {
             shortcut="⇧⌘S"
             keywords={["copy", "save as"]}
           >
-            Duplicate invoice
+            {`Duplicate ${DOCUMENT_TYPE_NAMES[documentType].toLowerCase()}`}
           </PaletteItem>
         )}
+        {isRecord &&
+          status === "editing" &&
+          DOCUMENT_TYPES.filter(otherType => otherType !== documentType).map(
+            otherType => (
+              <PaletteItem
+                key={otherType}
+                icon={<IconCopyPlus />}
+                onSelect={run(() => actions.duplicateCurrent(otherType))}
+                keywords={["copy", "convert", "turn into", "document", "type"]}
+              >
+                {`Duplicate as ${DOCUMENT_TYPE_NAMES[otherType].toLowerCase()}`}
+              </PaletteItem>
+            )
+          )}
         {isRecord && (
           <PaletteItem
             icon={<IconHistory />}

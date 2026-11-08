@@ -51,7 +51,8 @@ const FileActionsContext = createContext<{
   openInvoice: (documentId: string) => void;
   // ⌘S: writes the open invoice now and says it's saved.
   saveNow: () => void;
-  duplicateCurrent: () => void;
+  // A copy of the open invoice, as another type when one is given.
+  duplicateCurrent: (documentType?: DocumentType) => void;
   showVersionHistory: () => void;
   showOpenTemplate: () => void;
   applyTemplate: (template: InvoiceTemplate) => void;
@@ -60,7 +61,10 @@ const FileActionsContext = createContext<{
   importData: () => void;
   deleteAllData: () => void;
   renameInvoice: (document: InvoiceDocument) => void;
-  duplicateInvoice: (document: InvoiceDocument) => void;
+  duplicateInvoice: (
+    document: InvoiceDocument,
+    documentType?: DocumentType
+  ) => void;
   deleteInvoice: (document: InvoiceDocument) => void;
   renameTemplate: (template: InvoiceTemplate) => void;
   deleteTemplate: (template: InvoiceTemplate) => void;
@@ -183,11 +187,11 @@ export function FileActionsProvider({ children }: { children: ReactNode }) {
       toast.success("Saved", { id: "save-now", duration: 1500 });
   }
 
-  function handleDuplicateCurrent() {
+  function handleDuplicateCurrent(documentType?: DocumentType) {
     if (!isRecord || status !== "editing") return;
 
     run(async () => {
-      const copy = await duplicateCurrent();
+      const copy = await duplicateCurrent(documentType);
 
       if (copy) toast.success(`Duplicated as “${copy.name}”`);
     }, "Failed to duplicate invoice");
@@ -289,9 +293,12 @@ export function FileActionsProvider({ children }: { children: ReactNode }) {
     }
   }
 
-  function handleDuplicateInvoice(document: InvoiceDocument) {
+  function handleDuplicateInvoice(
+    document: InvoiceDocument,
+    documentType?: DocumentType
+  ) {
     run(async () => {
-      const copy = await duplicateInvoice(document);
+      const copy = await duplicateInvoice(document, documentType);
 
       toast.success(`Duplicated as “${copy.name}”`);
     }, "Failed to duplicate invoice");

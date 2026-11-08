@@ -9,6 +9,7 @@ import {
   hidePage,
   invoiceNameField,
   nameInvoice,
+  openFileMenu,
   pressShortcut,
   savedContains
 } from "./helpers";
@@ -224,6 +225,29 @@ test("⇧⌘S duplicates the open invoice and opens the copy", async ({ page }) 
   await expect.poll(() => countSavedInvoices(page)).toBe(2);
 });
 
+test("Duplicate As makes a quote into an invoice and leaves the quote", async ({
+  page
+}) => {
+  await gotoEditorSettled(page);
+  await openFileMenu(page);
+  await page.getByRole("menuitem", { name: "New Document" }).hover();
+  await page.getByRole("menuitem", { name: "Quote", exact: true }).click();
+  await expect(page.getByLabel("Invoice title")).toHaveValue("Quote");
+  await nameInvoice(page, "Acme website");
+
+  await openFileMenu(page);
+  await page.getByRole("menuitem", { name: "Duplicate As" }).hover();
+  await page.getByRole("menuitem", { name: "Invoice", exact: true }).click();
+
+  await expect(invoiceNameField(page)).toHaveValue("Acme website copy");
+  await expect(page.getByLabel("Invoice title")).toHaveValue("Invoice");
+  await expect(
+    page.getByText("Copied from QUO-0001 as an invoice")
+  ).toBeVisible();
+  await expect.poll(() => countSavedInvoices(page)).toBe(2);
+  await expect.poll(() => savedContains(page, "Quote")).toBe(true);
+});
+
 test("the project menu has no Save, Save As or unsaved prompt", async ({
   page
 }) => {
@@ -234,7 +258,9 @@ test("the project menu has no Save, Save As or unsaved prompt", async ({
   await expect(
     page.getByRole("menuitem", { name: /Save As\.\.\./ })
   ).toHaveCount(0);
-  await expect(page.getByRole("menuitem", { name: "Duplicate" })).toBeVisible();
+  await expect(
+    page.getByRole("menuitem", { name: /^Duplicate(?! As)/ })
+  ).toBeVisible();
   await expect(
     page.getByRole("menuitem", { name: "Save As Template" })
   ).toBeVisible();
