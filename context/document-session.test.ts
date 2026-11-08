@@ -1275,6 +1275,64 @@ describe("after another tab upgrades the database", () => {
     expect(reloaded.invoice().title).toBe("Typed");
   });
 
+  it("brings back an edit made during a new invoice's first write", async () => {
+    stubBrowser();
+
+    const page = await loadPage();
+
+    page.edit().setTitle("Written");
+    await vi.advanceTimersByTimeAsync(500);
+    page.edit().setTitle("Typed after");
+    upgradeElsewhere(page);
+    await settle(0);
+
+    const reloaded = await reload(page);
+
+    expect(reloaded.invoice().title).toBe("Typed after");
+  });
+
+  it("stays open with the edit stashed if it arrives while leaving", async () => {
+    const { page } = await loadStoredInvoice();
+
+    page.edit().setTitle("Written");
+    await vi.advanceTimersByTimeAsync(500);
+    page.edit().setTitle("Typed after");
+
+    const leaving = page.newInvoice();
+
+    await vi.advanceTimersByTimeAsync(0);
+    upgradeElsewhere(page);
+    await leaving;
+    await settle(0);
+
+    expect(page.documentState().status).toBe("reloadRequired");
+
+    const reloaded = await reload(page);
+
+    expect(reloaded.invoice().title).toBe("Typed after");
+  });
+
+  it("keeps a tab waiting for the invoice asking for a reload", async () => {
+    const { browser, page: editingTab } = await loadStoredInvoice();
+    const waitingTab = await loadPage();
+
+    expect(waitingTab.documentState().status).toBe("readOnly");
+
+    editingTab.edit().setTitle("Typed");
+    upgradeElsewhere(editingTab);
+    upgradeElsewhere(waitingTab);
+    await editingTab.detachEditor();
+    await settle(0);
+
+    expect(waitingTab.documentState().status).toBe("reloadRequired");
+    expect(browser.stash()).not.toBeNull();
+
+    const reloaded = await reload(editingTab);
+
+    expect(reloaded.documentState().status).toBe("editing");
+    expect(reloaded.invoice().title).toBe("Typed");
+  });
+
   it("still clears the stash once a save completes", async () => {
     const { browser, page } = await loadStoredInvoice();
 

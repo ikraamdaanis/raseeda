@@ -166,6 +166,12 @@ function isActive(session: Session) {
   return session === current && !session.disposed;
 }
 
+// Whether this tab can still take the invoice on. Once another tab upgrades
+// the database its saving has stopped for good, so only a reload can edit.
+function canEdit(session: Session) {
+  return isActive(session) && session.status !== "reloadRequired";
+}
+
 function liveContent(): Invoice {
   return selectInvoiceData(useInvoiceStore.getState());
 }
@@ -435,7 +441,6 @@ async function writeContent(session: Session, content: Invoice): Promise<void> {
     session.isRecord = true;
     session.rev = 1;
     publish(session);
-    clearStash(session.id);
     void setLastOpenedInvoiceId(session.id);
     void requestPersistentStorage();
     trackInvoice("invoice_saved", content);
@@ -615,7 +620,7 @@ async function onLockLost(session: Session) {
 
   await session.controller.flush();
 
-  if (!isActive(session)) return;
+  if (!canEdit(session)) return;
 
   session.status = "readOnly";
   session.shownContent = liveContent();
@@ -639,7 +644,7 @@ async function waitForLock(session: Session) {
 // This tab now edits the invoice. It reads the stored copy first, in case the
 // tab that edited it last wrote something this one hasn't seen.
 async function startEditing(session: Session) {
-  if (!isActive(session)) return;
+  if (!canEdit(session)) return;
 
   if (session.isRecord) {
     try {
@@ -657,7 +662,7 @@ async function startEditing(session: Session) {
     }
   }
 
-  if (!isActive(session)) return;
+  if (!canEdit(session)) return;
 
   session.status = "editing";
   clearInvoiceHistory();
@@ -708,7 +713,7 @@ async function attach(session: Session) {
     return;
   }
 
-  if (!isActive(session)) return;
+  if (!canEdit(session)) return;
 
   session.status = "readOnly";
   session.shownContent = liveContent();
@@ -869,6 +874,11 @@ async function leaveCurrent(): Promise<boolean> {
   // cleared below, and takes the lock another tab may be editing under.
   await attach(session);
 
+  // Before the reload check: an upgrade in another tab during this flush stops
+  // the save with an edit stashed, and leaving would clear that stash.
+  const wasEditing = session.status === "editing";
+  const saved = !wasEditing || (await session.controller.flush());
+
   if (session.status === "reloadRequired") {
     toast.error("Reload the page to open another invoice", {
       description: `${APP_NAME} was updated in another tab.`
@@ -886,9 +896,7 @@ async function leaveCurrent(): Promise<boolean> {
     return false;
   }
 
-  if (session.status === "editing") {
-    const saved = await session.controller.flush();
-
+  if (wasEditing) {
     if (!saved) {
       toast.error("This invoice couldn't be saved, so it stays open", {
         description: "Try again, or download a backup to keep a copy."
@@ -1503,6 +1511,7 @@ function onUpgradeElsewhere() {
 
   stashUnsaved(session);
   session.controller.stop();
+  session.stopWaitingForLock?.();
   session.status = "reloadRequired";
   publish(session);
 }
