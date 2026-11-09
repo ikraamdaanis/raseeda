@@ -85,7 +85,6 @@ export const Route = createRootRoute({
         rel: "stylesheet",
         href: appCss
       },
-      { rel: "icon", type: "image/svg+xml", href: "/favicon.svg" },
       {
         rel: "icon",
         type: "image/png",
@@ -93,6 +92,7 @@ export const Route = createRootRoute({
         href: "/favicon-96x96.png"
       },
       { rel: "shortcut icon", href: "/favicon.ico" },
+      { rel: "icon", type: "image/svg+xml", href: "/favicon.svg" },
       {
         rel: "apple-touch-icon",
         sizes: "180x180",
