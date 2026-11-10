@@ -831,7 +831,11 @@ async function waitForLock(session: Session) {
       return;
     }
 
-    if (session.attached && canEdit(session)) void waitForLock(session);
+    // Another tab took the invoice over meanwhile: wait in line again, unless
+    // the editor came back and its attach is waiting already.
+    if (session.attached && canEdit(session) && !session.stopWaitingForLock) {
+      void waitForLock(session);
+    }
   });
 }
 

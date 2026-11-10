@@ -2550,6 +2550,30 @@ describe("a read-only tab that gets the invoice while it opens another", () => {
     );
   });
 
+  it("waits for the invoice once when its editor comes back meanwhile", async () => {
+    const { first, second, busySecond } = await loadAFollowingTab();
+    const third = await loadPage();
+    const finishOpening = busySecond();
+    const leaving = second.detachEditor();
+    const coming = second.attachEditor();
+
+    await first.detachEditor();
+    await settle(0);
+    await finishOpening();
+    await leaving;
+    await coming;
+    await settle();
+
+    expect(third.documentState().status).toBe("editing");
+    expect(second.documentState().status).toBe("readOnly");
+
+    const { pending = [] } = await navigator.locks.query();
+
+    expect(
+      pending.filter(request => request.name?.endsWith("stored"))
+    ).toHaveLength(1);
+  });
+
   it("lets the invoice go after Edit here once it already had the lock", async () => {
     const { first, second, busySecond } = await loadAFollowingTab();
     const finishOpening = busySecond();
