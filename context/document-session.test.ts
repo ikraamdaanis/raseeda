@@ -35,6 +35,8 @@ type FailWrites = {
   hold?: Promise<void>;
   // Fails reads from those tables too.
   reads?: boolean;
+  // Lets writes through while reads fail, as a passing read error would.
+  writes?: boolean;
 };
 
 // The session is module state (one open invoice per page), so every test
@@ -81,7 +83,7 @@ async function loadPage({
           return {
             ...table,
             mutate: request => {
-              const error = failure();
+              const error = failWrites.writes === false ? null : failure();
 
               return error ? failWrite(error) : table.mutate(request);
             },
@@ -2226,6 +2228,53 @@ describe("recovering what other pages left when a page loads", () => {
     expect(
       (await page.getAllInvoices()).map(invoice => invoice.invoiceData.title)
     ).not.toContain("Typed");
+  });
+
+  it("opens the stash of a new invoice it had open that was never written", async () => {
+    await loadLeftBehind({
+      entries: { "unsaved:fresh": stashed("Fresh", { isRecord: false }) }
+    });
+    vi.stubGlobal("window", {
+      ...window,
+      sessionStorage: memoryStorage({ "open-invoice": "fresh" })
+    });
+
+    const page = await loadAPageThatRecovers();
+
+    expect(page.invoice().title).toBe("Fresh");
+    expect(
+      (await page.getAllInvoices()).map(invoice => invoice.invoiceData.title)
+    ).toContain("Fresh");
+  });
+
+  it("leaves a stash for the invoice it belongs to when reading that failed", async () => {
+    await loadLeftBehind({
+      entries: { "unsaved:stored": stashed("Typed") }
+    });
+
+    const sessionStorage = memoryStorage({ "open-invoice": "stored" });
+
+    vi.stubGlobal("window", { ...window, sessionStorage });
+
+    const failWrites: FailWrites = {
+      current: new DOMException("Unknown", "UnknownError"),
+      reads: true,
+      writes: false
+    };
+
+    await loadPage({ failWrites });
+    failWrites.current = null;
+    await settle();
+    await closePages();
+
+    const page = await loadAPageThatRecovers();
+
+    expect((await page.getInvoice("stored"))?.invoiceData.title).toBe("Typed");
+    expect(
+      (await page.getAllInvoices()).filter(
+        invoice => invoice.invoiceData.title === "Typed"
+      )
+    ).toHaveLength(1);
   });
 
   it("keeps the open invoice's stash when reading it back failed", async () => {

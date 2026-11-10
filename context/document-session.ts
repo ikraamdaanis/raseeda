@@ -1982,6 +1982,7 @@ async function runHydration(): Promise<void> {
   const pointer = readStorage("sessionStorage", OPEN_INVOICE_KEY);
   let openId = pointer;
   let document: InvoiceDocument | undefined;
+  let readFailed = false;
 
   if (!storageUnavailable) {
     try {
@@ -1989,11 +1990,14 @@ async function runHydration(): Promise<void> {
       document = openId ? await getInvoice(openId) : undefined;
     } catch (error) {
       console.error("[DocumentSession] Failed to open the last invoice", error);
+      readFailed = true;
     }
   }
 
-  // A new invoice this tab had open whose first edit never got written.
-  const stash = pointer && !document ? takeStash(pointer) : null;
+  // A new invoice this tab had open whose first edit never got written. When
+  // the read failed, the invoice may well be stored, so its stash stays for
+  // recovery to write into it rather than starting a copy.
+  const stash = pointer && !document && !readFailed ? takeStash(pointer) : null;
   let session: Session;
   let content: Invoice;
 
