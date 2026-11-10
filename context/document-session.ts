@@ -809,10 +809,10 @@ async function onLockLost(session: Session) {
 // once the tab editing it moves on or closes. The lock can come at any time,
 // so editing starts in the queue: an open that's under way finishes first
 // (and startEditing finds its session gone), and one asked for meanwhile
-// waits, so nothing startEditing brings in lands in another invoice. It
-// starts only while the tab still holds the lock and follows read-only: while
-// it waited, the editor may have gone, another tab taken the invoice, or Edit
-// here started editing already.
+// waits, so nothing startEditing brings in lands in another invoice. While
+// it waited, the editor may have gone, Edit here may have started editing
+// already, or another tab may have taken the invoice over, and then it waits
+// in line again.
 async function waitForLock(session: Session) {
   if (!locksSupported()) return;
 
@@ -823,9 +823,15 @@ async function waitForLock(session: Session) {
   if (!granted) return;
 
   await enqueue(async () => {
-    if (session.releaseLock && session.status === "readOnly") {
+    if (session.status !== "readOnly") return;
+
+    if (session.releaseLock) {
       await startEditing(session);
+
+      return;
     }
+
+    if (session.attached && canEdit(session)) void waitForLock(session);
   });
 }
 
@@ -1489,7 +1495,9 @@ function takeOver(): Promise<void> {
     session.stopWaitingForLock?.();
     session.stopWaitingForLock = null;
 
-    if (await requestLock(session, { steal: true })) {
+    // The lock may have come while this waited in the queue: it's this tab's
+    // already, and stealing it from itself would leave it held.
+    if (session.releaseLock || (await requestLock(session, { steal: true }))) {
       await startEditing(session);
     }
   });

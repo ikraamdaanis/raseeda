@@ -2463,7 +2463,10 @@ describe("a read-only tab that gets the invoice while it opens another", () => {
     );
   });
 
-  it("doesn't start editing once its editor has gone", async () => {
+  // A tab editing the stored invoice, and one following it read-only whose
+  // next read can be held, so something is under way in it when the lock
+  // comes.
+  async function loadAFollowingTab() {
     const earlierPage = await loadPage();
 
     await earlierPage.createInvoice(storedInvoice({}));
@@ -2475,31 +2478,93 @@ describe("a read-only tab that gets the invoice while it opens another", () => {
 
     expect(second.documentState().status).toBe("readOnly");
 
-    // Something else is under way in the second tab when the lock comes, and
-    // its editor goes before it's done.
     let releaseRead = () => {};
 
-    reads.beforeRead = () => {
-      reads.beforeRead = undefined;
+    return {
+      first,
+      second,
+      // Holds the second tab's next read, with an open that can't find its
+      // invoice, until the returned function lets it go.
+      busySecond: () => {
+        reads.beforeRead = () => {
+          reads.beforeRead = undefined;
 
-      return new Promise(release => {
-        releaseRead = release;
-      });
+          return new Promise(release => {
+            releaseRead = release;
+          });
+        };
+
+        const opening = second.openInvoice("nowhere").catch(() => {});
+
+        return async () => {
+          releaseRead();
+          await opening;
+        };
+      }
     };
+  }
 
-    const opening = second.openInvoice("nowhere").catch(() => {});
+  it("doesn't start editing once its editor has gone", async () => {
+    const { first, second, busySecond } = await loadAFollowingTab();
+    const finishOpening = busySecond();
     const leaving = second.detachEditor();
 
     await first.detachEditor();
     await settle(0);
-    releaseRead();
-    await opening;
+    await finishOpening();
     await leaving;
     await settle();
 
     expect(second.documentState().status).toBe("readOnly");
 
     // Another tab can still edit it.
+    const third = await loadPage();
+
+    expect(third.documentState()).toMatchObject({
+      documentId: "stored",
+      status: "editing"
+    });
+  });
+
+  it("waits again when another tab takes the invoice before it starts", async () => {
+    const { first, second, busySecond } = await loadAFollowingTab();
+    const third = await loadPage();
+
+    expect(third.documentState().status).toBe("readOnly");
+
+    const finishOpening = busySecond();
+
+    await first.detachEditor();
+    await settle(0);
+    await third.takeOver();
+    await finishOpening();
+    await settle();
+
+    expect(third.documentState().status).toBe("editing");
+    expect(second.documentState().status).toBe("readOnly");
+
+    // The second tab edits once the third moves on.
+    await third.detachEditor();
+    await vi.waitFor(() =>
+      expect(second.documentState().status).toBe("editing")
+    );
+  });
+
+  it("lets the invoice go after Edit here once it already had the lock", async () => {
+    const { first, second, busySecond } = await loadAFollowingTab();
+    const finishOpening = busySecond();
+    const takingOver = second.takeOver();
+
+    await first.detachEditor();
+    await settle(0);
+    await finishOpening();
+    await takingOver;
+    await settle();
+
+    expect(second.documentState().status).toBe("editing");
+
+    await second.detachEditor();
+
     const third = await loadPage();
 
     expect(third.documentState()).toMatchObject({
