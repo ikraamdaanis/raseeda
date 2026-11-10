@@ -1810,6 +1810,13 @@ async function recoverUnsaved(session: Session) {
   if (stored && !alreadyIn && !followsOn(stored.rev, stash)) return;
 
   if (!alreadyIn) {
+    // Edits of this tab's own it couldn't write yet (a failed write it kept
+    // through a takeover) are held the same way, for keepHeldEdits to keep
+    // as a version, so the stash taking their place doesn't lose them.
+    const own = session.isRecord ? session.controller.takeUnsaved() : null;
+
+    if (own) session.unwritten.push(toStash(session, own, session.rev, null));
+
     runWithOrigin("load", () => {
       useInvoiceStore
         .getState()

@@ -1936,6 +1936,43 @@ describe("a tab that loses the invoice while its saves fail", () => {
     ).toContain("Unwritten");
   });
 
+  it("keeps both edits when it gets the invoice back with another tab's stash and versions fail", async () => {
+    const tabs = await loadTakenOverWithAFailedEdit({
+      tables: ["invoices", "versions"]
+    });
+    const stored = await tabs.second.getInvoice("stored");
+
+    if (!stored) throw new Error("The stored invoice is missing");
+
+    tabs.localStorage.setItem(
+      "unsaved:stored",
+      JSON.stringify({
+        rev: stored.rev,
+        writingRev: null,
+        isRecord: true,
+        name: stored.name,
+        nameSource: stored.nameSource,
+        templateId: null,
+        invoiceData: {
+          ...stored.invoiceData,
+          title: "Stashed by the second tab"
+        },
+        schemaVersion: CURRENT_INVOICE_SCHEMA_VERSION
+      })
+    );
+    await tabs.second.detachEditor();
+    await vi.waitFor(() =>
+      expect(tabs.first.documentState().status).toBe("editing")
+    );
+    await settle();
+    tabs.hideFirst();
+    await settle(0);
+
+    expect(tabs.keptTitles()).toEqual(
+      expect.arrayContaining(["Unwritten", "Stashed by the second tab"])
+    );
+  });
+
   it("writes the edit once it gets the invoice back untouched", async () => {
     const tabs = await loadTakenOverWithAFailedEdit();
 
