@@ -1996,8 +1996,15 @@ async function runHydration(): Promise<void> {
 
   // A new invoice this tab had open whose first edit never got written. When
   // the read failed, the invoice may well be stored, so its stash stays for
-  // recovery to write into it rather than starting a copy.
-  const stash = pointer && !document && !readFailed ? takeStash(pointer) : null;
+  // recovery to write into it rather than starting a copy. When storage is
+  // unavailable it's shown, to back up, but stays for a page that can write
+  // it, since nothing here can.
+  let stash: UnsavedStash | null = null;
+
+  if (pointer && !document && !readFailed) {
+    stash = storageUnavailable ? readStash(pointer) : takeStash(pointer);
+  }
+
   let session: Session;
   let content: Invoice;
 

@@ -35,7 +35,7 @@ type FailWrites = {
   hold?: Promise<void>;
   // Fails reads from those tables too.
   reads?: boolean;
-  // Lets writes through while reads fail, as a passing read error would.
+  // False lets writes through while reads fail, as a passing read error would.
   writes?: boolean;
 };
 
@@ -43,14 +43,23 @@ type FailWrites = {
 // loads a fresh copy of it, as a page load would, over a fresh database.
 async function loadPage({
   failWrites,
-  attachEditor = true
+  attachEditor = true,
+  openFails = false
 }: {
   failWrites?: FailWrites;
   attachEditor?: boolean;
+  // The database won't open, as when a browser blocks storage.
+  openFails?: boolean;
 } = {}) {
   vi.resetModules();
 
   const database = await import("~/db");
+
+  if (openFails) {
+    vi.spyOn(database.db, "open").mockRejectedValue(
+      new DOMException("Unknown", "UnknownError")
+    );
+  }
 
   if (failWrites) {
     // Fails every write to the invoices table (or the tables listed) while
@@ -2275,6 +2284,31 @@ describe("recovering what other pages left when a page loads", () => {
         invoice => invoice.invoiceData.title === "Typed"
       )
     ).toHaveLength(1);
+  });
+
+  it("shows a stash when storage is unavailable and leaves it for a later page", async () => {
+    const localStorage = await loadLeftBehind({
+      entries: { "unsaved:stored": stashed("Typed") }
+    });
+
+    vi.stubGlobal("window", {
+      ...window,
+      sessionStorage: memoryStorage({ "open-invoice": "stored" })
+    });
+
+    const unavailable = await loadPage({ openFails: true });
+
+    expect(unavailable.documentState().status).toBe("unavailable");
+    expect(unavailable.invoice().title).toBe("Typed");
+
+    await settle();
+    await closePages();
+
+    expect(localStorage.getItem("unsaved:stored")).not.toBeNull();
+
+    const page = await loadAPageThatRecovers();
+
+    expect((await page.getInvoice("stored"))?.invoiceData.title).toBe("Typed");
   });
 
   it("keeps the open invoice's stash when reading it back failed", async () => {
