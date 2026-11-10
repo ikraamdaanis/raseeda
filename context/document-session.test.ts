@@ -33,6 +33,8 @@ type FailWrites = {
   tables?: string[];
   // Holds each failing write in flight until it settles.
   hold?: Promise<void>;
+  // Fails reads from those tables too.
+  reads?: boolean;
 };
 
 // The session is module state (one open invoice per page), so every test
@@ -65,13 +67,44 @@ async function loadPage({
         table: name => {
           const table = down.table(name);
 
+          function failure() {
+            return failWrites?.current &&
+              (failWrites.tables ?? ["invoices"]).includes(name)
+              ? failWrites.current
+              : null;
+          }
+
+          function readFailure() {
+            return failWrites?.reads ? failure() : null;
+          }
+
           return {
             ...table,
-            mutate: request =>
-              failWrites.current &&
-              (failWrites.tables ?? ["invoices"]).includes(name)
-                ? failWrite(failWrites.current)
-                : table.mutate(request)
+            mutate: request => {
+              const error = failure();
+
+              return error ? failWrite(error) : table.mutate(request);
+            },
+            get: request => {
+              const error = readFailure();
+
+              return error ? Promise.reject(error) : table.get(request);
+            },
+            getMany: request => {
+              const error = readFailure();
+
+              return error ? Promise.reject(error) : table.getMany(request);
+            },
+            query: request => {
+              const error = readFailure();
+
+              return error ? Promise.reject(error) : table.query(request);
+            },
+            openCursor: request => {
+              const error = readFailure();
+
+              return error ? Promise.reject(error) : table.openCursor(request);
+            }
           };
         }
       })
@@ -2132,6 +2165,48 @@ describe("recovering what other pages left when a page loads", () => {
 
     expect(localStorage.getItem("unwritten:gone:stored")).not.toBeNull();
     expect(localStorage.getItem("unwritten:gone:fresh")).toBeNull();
+  });
+
+  it("keeps a stash for a deleted invoice deleted", async () => {
+    const localStorage = await loadLeftBehind({
+      entries: { "unsaved:stored": stashed("Typed") }
+    });
+    const failWrites: FailWrites = {
+      current: new DOMException("Full", "QuotaExceededError")
+    };
+    const failing = await loadPage({ failWrites });
+
+    await settle();
+
+    expect(localStorage.getItem("unsaved:stored")).not.toBeNull();
+
+    failWrites.current = null;
+    await failing.deleteFromLibrary(["stored"]);
+    await closePages();
+
+    const page = await loadAPageThatRecovers();
+
+    expect(
+      (await page.getAllInvoices()).map(invoice => invoice.invoiceData.title)
+    ).not.toContain("Typed");
+  });
+
+  it("keeps the open invoice's stash when reading it back failed", async () => {
+    await loadLeftBehind({
+      entries: { "unsaved:stored": stashed("Typed", { rev: 5 }) },
+      openId: "stored"
+    });
+
+    const failWrites: FailWrites = { current: null, reads: true };
+    const failing = await loadPage({ failWrites, attachEditor: false });
+
+    failWrites.current = new DOMException("Closed", "DatabaseClosedError");
+    await failing.attachEditor();
+    await closePages();
+
+    const page = await loadAPageThatRecovers();
+
+    expect(await conflictTitles(page)).toContain("Typed");
   });
 
   it("keeps the open invoice's stash when its conflict version failed", async () => {

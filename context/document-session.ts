@@ -1409,10 +1409,11 @@ function deleteFromLibrary(ids: string[]): Promise<void> {
 
     clearLeftovers(ids);
 
+    for (const id of ids) clearStash(id);
+
     if (!session || !includesOpen) return;
 
     session.unwritten = [];
-    clearStash(session.id);
     dispose(session);
 
     const blank = createBlankInvoice();
@@ -1796,26 +1797,29 @@ async function recoverUnsaved(session: Session) {
 
   if (!stash || isEqual(liveContent(), stash.invoiceData)) return;
 
+  // Held as an unwritten edit, and in this tab's leftover, until it's in:
+  // edited in below, or kept as a version by keepHeldEdits once startEditing
+  // has it in. A failed read or version leaves it there, not lost.
+  session.unwritten.push(stash);
+  writeLeftovers(session);
+
   const stored = session.isRecord ? await getInvoice(session.id) : undefined;
+  const alreadyIn = !!stored && isEqual(stored.invoiceData, stash.invoiceData);
 
-  if (stored && isEqual(stored.invoiceData, stash.invoiceData)) return;
+  // Someone wrote it since: keepHeldEdits keeps it as a version instead.
+  if (stored && !alreadyIn && !followsOn(stored.rev, stash)) return;
 
-  // Held as an unwritten edit, and in this tab's leftover, until its version
-  // is kept (keepHeldEdits, once startEditing has it in), so a failed version
-  // is tried again rather than lost.
-  if (stored && !followsOn(stored.rev, stash)) {
-    session.unwritten.push(stash);
-    writeLeftovers(session);
-
-    return;
+  if (!alreadyIn) {
+    runWithOrigin("load", () => {
+      useInvoiceStore
+        .getState()
+        .setInvoice(ensureRowIds(structuredClone(stash.invoiceData)));
+    });
+    session.controller.schedule(liveContent());
   }
 
-  runWithOrigin("load", () => {
-    useInvoiceStore
-      .getState()
-      .setInvoice(ensureRowIds(structuredClone(stash.invoiceData)));
-  });
-  session.controller.schedule(liveContent());
+  session.unwritten = session.unwritten.filter(held => held !== stash);
+  writeLeftovers(session);
 }
 
 // Brings in what other tabs couldn't write to this invoice before another tab
