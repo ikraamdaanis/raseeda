@@ -2306,6 +2306,12 @@ describe("recovering what other pages left when a page loads", () => {
 
     expect(localStorage.getItem("unsaved:stored")).not.toBeNull();
 
+    const reloaded = await loadPage({ openFails: true });
+
+    expect(reloaded.invoice().title).toBe("Typed");
+
+    await closePages();
+
     const page = await loadAPageThatRecovers();
 
     expect((await page.getInvoice("stored"))?.invoiceData.title).toBe("Typed");

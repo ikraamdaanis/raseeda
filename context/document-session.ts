@@ -2027,6 +2027,13 @@ async function runHydration(): Promise<void> {
   }
 
   show(session, content);
+
+  // A stash only shown, not taken, keeps the tab pointing at its invoice, so
+  // another reload while storage is unavailable still shows it.
+  if (storageUnavailable && stash && pointer) {
+    writeStorage("sessionStorage", OPEN_INVOICE_KEY, pointer);
+  }
+
   useInvoiceStore.subscribe(onInvoiceChange);
   startInvoiceHistory();
   registerImageKeeper(() => [liveContent().image, ...getHistoryImageIds()]);
