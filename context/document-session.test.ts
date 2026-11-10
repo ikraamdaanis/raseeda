@@ -27,19 +27,35 @@ async function closePages() {
   }
 }
 
+type FailWrites = {
+  current: Error | null;
+  tables?: string[];
+  // Holds each failing write in flight until it settles.
+  hold?: Promise<void>;
+};
+
 // The session is module state (one open invoice per page), so every test
 // loads a fresh copy of it, as a page load would, over a fresh database.
 async function loadPage({
   failWrites,
   attachEditor = true
-}: { failWrites?: { current: Error | null }; attachEditor?: boolean } = {}) {
+}: {
+  failWrites?: FailWrites;
+  attachEditor?: boolean;
+} = {}) {
   vi.resetModules();
 
   const database = await import("~/db");
 
   if (failWrites) {
-    // Fails every write to the invoices table while `current` is set, as a
-    // full disk or a closing database would.
+    // Fails every write to the invoices table (or the tables listed) while
+    // `current` is set, as a full disk or a closing database would.
+    async function failWrite(error: Error): Promise<never> {
+      await failWrites?.hold;
+
+      throw error;
+    }
+
     database.db.use({
       stack: "dbcore",
       name: "fail-writes",
@@ -51,8 +67,9 @@ async function loadPage({
           return {
             ...table,
             mutate: request =>
-              failWrites.current && name === "invoices"
-                ? Promise.reject(failWrites.current)
+              failWrites.current &&
+              (failWrites.tables ?? ["invoices"]).includes(name)
+                ? failWrite(failWrites.current)
                 : table.mutate(request)
           };
         }
@@ -1442,5 +1459,254 @@ describe("after another tab upgrades the database", () => {
       documentId,
       status: "reloadRequired"
     });
+  });
+});
+
+describe("a tab that loses the invoice while its saves fail", () => {
+  beforeEach(async () => {
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout", "Date"] });
+    await Dexie.delete("InvoiceDatabase");
+  });
+
+  afterEach(async () => {
+    await closePages();
+    vi.unstubAllGlobals();
+    vi.useRealTimers();
+  });
+
+  // Two tabs on the stored invoice, sharing the browser's storage. Each tab's
+  // page listeners are kept apart, so one tab can be hidden or closed alone.
+  async function loadTwoTabs(failWrites: FailWrites) {
+    const earlierPage = await loadPage();
+
+    await earlierPage.createInvoice(storedInvoice({}));
+    await earlierPage.setLastOpenedInvoiceId("stored");
+
+    const localStorage = memoryStorage();
+    const tabListeners: Map<string, (event?: unknown) => void>[] = [];
+
+    vi.stubGlobal("window", {
+      sessionStorage: memoryStorage(),
+      localStorage,
+      addEventListener: (type: string, listener: (event?: unknown) => void) => {
+        // Each page adds its pagehide listener first.
+        if (type === "pagehide") tabListeners.push(new Map());
+
+        tabListeners.at(-1)?.set(type, listener);
+      },
+      removeEventListener: vi.fn()
+    });
+    vi.stubGlobal("document", {
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      visibilityState: "visible"
+    });
+
+    const first = await loadPage({ failWrites });
+
+    first.edit().setTitle("Saved");
+    await settle();
+
+    const second = await loadPage();
+
+    expect(second.documentState().status).toBe("readOnly");
+
+    return {
+      first,
+      second,
+      stashedTitle: () => {
+        const raw = localStorage.getItem("unsaved:stored");
+
+        return raw
+          ? (JSON.parse(raw) as { invoiceData: { title: string } }).invoiceData
+              .title
+          : null;
+      },
+      hideFirst: () => tabListeners[0]?.get("pagehide")?.(),
+      closeFirst: () => {
+        const event = { preventDefault: vi.fn(), returnValue: undefined };
+
+        tabListeners[0]?.get("beforeunload")?.(event);
+
+        return event;
+      }
+    };
+  }
+
+  // The first tab's writes fail with an edit in it, then the second tab takes
+  // the invoice over.
+  async function loadTakenOverWithAFailedEdit(
+    options: { tables?: string[]; hideFirst?: boolean } = {}
+  ) {
+    const failWrites: FailWrites = { current: null, tables: options.tables };
+    const tabs = await loadTwoTabs(failWrites);
+
+    failWrites.current = new DOMException("Full", "QuotaExceededError");
+    tabs.first.edit().setTitle("Unwritten");
+    await settle();
+
+    expect(tabs.first.documentState().saveFailure).not.toBeNull();
+
+    if (options.hideFirst) {
+      tabs.hideFirst();
+      await settle(0);
+    }
+
+    await tabs.second.takeOver();
+    await vi.waitFor(() =>
+      expect(tabs.first.documentState().status).toBe("readOnly")
+    );
+
+    return { ...tabs, failWrites };
+  }
+
+  async function conflictTitles(page: Awaited<ReturnType<typeof loadPage>>) {
+    return (await page.getInvoiceVersions("stored"))
+      .filter(version => version.reason === "conflict")
+      .map(version => version.invoiceData.title);
+  }
+
+  it("keeps the stash of an edit it couldn't write when hidden", async () => {
+    const tabs = await loadTakenOverWithAFailedEdit();
+
+    tabs.hideFirst();
+    await settle(0);
+
+    expect(tabs.stashedTitle()).toBe("Unwritten");
+  });
+
+  it("still asks before closing once the retry timer has fired", async () => {
+    const tabs = await loadTakenOverWithAFailedEdit();
+
+    await settle(5000);
+
+    const event = tabs.closeFirst();
+
+    expect(event.preventDefault).toHaveBeenCalled();
+    expect(tabs.stashedTitle()).toBe("Unwritten");
+  });
+
+  it("hands an edit stashed before the takeover to the other tab", async () => {
+    const tabs = await loadTakenOverWithAFailedEdit({ hideFirst: true });
+
+    await vi.waitFor(() =>
+      expect(tabs.second.invoice().title).toBe("Unwritten")
+    );
+    await settle();
+
+    expect((await tabs.second.getInvoice("stored"))?.invoiceData.title).toBe(
+      "Unwritten"
+    );
+    expect(await conflictTitles(tabs.second)).toEqual([]);
+  });
+
+  it("follows a write the other tab made while its own was failing", async () => {
+    const failWrites: FailWrites = { current: null };
+    const tabs = await loadTwoTabs(failWrites);
+    let release = () => {};
+
+    failWrites.current = new DOMException("Full", "QuotaExceededError");
+    tabs.first.edit().setTitle("Unwritten");
+    await settle();
+    failWrites.hold = new Promise(resolve => (release = resolve));
+    tabs.hideFirst();
+    await tabs.second.takeOver();
+    await settle();
+
+    expect((await tabs.second.getInvoice("stored"))?.invoiceData.title).toBe(
+      "Unwritten"
+    );
+
+    release();
+    await vi.waitFor(() =>
+      expect(tabs.first.documentState().status).toBe("readOnly")
+    );
+    await settle(0);
+    tabs.second.edit().setTitle("Written in the second tab");
+    await settle();
+
+    await vi.waitFor(() =>
+      expect(tabs.first.invoice().title).toBe("Written in the second tab")
+    );
+    await settle();
+
+    expect(await conflictTitles(tabs.first)).toEqual([]);
+  });
+
+  it("keeps the edit as a version when the other tab writes over it", async () => {
+    const tabs = await loadTakenOverWithAFailedEdit();
+
+    tabs.second.edit().setTitle("Written in the second tab");
+    await settle();
+
+    await vi.waitFor(() =>
+      expect(tabs.first.invoice().title).toBe("Written in the second tab")
+    );
+    await settle();
+
+    expect(await conflictTitles(tabs.first)).toEqual(["Unwritten"]);
+    expect(tabs.stashedTitle()).toBeNull();
+  });
+
+  it("keeps the edit stashed when its version can't be written either", async () => {
+    const tabs = await loadTakenOverWithAFailedEdit({
+      tables: ["invoices", "versions"]
+    });
+
+    tabs.second.edit().setTitle("Written in the second tab");
+    await settle();
+
+    await vi.waitFor(() =>
+      expect(tabs.first.invoice().title).toBe("Written in the second tab")
+    );
+    await settle();
+
+    expect(tabs.stashedTitle()).toBe("Unwritten");
+  });
+
+  it("writes the edit once it gets the invoice back untouched", async () => {
+    const tabs = await loadTakenOverWithAFailedEdit();
+
+    await settle(5000);
+    tabs.failWrites.current = null;
+    await tabs.second.newInvoice();
+
+    await vi.waitFor(() =>
+      expect(tabs.first.documentState().status).toBe("editing")
+    );
+    await settle();
+
+    expect((await tabs.first.getInvoice("stored"))?.invoiceData.title).toBe(
+      "Unwritten"
+    );
+    expect(tabs.first.documentState().saveFailure).toBeNull();
+  });
+
+  it("never writes the edit over the other tab's once it gets it back", async () => {
+    const tabs = await loadTakenOverWithAFailedEdit();
+
+    tabs.second.edit().setTitle("Written in the second tab");
+    await settle();
+    tabs.failWrites.current = null;
+    await tabs.second.newInvoice();
+
+    await vi.waitFor(() =>
+      expect(tabs.first.documentState().status).toBe("editing")
+    );
+    await settle(5000);
+
+    expect((await tabs.first.getInvoice("stored"))?.invoiceData.title).toBe(
+      "Written in the second tab"
+    );
+    expect(await conflictTitles(tabs.first)).toEqual(["Unwritten"]);
+  });
+
+  it("keeps the edit stashed when it opens another invoice", async () => {
+    const tabs = await loadTakenOverWithAFailedEdit();
+
+    await tabs.first.newInvoice();
+
+    expect(tabs.first.documentState().documentId).not.toBe("stored");
+    expect(tabs.stashedTitle()).toBe("Unwritten");
   });
 });

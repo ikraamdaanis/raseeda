@@ -107,6 +107,15 @@ export class DocumentNotFoundError extends Error {
   }
 }
 
+// Thrown by a write that reaches the library after another tab took the
+// invoice over, so it isn't counted as saved.
+class NotEditingError extends Error {
+  constructor() {
+    super("Another tab is editing this invoice.");
+    this.name = "NotEditingError";
+  }
+}
+
 type DocumentStatus = ReturnType<typeof useDocumentStore.getState>["status"];
 
 type Session = {
@@ -266,14 +275,23 @@ function stashUnsaved(session: Session) {
     return;
   }
 
+  writeStash(session, liveContent(), session.rev, session.writingRev);
+}
+
+function writeStash(
+  session: Session,
+  content: Invoice,
+  rev: number,
+  writingRev: number | null
+) {
   const stash: UnsavedStash = {
-    rev: session.rev,
-    writingRev: session.writingRev,
+    rev,
+    writingRev,
     isRecord: session.isRecord,
     name: session.name,
     nameSource: session.nameSource,
     templateId: session.templateId,
-    invoiceData: liveContent(),
+    invoiceData: content,
     schemaVersion: CURRENT_INVOICE_SCHEMA_VERSION
   };
 
@@ -411,7 +429,16 @@ function dismissBackupReminder() {
 // Writes the content to the library: creating the invoice on its first real
 // edit, and after that as a compare-and-swap on its revision.
 async function writeContent(session: Session, content: Invoice): Promise<void> {
-  if (session.status !== "editing" || session.deleting) return;
+  if (session.deleting) return;
+
+  // Another tab took the invoice over while this one's writes were failing.
+  // The edits aren't saved, so the write fails too: they wait until this tab
+  // edits again, or are kept as a version once the other tab writes (adopt).
+  if (session.status === "readOnly") {
+    throw session.failure ?? new NotEditingError();
+  }
+
+  if (session.status !== "editing") return;
 
   if (!session.isRecord) {
     if (!hasEdits(session, content)) return;
@@ -480,7 +507,7 @@ async function writeContent(session: Session, content: Invoice): Promise<void> {
   // that version rather than being written over theirs.
   const mine = session.controller.takeUnsaved() ?? content;
 
-  adopt(session, result.document);
+  await adopt(session, result.document);
   await keepVersion(session, mine, "conflict");
   toast.warning("This invoice was changed in another tab", {
     description:
@@ -505,8 +532,17 @@ function markDeleted(session: Session) {
 }
 
 // Shows a version of the invoice another tab wrote. Undo can't reach past it,
-// so it can never put back what the other tab replaced.
-function adopt(session: Session, document: InvoiceDocument) {
+// so it can never put back what the other tab replaced. Edits this tab
+// couldn't write before the other tab took over were made on the copy being
+// replaced, so they're kept as a version rather than lost or written over
+// theirs. Resolves once they're kept.
+function adopt(session: Session, document: InvoiceDocument): Promise<void> {
+  const unwritten = session.controller.takeUnsaved();
+  const kept =
+    unwritten && !isEqual(unwritten, document.invoiceData)
+      ? keepUnwritten(session, unwritten, session.rev)
+      : Promise.resolve();
+
   session.rev = document.rev;
   session.name = document.name;
   session.nameSource = document.nameSource;
@@ -522,6 +558,37 @@ function adopt(session: Session, document: InvoiceDocument) {
 
   session.shownContent = liveContent();
   publish(session);
+
+  return kept;
+}
+
+// Stashed first, so a tab closed before the version lands, or a version that
+// can't be written either, still brings them back as one the next time the
+// invoice is edited (recoverUnsaved).
+async function keepUnwritten(session: Session, content: Invoice, rev: number) {
+  writeStash(session, content, rev, null);
+
+  try {
+    await keepVersion(session, content, "conflict");
+  } catch (error) {
+    console.error("[DocumentSession] Failed to keep unsaved edits", error);
+    toast.warning("This invoice was changed in another tab", {
+      description:
+        "Their version is shown now. Yours couldn't be saved yet, so it's kept in this browser and goes into the version history when the invoice is next opened."
+    });
+
+    return;
+  }
+
+  // Unless another tab has stashed its own edits since.
+  if (isEqual(readStash(session.id)?.invoiceData, content)) {
+    clearStash(session.id);
+  }
+
+  toast.warning("This invoice was changed in another tab", {
+    description:
+      "Their version is shown now. Yours is kept in the invoice's version history."
+  });
 }
 
 function onStoredInvoice(
@@ -553,7 +620,7 @@ function onStoredInvoice(
   // This tab has edits on the way: the compare-and-swap settles it.
   if (session.status === "editing" && session.controller.isPending()) return;
 
-  adopt(session, document);
+  void adopt(session, document);
 }
 
 function locksSupported() {
@@ -627,6 +694,16 @@ async function onLockLost(session: Session) {
   clearInvoiceHistory();
   publish(session);
   void waitForLock(session);
+
+  // A write from the tab that took over may have come in while this one was
+  // still writing, and been left to a compare-and-swap that failed instead.
+  if (session.controller.isPending()) {
+    try {
+      onStoredInvoice(session, await getInvoice(session.id));
+    } catch (error) {
+      console.error("[DocumentSession] Failed to reload the invoice", error);
+    }
+  }
 }
 
 // While read-only, waits in line for the invoice, so this tab edits again
@@ -656,7 +733,7 @@ async function startEditing(session: Session) {
         return;
       }
 
-      if (document.rev !== session.rev) adopt(session, document);
+      if (document.rev !== session.rev) await adopt(session, document);
     } catch (error) {
       console.error("[DocumentSession] Failed to reload the invoice", error);
     }
@@ -678,6 +755,10 @@ async function startEditing(session: Session) {
   } catch (error) {
     console.error("[DocumentSession] Failed to recover unsaved edits", error);
   }
+
+  // Edits this tab couldn't write before another tab took over, and nobody
+  // has written since: try them again now rather than at the next retry.
+  if (session.controller.hasFailed()) void session.controller.retry();
 }
 
 async function attach(session: Session) {
@@ -923,7 +1004,14 @@ async function leaveCurrent(): Promise<boolean> {
     }
   }
 
-  clearStash(session.id);
+  // Edits this tab couldn't write before another tab took over stay stashed,
+  // and come back the next time the invoice is edited.
+  if (session.status === "readOnly" && session.controller.hasFailed()) {
+    stashUnsaved(session);
+  } else {
+    clearStash(session.id);
+  }
+
   dispose(session);
 
   return true;
@@ -1753,7 +1841,9 @@ export function attachEditor(): Promise<void> {
     ) {
       const document = await getInvoice(session.id).catch(() => undefined);
 
-      if (document && document.rev > session.rev) adopt(session, document);
+      if (document && document.rev > session.rev) {
+        await adopt(session, document);
+      }
     }
   });
 }

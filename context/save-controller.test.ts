@@ -221,6 +221,32 @@ describe("the save controller", () => {
     expect(write).toHaveBeenCalledExactlyOnceWith("next");
   });
 
+  it("drops the failure with the content it hands back", async () => {
+    const write = vi
+      .fn<(content: string) => Promise<void>>()
+      .mockRejectedValueOnce(new Error("Full"))
+      .mockResolvedValue(undefined);
+    const onChange = vi.fn();
+    const controller = createSaveController({ write, onChange });
+
+    controller.schedule("failed");
+    await vi.advanceTimersByTimeAsync(500);
+
+    expect(controller.hasFailed()).toBe(true);
+    expect(controller.takeUnsaved()).toBe("failed");
+    expect(controller.hasFailed()).toBe(false);
+    expect(onChange).toHaveBeenLastCalledWith({
+      pending: false,
+      failure: null
+    });
+
+    controller.schedule("next");
+    await vi.advanceTimersByTimeAsync(500);
+
+    expect(write).toHaveBeenLastCalledWith("next");
+    expect(write).toHaveBeenCalledTimes(2);
+  });
+
   it("drops unwritten content when stopped", async () => {
     const write = vi.fn(async (_content: string) => {});
     const controller = createSaveController({ write });
