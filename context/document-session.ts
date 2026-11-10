@@ -1800,8 +1800,12 @@ async function recoverUnsaved(session: Session) {
 
   if (stored && isEqual(stored.invoiceData, stash.invoiceData)) return;
 
+  // Held as an unwritten edit, and in this tab's leftover, until its version
+  // is kept (keepHeldEdits, once startEditing has it in), so a failed version
+  // is tried again rather than lost.
   if (stored && !followsOn(stored.rev, stash)) {
-    keepVersionQuietly(session, stash.invoiceData, "conflict");
+    session.unwritten.push(stash);
+    writeLeftovers(session);
 
     return;
   }
@@ -1861,38 +1865,46 @@ async function recoverOtherStashes(open: Session) {
 
   if (!locksSupported()) return;
 
+  // Each is cleared only once it's written, so one that fails (a full disk)
+  // is tried again on the next load, and the rest carry on without it.
   for (const id of storedKeys(UNSAVED_KEY_PREFIX)) {
     if (id === openId) continue;
 
-    await navigator.locks.request(
-      `${LOCK_PREFIX}${id}`,
-      { ifAvailable: true },
-      async lock => {
-        if (!lock) return;
+    await recoverWithLock(id, async () => {
+      const stash = readStash(id);
 
-        const stash = takeStash(id);
+      if (stash) await writeRecovered(id, stash);
 
-        if (stash) await writeRecovered(id, stash);
-      }
-    );
+      clearStash(id);
+    });
   }
 
   for (const leftover of readLeftovers({ ownId: open.leftoverId })) {
     if (leftover.invoiceId === openId) continue;
 
+    await recoverWithLock(leftover.invoiceId, async () => {
+      for (const stash of leftover.stashes) {
+        await writeRecovered(leftover.invoiceId, stash);
+      }
+
+      writeStorage("localStorage", leftover.key, null);
+    });
+  }
+}
+
+// Recovers an invoice unless a tab has it open, logging a failure rather
+// than stopping the rest.
+async function recoverWithLock(id: string, recover: () => Promise<void>) {
+  try {
     await navigator.locks.request(
-      `${LOCK_PREFIX}${leftover.invoiceId}`,
+      `${LOCK_PREFIX}${id}`,
       { ifAvailable: true },
       async lock => {
-        if (!lock) return;
-
-        for (const stash of leftover.stashes) {
-          await writeRecovered(leftover.invoiceId, stash);
-        }
-
-        writeStorage("localStorage", leftover.key, null);
+        if (lock) await recover();
       }
     );
+  } catch (error) {
+    console.error("[DocumentSession] Failed to recover unsaved edits", error);
   }
 }
 

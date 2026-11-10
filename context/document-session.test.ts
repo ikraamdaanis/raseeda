@@ -1951,3 +1951,199 @@ describe("a tab that loses the invoice while its saves fail", () => {
     expect(tabs.keptTitles()).toContain("Unwritten");
   });
 });
+
+describe("recovering what other pages left when a page loads", () => {
+  beforeEach(async () => {
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout", "Date"] });
+    await Dexie.delete("InvoiceDatabase");
+  });
+
+  afterEach(async () => {
+    await closePages();
+    vi.unstubAllGlobals();
+    vi.useRealTimers();
+  });
+
+  // An edit a page stashed and never wrote. A new invoice's isn't a record.
+  function stashed(
+    title: string,
+    { rev = 1, isRecord = true }: { rev?: number; isRecord?: boolean } = {}
+  ) {
+    return {
+      rev,
+      writingRev: null,
+      isRecord,
+      name: "Stashed invoice",
+      nameSource: "user",
+      templateId: null,
+      invoiceData: { ...structuredClone(invoiceDefault), title },
+      schemaVersion: CURRENT_INVOICE_SCHEMA_VERSION
+    };
+  }
+
+  // The stored invoice and another one, which the next page opens, with what
+  // earlier pages left in local storage under each key.
+  async function loadLeftBehind({
+    entries,
+    openId = "other"
+  }: {
+    entries: Record<string, unknown>;
+    openId?: string;
+  }) {
+    const earlierPage = await loadPage();
+
+    await earlierPage.createInvoice(
+      storedInvoice({
+        invoiceData: { ...structuredClone(invoiceDefault), title: "Stored" }
+      })
+    );
+    await earlierPage.createInvoice(
+      storedInvoice({ id: "other", name: "Other invoice" })
+    );
+    await earlierPage.setLastOpenedInvoiceId(openId);
+    await closePages();
+
+    const localStorage = new ListableStorage();
+
+    for (const [key, value] of Object.entries(entries)) {
+      localStorage.setItem(key, JSON.stringify(value));
+    }
+
+    vi.stubGlobal("window", {
+      sessionStorage: memoryStorage(),
+      localStorage,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn()
+    });
+    vi.stubGlobal("document", {
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      visibilityState: "visible"
+    });
+
+    return localStorage;
+  }
+
+  // A page whose writes to these tables fail while it recovers, then closes.
+  async function loadAPageWhoseWritesFail(tables: string[]) {
+    await loadPage({
+      failWrites: {
+        current: new DOMException("Full", "QuotaExceededError"),
+        tables
+      }
+    });
+    await settle();
+    await closePages();
+  }
+
+  async function loadAPageThatRecovers() {
+    const page = await loadPage();
+
+    await settle();
+
+    return page;
+  }
+
+  async function conflictTitles(page: Awaited<ReturnType<typeof loadPage>>) {
+    return (await page.getInvoiceVersions("stored"))
+      .filter(version => version.reason === "conflict")
+      .map(version => version.invoiceData.title);
+  }
+
+  it("writes a stash and clears it", async () => {
+    const localStorage = await loadLeftBehind({
+      entries: {
+        "unsaved:stored": stashed("Typed"),
+        "unsaved:fresh": stashed("Fresh", { isRecord: false })
+      }
+    });
+    const page = await loadAPageThatRecovers();
+
+    expect((await page.getInvoice("stored"))?.invoiceData.title).toBe("Typed");
+    expect((await page.getInvoice("fresh"))?.invoiceData.title).toBe("Fresh");
+    expect(Object.keys(localStorage)).toEqual([]);
+  });
+
+  it("keeps a stash its write failed on for the next page", async () => {
+    const localStorage = await loadLeftBehind({
+      entries: { "unsaved:stored": stashed("Typed") }
+    });
+
+    await loadAPageWhoseWritesFail(["invoices"]);
+
+    expect(localStorage.getItem("unsaved:stored")).not.toBeNull();
+
+    const page = await loadAPageThatRecovers();
+
+    expect((await page.getInvoice("stored"))?.invoiceData.title).toBe("Typed");
+    expect(localStorage.getItem("unsaved:stored")).toBeNull();
+  });
+
+  it("keeps a new invoice's stash when creating it failed", async () => {
+    const localStorage = await loadLeftBehind({
+      entries: { "unsaved:fresh": stashed("Fresh", { isRecord: false }) }
+    });
+
+    await loadAPageWhoseWritesFail(["invoices"]);
+
+    expect(localStorage.getItem("unsaved:fresh")).not.toBeNull();
+
+    const page = await loadAPageThatRecovers();
+
+    expect((await page.getInvoice("fresh"))?.invoiceData.title).toBe("Fresh");
+    expect(localStorage.getItem("unsaved:fresh")).toBeNull();
+  });
+
+  it("keeps a stash when its conflict version failed", async () => {
+    await loadLeftBehind({
+      entries: { "unsaved:stored": stashed("Typed", { rev: 5 }) }
+    });
+
+    await loadAPageWhoseWritesFail(["versions"]);
+
+    const page = await loadAPageThatRecovers();
+
+    expect(await conflictTitles(page)).toContain("Typed");
+  });
+
+  it("recovers the other stashes when one fails", async () => {
+    const localStorage = await loadLeftBehind({
+      entries: {
+        "unsaved:stored": stashed("Typed", { rev: 5 }),
+        "unsaved:fresh": stashed("Fresh", { isRecord: false })
+      }
+    });
+
+    await loadAPageWhoseWritesFail(["versions"]);
+
+    expect(localStorage.getItem("unsaved:stored")).not.toBeNull();
+    expect(localStorage.getItem("unsaved:fresh")).toBeNull();
+  });
+
+  it("recovers the other leftovers when one fails", async () => {
+    const localStorage = await loadLeftBehind({
+      entries: {
+        "unwritten:gone:stored": [stashed("Typed", { rev: 5 })],
+        "unwritten:gone:fresh": [stashed("Fresh", { isRecord: false })]
+      }
+    });
+
+    await loadAPageWhoseWritesFail(["versions"]);
+
+    expect(localStorage.getItem("unwritten:gone:stored")).not.toBeNull();
+    expect(localStorage.getItem("unwritten:gone:fresh")).toBeNull();
+  });
+
+  it("keeps the open invoice's stash when its conflict version failed", async () => {
+    await loadLeftBehind({
+      entries: { "unsaved:stored": stashed("Typed", { rev: 5 }) },
+      openId: "stored"
+    });
+
+    await loadAPageWhoseWritesFail(["versions"]);
+
+    const page = await loadAPageThatRecovers();
+
+    expect(await conflictTitles(page)).toContain("Typed");
+  });
+});
