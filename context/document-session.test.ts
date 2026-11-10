@@ -1,5 +1,6 @@
 import Dexie from "dexie";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { CURRENT_INVOICE_SCHEMA_VERSION } from "~/schema/migrations";
 import { invoiceDefault } from "~/stores/invoice-store";
 import type { InvoiceDocument } from "~/types";
 
@@ -117,6 +118,24 @@ function memoryStorage(entries: Record<string, string> = {}) {
     setItem: (key: string, value: string) => void items.set(key, value),
     removeItem: (key: string) => void items.delete(key)
   };
+}
+
+// Local storage whose entries are its own keys, as the browser's are, so code
+// that lists them (Object.keys) finds them.
+class ListableStorage {
+  getItem(key: string): string | null {
+    const value: unknown = Reflect.get(this, key);
+
+    return typeof value === "string" ? value : null;
+  }
+
+  setItem(key: string, value: string) {
+    Reflect.set(this, key, value);
+  }
+
+  removeItem(key: string) {
+    Reflect.deleteProperty(this, key);
+  }
 }
 
 function storedInvoice(overrides: Partial<InvoiceDocument>): InvoiceDocument {
@@ -636,6 +655,33 @@ describe("save failures", () => {
     expect(page.documentState().saveFailure?.episode).not.toBe(
       failure?.episode
     );
+  });
+
+  it("never writes an edit over theirs when its version can't be kept", async () => {
+    const failWrites: FailWrites = { current: null, tables: ["versions"] };
+    const page = await loadPage({ failWrites });
+
+    page.edit().setTitle("Mine");
+    await settle();
+
+    const id = page.documentState().documentId ?? "";
+    const stored = await page.getInvoice(id);
+
+    if (!stored) throw new Error("The invoice wasn't written");
+
+    failWrites.current = new DOMException("Full", "QuotaExceededError");
+    page.edit().setTitle("Mine, edited");
+    await page.saveInvoice({
+      ...stored,
+      invoiceData: { ...stored.invoiceData, title: "Theirs" },
+      rev: stored.rev + 1
+    });
+    await settle();
+    failWrites.current = null;
+    await settle(5000);
+
+    expect((await page.getInvoice(id))?.invoiceData.title).toBe("Theirs");
+    expect(page.invoice().title).toBe("Theirs");
   });
 
   it("keeps the invoice open when its edits can't be written", async () => {
@@ -1474,6 +1520,8 @@ describe("a tab that loses the invoice while its saves fail", () => {
     vi.useRealTimers();
   });
 
+  type KeptEdit = { invoiceData: { title: string } };
+
   // Two tabs on the stored invoice, sharing the browser's storage. Each tab's
   // page listeners are kept apart, so one tab can be hidden or closed alone.
   async function loadTwoTabs(failWrites: FailWrites) {
@@ -1482,7 +1530,7 @@ describe("a tab that loses the invoice while its saves fail", () => {
     await earlierPage.createInvoice(storedInvoice({}));
     await earlierPage.setLastOpenedInvoiceId("stored");
 
-    const localStorage = memoryStorage();
+    const localStorage = new ListableStorage();
     const tabListeners: Map<string, (event?: unknown) => void>[] = [];
 
     vi.stubGlobal("window", {
@@ -1514,14 +1562,24 @@ describe("a tab that loses the invoice while its saves fail", () => {
     return {
       first,
       second,
-      stashedTitle: () => {
-        const raw = localStorage.getItem("unsaved:stored");
+      localStorage,
+      // The titles kept in local storage for the stored invoice: its stash,
+      // and what any tab left there unwritten.
+      keptTitles: () =>
+        Object.keys(localStorage)
+          .filter(
+            key =>
+              key === "unsaved:stored" ||
+              (key.startsWith("unwritten:") && key.endsWith(":stored"))
+          )
+          .flatMap(key => {
+            // What the session wrote there: one stash, or a list of them.
+            const kept = JSON.parse(localStorage.getItem(key) ?? "[]") as
+              KeptEdit | KeptEdit[];
 
-        return raw
-          ? (JSON.parse(raw) as { invoiceData: { title: string } }).invoiceData
-              .title
-          : null;
-      },
+            return Array.isArray(kept) ? kept : [kept];
+          })
+          .map(kept => kept.invoiceData.title),
       hideFirst: () => tabListeners[0]?.get("pagehide")?.(),
       closeFirst: () => {
         const event = { preventDefault: vi.fn(), returnValue: undefined };
@@ -1572,7 +1630,7 @@ describe("a tab that loses the invoice while its saves fail", () => {
     tabs.hideFirst();
     await settle(0);
 
-    expect(tabs.stashedTitle()).toBe("Unwritten");
+    expect(tabs.keptTitles()).toContain("Unwritten");
   });
 
   it("still asks before closing once the retry timer has fired", async () => {
@@ -1583,7 +1641,7 @@ describe("a tab that loses the invoice while its saves fail", () => {
     const event = tabs.closeFirst();
 
     expect(event.preventDefault).toHaveBeenCalled();
-    expect(tabs.stashedTitle()).toBe("Unwritten");
+    expect(tabs.keptTitles()).toContain("Unwritten");
   });
 
   it("hands an edit stashed before the takeover to the other tab", async () => {
@@ -1645,10 +1703,10 @@ describe("a tab that loses the invoice while its saves fail", () => {
     await settle();
 
     expect(await conflictTitles(tabs.first)).toEqual(["Unwritten"]);
-    expect(tabs.stashedTitle()).toBeNull();
+    expect(tabs.keptTitles()).toEqual([]);
   });
 
-  it("keeps the edit stashed when its version can't be written either", async () => {
+  async function loadWithAVersionThatFailed() {
     const tabs = await loadTakenOverWithAFailedEdit({
       tables: ["invoices", "versions"]
     });
@@ -1661,7 +1719,92 @@ describe("a tab that loses the invoice while its saves fail", () => {
     );
     await settle();
 
-    expect(tabs.stashedTitle()).toBe("Unwritten");
+    return tabs;
+  }
+
+  it("keeps the edit through the other tab's saves when its version fails too", async () => {
+    const tabs = await loadWithAVersionThatFailed();
+
+    expect(tabs.keptTitles()).toContain("Unwritten");
+
+    tabs.second.edit().setTitle("Written again in the second tab");
+    await settle();
+
+    expect(tabs.keptTitles()).toContain("Unwritten");
+    expect(tabs.closeFirst().preventDefault).toHaveBeenCalled();
+  });
+
+  it("keeps the edit when it opens another invoice after its version failed", async () => {
+    const tabs = await loadWithAVersionThatFailed();
+
+    await tabs.first.newInvoice();
+    tabs.second.edit().setTitle("Written again in the second tab");
+    await settle();
+
+    expect(tabs.keptTitles()).toContain("Unwritten");
+  });
+
+  it("keeps a closed tab's edit through the other tab's saves", async () => {
+    const tabs = await loadTakenOverWithAFailedEdit();
+
+    tabs.closeFirst();
+    await tabs.first.detachEditor();
+    tabs.second.edit().setTitle("Written in the second tab");
+    await settle();
+
+    expect(tabs.keptTitles()).toContain("Unwritten");
+
+    await tabs.second.detachEditor();
+
+    const reopened = await loadPage();
+
+    await settle();
+
+    expect(await conflictTitles(reopened)).toContain("Unwritten");
+    expect(tabs.keptTitles()).toEqual([]);
+  });
+
+  it("keeps its own edit in the history when it gets the invoice back with another tab's stash", async () => {
+    const tabs = await loadTakenOverWithAFailedEdit();
+    const stored = await tabs.second.getInvoice("stored");
+
+    if (!stored) throw new Error("The stored invoice is missing");
+
+    tabs.failWrites.current = null;
+    // The second tab closed inside its save delay, so its edit is only
+    // stashed.
+    tabs.localStorage.setItem(
+      "unsaved:stored",
+      JSON.stringify({
+        rev: stored.rev,
+        writingRev: null,
+        isRecord: true,
+        name: stored.name,
+        nameSource: stored.nameSource,
+        templateId: null,
+        invoiceData: {
+          ...stored.invoiceData,
+          title: "Stashed by the second tab"
+        },
+        schemaVersion: CURRENT_INVOICE_SCHEMA_VERSION
+      })
+    );
+    await tabs.second.detachEditor();
+
+    await vi.waitFor(() =>
+      expect(tabs.first.documentState().status).toBe("editing")
+    );
+    await settle();
+
+    expect((await tabs.first.getInvoice("stored"))?.invoiceData.title).toBe(
+      "Stashed by the second tab"
+    );
+    // The version kept as it opened holds it.
+    expect(
+      (await tabs.first.getInvoiceVersions("stored")).map(
+        version => version.invoiceData.title
+      )
+    ).toContain("Unwritten");
   });
 
   it("writes the edit once it gets the invoice back untouched", async () => {
@@ -1705,8 +1848,10 @@ describe("a tab that loses the invoice while its saves fail", () => {
     const tabs = await loadTakenOverWithAFailedEdit();
 
     await tabs.first.newInvoice();
+    tabs.second.edit().setTitle("Written in the second tab");
+    await settle();
 
     expect(tabs.first.documentState().documentId).not.toBe("stored");
-    expect(tabs.stashedTitle()).toBe("Unwritten");
+    expect(tabs.keptTitles()).toContain("Unwritten");
   });
 });
