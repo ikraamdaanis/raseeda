@@ -93,13 +93,12 @@ const OPEN_INVOICE_KEY = "open-invoice";
 // Per tab: edits not yet known to be written when the page went away.
 const UNSAVED_KEY_PREFIX = "unsaved:";
 
-// Per tab, per invoice (`unwritten:<tab>:<invoice id>`): edits a tab
+// Per session, per invoice (`unwritten:<session>:<invoice id>`): edits a tab
 // couldn't write before another tab took the invoice over. Apart from the
 // stash, since the tab editing the invoice clears that with its own saves.
+// Per session, so opening the invoice again in the same tab brings them in
+// rather than writing over them.
 const LEFTOVER_KEY_PREFIX = "unwritten:";
-
-// Names this page's leftovers.
-const tabId = crypto.randomUUID();
 
 const BACKUP_REMINDER_KEY = "backup-reminder";
 
@@ -148,6 +147,8 @@ type Session = {
   // Edits this tab couldn't write, made on a copy another tab's write has
   // since replaced, until each is kept as a version (keepUnwritten).
   unwritten: UnsavedStash[];
+  // Names this session's leftovers (writeLeftovers).
+  leftoverId: string;
   // The content the read-only view shows, put back if anything changes it.
   shownContent: Invoice;
   attached: boolean;
@@ -362,21 +363,37 @@ function writeLeftovers(session: Session) {
 
   writeStorage(
     "localStorage",
-    `${LEFTOVER_KEY_PREFIX}${tabId}:${session.id}`,
+    `${LEFTOVER_KEY_PREFIX}${session.leftoverId}:${session.id}`,
     held.length > 0 ? JSON.stringify(held) : null
   );
 }
 
-// Other tabs' leftovers, for one invoice or all of them.
-function readLeftovers(
-  invoiceId?: string
-): { key: string; invoiceId: string; stashes: UnsavedStash[] }[] {
+// Clears every session's leftovers for deleted invoices, or for all of them.
+function clearLeftovers(invoiceIds?: string[]) {
+  for (const name of storedKeys(LEFTOVER_KEY_PREFIX)) {
+    const id = name.slice(name.indexOf(":") + 1);
+
+    if (invoiceIds && !invoiceIds.includes(id)) continue;
+
+    writeStorage("localStorage", `${LEFTOVER_KEY_PREFIX}${name}`, null);
+  }
+}
+
+// Leftovers other sessions left (in other tabs, or earlier in this one), for
+// one invoice or all of them.
+function readLeftovers({
+  ownId,
+  invoiceId
+}: {
+  ownId: string;
+  invoiceId?: string;
+}): { key: string; invoiceId: string; stashes: UnsavedStash[] }[] {
   return storedKeys(LEFTOVER_KEY_PREFIX).flatMap(name => {
     const separator = name.indexOf(":");
-    const tab = name.slice(0, separator);
+    const owner = name.slice(0, separator);
     const id = name.slice(separator + 1);
 
-    if (separator < 0 || tab === tabId) return [];
+    if (separator < 0 || owner === ownId) return [];
     if (invoiceId !== undefined && id !== invoiceId) return [];
 
     const key = `${LEFTOVER_KEY_PREFIX}${name}`;
@@ -949,6 +966,7 @@ function createSession({
     failure: null,
     failureEpisode: 0,
     unwritten: [],
+    leftoverId: crypto.randomUUID(),
     shownContent: content,
     attached: false,
     releaseLock: null,
@@ -1389,11 +1407,11 @@ function deleteFromLibrary(ids: string[]): Promise<void> {
       throw error;
     }
 
+    clearLeftovers(ids);
+
     if (!session || !includesOpen) return;
 
     session.unwritten = [];
-    session.controller.stop();
-    writeLeftovers(session);
     clearStash(session.id);
     dispose(session);
 
@@ -1426,9 +1444,7 @@ function deleteEverything(): Promise<void> {
 
     for (const id of storedKeys(UNSAVED_KEY_PREFIX)) clearStash(id);
 
-    for (const name of storedKeys(LEFTOVER_KEY_PREFIX)) {
-      writeStorage("localStorage", `${LEFTOVER_KEY_PREFIX}${name}`, null);
-    }
+    clearLeftovers();
 
     if (session) session.unwritten = [];
 
@@ -1709,6 +1725,16 @@ function onUpgradeElsewhere() {
 
   if (!session) return;
 
+  // A tab that lost the invoice holds on to what it couldn't write, so it
+  // stays a leftover rather than going over the editing tab's stash.
+  if (session.status === "readOnly") {
+    const unsaved = session.controller.takeUnsaved();
+
+    if (unsaved) {
+      session.unwritten.push(toStash(session, unsaved, session.rev, null));
+    }
+  }
+
   stashUnsaved(session);
   session.controller.stop();
   session.stopWaitingForLock?.();
@@ -1795,7 +1821,10 @@ async function recoverUnsaved(session: Session) {
 async function recoverLeftovers(session: Session) {
   if (!session.isRecord) return;
 
-  for (const leftover of readLeftovers(session.id)) {
+  for (const leftover of readLeftovers({
+    ownId: session.leftoverId,
+    invoiceId: session.id
+  })) {
     for (const stash of leftover.stashes) {
       const stored = await getInvoice(session.id);
 
@@ -1827,7 +1856,9 @@ async function recoverLeftovers(session: Session) {
 // Brings back stashed edits, and other tabs' leftovers, for invoices no tab
 // has open, such as one whose tab closed inside the save delay while this tab
 // opens another.
-async function recoverOtherStashes(openId: string) {
+async function recoverOtherStashes(open: Session) {
+  const openId = open.id;
+
   if (!locksSupported()) return;
 
   for (const id of storedKeys(UNSAVED_KEY_PREFIX)) {
@@ -1846,7 +1877,7 @@ async function recoverOtherStashes(openId: string) {
     );
   }
 
-  for (const leftover of readLeftovers()) {
+  for (const leftover of readLeftovers({ ownId: open.leftoverId })) {
     if (leftover.invoiceId === openId) continue;
 
     await navigator.locks.request(
@@ -1975,7 +2006,7 @@ async function runHydration(): Promise<void> {
   if (stash) session.controller.schedule(liveContent());
 
   if (!storageUnavailable) {
-    recoverOtherStashes(session.id)
+    recoverOtherStashes(session)
       .then(() => sweepBlankInvoices(session.id))
       .catch((error: unknown) =>
         console.error("[DocumentSession] Failed to tidy up storage", error)

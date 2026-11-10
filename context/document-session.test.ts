@@ -1744,6 +1744,102 @@ describe("a tab that loses the invoice while its saves fail", () => {
     expect(tabs.keptTitles()).toContain("Unwritten");
   });
 
+  it("keeps the edit when it opens the invoice again, still read-only", async () => {
+    const tabs = await loadTakenOverWithAFailedEdit();
+
+    await tabs.first.newInvoice();
+    await tabs.first.openInvoice("stored");
+
+    expect(tabs.first.documentState().status).toBe("readOnly");
+
+    tabs.hideFirst();
+    await settle(0);
+
+    expect(tabs.keptTitles()).toContain("Unwritten");
+  });
+
+  it("brings the edit in when it opens the invoice again to edit it", async () => {
+    const tabs = await loadTakenOverWithAFailedEdit();
+
+    await tabs.first.newInvoice();
+    await tabs.second.newInvoice();
+    tabs.failWrites.current = null;
+    await tabs.first.openInvoice("stored");
+    await settle();
+
+    expect(tabs.first.documentState().status).toBe("editing");
+    expect((await tabs.first.getInvoice("stored"))?.invoiceData.title).toBe(
+      "Unwritten"
+    );
+    expect(tabs.keptTitles()).toEqual([]);
+  });
+
+  it("writes the edit of a tab that left it when another page loads", async () => {
+    const tabs = await loadTakenOverWithAFailedEdit();
+
+    await tabs.first.newInvoice();
+    await tabs.second.newInvoice();
+
+    const later = await loadPage();
+
+    await settle();
+
+    expect((await later.getInvoice("stored"))?.invoiceData.title).toBe(
+      "Unwritten"
+    );
+    expect(tabs.keptTitles()).toEqual([]);
+  });
+
+  it("drops the edit when the invoice is deleted from the library", async () => {
+    const tabs = await loadTakenOverWithAFailedEdit();
+
+    await tabs.first.newInvoice();
+    await tabs.second.newInvoice();
+    tabs.failWrites.current = null;
+    await tabs.first.deleteFromLibrary(["stored"]);
+
+    expect(tabs.keptTitles()).toEqual([]);
+
+    const later = await loadPage();
+
+    await settle();
+
+    expect(
+      (await later.getAllInvoices()).map(invoice => invoice.invoiceData.title)
+    ).not.toContain("Unwritten");
+  });
+
+  it("keeps both tabs' edits when another tab upgrades the database", async () => {
+    const tabs = await loadTakenOverWithAFailedEdit();
+
+    tabs.second.edit().setTitle("Pending in the second tab");
+
+    for (const page of [tabs.first, tabs.second]) {
+      page.db.on.versionchange.fire(
+        new IDBVersionChangeEvent("versionchange", {
+          newVersion: 999,
+          oldVersion: 1
+        })
+      );
+    }
+
+    tabs.hideFirst();
+    await settle(0);
+
+    expect(tabs.keptTitles()).toEqual(
+      expect.arrayContaining(["Unwritten", "Pending in the second tab"])
+    );
+  });
+
+  it("drops the edit when all data is deleted", async () => {
+    const tabs = await loadTakenOverWithAFailedEdit();
+
+    await tabs.first.newInvoice();
+    await tabs.second.deleteEverything();
+
+    expect(tabs.keptTitles()).toEqual([]);
+  });
+
   it("keeps a closed tab's edit through the other tab's saves", async () => {
     const tabs = await loadTakenOverWithAFailedEdit();
 
