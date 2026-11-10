@@ -37,6 +37,9 @@ type FailWrites = {
   reads?: boolean;
   // False lets writes through while reads fail, as a passing read error would.
   writes?: boolean;
+  // Runs before each get from those tables, as getInvoice makes. A promise it
+  // returns holds the read's result back until it settles.
+  beforeRead?: () => Promise<void> | undefined;
 };
 
 // The session is module state (one open invoice per page), so every test
@@ -97,6 +100,17 @@ async function loadPage({
               return error ? failWrite(error) : table.mutate(request);
             },
             get: request => {
+              const held = (failWrites.tables ?? ["invoices"]).includes(name)
+                ? failWrites.beforeRead?.()
+                : undefined;
+
+              // Read inside the transaction, then hold the result back.
+              if (held) {
+                return table
+                  .get(request)
+                  .then(result => held.then(() => result));
+              }
+
               const error = readFailure();
 
               return error ? Promise.reject(error) : table.get(request);
@@ -2346,5 +2360,151 @@ describe("recovering what other pages left when a page loads", () => {
     const page = await loadAPageThatRecovers();
 
     expect(await conflictTitles(page)).toContain("Typed");
+  });
+});
+
+describe("a read-only tab that gets the invoice while it opens another", () => {
+  beforeEach(async () => {
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout", "Date"] });
+    await Dexie.delete("InvoiceDatabase");
+  });
+
+  afterEach(async () => {
+    await closePages();
+    vi.unstubAllGlobals();
+    vi.useRealTimers();
+  });
+
+  it("never puts the first invoice's stash in the one it opens", async () => {
+    const earlierPage = await loadPage();
+    const other = storedInvoice({ id: "other", name: "Other invoice" });
+
+    other.invoiceData.title = "Other";
+    await earlierPage.createInvoice(storedInvoice({}));
+    await earlierPage.createInvoice(other);
+    await earlierPage.setLastOpenedInvoiceId("stored");
+
+    const localStorage = new ListableStorage();
+
+    vi.stubGlobal("window", {
+      sessionStorage: memoryStorage(),
+      localStorage,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn()
+    });
+    vi.stubGlobal("document", {
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      visibilityState: "visible"
+    });
+
+    const first = await loadPage();
+    const reads: FailWrites = { current: null };
+    const second = await loadPage({ failWrites: reads });
+
+    expect(second.documentState().status).toBe("readOnly");
+
+    const stored = await first.getInvoice("stored");
+
+    if (!stored) throw new Error("The stored invoice is missing");
+
+    // The first tab closed inside its save delay, so its edit is only stashed.
+    localStorage.setItem(
+      "unsaved:stored",
+      JSON.stringify({
+        rev: stored.rev,
+        writingRev: null,
+        isRecord: true,
+        name: stored.name,
+        nameSource: stored.nameSource,
+        templateId: null,
+        invoiceData: { ...stored.invoiceData, title: "Stashed" },
+        schemaVersion: CURRENT_INVOICE_SCHEMA_VERSION
+      })
+    );
+
+    // Holds the read the second tab makes once it has taken the stash, which
+    // it makes while bringing the stash in as it starts editing.
+    let releaseRead = () => {};
+    let readHeld = false;
+
+    reads.beforeRead = () => {
+      if (readHeld || localStorage.getItem("unsaved:stored") !== null) {
+        return undefined;
+      }
+
+      readHeld = true;
+
+      return new Promise(release => {
+        releaseRead = release;
+      });
+    };
+
+    await first.detachEditor();
+    await vi.waitFor(() => expect(readHeld).toBe(true));
+
+    const opening = second.openInvoice("other");
+
+    await settle(0);
+    releaseRead();
+    await opening;
+    await settle();
+
+    expect(second.documentState().documentId).toBe("other");
+    expect(second.invoice().title).toBe("Other");
+
+    second.edit().setNumber("INV-0042");
+    await settle();
+
+    expect((await second.getInvoice("other"))?.invoiceData.title).toBe("Other");
+    // The stash still lands in the invoice it belongs to.
+    expect((await second.getInvoice("stored"))?.invoiceData.title).toBe(
+      "Stashed"
+    );
+  });
+
+  it("doesn't start editing once its editor has gone", async () => {
+    const earlierPage = await loadPage();
+
+    await earlierPage.createInvoice(storedInvoice({}));
+    await earlierPage.setLastOpenedInvoiceId("stored");
+
+    const first = await loadPage();
+    const reads: FailWrites = { current: null };
+    const second = await loadPage({ failWrites: reads });
+
+    expect(second.documentState().status).toBe("readOnly");
+
+    // Something else is under way in the second tab when the lock comes, and
+    // its editor goes before it's done.
+    let releaseRead = () => {};
+
+    reads.beforeRead = () => {
+      reads.beforeRead = undefined;
+
+      return new Promise(release => {
+        releaseRead = release;
+      });
+    };
+
+    const opening = second.openInvoice("nowhere").catch(() => {});
+    const leaving = second.detachEditor();
+
+    await first.detachEditor();
+    await settle(0);
+    releaseRead();
+    await opening;
+    await leaving;
+    await settle();
+
+    expect(second.documentState().status).toBe("readOnly");
+
+    // Another tab can still edit it.
+    const third = await loadPage();
+
+    expect(third.documentState()).toMatchObject({
+      documentId: "stored",
+      status: "editing"
+    });
   });
 });

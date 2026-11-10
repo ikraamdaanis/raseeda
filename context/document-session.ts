@@ -806,7 +806,13 @@ async function onLockLost(session: Session) {
 }
 
 // While read-only, waits in line for the invoice, so this tab edits again
-// once the tab editing it moves on or closes.
+// once the tab editing it moves on or closes. The lock can come at any time,
+// so editing starts in the queue: an open that's under way finishes first
+// (and startEditing finds its session gone), and one asked for meanwhile
+// waits, so nothing startEditing brings in lands in another invoice. It
+// starts only while the tab still holds the lock and follows read-only: while
+// it waited, the editor may have gone, another tab taken the invoice, or Edit
+// here started editing already.
 async function waitForLock(session: Session) {
   if (!locksSupported()) return;
 
@@ -814,7 +820,13 @@ async function waitForLock(session: Session) {
 
   session.stopWaitingForLock = null;
 
-  if (granted) await startEditing(session);
+  if (!granted) return;
+
+  await enqueue(async () => {
+    if (session.releaseLock && session.status === "readOnly") {
+      await startEditing(session);
+    }
+  });
 }
 
 // This tab now edits the invoice. It reads the stored copy first, in case the
