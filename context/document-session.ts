@@ -862,6 +862,17 @@ async function startEditing(session: Session) {
 
   if (!canEdit(session)) return;
 
+  // Another tab took the invoice over while this one read it: keep following
+  // it and wait in line again. A tab that was editing went read-only in
+  // onLockLost, which waits itself.
+  if (locksSupported() && !session.releaseLock) {
+    if (session.status === "readOnly" && !session.stopWaitingForLock) {
+      void waitForLock(session);
+    }
+
+    return;
+  }
+
   session.status = "editing";
   clearInvoiceHistory();
   publish(session);

@@ -2763,6 +2763,50 @@ describe("a read-only tab that gets the invoice while it opens another", () => {
     );
   });
 
+  it("stays read-only when another tab takes the invoice while it starts", async () => {
+    const earlierPage = await loadPage();
+
+    await earlierPage.createInvoice(storedInvoice({}));
+    await earlierPage.setLastOpenedInvoiceId("stored");
+
+    const first = await loadPage();
+    const reads: FailWrites = { current: null };
+    const second = await loadPage({ failWrites: reads });
+    const third = await loadPage();
+
+    expect(second.documentState().status).toBe("readOnly");
+    expect(third.documentState().status).toBe("readOnly");
+
+    // Holds the read the second tab makes of the invoice as it starts editing.
+    let releaseRead = () => {};
+    let readHeld = false;
+
+    reads.beforeRead = key => {
+      if (readHeld || key !== "stored") return undefined;
+
+      readHeld = true;
+
+      return new Promise(release => {
+        releaseRead = release;
+      });
+    };
+
+    await first.detachEditor();
+    await vi.waitFor(() => expect(readHeld).toBe(true));
+    await third.takeOver();
+    releaseRead();
+    await settle();
+
+    expect(third.documentState().status).toBe("editing");
+    expect(second.documentState().status).toBe("readOnly");
+
+    // The second tab edits once the third moves on.
+    await third.detachEditor();
+    await vi.waitFor(() =>
+      expect(second.documentState().status).toBe("editing")
+    );
+  });
+
   it("waits for the invoice once when its editor comes back meanwhile", async () => {
     const { first, second, busySecond } = await loadAFollowingTab();
     const third = await loadPage();
