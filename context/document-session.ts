@@ -1914,26 +1914,33 @@ async function recoverOtherStashes(open: Session) {
     });
   }
 
-  for (const leftover of readLeftovers({ ownId: open.leftoverId })) {
-    if (leftover.invoiceId === openId) continue;
+  for (const { key, invoiceId } of readLeftovers({ ownId: open.leftoverId })) {
+    if (invoiceId === openId) continue;
 
-    await recoverWithLock(leftover.invoiceId, async () => {
+    await recoverWithLock(invoiceId, async () => {
+      // Read again under the lock, since another page may have recovered it
+      // while this one worked on others.
+      const stashes =
+        readLeftovers({ ownId: open.leftoverId, invoiceId }).find(
+          leftover => leftover.key === key
+        )?.stashes ?? [];
+
       // Each stash leaves the leftover once it's written, so a retry after a
       // failure writes only the rest: a deleted invoice's stash comes back as
       // a new invoice, and writing it again would make a second one.
-      for (const [index, stash] of leftover.stashes.entries()) {
-        await writeRecovered(leftover.invoiceId, stash);
+      for (const [index, stash] of stashes.entries()) {
+        await writeRecovered(invoiceId, stash);
 
-        const rest = leftover.stashes.slice(index + 1);
+        const rest = stashes.slice(index + 1);
 
         writeStorage(
           "localStorage",
-          leftover.key,
+          key,
           rest.length > 0 ? JSON.stringify(rest) : null
         );
       }
 
-      writeStorage("localStorage", leftover.key, null);
+      writeStorage("localStorage", key, null);
     });
   }
 }

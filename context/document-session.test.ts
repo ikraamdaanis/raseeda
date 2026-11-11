@@ -37,9 +37,10 @@ type FailWrites = {
   reads?: boolean;
   // False lets writes through while reads fail, as a passing read error would.
   writes?: boolean;
-  // Runs before each get from those tables, as getInvoice makes. A promise it
-  // returns holds the read's result back until it settles.
-  beforeRead?: () => Promise<void> | undefined;
+  // Runs before each get from those tables, as getInvoice makes, with the key
+  // it reads. A promise it returns holds the read's result back until it
+  // settles.
+  beforeRead?: (key: unknown) => Promise<void> | undefined;
   // Runs before each write to those tables with its type ("add", "put",
   // "delete"), so a test can fail a later write by setting `current`.
   beforeWrite?: (type: string) => void;
@@ -108,7 +109,7 @@ async function loadPage({
             },
             get: request => {
               const held = (failWrites.tables ?? ["invoices"]).includes(name)
-                ? failWrites.beforeRead?.()
+                ? failWrites.beforeRead?.(request.key)
                 : undefined;
 
               // Read inside the transaction, then hold the result back.
@@ -2256,6 +2257,7 @@ describe("recovering what other pages left when a page loads", () => {
     await settle();
     await closePages();
 
+    // Stored as JSON, so its shape is only known from what the page wrote.
     const left = JSON.parse(
       localStorage.getItem("unwritten:gone:deleted") ?? "[]"
     ) as { invoiceData: { title: string } }[];
@@ -2269,6 +2271,35 @@ describe("recovering what other pages left when a page loads", () => {
 
     expect(titles.filter(title => title === "First")).toHaveLength(1);
     expect(titles.filter(title => title === "Second")).toHaveLength(1);
+  });
+
+  it("leaves a leftover another page recovered while it worked on another", async () => {
+    const localStorage = await loadLeftBehind({
+      entries: {
+        "unwritten:gone:stored": [stashed("Typed", { rev: 5 })],
+        "unwritten:gone:deleted": [stashed("Lost")]
+      }
+    });
+
+    let release = () => {};
+    const held = new Promise<void>(resolve => (release = resolve));
+    const page = await loadPage({
+      failWrites: {
+        current: null,
+        beforeRead: key => (key === "stored" ? held : undefined)
+      }
+    });
+
+    await settle();
+    // Another page recovers the deleted invoice's leftover meanwhile.
+    localStorage.removeItem("unwritten:gone:deleted");
+    release();
+    await settle();
+
+    expect(
+      (await page.getAllInvoices()).map(invoice => invoice.invoiceData.title)
+    ).not.toContain("Lost");
+    expect(localStorage.getItem("unwritten:gone:deleted")).toBeNull();
   });
 
   it("keeps a stash for a deleted invoice deleted", async () => {
