@@ -2302,6 +2302,36 @@ describe("recovering what other pages left when a page loads", () => {
     expect(localStorage.getItem("unwritten:gone:deleted")).toBeNull();
   });
 
+  it("leaves the rest of a leftover a delete cleared while it recovered", async () => {
+    const localStorage = await loadLeftBehind({
+      entries: {
+        "unwritten:gone:deleted": [stashed("First"), stashed("Second")]
+      }
+    });
+
+    let release = () => {};
+    const held = new Promise<void>(resolve => (release = resolve));
+    let reads = 0;
+    const page = await loadPage({
+      failWrites: {
+        current: null,
+        beforeRead: key =>
+          key === "deleted" && ++reads === 1 ? held : undefined
+      }
+    });
+
+    await settle();
+    // The invoice is deleted in another tab, which clears its leftovers.
+    localStorage.removeItem("unwritten:gone:deleted");
+    release();
+    await settle();
+
+    expect(
+      (await page.getAllInvoices()).map(invoice => invoice.invoiceData.title)
+    ).not.toContain("Second");
+    expect(localStorage.getItem("unwritten:gone:deleted")).toBeNull();
+  });
+
   it("keeps a stash for a deleted invoice deleted", async () => {
     const localStorage = await loadLeftBehind({
       entries: { "unsaved:stored": stashed("Typed") }

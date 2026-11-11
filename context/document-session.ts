@@ -1931,6 +1931,10 @@ async function recoverOtherStashes(open: Session) {
       for (const [index, stash] of stashes.entries()) {
         await writeRecovered(invoiceId, stash);
 
+        // Deleting the invoice elsewhere clears its leftovers meanwhile: the
+        // rest stays deleted with it.
+        if (readStorage("localStorage", key) === null) return;
+
         const rest = stashes.slice(index + 1);
 
         writeStorage(
