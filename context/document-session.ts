@@ -1918,8 +1918,19 @@ async function recoverOtherStashes(open: Session) {
     if (leftover.invoiceId === openId) continue;
 
     await recoverWithLock(leftover.invoiceId, async () => {
-      for (const stash of leftover.stashes) {
+      // Each stash leaves the leftover once it's written, so a retry after a
+      // failure writes only the rest: a deleted invoice's stash comes back as
+      // a new invoice, and writing it again would make a second one.
+      for (const [index, stash] of leftover.stashes.entries()) {
         await writeRecovered(leftover.invoiceId, stash);
+
+        const rest = leftover.stashes.slice(index + 1);
+
+        writeStorage(
+          "localStorage",
+          leftover.key,
+          rest.length > 0 ? JSON.stringify(rest) : null
+        );
       }
 
       writeStorage("localStorage", leftover.key, null);

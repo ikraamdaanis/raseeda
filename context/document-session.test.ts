@@ -40,6 +40,9 @@ type FailWrites = {
   // Runs before each get from those tables, as getInvoice makes. A promise it
   // returns holds the read's result back until it settles.
   beforeRead?: () => Promise<void> | undefined;
+  // Runs before each write to those tables with its type ("add", "put",
+  // "delete"), so a test can fail a later write by setting `current`.
+  beforeWrite?: (type: string) => void;
 };
 
 // The session is module state (one open invoice per page), so every test
@@ -95,6 +98,10 @@ async function loadPage({
           return {
             ...table,
             mutate: request => {
+              if ((failWrites.tables ?? ["invoices"]).includes(name)) {
+                failWrites.beforeWrite?.(request.type);
+              }
+
               const error = failWrites.writes === false ? null : failure();
 
               return error ? failWrite(error) : table.mutate(request);
@@ -2227,6 +2234,41 @@ describe("recovering what other pages left when a page loads", () => {
 
     expect(localStorage.getItem("unwritten:gone:stored")).not.toBeNull();
     expect(localStorage.getItem("unwritten:gone:fresh")).toBeNull();
+  });
+
+  it("creates a deleted invoice's leftover stashes once when one fails", async () => {
+    const localStorage = await loadLeftBehind({
+      entries: {
+        "unwritten:gone:deleted": [stashed("First"), stashed("Second")]
+      }
+    });
+
+    const full = new DOMException("Full", "QuotaExceededError");
+    let adds = 0;
+    const failWrites: FailWrites = {
+      current: null,
+      beforeWrite: type => {
+        if (type === "add" && ++adds === 2) failWrites.current = full;
+      }
+    };
+
+    await loadPage({ failWrites });
+    await settle();
+    await closePages();
+
+    const left = JSON.parse(
+      localStorage.getItem("unwritten:gone:deleted") ?? "[]"
+    ) as { invoiceData: { title: string } }[];
+
+    expect(left.map(stash => stash.invoiceData.title)).toEqual(["Second"]);
+
+    const page = await loadAPageThatRecovers();
+    const titles = (await page.getAllInvoices()).map(
+      invoice => invoice.invoiceData.title
+    );
+
+    expect(titles.filter(title => title === "First")).toHaveLength(1);
+    expect(titles.filter(title => title === "Second")).toHaveLength(1);
   });
 
   it("keeps a stash for a deleted invoice deleted", async () => {
