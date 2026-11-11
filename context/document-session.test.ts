@@ -2807,6 +2807,65 @@ describe("a read-only tab that gets the invoice while it opens another", () => {
     );
   });
 
+  it("stays read-only when the invoice is taken while it starts on load", async () => {
+    const earlierPage = await loadPage();
+
+    await earlierPage.createInvoice(storedInvoice({}));
+    await earlierPage.setLastOpenedInvoiceId("stored");
+    await earlierPage.detachEditor();
+
+    // Holds the read the page makes of the invoice once it has the lock,
+    // which it makes as its editor mounts and it starts editing.
+    const reads: FailWrites = { current: null };
+    let releaseRead = () => {};
+    let readHeld = false;
+
+    reads.beforeRead = key => {
+      if (readHeld || key !== "stored") return undefined;
+
+      return navigator.locks.query().then(({ held = [] }) => {
+        if (!held.some(lock => lock.name === "invoice-lock:stored")) return;
+
+        readHeld = true;
+
+        return new Promise<void>(release => {
+          releaseRead = release;
+        });
+      });
+    };
+
+    const loading = loadPage({ failWrites: reads });
+
+    await vi.waitFor(() => expect(readHeld).toBe(true));
+
+    // Another tab takes the invoice over, as Edit here does.
+    let releaseTaken = () => {};
+    const taken = new Promise<void>(granted => {
+      void navigator.locks.request(
+        "invoice-lock:stored",
+        { steal: true },
+        () =>
+          new Promise<void>(release => {
+            releaseTaken = release;
+            granted();
+          })
+      );
+    });
+
+    await taken;
+    releaseRead();
+
+    const page = await loading;
+
+    await settle();
+
+    expect(page.documentState().status).toBe("readOnly");
+
+    // It edits once the other tab moves on.
+    releaseTaken();
+    await vi.waitFor(() => expect(page.documentState().status).toBe("editing"));
+  });
+
   it("waits for the invoice once when its editor comes back meanwhile", async () => {
     const { first, second, busySecond } = await loadAFollowingTab();
     const third = await loadPage();
