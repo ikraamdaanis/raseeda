@@ -1,7 +1,7 @@
 import Dexie from "dexie";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { CURRENT_INVOICE_SCHEMA_VERSION } from "~/schema/migrations";
-import { invoiceDefault } from "~/stores/invoice-store";
+import { createBlankInvoice, invoiceDefault } from "~/stores/invoice-store";
 import type { InvoiceDocument } from "~/types";
 
 // The usage counts, as the session reports them (utils/track.ts). The module
@@ -2088,12 +2088,17 @@ describe("recovering what other pages left when a page loads", () => {
   // earlier pages left in local storage under each key.
   async function loadLeftBehind({
     entries,
-    openId = "other"
+    openId = "other",
+    invoices = []
   }: {
     entries: Record<string, unknown>;
     openId?: string;
+    // Stored as well, before the page loads.
+    invoices?: InvoiceDocument[];
   }) {
     const earlierPage = await loadPage();
+
+    for (const invoice of invoices) await earlierPage.createInvoice(invoice);
 
     await earlierPage.createInvoice(
       storedInvoice({
@@ -2330,6 +2335,63 @@ describe("recovering what other pages left when a page loads", () => {
       (await page.getAllInvoices()).map(invoice => invoice.invoiceData.title)
     ).not.toContain("Second");
     expect(localStorage.getItem("unwritten:gone:deleted")).toBeNull();
+  });
+
+  // An invoice left blank, still named for its number, which the sweep
+  // deletes when its page left a marker for it.
+  function leftBlank(id: string) {
+    return storedInvoice({
+      id,
+      name: "INV-0001",
+      nameSource: "auto",
+      invoiceData: createBlankInvoice()
+    });
+  }
+
+  it("keeps a blank invoice's marker when reading it fails", async () => {
+    const localStorage = await loadLeftBehind({
+      entries: { "blank:left": 1 },
+      invoices: [leftBlank("left")]
+    });
+
+    await loadPage({
+      failWrites: {
+        current: new DOMException("Unknown", "UnknownError"),
+        reads: true,
+        writes: false
+      }
+    });
+    await settle();
+    await closePages();
+
+    expect(localStorage.getItem("blank:left")).not.toBeNull();
+
+    const page = await loadAPageThatRecovers();
+
+    expect(await page.getInvoice("left")).toBeUndefined();
+    expect(localStorage.getItem("blank:left")).toBeNull();
+  });
+
+  it("sweeps the other blank invoices when one's read fails", async () => {
+    const localStorage = await loadLeftBehind({
+      entries: { "blank:failing": 1, "blank:left": 1 },
+      invoices: [leftBlank("failing"), leftBlank("left")]
+    });
+    const page = await loadPage({
+      failWrites: {
+        current: null,
+        beforeRead: key =>
+          key === "failing"
+            ? Promise.reject(new DOMException("Unknown", "UnknownError"))
+            : undefined
+      }
+    });
+
+    await settle();
+
+    expect(await page.getInvoice("left")).toBeUndefined();
+    expect(localStorage.getItem("blank:left")).toBeNull();
+    expect(localStorage.getItem("blank:failing")).not.toBeNull();
   });
 
   it("keeps a stash for a deleted invoice deleted", async () => {

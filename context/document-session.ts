@@ -1788,27 +1788,34 @@ async function sweepBlankInvoices(openId: string) {
 
   const markedIds = storedKeys(BLANK_KEY_PREFIX);
 
+  // Each marker is cleared only once its invoice has been checked, so one
+  // whose read or delete fails is tried again on the next load, and the rest
+  // carry on without it.
   for (const id of markedIds) {
     if (id === openId) continue;
 
-    await navigator.locks.request(
-      `${LOCK_PREFIX}${id}`,
-      { ifAvailable: true },
-      async lock => {
-        if (!lock) return;
+    try {
+      await navigator.locks.request(
+        `${LOCK_PREFIX}${id}`,
+        { ifAvailable: true },
+        async lock => {
+          if (!lock) return;
 
-        writeStorage("localStorage", `${BLANK_KEY_PREFIX}${id}`, null);
+          const invoice = await getInvoice(id);
 
-        const invoice = await getInvoice(id);
+          if (
+            invoice?.nameSource === "auto" &&
+            isBlankInvoice(invoice.invoiceData)
+          ) {
+            await deleteInvoices([id]);
+          }
 
-        if (
-          invoice?.nameSource === "auto" &&
-          isBlankInvoice(invoice.invoiceData)
-        ) {
-          await deleteInvoices([id]);
+          writeStorage("localStorage", `${BLANK_KEY_PREFIX}${id}`, null);
         }
-      }
-    );
+      );
+    } catch (error) {
+      console.error("[DocumentSession] Failed to sweep a blank invoice", error);
+    }
   }
 }
 
