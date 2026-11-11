@@ -2394,6 +2394,54 @@ describe("recovering what other pages left when a page loads", () => {
     expect(localStorage.getItem("blank:failing")).not.toBeNull();
   });
 
+  it("keeps a blank invoice's marker when deleting it fails", async () => {
+    const localStorage = await loadLeftBehind({
+      entries: { "blank:failing": 1, "blank:left": 1 },
+      invoices: [leftBlank("failing"), leftBlank("left")]
+    });
+    const full = new DOMException("Full", "QuotaExceededError");
+    let deletes = 0;
+    const failWrites: FailWrites = {
+      current: null,
+      beforeWrite: type => {
+        failWrites.current = type === "delete" && ++deletes === 1 ? full : null;
+      }
+    };
+    const failing = await loadPage({ failWrites });
+
+    await settle();
+
+    expect(await failing.getInvoice("failing")).toBeDefined();
+    expect(localStorage.getItem("blank:failing")).not.toBeNull();
+    expect(await failing.getInvoice("left")).toBeUndefined();
+    expect(localStorage.getItem("blank:left")).toBeNull();
+
+    await closePages();
+
+    const page = await loadAPageThatRecovers();
+
+    expect(await page.getInvoice("failing")).toBeUndefined();
+    expect(localStorage.getItem("blank:failing")).toBeNull();
+  });
+
+  it("clears the marker of an invoice since renamed, edited or deleted", async () => {
+    const localStorage = await loadLeftBehind({
+      entries: { "blank:renamed": 1, "blank:edited": 1, "blank:gone": 1 },
+      invoices: [
+        { ...leftBlank("renamed"), name: "Kept", nameSource: "user" },
+        {
+          ...leftBlank("edited"),
+          invoiceData: { ...createBlankInvoice(), title: "Edited" }
+        }
+      ]
+    });
+    const page = await loadAPageThatRecovers();
+
+    expect(await page.getInvoice("renamed")).toBeDefined();
+    expect(await page.getInvoice("edited")).toBeDefined();
+    expect(Object.keys(localStorage)).toEqual([]);
+  });
+
   it("keeps a stash for a deleted invoice deleted", async () => {
     const localStorage = await loadLeftBehind({
       entries: { "unsaved:stored": stashed("Typed") }
