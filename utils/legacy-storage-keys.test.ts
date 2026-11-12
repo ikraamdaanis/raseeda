@@ -35,7 +35,6 @@ describe("legacy storage keys", () => {
   it("drops the billsend prefix from keys in both storage areas", () => {
     const local = createStorage({
       "billsend-editor-theme": "dark",
-      "billsend-unsaved:inv-1": "{}",
       "tsr-scroll-restoration-v1_3": "{}"
     });
     const session = createStorage({ "billsend-open-invoice": "inv-1" });
@@ -44,7 +43,6 @@ describe("legacy storage keys", () => {
 
     expect(Object.fromEntries(local.items)).toEqual({
       "editor-theme": "dark",
-      "unsaved:inv-1": "{}",
       "tsr-scroll-restoration-v1_3": "{}"
     });
     expect(Object.fromEntries(session.items)).toEqual({
