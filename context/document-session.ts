@@ -188,9 +188,14 @@ function isActive(session: Session) {
 }
 
 // Whether this tab can still take the invoice on. Once another tab upgrades
-// the database its saving has stopped for good, so only a reload can edit.
+// the database its saving has stopped for good, so only a reload can edit;
+// once the invoice is deleted, only keeping a copy of it can.
 function canEdit(session: Session) {
-  return isActive(session) && session.status !== "reloadRequired";
+  return (
+    isActive(session) &&
+    session.status !== "reloadRequired" &&
+    session.status !== "deleted"
+  );
 }
 
 function liveContent(): Invoice {

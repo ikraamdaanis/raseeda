@@ -38,12 +38,18 @@ type FailWrites = {
   // False lets writes through while reads fail, as a passing read error would.
   writes?: boolean;
   // Runs before each get from those tables, as getInvoice makes, with the key
-  // it reads. A promise it returns holds the read's result back until it
+  // it reads, its table and its transaction's mode ("readonly" for a live
+  // query). A promise it returns holds the read's result back until it
   // settles.
-  beforeRead?: (key: unknown) => Promise<void> | undefined;
+  beforeRead?: (
+    key: unknown,
+    table: string,
+    mode: string | undefined
+  ) => Promise<void> | undefined;
   // Runs before each write to those tables with its type ("add", "put",
-  // "delete"), so a test can fail a later write by setting `current`.
-  beforeWrite?: (type: string) => void;
+  // "delete") and table, so a test can fail a later write by setting
+  // `current`.
+  beforeWrite?: (type: string, table: string) => void;
 };
 
 // The session is module state (one open invoice per page), so every test
@@ -100,7 +106,7 @@ async function loadPage({
             ...table,
             mutate: request => {
               if ((failWrites.tables ?? ["invoices"]).includes(name)) {
-                failWrites.beforeWrite?.(request.type);
+                failWrites.beforeWrite?.(request.type, name);
               }
 
               const error = failWrites.writes === false ? null : failure();
@@ -109,7 +115,11 @@ async function loadPage({
             },
             get: request => {
               const held = (failWrites.tables ?? ["invoices"]).includes(name)
-                ? failWrites.beforeRead?.(request.key)
+                ? failWrites.beforeRead?.(
+                    request.key,
+                    name,
+                    (request.trans as { mode?: string }).mode
+                  )
                 : undefined;
 
               // Read inside the transaction, then hold the result back.
@@ -2052,6 +2062,109 @@ describe("a tab that loses the invoice while its saves fail", () => {
 
     expect(tabs.first.documentState().documentId).not.toBe("stored");
     expect(tabs.keptTitles()).toContain("Unwritten");
+  });
+
+  it("stays deleted when the invoice goes while it starts editing", async () => {
+    const tabs = await loadTakenOverWithAFailedEdit({
+      tables: ["invoices", "versions"]
+    });
+    const { failWrites } = tabs;
+    const library = await loadPage({ attachEditor: false });
+
+    // Holds the first tab's live query read of the second tab's write, so it
+    // starts editing from the copy it had.
+    let releaseLive = () => {};
+    let liveHeld = false;
+
+    failWrites.beforeRead = (key, table, mode) => {
+      if (liveHeld || key !== "stored" || mode !== "readonly") return undefined;
+      if (table !== "invoices") return undefined;
+
+      liveHeld = true;
+
+      return new Promise(release => {
+        releaseLive = release;
+      });
+    };
+    tabs.second.edit().setTitle("Theirs");
+    await settle();
+    await vi.waitFor(() => expect(liveHeld).toBe(true));
+
+    // Holds the version starting keeps of the unwritten edit.
+    let releaseVersion = () => {};
+    let versionWriting = false;
+
+    failWrites.hold = new Promise(release => {
+      releaseVersion = release;
+    });
+    failWrites.beforeWrite = (_type, table) => {
+      if (table === "versions") versionWriting = true;
+    };
+
+    const takingOver = tabs.first.takeOver();
+
+    await vi.waitFor(() => expect(versionWriting).toBe(true));
+    await library.deleteFromLibrary(["stored"]);
+    releaseLive();
+    await vi.waitFor(() =>
+      expect(tabs.first.documentState().status).toBe("deleted")
+    );
+    releaseVersion();
+    failWrites.current = null;
+    await takingOver;
+    await settle();
+
+    expect(tabs.first.documentState().status).toBe("deleted");
+  });
+
+  it("stays deleted when the invoice goes while it lets the invoice go", async () => {
+    const earlierPage = await loadPage();
+
+    await earlierPage.createInvoice(storedInvoice({}));
+    await earlierPage.setLastOpenedInvoiceId("stored");
+
+    const failWrites: FailWrites = { current: null };
+    const page = await loadPage({ failWrites });
+    const library = await loadPage({ attachEditor: false });
+
+    expect(page.documentState().status).toBe("editing");
+
+    // Holds the page's live query read of the delete, so it only learns of it
+    // from its own write.
+    let liveHeld = false;
+
+    failWrites.beforeRead = (key, _table, mode) => {
+      if (liveHeld || key !== "stored" || mode !== "readonly") return undefined;
+
+      liveHeld = true;
+
+      return new Promise(() => {});
+    };
+    page.edit().setTitle("Typed");
+    await library.deleteFromLibrary(["stored"]);
+    await vi.waitFor(() => expect(liveHeld).toBe(true));
+
+    // Another tab takes the invoice over, as Edit here does, and keeps it:
+    // the page writes what's pending first, and that write finds the invoice
+    // gone.
+    let releaseTaken = () => {};
+
+    await new Promise<void>(granted => {
+      void navigator.locks.request(
+        "invoice-lock:stored",
+        { steal: true },
+        () =>
+          new Promise<void>(release => {
+            releaseTaken = release;
+            granted();
+          })
+      );
+    });
+    await settle();
+
+    expect(page.documentState().status).toBe("deleted");
+
+    releaseTaken();
   });
 });
 
