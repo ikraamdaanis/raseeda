@@ -12,18 +12,17 @@ import { toast } from "sonner";
 import { ConfirmDeleteDialog } from "~/components/dialogs/confirm-delete-dialog";
 import { DeleteAllDataDialog } from "~/components/dialogs/delete-all-data-dialog";
 import { ImportDataDialog } from "~/components/dialogs/import-data-dialog";
-import { OpenInvoiceDialog } from "~/components/dialogs/open-invoice-dialog";
-import { OpenTemplateDialog } from "~/components/dialogs/open-template-dialog";
 import { RenameInvoiceDialog } from "~/components/dialogs/rename-invoice-dialog";
 import { SaveTemplateModal } from "~/components/dialogs/save-template-modal";
 import { VersionHistoryDialog } from "~/components/dialogs/version-history-dialog";
 import { DOCUMENT_TYPE_NAMES } from "~/consts/document-types";
+import { useEditorUi } from "~/context/editor-ui-context";
 import {
   DocumentNotFoundError,
   useInvoiceDocument
 } from "~/context/invoice-document-context";
 import {
-  deleteTemplate,
+  deleteTemplates,
   getAllTemplates,
   renameInvoice,
   renameTemplate
@@ -65,9 +64,10 @@ const FileActionsContext = createContext<{
     document: InvoiceDocument,
     documentType?: DocumentType
   ) => void;
-  deleteInvoice: (document: InvoiceDocument) => void;
+  // Asks first, then deletes them all: one row's, or a selection's.
+  deleteInvoices: (documents: InvoiceDocument[]) => void;
   renameTemplate: (template: InvoiceTemplate) => void;
-  deleteTemplate: (template: InvoiceTemplate) => void;
+  deleteTemplates: (templates: InvoiceTemplate[]) => void;
 } | null>(null);
 
 // A saved invoice or template that a row's menu is acting on.
@@ -75,10 +75,21 @@ type LibraryTarget =
   | { kind: "invoice"; document: InvoiceDocument }
   | { kind: "template"; template: InvoiceTemplate };
 
+// The saved invoices or templates a delete is asking about.
+type DeleteTarget =
+  | { kind: "invoice"; documents: InvoiceDocument[] }
+  | { kind: "template"; templates: InvoiceTemplate[] };
+
 function targetName(target: LibraryTarget) {
   return target.kind === "invoice"
     ? target.document.name
     : target.template.name;
+}
+
+function deleteTargetNames(target: DeleteTarget) {
+  return target.kind === "invoice"
+    ? target.documents.map(document => document.name)
+    : target.templates.map(template => template.name);
 }
 
 function errorMessage(error: unknown, fallback: string) {
@@ -89,7 +100,6 @@ export function FileActionsProvider({ children }: { children: ReactNode }) {
   const { invoice } = useInvoiceDataAndActions();
   const {
     currentDocumentId,
-    libraryDocumentId,
     isRecord,
     status,
     openInvoice,
@@ -104,8 +114,7 @@ export function FileActionsProvider({ children }: { children: ReactNode }) {
   } = useInvoiceDocument();
   const { open: openRequest } = useSearch({ from: "/create" });
   const navigate = useNavigate();
-  const [openDialogOpen, setOpenDialogOpen] = useState(false);
-  const [templateDialogOpen, setTemplateDialogOpen] = useState(false);
+  const { showLibrary } = useEditorUi();
   const [saveTemplateDialogOpen, setSaveTemplateDialogOpen] = useState(false);
   const [importDialogOpen, setImportDialogOpen] = useState(false);
   const [versionsOpen, setVersionsOpen] = useState(false);
@@ -119,7 +128,7 @@ export function FileActionsProvider({ children }: { children: ReactNode }) {
     open: boolean;
   }>({ target: null, open: false });
   const [deleteDialog, setDeleteDialog] = useState<{
-    target: LibraryTarget | null;
+    target: DeleteTarget | null;
     open: boolean;
   }>({ target: null, open: false });
   const renameTarget = renameDialog.target;
@@ -156,7 +165,7 @@ export function FileActionsProvider({ children }: { children: ReactNode }) {
   // A link to `/create?open=invoices` lands here. The param is cleared so a
   // reload doesn't reopen the list.
   const onOpenRequested = useEffectEvent(() => {
-    setOpenDialogOpen(true);
+    showLibrary("invoices");
     void navigate({
       to: "/create",
       search: previous => ({ ...previous, open: undefined }),
@@ -247,7 +256,7 @@ export function FileActionsProvider({ children }: { children: ReactNode }) {
     if (hasOpenModal() || event.repeat) return;
 
     if (key === "o" && !event.shiftKey) {
-      setOpenDialogOpen(true);
+      showLibrary("invoices");
     } else if (key === "s" && !event.shiftKey) {
       void handleSaveNow();
     } else if (key === "s" && event.shiftKey && !pending) {
@@ -280,17 +289,33 @@ export function FileActionsProvider({ children }: { children: ReactNode }) {
   async function handleLibraryDelete() {
     if (!deleteTarget) return;
 
+    const count = deleteTargetNames(deleteTarget).length;
+
     try {
       if (deleteTarget.kind === "invoice") {
-        await deleteFromLibrary([deleteTarget.document.id]);
-        toast.success("Invoice deleted");
+        await deleteFromLibrary(
+          deleteTarget.documents.map(document => document.id)
+        );
+        toast.success(
+          count === 1 ? "Invoice deleted" : `Deleted ${count} invoices`
+        );
       } else {
-        await deleteTemplate(deleteTarget.template.id);
-        toast.success("Template deleted");
+        await deleteTemplates(
+          deleteTarget.templates.map(template => template.id)
+        );
+        toast.success(
+          count === 1 ? "Template deleted" : `Deleted ${count} templates`
+        );
       }
     } catch (error) {
       toast.error(errorMessage(error, "Failed to delete"));
     }
+  }
+
+  function askToDelete(target: DeleteTarget) {
+    if (deleteTargetNames(target).length === 0) return;
+
+    setDeleteDialog({ target, open: true });
   }
 
   function handleDuplicateInvoice(
@@ -312,12 +337,12 @@ export function FileActionsProvider({ children }: { children: ReactNode }) {
         () => newDocument(documentType),
         `Failed to start a new ${DOCUMENT_TYPE_NAMES[documentType].toLowerCase()}`
       ),
-    showOpenInvoice: () => setOpenDialogOpen(true),
+    showOpenInvoice: () => showLibrary("invoices"),
     openInvoice: handleOpenInvoice,
     saveNow: () => void handleSaveNow(),
     duplicateCurrent: handleDuplicateCurrent,
     showVersionHistory: () => setVersionsOpen(true),
-    showOpenTemplate: () => setTemplateDialogOpen(true),
+    showOpenTemplate: () => showLibrary("templates"),
     applyTemplate: (template: InvoiceTemplate) =>
       run(() => applyTemplate(template), "Failed to apply template"),
     saveAsTemplate: () => setSaveTemplateDialogOpen(true),
@@ -327,30 +352,17 @@ export function FileActionsProvider({ children }: { children: ReactNode }) {
     renameInvoice: (document: InvoiceDocument) =>
       setRenameDialog({ target: { kind: "invoice", document }, open: true }),
     duplicateInvoice: handleDuplicateInvoice,
-    deleteInvoice: (document: InvoiceDocument) =>
-      setDeleteDialog({ target: { kind: "invoice", document }, open: true }),
+    deleteInvoices: (documents: InvoiceDocument[]) =>
+      askToDelete({ kind: "invoice", documents }),
     renameTemplate: (template: InvoiceTemplate) =>
       setRenameDialog({ target: { kind: "template", template }, open: true }),
-    deleteTemplate: (template: InvoiceTemplate) =>
-      setDeleteDialog({ target: { kind: "template", template }, open: true })
+    deleteTemplates: (chosen: InvoiceTemplate[]) =>
+      askToDelete({ kind: "template", templates: chosen })
   };
 
   return (
     <FileActionsContext.Provider value={value}>
       {children}
-      <OpenInvoiceDialog
-        open={openDialogOpen}
-        onOpenChange={setOpenDialogOpen}
-        onSelectInvoice={invoiceDoc => handleOpenInvoice(invoiceDoc.id)}
-        currentInvoiceId={libraryDocumentId}
-        onDeleteInvoices={deleteFromLibrary}
-        onDuplicateInvoice={handleDuplicateInvoice}
-      />
-      <OpenTemplateDialog
-        open={templateDialogOpen}
-        onOpenChange={setTemplateDialogOpen}
-        onSelectTemplate={value.applyTemplate}
-      />
       <SaveTemplateModal
         open={saveTemplateDialogOpen}
         onOpenChange={setSaveTemplateDialogOpen}
@@ -376,7 +388,7 @@ export function FileActionsProvider({ children }: { children: ReactNode }) {
           if (!open) setDeleteDialog(prev => ({ ...prev, open: false }));
         }}
         subject={deleteTarget?.kind ?? "invoice"}
-        name={deleteTarget ? targetName(deleteTarget) : ""}
+        names={deleteTarget ? deleteTargetNames(deleteTarget) : []}
         onConfirm={handleLibraryDelete}
       />
       <ImportDataDialog

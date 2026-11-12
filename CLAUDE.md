@@ -105,7 +105,7 @@ lib/                 # Helper utilities (cn() classname merger)
 ### Context (UI state)
 
 - `InvoiceDocumentProvider`: hydrates the editor session and attaches the editor to the open invoice; `useInvoiceDocument` exposes its identity, status and actions
-- `EditorUiProvider`: edit/preview mode, which side panels are open, the command palette
+- `EditorUiProvider`: edit/preview mode, which side panels are open, the invoices panel's tab (`showLibrary` opens it with focus in its search), the command palette
 - `FileActionsProvider`: new/open/duplicate/version history/templates/import/export and their dialogs, shared by the project menu, invoices panel and command palette
 - `CanvasViewProvider`: zoom (a level or fit)
 

@@ -15,6 +15,7 @@ import { failureMessage } from "~/context/document-session";
 import { useFileActions } from "~/context/file-actions-context";
 import { getAllInvoices } from "~/db";
 import { useDocumentStore } from "~/stores/document-store";
+import { seedDummyInvoice } from "~/utils/seed-dummy-invoice";
 
 // Development only (the top bar loads it behind import.meta.env.DEV): shows
 // any status alert, toast or dialog on demand, to judge them in place. The
@@ -51,6 +52,16 @@ export function DevMenu() {
     }
 
     action(newest);
+  }
+
+  async function addDummyInvoice() {
+    try {
+      await seedDummyInvoice();
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Failed to add a dummy invoice"
+      );
+    }
   }
 
   return (
@@ -161,14 +172,8 @@ export function DevMenu() {
         <DropdownMenuSub>
           <DropdownMenuSubTrigger>Dialogs</DropdownMenuSubTrigger>
           <DropdownMenuSubContent className="w-52">
-            <DropdownMenuItem onClick={actions.showOpenInvoice}>
-              Open invoice
-            </DropdownMenuItem>
             <DropdownMenuItem onClick={actions.showVersionHistory}>
               Version history
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={actions.showOpenTemplate}>
-              Open template
             </DropdownMenuItem>
             <DropdownMenuItem onClick={actions.saveAsTemplate}>
               Save as template
@@ -182,12 +187,20 @@ export function DevMenu() {
               Rename a saved invoice
             </DropdownMenuItem>
             <DropdownMenuItem
-              onClick={() => void withSavedInvoice(actions.deleteInvoice)}
+              onClick={() =>
+                void withSavedInvoice(document =>
+                  actions.deleteInvoices([document])
+                )
+              }
             >
               Delete a saved invoice (asks first)
             </DropdownMenuItem>
           </DropdownMenuSubContent>
         </DropdownMenuSub>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={() => void addDummyInvoice()}>
+          Add a dummy invoice
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );

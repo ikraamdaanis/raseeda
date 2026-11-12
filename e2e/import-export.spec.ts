@@ -4,6 +4,8 @@ import {
   clickFileMenuItem,
   exportData,
   gotoEditorReady,
+  invoicesPanel,
+  libraryRow,
   nameInvoice,
   selectImportFile,
   storeContains
@@ -46,11 +48,7 @@ test("a full export/import round-trip restores the data", async ({
   await dialog.getByRole("button", { name: "Done" }).click();
 
   await clickFileMenuItem(page, "Open Invoice");
-  await expect(
-    page
-      .getByRole("dialog", { name: "Open Invoice" })
-      .getByRole("row", { name: /Roundtrip doc/ })
-  ).toBeVisible();
+  await expect(libraryRow(page, "Roundtrip doc")).toBeVisible();
 });
 
 test("importing the same file again conflict-renames duplicates", async ({
@@ -70,9 +68,7 @@ test("importing the same file again conflict-renames duplicates", async ({
   await dialog.getByRole("button", { name: "Done" }).click();
 
   await clickFileMenuItem(page, "Open Invoice");
-  await expect(
-    page.getByRole("dialog", { name: "Open Invoice" }).getByText(/\(imported\)/)
-  ).toBeVisible();
+  await expect(invoicesPanel(page).getByText(/\(imported\)/)).toBeVisible();
 });
 
 test("importing a newer-version file shows the please-update message [R]", async ({
@@ -110,15 +106,10 @@ test("importing a record with an unparseable date does not crash [R]", async ({
   await expect(dialog.getByText(/Successfully imported/)).toBeVisible();
   await dialog.getByRole("button", { name: "Done" }).click();
 
-  // The Open dialog still renders the imported record (a conflict-renamed copy
-  // sits alongside the original) without throwing.
+  // The invoices panel still lists the imported record (a conflict-renamed
+  // copy sits alongside the original) without throwing.
   await clickFileMenuItem(page, "Open Invoice");
-  await expect(
-    page
-      .getByRole("dialog", { name: "Open Invoice" })
-      .getByRole("row", { name: /Datey doc/ })
-      .first()
-  ).toBeVisible();
+  await expect(libraryRow(page, "Datey doc").first()).toBeVisible();
   expect(pageErrors).toEqual([]);
 });
 
@@ -196,11 +187,7 @@ test("pasting an export's JSON imports it like a chosen file", async ({
   await dialog.getByRole("button", { name: "Done" }).click();
 
   await clickFileMenuItem(page, "Open Invoice");
-  await expect(
-    page
-      .getByRole("dialog", { name: "Open Invoice" })
-      .getByRole("row", { name: /Pasted doc/ })
-  ).toBeVisible();
+  await expect(libraryRow(page, "Pasted doc")).toBeVisible();
 });
 
 test("typed JSON that isn't an export shows the error and keeps the text", async ({
