@@ -19,10 +19,18 @@ type DocumentState = {
   // Where the open invoice stands, for the editor to show:
   // - editing: this tab edits it and every change saves itself
   // - readOnly: another tab is editing it; this one follows along
+  // - elsewhere: another tab has the editor, so this one shows "open in
+  //   another tab" with Use here
   // - deleted: it was deleted elsewhere, so nothing more is written to it
   // - reloadRequired: a newer version of the app upgraded storage in another tab
   // - unavailable: this browser won't give the app any storage
-  status: "editing" | "readOnly" | "deleted" | "reloadRequired" | "unavailable";
+  status:
+    | "editing"
+    | "readOnly"
+    | "elsewhere"
+    | "deleted"
+    | "reloadRequired"
+    | "unavailable";
   // The current save failure, if a save failed. `episode` changes only when a
   // new run of failures starts, not on every retry, so it's announced once.
   saveFailure: {
