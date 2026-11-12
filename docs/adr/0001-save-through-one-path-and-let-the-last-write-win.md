@@ -35,12 +35,12 @@ What we accept losing:
 - Having the editor open in two tabs at once, the read-only banner and "Edit here".
 - Edits made while writes fail, if the tab is closed anyway after the prompt.
 - A blank invoice sitting in the library between closing the tab on it and the next visit.
+- Edits the old release left in localStorage when its last visit before the switch-over closed inside the save delay or while writes failed. They aren't brought back.
 
 The rule for the next change: if a case seems to need another flag, lock or storage key, revisit this decision rather than adding one.
 
 ## Migration
 
 1. Build the new session and the editor lock next to the old session, with tests written against the decision above. Nothing switches yet.
-2. Switch the editor over. Bump the IndexedDB version with no schema change, so a tab still on the old release gets the reload notice and stops writing (stashing what it had pending). On each load, a one-time recovery brings in the `unsaved:<id>` stashes and `unwritten:<session>:<id>` leftovers already on the device, by today's rule: written into the invoice when nothing was written since (its `rev` still matches), otherwise kept as a version, and as a new invoice when the invoice was deleted; then the key is removed. Writes keep bumping `rev` while the recovery exists.
+2. Switch the editor over. Bump the IndexedDB version (dropping the unused `drafts` table), so a tab still on the old release gets the reload notice and stops writing. What the old release left in localStorage is not recovered.
 3. Delete the old session, its storage keys, the per-invoice locks and the compare-and-swap write, and update the Autosave section of `CLAUDE.md`.
-4. In May 2027, remove the recovery and the `rev` bump.
