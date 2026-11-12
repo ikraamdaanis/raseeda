@@ -38,6 +38,8 @@ const INDEXABLE_ROBOTS = "max-image-preview:large";
 
 // Each site template page's meta, from its entry in consts/site-templates.ts.
 // Its share card is named after its address (/og-quote-template.jpg).
+// Object.fromEntries types its keys as string; SITE_TEMPLATES gives one entry
+// per SiteTemplateId, so the cast only restores the keys it loses.
 const SITE_TEMPLATE_META = Object.fromEntries(
   SITE_TEMPLATES.map(template => [
     template.id,
