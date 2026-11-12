@@ -149,7 +149,17 @@ function listEligibleIssues(): Issue[] {
       })
     );
 
-  const openNumbers = new Set(all.map(issue => issue.number));
+  // Every open issue counts as a blocker, not just the eligible ones: a
+  // feature can wait on a PRD parent, which never carries ready-for-agent.
+  const openNumbers = new Set(
+    (
+      JSON.parse(
+        sh(`gh issue list --state open --json number --limit 1000`)
+      ) as { number: number }[]
+    )
+      .map(issue => issue.number)
+      .filter(number => !recentlyClosed.has(number))
+  );
   const handledByPr = issuesHandledByPr();
 
   return all.filter(

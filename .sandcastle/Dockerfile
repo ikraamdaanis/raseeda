@@ -1,4 +1,12 @@
-FROM node:22-bookworm
+# Node 26, as in CI: the session tests need Node's Web Locks (navigator.locks),
+# which Node 22 doesn't have.
+FROM node:26-bookworm
+
+# Match CI: Playwright runs one worker with retries, as the e2e job does.
+# localhost resolves to ::1 first in the container, so without ipv4first the
+# build's prerender server listens on ::1 while its fetches go to 127.0.0.1.
+ENV CI=1
+ENV NODE_OPTIONS=--dns-result-order=ipv4first
 
 # Install system dependencies (unzip is required by the bun installer)
 RUN apt-get update && apt-get install -y \
