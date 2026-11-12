@@ -676,6 +676,90 @@ describe("opening and leaving", () => {
   });
 });
 
+describe("logo cleanup", () => {
+  async function storeLogo(page: Page, id: string) {
+    await page.saveImage(
+      id,
+      new Blob([new Uint8Array([1, 2, 3])]),
+      "image/png"
+    );
+  }
+
+  async function storedLogoIds(page: Page) {
+    const images = await page.getAllImages();
+
+    return images.map(image => image.id).sort();
+  }
+
+  it("deletes logos nothing references on load, and keeps the ones in use", async () => {
+    const earlier = await loadPage();
+
+    await Promise.all(
+      ["invoice-logo", "template-logo", "version-logo", "unused-logo"].map(id =>
+        storeLogo(earlier, id)
+      )
+    );
+    await earlier.saveInvoice(
+      storedInvoice({
+        invoiceData: {
+          ...structuredClone(invoiceDefault),
+          image: "invoice-logo"
+        }
+      })
+    );
+    await earlier.saveTemplate({
+      id: "template",
+      name: "Template",
+      description: null,
+      isDefault: false,
+      screenshotUrl: null,
+      templateData: {
+        ...structuredClone(invoiceDefault),
+        image: "template-logo"
+      },
+      createdAt: new Date(),
+      updatedAt: new Date()
+    });
+    await earlier.addInvoiceVersion({
+      invoiceId: "gone",
+      name: "Gone",
+      invoiceData: {
+        ...structuredClone(invoiceDefault),
+        image: "version-logo"
+      },
+      reason: "opened"
+    });
+    await earlier.close();
+
+    const page = await loadPage();
+
+    expect(await storedLogoIds(page)).toEqual([
+      "invoice-logo",
+      "template-logo",
+      "version-logo"
+    ]);
+  });
+
+  it("keeps a logo removed from the open invoice until the next load", async () => {
+    const page = await loadPage();
+
+    await storeLogo(page, "removed-logo");
+    page.edit().setImage("removed-logo");
+    await settle();
+    page.edit().setImage("");
+    await settle(3000);
+
+    expect(page.invoice().image).toBe("");
+    expect(await storedLogoIds(page)).toEqual(["removed-logo"]);
+
+    await page.close();
+
+    const reloaded = await loadPage();
+
+    expect(await storedLogoIds(reloaded)).toEqual([]);
+  });
+});
+
 describe("version history", () => {
   it("keeps a version when an invoice is opened", async () => {
     const page = await loadPage();

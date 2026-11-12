@@ -15,7 +15,6 @@ import {
   isStorageFullError,
   onDatabaseUpgradeElsewhere,
   openDatabase,
-  registerImageKeeper,
   renameInvoice,
   setLastOpenedInvoiceId,
   updateInvoiceContent
@@ -24,7 +23,6 @@ import { getChangeOrigin, runWithOrigin } from "~/stores/change-origin";
 import { useDocumentStore } from "~/stores/document-store";
 import {
   clearInvoiceHistory,
-  getHistoryImageIds,
   recordHistoryAction,
   setInvoiceHistoryEnabled,
   startInvoiceHistory
@@ -384,9 +382,6 @@ function createSession({
       onChange: ({ failure }) => {
         if (failure && !session.failure) {
           session.failureEpisode = ++failureEpisodes;
-
-          // Make room by dropping logos nothing uses any more.
-          if (isStorageFullError(failure)) void cleanupOrphanedImages();
         }
 
         session.failure = failure;
@@ -457,8 +452,6 @@ function switchTo(session: Session, content: Invoice) {
     keepVersionQuietly(session, liveContent(), "opened");
     void requestPersistentStorage();
   }
-
-  void cleanupOrphanedImages();
 }
 
 // Leaves the open invoice: writes what's pending, and deletes it when it has
@@ -1088,8 +1081,9 @@ async function editorGranted() {
   }
 }
 
-// Opens the database and the invoice this tab had open, or the last one
-// opened, or else a blank.
+// Opens the database, sweeps the logos nothing references (nothing in memory
+// can point at one yet), then opens the invoice this tab had open, or the last
+// one opened, or else a blank.
 async function load() {
   try {
     await openDatabase();
@@ -1102,6 +1096,8 @@ async function load() {
   let readFailed = storageUnavailable;
 
   if (!storageUnavailable) {
+    await cleanupOrphanedImages();
+
     try {
       const openId =
         readStorage("sessionStorage", OPEN_INVOICE_KEY) ??
@@ -1122,7 +1118,6 @@ async function load() {
   show(session, content, readFailed);
   useInvoiceStore.subscribe(onInvoiceChange);
   startInvoiceHistory();
-  registerImageKeeper(() => [liveContent().image, ...getHistoryImageIds()]);
 
   if (!storageUnavailable) onDatabaseUpgradeElsewhere(onUpgradeElsewhere);
 

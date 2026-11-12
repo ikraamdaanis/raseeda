@@ -890,51 +890,15 @@ export async function getAllImages(): Promise<StoredImage[]> {
   }
 }
 
-// A blob this new is never swept. Another tab's undo history may still point
-// at a logo it uploaded and then removed, and no tab can see another's
-// history; logos older than this are kept by the version taken when their
-// invoice was opened.
-const ORPHAN_GRACE_MS = 24 * 60 * 60 * 1000;
-
-// Image ids in use outside the database, such as this tab's undo history and
-// the invoice being edited before its next save.
-const imageKeepers = new Set<() => Iterable<string>>();
-
-export function registerImageKeeper(
-  keeper: () => Iterable<string>
-): () => void {
-  imageKeepers.add(keeper);
-
-  return () => {
-    imageKeepers.delete(keeper);
-  };
-}
-
 /**
- * Delete image blobs that nothing references: no saved invoice, template or
- * version, nothing a registered keeper names (this tab's undo history and the
- * invoice being edited), and nothing in `keepImageIds`. Blobs from the last
- * day are always kept, since another tab's undo history may need them.
+ * Delete image blobs that no saved invoice, template or version references.
+ * The editor runs it once as it opens, after taking the editor lock and
+ * before loading anything, when nothing in memory can point at a logo.
  *
  * Best-effort: failures are logged but never thrown, since this is background
- * garbage collection that must not disrupt the upload/load/reset it follows.
+ * garbage collection that must not keep the editor from opening.
  */
-// Serialises orphan sweeps so overlapping callers (upload, load, save, reset)
-// can't interleave their read-then-bulkDelete and drop a blob another sweep was
-// about to keep. runOrphanCleanup never throws, so the chain never rejects.
-let orphanCleanupChain: Promise<void> = Promise.resolve();
-
-export function cleanupOrphanedImages(
-  keepImageIds: string[] = []
-): Promise<void> {
-  orphanCleanupChain = orphanCleanupChain.then(() =>
-    runOrphanCleanup(keepImageIds)
-  );
-
-  return orphanCleanupChain;
-}
-
-async function runOrphanCleanup(keepImageIds: string[]): Promise<void> {
+export async function cleanupOrphanedImages(): Promise<void> {
   try {
     await ensureDbReady();
 
@@ -949,15 +913,9 @@ async function runOrphanCleanup(keepImageIds: string[]): Promise<void> {
       ...templates.map(template => template.templateData.image),
       ...versionImageIds.map(String)
     ];
-    const keptByTabs = [...imageKeepers].flatMap(keeper => [...keeper()]);
-    const graceStart = Date.now() - ORPHAN_GRACE_MS;
-    const recentImageIds = images
-      .filter(image => new Date(image.createdAt).getTime() > graceStart)
-      .map(image => image.id);
     const orphanedImageIds = selectOrphanedImageIds(
       images.map(image => image.id),
-      referencedImageIds,
-      [...keepImageIds, ...keptByTabs, ...recentImageIds]
+      referencedImageIds
     );
 
     if (orphanedImageIds.length === 0) return;
