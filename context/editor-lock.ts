@@ -10,13 +10,15 @@ const CHANNEL_NAME = "editor";
 
 const USE_HERE_MESSAGE = "use-here";
 
-let handlers: {
+type EditorLockHandlers = {
   // This tab got the editor after waiting for it.
   onGranted: () => void;
   // Another tab asked for the editor: get ready to let go. The lock is
   // released once it resolves.
   onLetGo: () => Promise<void>;
-} | null = null;
+};
+
+let handlers: EditorLockHandlers | null = null;
 let releaseLock: (() => void) | null = null;
 let stopWaiting: AbortController | null = null;
 let channel: BroadcastChannel | null = null;
@@ -87,10 +89,7 @@ function waitInLine() {
 // Takes the editor if no other tab has it, and resolves whether it did. When
 // another tab has it, this one waits in line, and onGranted runs once it gets
 // it.
-export function claimEditor(callbacks: {
-  onGranted: () => void;
-  onLetGo: () => Promise<void>;
-}): Promise<boolean> {
+export function claimEditor(callbacks: EditorLockHandlers): Promise<boolean> {
   handlers = callbacks;
 
   if (!locksSupported()) return Promise.resolve(true);
