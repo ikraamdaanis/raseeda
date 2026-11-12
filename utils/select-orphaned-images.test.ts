@@ -17,19 +17,13 @@ describe("selectOrphanedImageIds", () => {
     expect(orphans).toEqual([]);
   });
 
-  it("keeps the active-but-unsaved image via the keep list", () => {
-    const orphans = selectOrphanedImageIds(["active", "stale"], [], ["active"]);
-
-    expect(orphans).toEqual(["stale"]);
-  });
-
-  it("ignores empty string references and keep ids", () => {
-    const orphans = selectOrphanedImageIds(["a", "b"], ["", "a"], [""]);
+  it("ignores empty string references", () => {
+    const orphans = selectOrphanedImageIds(["a", "b"], ["", "a"]);
 
     expect(orphans).toEqual(["b"]);
   });
 
   it("returns an empty array when nothing is stored", () => {
-    expect(selectOrphanedImageIds([], ["used"], ["active"])).toEqual([]);
+    expect(selectOrphanedImageIds([], ["used"])).toEqual([]);
   });
 });
