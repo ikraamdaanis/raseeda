@@ -630,6 +630,41 @@ export async function writeInvoiceContent({
   }
 }
 
+// Writes an invoice's content and when it was edited, and its name while
+// that's the automatic one (read in the same transaction, so a rename always
+// wins). The editor tab is the only writer, so there's no revision check, and
+// the revision is left as it is. Resolves "missing" when the row is gone.
+export async function updateInvoiceContent({
+  id,
+  invoiceData
+}: {
+  id: string;
+  invoiceData: Invoice;
+}): Promise<"saved" | "missing"> {
+  try {
+    await ensureDbReady();
+
+    return await db.transaction("rw", db.invoices, async () => {
+      const stored: StoredInvoice | undefined = await db.invoices.get(id);
+
+      if (!stored) return "missing";
+
+      await db.invoices.update(id, {
+        invoiceData,
+        updatedAt: new Date(),
+        schemaVersion: CURRENT_INVOICE_SCHEMA_VERSION,
+        ...(stored.nameSource === "auto"
+          ? { name: deriveInvoiceName(invoiceData) }
+          : {})
+      });
+
+      return "saved";
+    });
+  } catch (error) {
+    throw createStorageError(error, "Failed to save invoice to local storage.");
+  }
+}
+
 // Calls back with an invoice whenever it changes, in this tab or another, and
 // with undefined once it no longer exists. Returns the unsubscribe.
 export function watchInvoice(
