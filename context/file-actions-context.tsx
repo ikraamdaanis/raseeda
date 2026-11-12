@@ -100,6 +100,7 @@ export function FileActionsProvider({ children }: { children: ReactNode }) {
     duplicateCurrent,
     deleteFromLibrary,
     deleteEverything,
+    renameCurrent,
     flushNow
   } = useInvoiceDocument();
   const { open: openRequest } = useSearch({ from: "/create" });
@@ -172,14 +173,6 @@ export function FileActionsProvider({ children }: { children: ReactNode }) {
   // whatever is waiting and confirms. A failure shows in the save banner.
   async function handleSaveNow() {
     const { status: currentStatus } = useDocumentStore.getState();
-
-    if (currentStatus === "readOnly") {
-      toast("This invoice is being edited in another tab", {
-        id: "save-now"
-      });
-
-      return;
-    }
 
     if (currentStatus !== "editing") return;
 
@@ -265,11 +258,23 @@ export function FileActionsProvider({ children }: { children: ReactNode }) {
     return () => window.removeEventListener("keydown", listener);
   }, []);
 
+  // The open invoice is renamed through the editor, which never reads it back
+  // from storage; any other is renamed in the library directly.
+  async function renameLibraryInvoice(id: string, newName: string) {
+    if (id === libraryDocumentId) {
+      await renameCurrent(newName);
+
+      return;
+    }
+
+    await renameInvoice(id, newName);
+  }
+
   async function handleLibraryRename(newName: string) {
     if (!renameTarget) return;
 
     if (renameTarget.kind === "invoice") {
-      await renameInvoice(renameTarget.document.id, newName);
+      await renameLibraryInvoice(renameTarget.document.id, newName);
       toast.success("Invoice renamed");
     } else {
       await renameTemplate(renameTarget.template.id, newName);
@@ -344,6 +349,7 @@ export function FileActionsProvider({ children }: { children: ReactNode }) {
         onSelectInvoice={invoiceDoc => handleOpenInvoice(invoiceDoc.id)}
         currentInvoiceId={libraryDocumentId}
         onDeleteInvoices={deleteFromLibrary}
+        onRenameInvoice={renameLibraryInvoice}
         onDuplicateInvoice={handleDuplicateInvoice}
       />
       <OpenTemplateDialog

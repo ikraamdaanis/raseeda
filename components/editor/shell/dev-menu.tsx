@@ -11,7 +11,7 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger
 } from "~/components/ui/dropdown-menu";
-import { failureMessage } from "~/context/document-session";
+import { failureMessage } from "~/context/editor-session";
 import { useFileActions } from "~/context/file-actions-context";
 import { getAllInvoices } from "~/db";
 import { useDocumentStore } from "~/stores/document-store";
@@ -72,9 +72,6 @@ export function DevMenu() {
         <DropdownMenuSub>
           <DropdownMenuSubTrigger>Alerts</DropdownMenuSubTrigger>
           <DropdownMenuSubContent className="w-60">
-            <DropdownMenuItem onClick={() => showAlert({ status: "readOnly" })}>
-              Open in another tab
-            </DropdownMenuItem>
             <DropdownMenuItem onClick={() => showAlert({ status: "deleted" })}>
               Deleted in another tab
             </DropdownMenuItem>

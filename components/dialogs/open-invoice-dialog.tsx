@@ -27,7 +27,7 @@ import {
   DialogIcon,
   DialogTitle
 } from "~/components/ui/dialog";
-import { renameInvoice, watchInvoices } from "~/db";
+import { watchInvoices } from "~/db";
 import { usePersistentState } from "~/hooks/use-persistent-state";
 import { cn } from "~/lib/utils";
 import type { InvoiceDocument, InvoiceLibraryView } from "~/types";
@@ -48,6 +48,7 @@ export function OpenInvoiceDialog({
   onSelectInvoice,
   currentInvoiceId,
   onDeleteInvoices,
+  onRenameInvoice,
   onDuplicateInvoice
 }: {
   open: boolean;
@@ -57,6 +58,8 @@ export function OpenInvoiceDialog({
   // Deleting goes through the editor, which replaces the open invoice when
   // it's one of them.
   onDeleteInvoices: (ids: string[]) => Promise<void>;
+  // Renaming goes through the editor too, so the open invoice's name follows.
+  onRenameInvoice: (id: string, newName: string) => Promise<void>;
   onDuplicateInvoice: (invoice: InvoiceDocument) => void;
 }) {
   const [query, setQuery] = useState("");
@@ -276,7 +279,7 @@ export function OpenInvoiceDialog({
     newName: string
   ) {
     try {
-      await renameInvoice(invoice.id, newName);
+      await onRenameInvoice(invoice.id, newName);
       toast.success("Invoice renamed successfully");
     } catch (error) {
       toast.error(

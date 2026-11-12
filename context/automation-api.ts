@@ -1,7 +1,7 @@
 import { isNil, omitBy, pick } from "lodash-es";
 import { APP_NAME } from "~/consts/app";
 import { DOCUMENT_TYPE_DEFAULTS } from "~/consts/document-types";
-import { documentActions } from "~/context/document-session";
+import { documentActions } from "~/context/editor-session";
 import { createInvoice, getAllInvoices, getInvoice } from "~/db";
 import { STORED_INVOICE_FORMATS } from "~/schema/invoice";
 import {

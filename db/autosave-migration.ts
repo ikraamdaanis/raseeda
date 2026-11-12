@@ -49,8 +49,8 @@ function newInvoiceFromDraft(
 // - A draft of an invoice that has since been deleted, or one that was never
 //   saved, becomes a new library invoice when it has anything in it.
 //
-// The invoice the draft continues as opens next. The drafts table stays one
-// more release before it's dropped. Runs inside Dexie's upgrade transaction.
+// The invoice the draft continues as opens next. Version 11 drops the drafts
+// table afterwards. Runs inside Dexie's upgrade transaction.
 export async function migrateToAutosave(
   tx: Transaction,
   now: Date = new Date()
