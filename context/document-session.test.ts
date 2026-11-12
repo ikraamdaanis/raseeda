@@ -114,6 +114,8 @@ async function loadPage({
               return error ? failWrite(error) : table.mutate(request);
             },
             get: request => {
+              // DBCore's transaction type leaves out the mode the IndexedDB
+              // transaction underneath it has.
               const held = (failWrites.tables ?? ["invoices"]).includes(name)
                 ? failWrites.beforeRead?.(
                     request.key,
@@ -2090,7 +2092,9 @@ describe("a tab that loses the invoice while its saves fail", () => {
     await settle();
     await vi.waitFor(() => expect(liveHeld).toBe(true));
 
-    // Holds the version starting keeps of the unwritten edit.
+    // Holds the version starting keeps of the unwritten edit. A write can
+    // only be held by failing it: one held while it succeeds would let its
+    // transaction commit early. Failing or not, starting goes on the same way.
     let releaseVersion = () => {};
     let versionWriting = false;
 
@@ -2162,9 +2166,12 @@ describe("a tab that loses the invoice while its saves fail", () => {
     });
     await settle();
 
-    expect(page.documentState().status).toBe("deleted");
+    // Lets the invoice go before checking, so a failure leaves no lock held.
+    const statusWhileTaken = page.documentState().status;
 
     releaseTaken();
+
+    expect(statusWhileTaken).toBe("deleted");
   });
 });
 
@@ -2972,10 +2979,14 @@ describe("a read-only tab that gets the invoice while it opens another", () => {
 
     await settle();
 
-    expect(page.documentState().status).toBe("readOnly");
+    // Lets the invoice go before checking, so a failure leaves no lock held.
+    const statusWhileTaken = page.documentState().status;
+
+    releaseTaken();
+
+    expect(statusWhileTaken).toBe("readOnly");
 
     // It edits once the other tab moves on.
-    releaseTaken();
     await vi.waitFor(() => expect(page.documentState().status).toBe("editing"));
   });
 
