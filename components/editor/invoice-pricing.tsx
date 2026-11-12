@@ -1,7 +1,7 @@
 import type { CSSProperties, ReactNode } from "react";
-import { useEffect, useState } from "react";
 import { InvoiceDateField } from "~/components/editor/invoice-date-field";
 import { InvoiceInput } from "~/components/editor/invoice-input";
+import { NumberField } from "~/components/editor/number-field";
 import {
   Tooltip,
   TooltipContent,
@@ -28,42 +28,9 @@ import {
   formatInvoiceTotal,
   withConvertedAmount
 } from "~/utils/currency-conversion";
-import { formatDecimalDraft } from "~/utils/decimal-input";
 import { formatPlainNumber, roundToDecimals } from "~/utils/format-number";
 import { getRoleSettings } from "~/utils/get-role-settings";
 import { getTextStyles } from "~/utils/get-text-styles";
-import { handleCurrencyInput } from "~/utils/handle-currency-input";
-import { handlePercentageInput } from "~/utils/handle-percentage-input";
-import { reconcilePricingInput } from "~/utils/reconcile-pricing-input";
-
-function handleInputBlur(
-  currentInput: string,
-  setter: (value: string) => void,
-  setValue: (value: number) => void
-) {
-  // When input loses focus, ensure valid number
-  if (currentInput === "" || currentInput === ".") {
-    setter("0");
-    setValue(0);
-  } else if (currentInput.endsWith(".")) {
-    const cleanValue = currentInput.slice(0, -1);
-    setter(cleanValue);
-    setValue(Number(cleanValue));
-  }
-  // Note: Totals are auto-recalculated by Zustand store actions
-}
-
-// Tracks a pricing field's local input string, refreshing it from the store
-// value whenever the active document is replaced (see reconcilePricingInput).
-function usePricingInput(storeValue: number) {
-  const [input, setInput] = useState(storeValue.toString());
-
-  useEffect(() => {
-    setInput(prev => reconcilePricingInput(prev, storeValue));
-  }, [storeValue]);
-
-  return [input, setInput] as const;
-}
 
 // Small editor-only toggles shown to the left of a pricing row (e.g. switch a
 // discount between fixed and percentage, or mark tax exempt). Like the add /
@@ -138,53 +105,35 @@ function PricingRowToggle({
 function MoneyInput({
   label,
   field,
-  input,
   amount,
   display,
   money,
   style,
-  onInput,
-  onCommit
+  onChange
 }: {
   label: string;
   // The data-field path, for undo to find the field again.
   field: string;
-  input: string;
   amount: number;
   display?: string;
   money: MoneyFormat;
   style: CSSProperties;
-  onInput: (numericValue: string) => void;
-  onCommit: () => void;
+  onChange: (value: number) => void;
 }) {
-  const [focused, setFocused] = useState(false);
-
   return (
-    <InvoiceInput
+    <NumberField
       aria-label={label}
       data-field={field}
-      value={
-        focused
-          ? formatDecimalDraft(input, money)
-          : (display ?? formatCurrency(amount, money))
-      }
+      value={amount}
+      onChange={onChange}
+      money={money}
+      decimals={money.decimals}
+      min={0}
+      display={display ?? formatCurrency(amount, money)}
+      showMarker
       className="field-sizing-content min-w-20 text-right"
       style={style}
       placeholder={money.marker}
-      onFocus={() => setFocused(true)}
-      onChange={value =>
-        onInput(
-          handleCurrencyInput(value, {
-            currencySymbol: money.marker,
-            numberFormat: money.numberFormat,
-            decimals: money.decimals
-          })
-        )
-      }
-      onBlur={() => {
-        setFocused(false);
-        onCommit();
-      }}
     />
   );
 }
@@ -390,8 +339,6 @@ function InvoiceTaxRow({ isDefault }: { isDefault: boolean }) {
   const labelSettings = getRoleSettings(theme, "totalsLabel");
   const valueSettings = getRoleSettings(theme, "totalsValue");
 
-  const [taxInput, setTaxInput] = usePricingInput(tax.percentage);
-
   return (
     <div className="group/pricing-row col-span-2 grid grid-cols-subgrid items-center text-sm">
       <div
@@ -442,21 +389,16 @@ function InvoiceTaxRow({ isDefault }: { isDefault: boolean }) {
         </span>
         {!tax.exempt && (
           <span className="flex items-center">
-            <InvoiceInput
+            <NumberField
               id="invoice-field-totals"
               aria-label="Tax percentage"
               data-field="tax.percentage"
-              value={formatPlainNumber(taxInput, money.numberFormat)}
-              onChange={value => {
-                const numericValue = handlePercentageInput(value);
-                setTaxInput(numericValue);
-                setTax(prev => ({ ...prev, percentage: Number(numericValue) }));
-              }}
-              onBlur={() =>
-                handleInputBlur(taxInput, setTaxInput, (val: number) =>
-                  setTax(prev => ({ ...prev, percentage: val }))
-                )
-              }
+              value={tax.percentage}
+              onChange={percentage => setTax(prev => ({ ...prev, percentage }))}
+              money={money}
+              decimals={2}
+              min={0}
+              max={100}
               className="field-sizing-content w-auto min-w-[1ch] text-right"
               style={getTextStyles({
                 settings: labelSettings,
@@ -505,9 +447,7 @@ function FeesRow() {
   const theme = useTheme();
   const labelSettings = getRoleSettings(theme, "totalsLabel");
   const valueSettings = getRoleSettings(theme, "totalsValue");
-
   const conversion = useCurrencyConversion();
-  const [feesInput, setFeesInput] = usePricingInput(fees);
 
   return (
     <div className="col-span-2 grid grid-cols-subgrid items-center text-sm">
@@ -527,7 +467,6 @@ function FeesRow() {
         <MoneyInput
           label="Fees amount"
           field="fees"
-          input={feesInput}
           amount={fees}
           display={withConvertedAmount({
             value: formatCurrency(fees, money),
@@ -539,11 +478,7 @@ function FeesRow() {
           })}
           money={money}
           style={getTextStyles({ settings: valueSettings })}
-          onInput={numericValue => {
-            setFeesInput(numericValue);
-            setFees(Number(numericValue));
-          }}
-          onCommit={() => handleInputBlur(feesInput, setFeesInput, setFees)}
+          onChange={setFees}
         />
       </span>
     </div>
@@ -564,9 +499,7 @@ function DiscountsRow() {
   const theme = useTheme();
   const labelSettings = getRoleSettings(theme, "totalsLabel");
   const valueSettings = getRoleSettings(theme, "totalsValue");
-
   const conversion = useCurrencyConversion();
-  const [discountsInput, setDiscountsInput] = usePricingInput(discounts);
   const isPercentage = discountType === "percentage";
 
   return (
@@ -604,18 +537,15 @@ function DiscountsRow() {
         </span>
         {isPercentage && (
           <span className="flex items-center">
-            <InvoiceInput
+            <NumberField
               aria-label="Discount percentage"
               data-field="discounts"
-              value={formatPlainNumber(discountsInput, money.numberFormat)}
-              onChange={value => {
-                const numericValue = handlePercentageInput(value);
-                setDiscountsInput(numericValue);
-                setDiscounts(Number(numericValue));
-              }}
-              onBlur={() =>
-                handleInputBlur(discountsInput, setDiscountsInput, setDiscounts)
-              }
+              value={discounts}
+              onChange={setDiscounts}
+              money={money}
+              decimals={2}
+              min={0}
+              max={100}
               className="field-sizing-content w-auto min-w-[1ch] text-right"
               style={getTextStyles({
                 settings: labelSettings,
@@ -641,7 +571,6 @@ function DiscountsRow() {
           <MoneyInput
             label="Discounts amount"
             field="discounts"
-            input={discountsInput}
             amount={discounts}
             display={
               discountAmount > 0
@@ -659,13 +588,7 @@ function DiscountsRow() {
             }
             money={money}
             style={getTextStyles({ settings: valueSettings })}
-            onInput={numericValue => {
-              setDiscountsInput(numericValue);
-              setDiscounts(Number(numericValue));
-            }}
-            onCommit={() =>
-              handleInputBlur(discountsInput, setDiscountsInput, setDiscounts)
-            }
+            onChange={setDiscounts}
           />
         </span>
       )}
@@ -746,7 +669,6 @@ function AmountPaidRow() {
   const conversion = useCurrencyConversion();
   const totals = useInvoiceTotals();
   const converted = useConvertedTotals();
-  const [amountPaidInput, setAmountPaidInput] = usePricingInput(amountPaid);
 
   return (
     <div className="col-span-2 grid grid-cols-subgrid items-center text-sm">
@@ -787,7 +709,6 @@ function AmountPaidRow() {
         <MoneyInput
           label="Amount paid"
           field="amountPaid"
-          input={amountPaidInput}
           amount={amountPaid}
           display={
             totals.amountPaid > 0
@@ -806,13 +727,7 @@ function AmountPaidRow() {
           }
           money={money}
           style={getTextStyles({ settings: valueSettings })}
-          onInput={numericValue => {
-            setAmountPaidInput(numericValue);
-            setAmountPaid(Number(numericValue));
-          }}
-          onCommit={() =>
-            handleInputBlur(amountPaidInput, setAmountPaidInput, setAmountPaid)
-          }
+          onChange={setAmountPaid}
         />
       </span>
     </div>

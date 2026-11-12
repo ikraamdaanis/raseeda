@@ -1,15 +1,64 @@
 import { InvoiceDateField } from "~/components/editor/invoice-date-field";
 import { InvoiceInput } from "~/components/editor/invoice-input";
+import { useNumberField } from "~/components/editor/number-field";
 import { useCurrencyConversion } from "~/hooks/use-currency-conversion";
-import { useExchangeRateInput } from "~/hooks/use-exchange-rate-input";
 import { useIsPreview } from "~/hooks/use-shown-sections";
 import {
   useCurrencyConversionSlice,
+  useMoneyFormat,
   useTheme
 } from "~/stores/invoice-selectors";
-import { buildExchangeRateLine } from "~/utils/currency-conversion";
+import { useInvoiceStore } from "~/stores/invoice-store";
+import {
+  buildExchangeRateLine,
+  formatExchangeRate
+} from "~/utils/currency-conversion";
+import { formatPlainNumber } from "~/utils/format-number";
 import { getRoleSettings } from "~/utils/get-role-settings";
 import { getTextStyles } from "~/utils/get-text-styles";
+import { readInvoiceDate } from "~/utils/read-invoice-date";
+
+// The exchange rate's field, typed on the page and in the inspector: up to
+// six decimal places, as central banks quote rates, and empty while there's
+// no rate. At rest it reads as it prints.
+export function useExchangeRateField() {
+  const { currencyConversion, numberFormat, setCurrencyConversion } =
+    useCurrencyConversionSlice();
+  const money = useMoneyFormat();
+  const { rate } = currencyConversion;
+
+  function setRate(next: number) {
+    const { invoiceDate, supplyDate, sections } = useInvoiceStore.getState();
+    // A rate typed in with no date is dated to the supply (its first day,
+    // for a period), or failing that the invoice, since that's the day its
+    // rate should be from. Anything that isn't a date is left out.
+    const fallbackDate =
+      [sections.supplyDate ? supplyDate.split("/")[0] : "", invoiceDate].find(
+        candidate => readInvoiceDate(candidate) !== null
+      ) ?? "";
+
+    setCurrencyConversion(prev => ({
+      ...prev,
+      rate: next,
+      date: !prev.date && !prev.rate && next ? fallbackDate : prev.date
+    }));
+  }
+
+  const field = useNumberField({
+    value: rate || undefined,
+    onChange: setRate,
+    onClear: () => setRate(0),
+    money,
+    decimals: 6,
+    min: 0,
+    display: rate ? formatExchangeRate(rate, numberFormat) : ""
+  });
+
+  return {
+    ...field,
+    placeholder: formatPlainNumber("0.000000", numberFormat)
+  };
+}
 
 // The rate under the totals, typed into the line as it prints: "Exchange
 // rate: 1 GBP = 1.2875 USD (Bank of England rate, 30 Oct 2026)". The brackets
@@ -28,7 +77,7 @@ export function InvoiceExchangeRate() {
     settings: getRoleSettings(theme, "totalsLabel"),
     remove: ["align"]
   });
-  const rateInput = useExchangeRateInput();
+  const rateInput = useExchangeRateField();
 
   if (!conversion || !currencyConversion.showRate) return null;
 
@@ -69,12 +118,9 @@ export function InvoiceExchangeRate() {
           aria-label={`Exchange rate, ${conversion.toCode} per ${conversion.fromCode}`}
           data-field="currencyConversion.rate"
           inputMode="decimal"
-          value={rateInput.value}
-          onChange={rateInput.onChange}
-          onBlur={rateInput.onBlur}
+          {...rateInput}
           className="field-sizing-content w-auto min-w-4 text-right"
           style={style}
-          placeholder={rateInput.placeholder}
         />
         <span>{conversion.toCode}</span>
         <span className="flex items-center">
