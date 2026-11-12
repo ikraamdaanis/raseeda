@@ -5,6 +5,7 @@ import {
   readStoredValue,
   writeStoredValue
 } from "~/hooks/use-persistent-state";
+import type { LibraryTab } from "~/types";
 
 type EditorMode = "edit" | "preview";
 
@@ -13,6 +14,8 @@ type PanelState = { left: boolean; right: boolean };
 const PANELS_STORAGE_KEY = "editor-panels";
 
 const MODE_STORAGE_KEY = "editor-mode";
+
+const LIBRARY_TAB_STORAGE_KEY = "editor-library-tab";
 
 const ALL_CLOSED: PanelState = { left: false, right: false };
 
@@ -39,6 +42,10 @@ function parsePanels(stored: unknown): PanelState | undefined {
   }
 
   return { left: stored.left === true, right: stored.right === true };
+}
+
+function parseLibraryTab(stored: unknown): LibraryTab | undefined {
+  return stored === "invoices" || stored === "templates" ? stored : undefined;
 }
 
 function parseMode(stored: unknown): EditorMode | undefined {
@@ -71,7 +78,7 @@ function storePanels(panels: PanelState) {
 }
 
 // The editor shell's own state: whether the page is being edited or previewed,
-// and which side panels are open. Previewing hides both panels and leaving it
+// which side panels are open and which tab the invoices panel shows. Previewing hides both panels and leaving it
 // puts back whichever were open. Both are remembered across reloads. Phones
 // have no Preview: the PDF that Download opens shows the page as it prints, so
 // there the page is always being edited, and a wider window's Preview comes
@@ -89,6 +96,13 @@ const EditorUiContext = createContext<{
   closePanels: () => void;
   paletteOpen: boolean;
   setPaletteOpen: (open: boolean) => void;
+  libraryTab: LibraryTab;
+  setLibraryTab: (tab: LibraryTab) => void;
+  // Opens the invoices panel on a tab with focus in its search (⌘O, Open
+  // Invoice, Open Template); the panel focuses its search each time this
+  // count goes up.
+  showLibrary: (tab: LibraryTab) => void;
+  librarySearchRequest: number;
 } | null>(null);
 
 export function EditorUiProvider({ children }: { children: ReactNode }) {
@@ -98,6 +112,11 @@ export function EditorUiProvider({ children }: { children: ReactNode }) {
   const [panelsBeforePreview, setPanelsBeforePreview] =
     useState<PanelState | null>(initialLayout.panelsBeforePreview);
   const [paletteOpen, setPaletteOpen] = useState(false);
+  const [libraryTab, setLibraryTab] = useState<LibraryTab>(
+    () =>
+      readStoredValue(LIBRARY_TAB_STORAGE_KEY, parseLibraryTab) ?? "invoices"
+  );
+  const [librarySearchRequest, setLibrarySearchRequest] = useState(0);
   const isNarrow = useMediaQuery(NARROW_VIEWPORT_QUERY);
   const isCompact = useMediaQuery(COMPACT_VIEWPORT_QUERY);
   // Both panels can be remembered open from a wider window; a compact one
@@ -149,6 +168,11 @@ export function EditorUiProvider({ children }: { children: ReactNode }) {
     applyPanels(next);
   }
 
+  function changeLibraryTab(tab: LibraryTab) {
+    setLibraryTab(tab);
+    writeStoredValue(LIBRARY_TAB_STORAGE_KEY, tab);
+  }
+
   const value = {
     mode,
     setMode,
@@ -168,7 +192,15 @@ export function EditorUiProvider({ children }: { children: ReactNode }) {
     },
     closePanels: () => applyPanels({ left: false, right: false }),
     paletteOpen,
-    setPaletteOpen
+    setPaletteOpen,
+    libraryTab,
+    setLibraryTab: changeLibraryTab,
+    showLibrary: (tab: LibraryTab) => {
+      changeLibraryTab(tab);
+      if (!leftPanelOpen) setPanelOpen("left", true);
+      setLibrarySearchRequest(count => count + 1);
+    },
+    librarySearchRequest
   };
 
   return (

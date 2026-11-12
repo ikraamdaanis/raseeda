@@ -15,7 +15,6 @@ import {
 import { NativeSelect } from "~/components/ui/select";
 import { getCurrencyMarker } from "~/consts/currencies";
 import { DOCUMENT_TYPE_NAMES } from "~/consts/document-types";
-import { cn } from "~/lib/utils";
 import type { InvoiceDocument, InvoiceFont, InvoiceLibraryView } from "~/types";
 import {
   countActiveFilters,
@@ -39,24 +38,15 @@ const fieldClassName =
 
 // Sort, group and filter for a saved-invoice list, behind one button with a
 // badge counting the filters that are on. The Type and Currency filters only
-// show once the library holds more than one, or one is chosen. Grouping is
-// optional, for lists that can't show groups (the Open Invoice table).
+// show once the library holds more than one, or one is chosen.
 export function LibraryViewOptions({
   view,
   onViewChange,
-  invoices,
-  showGroup = true,
-  align = "start",
-  size = "default"
+  invoices
 }: {
   view: InvoiceLibraryView;
   onViewChange: (view: InvoiceLibraryView) => void;
   invoices: InvoiceDocument[];
-  showGroup?: boolean;
-  align?: "start" | "end";
-  // Square, the height of the search field beside it: `sm` in the dialogs'
-  // compact toolbars, `default` in the invoices panel.
-  size?: "sm" | "default";
 }) {
   const activeFilters = countActiveFilters(view);
   // A filter stays listed after its last invoice changes, so it still shows
@@ -67,10 +57,7 @@ export function LibraryViewOptions({
     listDocumentTypes(invoices),
     view.documentType
   );
-  const defaultView = showGroup
-    ? DEFAULT_LIBRARY_VIEW
-    : { ...DEFAULT_LIBRARY_VIEW, group: view.group };
-  const isDefault = isEqual(view, defaultView);
+  const isDefault = isEqual(view, DEFAULT_LIBRARY_VIEW);
 
   function update(changes: Partial<InvoiceLibraryView>) {
     onViewChange({ ...view, ...changes });
@@ -85,10 +72,7 @@ export function LibraryViewOptions({
             : "View options"
         }
         title="Sort, group and filter"
-        className={cn(
-          "bg-muted text-muted-foreground hover:text-foreground aria-expanded:text-foreground focus-visible:ring-ring relative flex shrink-0 items-center justify-center rounded-md outline-none focus-visible:ring-1",
-          size === "sm" ? "size-7" : "size-8"
-        )}
+        className="bg-muted text-muted-foreground hover:text-foreground aria-expanded:text-foreground focus-visible:ring-ring relative flex size-8 shrink-0 items-center justify-center rounded-md outline-none focus-visible:ring-1"
       >
         <IconAdjustmentsHorizontal aria-hidden="true" className="size-4" />
         {activeFilters > 0 && (
@@ -100,7 +84,7 @@ export function LibraryViewOptions({
           </span>
         )}
       </PopoverTrigger>
-      <PopoverContent align={align} className="w-64 gap-3 p-3">
+      <PopoverContent align="start" className="w-64 gap-3 p-3">
         <OptionGroup label="Sort by" htmlFor="library-sort">
           <div className="flex items-center gap-1.5">
             <NativeSelect
@@ -147,16 +131,14 @@ export function LibraryViewOptions({
             </button>
           </div>
         </OptionGroup>
-        {showGroup && (
-          <OptionGroup label="Group by">
-            <SegmentedControl
-              label="Group by"
-              value={view.group}
-              options={LIBRARY_GROUPS}
-              onChange={group => update({ group })}
-            />
-          </OptionGroup>
-        )}
+        <OptionGroup label="Group by">
+          <SegmentedControl
+            label="Group by"
+            value={view.group}
+            options={LIBRARY_GROUPS}
+            onChange={group => update({ group })}
+          />
+        </OptionGroup>
         <div className="border-border -mx-3 border-t" />
         {(documentTypes.length > 1 || view.documentType !== null) && (
           <OptionGroup label="Type" htmlFor="library-type">
@@ -244,7 +226,7 @@ export function LibraryViewOptions({
           variant="ghost"
           size="sm"
           disabled={isDefault}
-          onClick={() => onViewChange(defaultView)}
+          onClick={() => onViewChange(DEFAULT_LIBRARY_VIEW)}
           className="text-muted-foreground -mx-1 w-fit"
         >
           Reset to default

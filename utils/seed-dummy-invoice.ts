@@ -242,7 +242,7 @@ function buildPaymentDetails(sellerName: string): InvoicePaymentDetails {
 
 /**
  * Dev-only helper. Builds an invoice with random but realistic data and writes
- * it straight to IndexedDB so the Open Invoice list can be tested with many
+ * it straight to IndexedDB so the invoices panel can be tested with many
  * entries. Not referenced from any production code path.
  */
 export async function seedDummyInvoice(): Promise<InvoiceDocument> {

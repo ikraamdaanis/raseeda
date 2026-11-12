@@ -82,8 +82,10 @@ test("the open=invoices hand-off opens the saved-invoice list", async ({
   await page.goto("/create?open=invoices");
 
   await expect(
-    page.getByRole("dialog", { name: "Open Invoice" })
-  ).toBeVisible();
+    page
+      .getByRole("complementary", { name: "Invoices" })
+      .getByRole("searchbox", { name: "Search invoices" })
+  ).toBeFocused();
   await expect(page).toHaveURL("/create");
 });
 
