@@ -2,36 +2,24 @@ import { describe, expect, it } from "vitest";
 import { getLocaleDefaults } from "~/utils/locale-defaults";
 
 describe("getLocaleDefaults", () => {
-  it("reads the format and currency position from the browser's region", () => {
-    expect(getLocaleDefaults("de-DE")).toEqual({
-      numberFormat: "dot-comma",
-      currencyPosition: "after",
-      paperSize: "A4"
-    });
-    expect(getLocaleDefaults("en-US")).toEqual({
-      numberFormat: "comma-dot",
-      currencyPosition: "before",
-      paperSize: "Letter"
-    });
-    expect(getLocaleDefaults("de-AT")).toEqual({
-      numberFormat: "dot-comma",
-      currencyPosition: "before",
-      paperSize: "A4"
-    });
-    expect(getLocaleDefaults("fr-FR")).toEqual({
-      numberFormat: "space-comma",
-      currencyPosition: "after",
-      paperSize: "A4"
-    });
-    expect(getLocaleDefaults("de-CH")).toEqual({
-      numberFormat: "apostrophe-dot",
-      currencyPosition: "before",
-      paperSize: "A4"
-    });
-    expect(getLocaleDefaults("en-IN")).toEqual({
-      numberFormat: "indian",
-      currencyPosition: "before",
-      paperSize: "A4"
+  it.each([
+    ["en-US", "comma-dot", "before", "Letter"],
+    ["en-GB", "comma-dot", "before", "A4"],
+    ["de-DE", "dot-comma", "after", "A4"],
+    ["de-AT", "dot-comma", "before", "A4"],
+    ["fr-FR", "space-comma", "after", "A4"],
+    ["de-CH", "apostrophe-dot", "before", "A4"],
+    ["en-IN", "indian", "before", "A4"],
+    ["ja", "comma-dot", "before", "A4"],
+    ["fr-CA", "space-comma", "after", "Letter"],
+    ["en-CA", "comma-dot", "before", "Letter"],
+    ["nl-BE", "dot-comma", "before", "A4"],
+    ["zh-Hant-TW", "comma-dot", "before", "A4"]
+  ])("reads %s as %s, %s, %s", (tag, numberFormat, currencyPosition, paper) => {
+    expect(getLocaleDefaults(tag)).toEqual({
+      numberFormat,
+      currencyPosition,
+      paperSize: paper
     });
   });
 
@@ -41,30 +29,7 @@ describe("getLocaleDefaults", () => {
     expect(getLocaleDefaults("en")).toEqual(getLocaleDefaults("en-US"));
   });
 
-  it("lets the language decide in Canada and Belgium", () => {
-    expect(getLocaleDefaults("fr-CA")).toEqual({
-      numberFormat: "space-comma",
-      currencyPosition: "after",
-      paperSize: "Letter"
-    });
-    expect(getLocaleDefaults("en-CA")).toEqual({
-      numberFormat: "comma-dot",
-      currencyPosition: "before",
-      paperSize: "Letter"
-    });
-    expect(getLocaleDefaults("nl-BE")).toEqual({
-      numberFormat: "dot-comma",
-      currencyPosition: "before",
-      paperSize: "A4"
-    });
-  });
-
-  it("reads script subtags and underscores", () => {
-    expect(getLocaleDefaults("zh-Hant-TW")).toEqual({
-      numberFormat: "comma-dot",
-      currencyPosition: "before",
-      paperSize: "A4"
-    });
+  it("reads underscores as hyphens", () => {
     expect(getLocaleDefaults("de_DE")).toEqual(getLocaleDefaults("de-DE"));
   });
 
@@ -72,8 +37,6 @@ describe("getLocaleDefaults", () => {
     expect(getLocaleDefaults("es-MX").paperSize).toBe("Letter");
     expect(getLocaleDefaults("es-CO").paperSize).toBe("Letter");
     expect(getLocaleDefaults("fil-PH").paperSize).toBe("Letter");
-    expect(getLocaleDefaults("en").paperSize).toBe("Letter");
-    expect(getLocaleDefaults("en-GB").paperSize).toBe("A4");
     expect(getLocaleDefaults("en-AU").paperSize).toBe("A4");
     expect(getLocaleDefaults("es-ES").paperSize).toBe("A4");
     expect(getLocaleDefaults("es-AR").paperSize).toBe("A4");
@@ -89,5 +52,6 @@ describe("getLocaleDefaults", () => {
     expect(getLocaleDefaults(undefined)).toEqual(stored);
     expect(getLocaleDefaults("")).toEqual(stored);
     expect(getLocaleDefaults("xx")).toEqual(stored);
+    expect(getLocaleDefaults("not a tag")).toEqual(stored);
   });
 });
