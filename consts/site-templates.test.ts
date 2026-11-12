@@ -1,33 +1,12 @@
 import { existsSync, readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { PAGE_VIEW_PATHS } from "~/consts/analytics-events";
 import { SITE_TEMPLATES } from "~/consts/site-templates";
-import { PAGE_META } from "~/utils/site-meta";
-import { siteTemplateStructuredData } from "~/utils/structured-data";
 
-function read(path: string) {
-  return readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
-}
-
-// Each page is listed in places that can't share one list (the service worker
-// and the static headers are plain files; the sitemap's list is in the Vite
-// config). A page missing from one would go uncached, unhashed or unindexed.
+// Everything else about a page is built from SITE_TEMPLATES; its pictures and
+// its public/_headers entry are files, so they're checked here.
 describe.each(SITE_TEMPLATES)("the $id page", template => {
-  it("has a route", () => {
-    expect(
-      existsSync(new URL(`../app/routes${template.path}.tsx`, import.meta.url))
-    ).toBe(true);
-  });
-
-  it("has its own meta at its own address", () => {
-    expect(PAGE_META[template.id].path).toBe(template.path);
-    expect(PAGE_META[template.id].image).toBe(
-      `https://raseeda.com/og${template.path.replace("/", "-")}.jpg`
-    );
-  });
-
   it("has a share card and a picture at every width", () => {
-    const file = `../public/og${template.path.replace("/", "-")}.jpg`;
+    const file = `../public/og-${template.path.slice(1)}.jpg`;
 
     expect(existsSync(new URL(file, import.meta.url))).toBe(true);
 
@@ -42,26 +21,28 @@ describe.each(SITE_TEMPLATES)("the $id page", template => {
     }
   });
 
-  it("is counted, cached and in the sitemap", () => {
-    expect(PAGE_VIEW_PATHS).toContain(template.path);
-    expect(read("scripts/service-worker.js")).toContain(`"${template.path}"`);
-    expect(read("vite.config.ts")).toContain(`"${template.path}"`);
-  });
+  it("has its public/_headers entry", () => {
+    const lines = readFileSync(
+      new URL("../public/_headers", import.meta.url),
+      "utf8"
+    ).split("\n");
 
-  it("names itself in its trail", () => {
-    const [, breadcrumb] = siteTemplateStructuredData(template.id)["@graph"];
-
-    expect(breadcrumb.itemListElement?.at(-1)).toMatchObject({
-      position: 3,
-      name: template.name,
-      item: `https://raseeda.com${template.path}`
-    });
+    expect(lines).toContain(template.path);
+    expect(lines).toContain(`${template.path}.html`);
   });
 });
 
 describe("SITE_TEMPLATES", () => {
   it("gives every page its own copy and picture", () => {
-    for (const field of ["heading", "intro", "when", "src", "alt"] as const) {
+    for (const field of [
+      "title",
+      "description",
+      "heading",
+      "intro",
+      "when",
+      "src",
+      "alt"
+    ] as const) {
       const values = SITE_TEMPLATES.map(template => template[field]);
 
       expect(new Set(values).size).toBe(values.length);

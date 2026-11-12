@@ -124,7 +124,8 @@ function InvoiceTemplatePage() {
             {SITE_TEMPLATES.map(template => (
               <li key={template.id} className="flex flex-col gap-1">
                 <Link
-                  to={template.path}
+                  to="/$templatePage"
+                  params={{ templatePage: template.path.slice(1) }}
                   className={cn(
                     "hover:text-brand-600 inline-flex min-h-11 w-fit items-center rounded-sm font-medium sm:min-h-9",
                     typeClass("body"),

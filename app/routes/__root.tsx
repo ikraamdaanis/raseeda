@@ -144,7 +144,12 @@ function PageViews() {
       if (!page || page.routeId === rootRouteId) return undefined;
       if (page.status === "notFound") return undefined;
 
-      return PAGE_VIEW_PATHS.find(known => known === page.fullPath);
+      // A site template page is counted by its own address, not the
+      // pattern every one of them shares.
+      const pagePath =
+        page.routeId === "/$templatePage" ? page.pathname : page.fullPath;
+
+      return PAGE_VIEW_PATHS.find(known => known === pagePath);
     }
   });
 

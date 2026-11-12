@@ -87,6 +87,14 @@ export default defineConfig([
       "no-console": "warn"
     }
   },
+  // Vite loads its config before the ~/ alias exists, so the config imports
+  // project files by relative path.
+  {
+    files: ["vite.config.ts"],
+    rules: {
+      "no-restricted-imports": "off"
+    }
+  },
   {
     files: ["components/ui/**"],
     rules: {

@@ -1,3 +1,4 @@
+import { SITE_TEMPLATES } from "~/consts/site-templates";
 import type { AnalyticsEvent, InvoiceSectionKey } from "~/types";
 
 // The only events /api/event records (app/analytics-event.ts). Anything else
@@ -14,18 +15,13 @@ export const ANALYTICS_EVENTS = [
   "data_imported"
 ] as const;
 
-// The route patterns a page_view may name. Any other path is dropped.
+// The pages a page_view may name, each site template page by its own address.
+// Any other path is dropped.
 export const PAGE_VIEW_PATHS = [
   "/",
   "/create",
   "/invoice-template",
-  "/quote-template",
-  "/proforma-invoice-template",
-  "/receipt-template",
-  "/credit-note-template",
-  "/freelance-invoice-template",
-  "/contractor-invoice-template",
-  "/retail-invoice-template",
+  ...SITE_TEMPLATES.map(template => template.path),
   "/privacy"
 ] as const;
 
