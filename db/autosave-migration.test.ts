@@ -232,7 +232,7 @@ describe("the move to autosave", () => {
     expect(await getLastOpenedInvoiceId()).toBeNull();
   });
 
-  it("keeps the drafts table for a release", async () => {
+  it("drops the drafts table once the draft is in the library", async () => {
     await seedVersion7({
       draft: {
         invoiceData: invoiceWith({ title: "Kept" }),
@@ -241,8 +241,12 @@ describe("the move to autosave", () => {
         lastSavedInvoice: null
       }
     });
-    await getAllInvoices();
 
-    expect(await db.drafts.count()).toBe(1);
+    const invoices = await getAllInvoices();
+
+    expect(invoices.map(invoice => invoice.invoiceData.title)).toEqual([
+      "Kept"
+    ]);
+    expect(db.tables.map(table => table.name)).not.toContain("drafts");
   });
 });

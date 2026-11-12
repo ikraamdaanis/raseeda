@@ -354,8 +354,8 @@ export type InvoiceVersion = {
 };
 
 // The working draft from before autosave: one record holding the live editing
-// session. Only read by the upgrade that turns it into library invoices; the
-// table goes after one release.
+// session. Only read by the upgrade that turns it into library invoices,
+// before version 11 drops the table.
 export type InvoiceDraft = {
   id: string;
   invoiceData: Invoice;

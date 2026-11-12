@@ -316,3 +316,21 @@ test("the Rename dialog starts from the name of the invoice it renames", async (
   await expect(rename).toBeHidden();
   await expect(libraryRow(page, "Alpha renamed")).toBeVisible();
 });
+
+test("Cmd/Ctrl+O opens the Open Invoice dialog and traps focus", async ({
+  page
+}) => {
+  await gotoEditorReady(page, "Shortcut open");
+
+  await pressShortcut(page, "Mod+o");
+
+  const dialog = page.getByRole("dialog", { name: "Open Invoice" });
+
+  await expect(dialog).toBeVisible();
+  await expect(dialog.locator(":focus")).toHaveCount(1);
+
+  await page.keyboard.press("Escape");
+  await expect(dialog).toBeHidden();
+  await page.getByLabel("Invoice title").click();
+  await expect(page.getByLabel("Invoice title")).toBeFocused();
+});

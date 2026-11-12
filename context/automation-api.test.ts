@@ -4,7 +4,7 @@ import { deleteAllData } from "~/db";
 
 // Opening an invoice drives the whole editor session; these tests only need
 // what createInvoice stores.
-vi.mock("~/context/document-session", () => ({
+vi.mock("~/context/editor-session", () => ({
   documentActions: { openInvoice: vi.fn(async () => {}) }
 }));
 
