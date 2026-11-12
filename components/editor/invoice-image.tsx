@@ -4,7 +4,7 @@ import type { FileRejection } from "react-dropzone";
 import Dropzone from "react-dropzone";
 import { toast } from "sonner";
 import { Button } from "~/components/ui/button";
-import { cleanupOrphanedImages, getImageBlob, saveImage } from "~/db";
+import { getImageBlob, saveImage } from "~/db";
 import { useImageLoader } from "~/hooks/use-image-loader";
 import { useIsPreview } from "~/hooks/use-shown-sections";
 import { cn } from "~/lib/utils";
@@ -57,8 +57,6 @@ export function InvoiceImage() {
       if (!verifyBlob) throw new Error("Image was not saved correctly");
 
       setImage(newImageId);
-
-      void cleanupOrphanedImages([newImageId]);
     } catch (error) {
       toast.error(
         error instanceof Error
@@ -69,13 +67,9 @@ export function InvoiceImage() {
   }
 
   function handleRemoveImage() {
+    // Only detach the blob; undo, versions or other invoices may still use
+    // it, and the sweep when the editor next opens deletes it if not.
     setImage("");
-
-    // Only detach the blob from the live invoice; never hard-delete it. Save As
-    // clones the image id, so the same blob can back other saved invoices,
-    // templates, or the draft. Let the reference-counting orphan sweep decide
-    // whether it is now unreferenced and safe to collect.
-    void cleanupOrphanedImages();
   }
 
   if (!sections.logo) return null;

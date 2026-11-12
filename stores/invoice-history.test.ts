@@ -7,7 +7,6 @@ import {
   HISTORY_LIMIT,
   clearInvoiceHistory,
   closeHistoryStep,
-  getHistoryImageIds,
   noteComposition,
   noteFocusChange,
   notePaste,
@@ -276,15 +275,6 @@ describe("invoice history", () => {
     expect(undoInvoiceChange()).toBe(false);
     expect(data().title).toBe("Edited");
     expect(useInvoiceHistory.getState().canUndo).toBe(false);
-  });
-
-  it("names the logos it could put back, for the image sweep", () => {
-    blurAll();
-    store().setImage("logo-1");
-    closeHistoryStep();
-    store().setImage("");
-
-    expect(getHistoryImageIds()).toEqual(["logo-1"]);
   });
 });
 
