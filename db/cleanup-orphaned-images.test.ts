@@ -1,22 +1,19 @@
-import { subDays } from "date-fns";
 import { beforeEach, describe, expect, it } from "vitest";
 import {
   addInvoiceVersion,
   cleanupOrphanedImages,
   db,
   getAllImages,
-  registerImageKeeper,
   saveInvoice
 } from "~/db";
 import { createBlankInvoice } from "~/stores/invoice-store";
 
-// Stores a blob uploaded `daysAgo` days ago.
-async function storeBlob(imageId: string, daysAgo = 2) {
+async function storeBlob(imageId: string) {
   await db.images.put({
     id: imageId,
     data: new Uint8Array([1, 2, 3]).buffer,
     type: "image/png",
-    createdAt: subDays(new Date(), daysAgo)
+    createdAt: new Date()
   });
 }
 
@@ -82,26 +79,7 @@ describe("cleanupOrphanedImages", () => {
     expect(await storedImageIds()).toEqual(["versioned-logo"]);
   });
 
-  it("keeps a blob this tab's undo history could put back", async () => {
-    await storeBlob("undoable-logo");
-
-    const unregister = registerImageKeeper(() => ["undoable-logo"]);
-
-    await cleanupOrphanedImages();
-    unregister();
-
-    expect(await storedImageIds()).toEqual(["undoable-logo"]);
-  });
-
-  it("keeps a blob from the last day, which another tab's undo may need", async () => {
-    await storeBlob("new-logo", 0);
-
-    await cleanupOrphanedImages();
-
-    expect(await storedImageIds()).toEqual(["new-logo"]);
-  });
-
-  it("collects an older blob nothing references anymore", async () => {
+  it("collects a blob nothing references, however new", async () => {
     await storeBlob("gone-logo");
 
     await cleanupOrphanedImages();

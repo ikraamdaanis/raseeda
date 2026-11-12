@@ -378,14 +378,6 @@ export function recordHistoryAction(
   }
 }
 
-// The image ids the history could put back, which the orphaned-image sweep
-// must keep.
-export function getHistoryImageIds(): string[] {
-  return [...undoStack, ...redoStack]
-    .map(entry => entry.snapshot.image)
-    .filter(Boolean);
-}
-
 function cssEscape(value: string) {
   return typeof CSS !== "undefined"
     ? CSS.escape(value)
