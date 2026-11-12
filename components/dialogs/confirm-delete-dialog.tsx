@@ -11,22 +11,25 @@ import {
   DialogTitle
 } from "~/components/ui/dialog";
 
-// Asks before deleting a saved invoice or template, since nothing in IndexedDB
-// can be brought back.
+// Asks before deleting saved invoices or templates (one, or a selection),
+// since nothing in IndexedDB can be brought back.
 export function ConfirmDeleteDialog({
   open,
   onOpenChange,
   subject,
-  name,
+  names,
   onConfirm
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   subject: "invoice" | "template";
-  name: string;
+  names: string[];
   onConfirm: () => Promise<void>;
 }) {
   const [pending, setPending] = useState(false);
+  const onlyName = names.length === 1 ? names[0] : null;
+  const what =
+    onlyName === null ? `${names.length} ${subject}s` : `this ${subject}`;
 
   async function handleConfirm() {
     setPending(true);
@@ -49,9 +52,10 @@ export function ConfirmDeleteDialog({
             </DialogIcon>
           }
         >
-          <DialogTitle>Delete this {subject}?</DialogTitle>
+          <DialogTitle>Delete {what}?</DialogTitle>
           <DialogDescription className="text-pretty">
-            “{name}” will be removed from this browser. This can’t be undone.
+            {onlyName === null ? "They" : `“${onlyName}”`} will be removed from
+            this browser. This can’t be undone.
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
@@ -68,7 +72,7 @@ export function ConfirmDeleteDialog({
             disabled={pending}
             className="bg-destructive hover:bg-destructive/90 dark:bg-destructive dark:hover:bg-destructive/90 text-white"
           >
-            Delete {subject}
+            Delete {onlyName === null ? `${subject}s` : subject}
           </Button>
         </DialogFooter>
       </DialogContent>

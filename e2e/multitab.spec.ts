@@ -2,8 +2,9 @@ import { expect, test } from "./fixtures";
 import {
   clickFileMenuItem,
   gotoEditorReady,
+  invoicesPanel,
+  libraryRow,
   nameInvoice,
-  pressShortcut,
   savedContains
 } from "./helpers";
 
@@ -116,14 +117,15 @@ test("deleting the open invoice in another tab stops this tab writing it", async
   await expect(second.getByRole("button", { name: "Edit here" })).toBeVisible();
   await clickFileMenuItem(second, "New Invoice");
   await clickFileMenuItem(second, "Open Invoice");
-
-  const dialog = second.getByRole("dialog", { name: "Open Invoice" });
-  const row = dialog.getByRole("row", { name: /Doomed invoice/ });
-
-  await row.click();
-  await row.press("Delete");
-  await dialog.getByRole("button", { name: "Delete", exact: true }).click();
-  await expect(row).toHaveCount(0);
+  await invoicesPanel(second)
+    .getByRole("button", { name: "Actions for Doomed invoice" })
+    .click();
+  await second.getByRole("menuitem", { name: "Delete…" }).click();
+  await second
+    .getByRole("dialog", { name: "Delete this invoice?" })
+    .getByRole("button", { name: "Delete invoice" })
+    .click();
+  await expect(libraryRow(second, "Doomed invoice")).toHaveCount(0);
 
   await page.bringToFront();
   await expect(page.getByText("Deleted in another tab")).toBeVisible();
@@ -148,26 +150,5 @@ test("a second tab sees an invoice named in the first", async ({ page }) => {
   await clickFileMenuItem(second, "New Invoice");
   await clickFileMenuItem(second, "Open Invoice");
 
-  const dialog = second.getByRole("dialog", { name: "Open Invoice" });
-
-  await expect(dialog.getByText("Loading invoices")).toHaveCount(0);
-  await expect(dialog.getByRole("row", { name: /Shared doc/ })).toBeVisible();
-});
-
-test("Cmd/Ctrl+O opens the Open Invoice dialog and traps focus", async ({
-  page
-}) => {
-  await gotoEditorReady(page, "Shortcut open");
-
-  await pressShortcut(page, "Mod+o");
-
-  const dialog = page.getByRole("dialog", { name: "Open Invoice" });
-
-  await expect(dialog).toBeVisible();
-  await expect(dialog.locator(":focus")).toHaveCount(1);
-
-  await page.keyboard.press("Escape");
-  await expect(dialog).toBeHidden();
-  await page.getByLabel("Invoice title").click();
-  await expect(page.getByLabel("Invoice title")).toBeFocused();
+  await expect(libraryRow(second, "Shared doc")).toBeVisible();
 });

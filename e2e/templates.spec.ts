@@ -4,6 +4,8 @@ import {
   countSavedInvoices,
   gotoEditorReady,
   invoiceNameField,
+  invoicesPanel,
+  libraryRow,
   nameInvoice,
   savedContains
 } from "./helpers";
@@ -20,9 +22,7 @@ test("saves the current invoice as a template", async ({
 
   await clickFileMenuItem(page, "Open Template");
 
-  const dialog = page.getByRole("dialog", { name: "Open Template" });
-
-  await expect(dialog.getByRole("row", { name: /My template/ })).toBeVisible();
+  await expect(libraryRow(page, "My template")).toBeVisible();
 });
 
 test("opening a template starts a new invoice from it [R]", async ({
@@ -35,11 +35,7 @@ test("opening a template starts a new invoice from it [R]", async ({
   await seedTemplate({ name: "Reusable" });
 
   await clickFileMenuItem(page, "Open Template");
-
-  const dialog = page.getByRole("dialog", { name: "Open Template" });
-
-  await dialog.getByRole("row", { name: /Reusable/ }).dblclick();
-  await expect(dialog).toBeHidden();
+  await libraryRow(page, "Reusable").click();
 
   // The template's content starts a new invoice with an automatic name; "Base
   // doc" stays as it was, and the new one joins the library once it's edited.
@@ -53,7 +49,7 @@ test("opening a template starts a new invoice from it [R]", async ({
   expect(await savedContains(page, "Base title")).toBe(true);
 });
 
-test("templates can be renamed and deleted from the dialog", async ({
+test("templates can be renamed and deleted from the panel", async ({
   page,
   seedTemplate
 }) => {
@@ -63,21 +59,25 @@ test("templates can be renamed and deleted from the dialog", async ({
 
   await clickFileMenuItem(page, "Open Template");
 
-  const dialog = page.getByRole("dialog", { name: "Open Template" });
-  const row = dialog.getByRole("row", { name: /First template/ });
+  const panel = invoicesPanel(page);
+  const rename = page.getByRole("dialog", { name: "Rename Template" });
 
-  await row.press("F2");
-  await dialog.getByLabel("Template name").fill("Renamed template");
-  await dialog.getByLabel("Template name").press("Enter");
-  await expect(
-    dialog.getByRole("row", { name: /Renamed template/ })
-  ).toBeVisible();
+  await panel
+    .getByRole("button", { name: "Actions for First template" })
+    .click();
+  await page.getByRole("menuitem", { name: "Rename…" }).click();
+  await rename.getByRole("textbox").fill("Renamed template");
+  await rename.getByRole("textbox").press("Enter");
+  await expect(rename).toBeHidden();
+  await expect(libraryRow(page, "Renamed template")).toBeVisible();
 
-  const renamedRow = dialog.getByRole("row", { name: /Renamed template/ });
+  await libraryRow(page, "Renamed template").click({ button: "right" });
+  await page.getByRole("menuitem", { name: "Delete…" }).click();
 
-  await renamedRow.click();
-  await renamedRow.press("Delete");
-  await dialog.getByRole("button", { name: "Delete", exact: true }).click();
+  const confirm = page.getByRole("dialog", { name: "Delete this template?" });
 
-  await expect(dialog.getByText("No saved templates yet")).toBeVisible();
+  await confirm.getByRole("button", { name: "Delete template" }).click();
+  await expect(confirm).toBeHidden();
+
+  await expect(panel.getByText("No templates yet.")).toBeVisible();
 });

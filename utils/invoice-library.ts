@@ -26,9 +26,8 @@ import type {
 import { calculateInvoiceTotals } from "~/utils/calculate-invoice-totals";
 import { readInvoiceDate } from "~/utils/read-invoice-date";
 
-// Sorting, filtering and grouping for the saved-invoice lists (the invoices
-// panel and the Open Invoice dialog), kept pure so both lists agree and the
-// rules can be tested.
+// Sorting, filtering and grouping for the invoices panel's list, kept pure so
+// the rules can be tested.
 
 export const NO_CLIENT = "No client yet";
 

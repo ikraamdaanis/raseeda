@@ -23,9 +23,14 @@ export function SidePanel({
   const panelRef = useRef<HTMLElement>(null);
 
   // A sheet takes focus as it opens, so the keyboard and screen readers start
-  // in it rather than on the page it covers.
+  // in it rather than on the page it covers, unless something in it already
+  // took focus (the invoices panel's search, opened by Open Invoice).
   useEffect(() => {
-    if (isSheet) panelRef.current?.focus({ preventScroll: true });
+    const panel = panelRef.current;
+
+    if (isSheet && panel && !panel.contains(document.activeElement)) {
+      panel.focus({ preventScroll: true });
+    }
   }, [isSheet]);
 
   return (

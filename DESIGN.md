@@ -777,7 +777,8 @@ are 13px, labels `muted-foreground`, fields `muted` fills (`rounded-md`).
   icon lines up with the first line.
 - **Editor entry points:** `/create` accepts two optional search params.
   `font` (any invoice font id) styles a fresh, untouched blank invoice and is
-  then cleared; `open=invoices` opens the Open Invoice dialog.
+  then cleared; `open=invoices` opens the invoices panel with focus in its
+  search.
 - **Homepage skip link:** the first focusable element, "Skip to content", a
   white pill with a `zinc-950/10` ring and `shadow-lg`, fixed 12px from the
   top-left, held its own height plus 40px above the viewport (clear of its

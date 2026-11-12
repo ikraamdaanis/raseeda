@@ -251,3 +251,18 @@ export async function setNumber(locator: Locator, value: string) {
   await locator.pressSequentially(value);
   await locator.blur();
 }
+
+// The invoices panel, the editor's library of saved invoices and templates.
+export function invoicesPanel(page: Page) {
+  return page.getByRole("complementary", { name: "Invoices" });
+}
+
+// A row of the invoices panel, by the name it starts with (its ⋯ button,
+// "Actions for …", doesn't match).
+export function libraryRow(page: Page, name: string) {
+  const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+  return invoicesPanel(page).getByRole("button", {
+    name: new RegExp(`^${escaped}`)
+  });
+}
