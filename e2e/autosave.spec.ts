@@ -75,19 +75,48 @@ test("an edit survives a reload", async ({ page }) => {
   await expect(page.getByLabel("From details")).toHaveValue("Persisted seller");
 });
 
-test("a reload inside the save delay keeps the last edit", async ({ page }) => {
+test("a reload inside the save delay asks first, and staying writes the edit", async ({
+  page
+}) => {
   await gotoEditorReady(page, "Before the reload");
 
-  // No waiting for the write: the page goes away within the debounce.
-  await page.getByLabel("From details").fill("Typed just before reloading");
+  // No waiting for the write: the browser asks while it's pending.
+  await page
+    .getByLabel("From details")
+    .pressSequentially("Typed just before reloading");
+
+  const asked = new Promise<string>(resolve => {
+    page.once("dialog", dialog => {
+      resolve(dialog.type());
+      void dialog.dismiss();
+    });
+  });
+
+  // Staying cancels the reload.
+  await page.reload({ timeout: 3000 }).catch(() => {});
+
+  expect(await asked).toBe("beforeunload");
+  await expect
+    .poll(() => savedContains(page, "Typed just before reloading"))
+    .toBe(true);
+
+  // Written, so the next reload goes without asking.
+  let askedAgain = false;
+
+  page.on("dialog", dialog => {
+    askedAgain = true;
+    void dialog.accept();
+  });
   await page.reload();
+
+  expect(askedAgain).toBe(false);
 
   await expect(page.getByLabel("From details")).toHaveValue(
     "Typed just before reloading"
   );
 });
 
-test("closing the tab right after typing keeps the last keystroke", async ({
+test("closing the tab while a write is pending asks first, and hiding writes it", async ({
   page
 }) => {
   const context = page.context();
@@ -95,27 +124,47 @@ test("closing the tab right after typing keeps the last keystroke", async ({
   await gotoEditorReady(page, "Closing soon");
   await page.getByLabel("From details").pressSequentially("Last keystroke");
 
-  // While a write is on its way the browser asks before closing; leaving at
-  // once still keeps the edit.
   const asked = new Promise<string>(resolve => {
-    page.on("dialog", dialog => {
+    page.once("dialog", dialog => {
       resolve(dialog.type());
-      void dialog.accept();
+      void dialog.dismiss();
     });
   });
 
   await page.close({ runBeforeUnload: true });
 
   expect(await asked).toBe("beforeunload");
+  expect(page.isClosed()).toBe(false);
 
-  await page.waitForEvent("close");
+  // Hiding the page, as switching away before closing does, writes the next
+  // edit at once, so the tab then closes without asking.
+  await page.getByLabel("From details").pressSequentially(", then hidden");
+  await hidePage(page);
+  await expect
+    .poll(() => savedContains(page, "Last keystroke, then hidden"), {
+      timeout: 400
+    })
+    .toBe(true);
+
+  let askedAgain = false;
+
+  page.on("dialog", dialog => {
+    askedAgain = true;
+    void dialog.accept();
+  });
+  const closed = page.waitForEvent("close");
+
+  await page.close({ runBeforeUnload: true });
+  await closed;
+
+  expect(askedAgain).toBe(false);
 
   const reopened = await context.newPage();
 
   await reopened.goto("/create");
 
   await expect(reopened.getByLabel("From details")).toHaveValue(
-    "Last keystroke"
+    "Last keystroke, then hidden"
   );
 });
 

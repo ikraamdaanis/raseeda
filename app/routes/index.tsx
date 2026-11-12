@@ -900,15 +900,15 @@ const PROOFS: {
       { label: "Copy on a server", status: "None", isRefused: true }
     ],
     path: "db/index.ts",
-    firstLine: 178,
+    firstLine: 177,
     lines: [
       "class InvoiceDatabase extends Dexie {",
       "  templates!: Table<InvoiceTemplate, string>;",
       "  invoices!: Table<InvoiceDocument, string>;",
       "  images!: Table<StoredImage, string>;",
-      "  drafts!: Table<InvoiceDraft, string>;"
+      "  versions!: Table<InvoiceVersion, string>;"
     ],
-    highlight: 178,
+    highlight: 177,
     hues: [TILE_HUES.lavender, TILE_HUES.sky]
   },
   {
