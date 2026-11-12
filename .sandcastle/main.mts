@@ -5,17 +5,21 @@
 //      issue lacks `gate-review`, CI passed if it targets main). Self-heals races
 //      where the inline merge step missed a PR (e.g. an issue's Parent ref was
 //      added after the implementer ran, or a PR was retargeted by hand).
-//   2. Pick the next eligible AFK issue from GitHub (not blocked by an open issue).
-//   3. Classify it: standalone, or a child of a PRD parent issue.
+//   2. Fix: hand each open loop PR whose CI failed or that conflicts with its
+//      base to the fix agent (twice at most per PR), push what it changes, and
+//      merge it once CI passes. A flaky failure the agent leaves alone gets its
+//      failed jobs rerun instead.
+//   3. Pick the next eligible AFK issue from GitHub (not blocked by an open issue).
+//   4. Classify it: standalone, or a child of a PRD parent issue.
 //      - Standalone        → branch off main, PR into main.
 //      - PRD child         → branch off feature/prd-<n> (created if missing,
 //                             rebased on main if it exists), PR into that branch.
-//   4. Run the implementer agent on a dedicated child branch.
-//   5. Run the reviewer agent on the same branch (cleanup pass).
-//   6. Push and open a PR. PRs targeting a feature branch are merged at once;
+//   5. Run the implementer agent on a dedicated child branch.
+//   6. Run the reviewer agent on the same branch (cleanup pass).
+//   7. Push and open a PR. PRs targeting a feature branch are merged at once;
 //      PRs into `main` are merged once CI passes (left open if it fails).
 //      `gate-review` on the issue makes either wait for a human instead.
-//   7. If this was the last open child of its PRD, open a feature → main PR
+//   8. If this was the last open child of its PRD, open a feature → main PR
 //      for the parent, merged once CI passes like any PR into main.
 //
 // GitHub conventions assumed:
@@ -428,6 +432,53 @@ function waitForChecks(url: string): boolean {
   return false;
 }
 
+// The GitHub Actions runs behind a PR's failed checks.
+function failedRunIds(url: string): string[] {
+  let raw: string;
+
+  try {
+    raw = sh(`gh pr checks ${url} --json bucket,link`);
+  } catch (error) {
+    raw = (error as { stdout?: string }).stdout ?? "";
+  }
+
+  try {
+    const checks = JSON.parse(raw) as { bucket: string; link: string }[];
+    const runIds = checks
+      .filter(check => check.bucket === "fail")
+      .map(check => /\/runs\/(\d+)/.exec(check.link)?.[1])
+      .filter((runId): runId is string => runId !== undefined);
+
+    return [...new Set(runIds)];
+  } catch {
+    return [];
+  }
+}
+
+// The end of the failed jobs' logs, which is where the error is, sized to fit
+// in the fix agent's prompt.
+function failedCiLog(url: string): string {
+  const logs = failedRunIds(url).map(runId => {
+    try {
+      return sh(`gh run view ${runId} --log-failed`);
+    } catch {
+      return "";
+    }
+  });
+
+  return logs.join("\n").slice(-15_000);
+}
+
+function rerunFailedJobs(url: string) {
+  for (const runId of failedRunIds(url)) {
+    try {
+      sh(`gh run rerun ${runId} --failed`);
+    } catch {
+      // The run may already be rerunning; the next check says how it went.
+    }
+  }
+}
+
 function findOpenPr(head: string, base: string): string | null {
   const raw = sh(
     `gh pr list --state open --base ${base} --head ${head} --json url --limit 1`
@@ -463,17 +514,24 @@ function openPr(args: {
   }
 
   if (args.mergeMode === "afterChecks" && !waitForChecks(url)) {
-    console.warn(`  CI didn't pass on ${url}; leaving it open.`);
+    console.warn(`  CI didn't pass on ${url}; the fix pass takes it next.`);
 
     return url;
   }
 
   if (args.mergeMode !== "gated") {
-    mergePrAndCloseIssue({
-      url,
-      head: args.head,
-      closesIssue: args.closesIssue
-    });
+    try {
+      mergePrAndCloseIssue({
+        url,
+        head: args.head,
+        closesIssue: args.closesIssue
+      });
+    } catch (error) {
+      // A conflict with the base: the fix pass rebases it next iteration.
+      console.warn(
+        `  merge failed for ${url}: ${(error as Error).message.split("\n")[0]}`
+      );
+    }
   }
 
   return url;
@@ -706,6 +764,123 @@ function wrapUpBody(
 }
 
 // ---------------------------------------------------------------------------
+// Fix pass
+// ---------------------------------------------------------------------------
+
+// Fix passes each PR has had this run. After the last, it's left open.
+const MAX_FIX_ATTEMPTS = 2;
+const fixAttempts = new Map<string, number>();
+
+// Hands every open loop PR whose CI failed or that conflicts with its base to
+// the fix agent, then lets the sweep merge whatever is green. Resolves whether
+// it took on any PR, so the loop keeps going while there's fixing to do.
+async function fixBrokenPrs(): Promise<boolean> {
+  const prs = JSON.parse(
+    sh(
+      `gh pr list --state open --label sandcastle ` +
+        `--json url,baseRefName,headRefName,mergeable --limit 200`
+    )
+  ) as {
+    url: string;
+    baseRefName: string;
+    headRefName: string;
+    mergeable: string;
+  }[];
+  let tookAny = false;
+
+  for (const pr of prs) {
+    const isConflicting = pr.mergeable === "CONFLICTING";
+
+    if (!isConflicting && checksState(pr.url) !== "failed") continue;
+
+    const attempts = fixAttempts.get(pr.url) ?? 0;
+
+    if (attempts >= MAX_FIX_ATTEMPTS) continue;
+
+    fixAttempts.set(pr.url, attempts + 1);
+    tookAny = true;
+
+    console.log(
+      `Fixing ${pr.url} (${isConflicting ? "conflict" : "CI failed"}), ` +
+        `attempt ${attempts + 1}/${MAX_FIX_ATTEMPTS}`
+    );
+
+    const pushed = await runFixAgent({
+      url: pr.url,
+      base: pr.baseRefName,
+      head: pr.headRefName,
+      isConflicting
+    });
+
+    // No fix means the agent judged the failure not to be the branch's
+    // fault (a flaky test, a CI outage), so run the failed jobs again.
+    if (!pushed && !isConflicting) rerunFailedJobs(pr.url);
+    if (pr.baseRefName === "main") waitForChecks(pr.url);
+  }
+
+  if (tookAny) sweepAutoMergeablePrs();
+
+  return tookAny;
+}
+
+// Runs the fix agent on a PR's own branch and force-pushes what it changed
+// (a rebase rewrites the branch). Resolves whether anything was pushed.
+async function runFixAgent(pr: {
+  url: string;
+  base: string;
+  head: string;
+  isConflicting: boolean;
+}): Promise<boolean> {
+  sh(`git fetch origin ${pr.base} ${pr.head}`);
+  tearDownWorktree(pr.head);
+  sh(`git branch -f ${pr.head} origin/${pr.head}`);
+
+  const before = sh(`git rev-parse ${pr.head}`).trim();
+  // A PRD feature branch already carries merges from main, so it's brought
+  // up to date the same way; every other branch is rebased.
+  const updateCommand = pr.head.startsWith("feature/")
+    ? `git merge origin/${pr.base}`
+    : `git rebase origin/${pr.base}`;
+  const sandbox = await sandcastle.createSandbox({
+    branch: pr.head,
+    sandbox: docker({ mounts: sandboxMounts }),
+    hooks,
+    copyToWorktree
+  });
+
+  try {
+    await sandbox.run({
+      name: `fixer-${pr.head.replace(/[^\w-]+/g, "-")}`,
+      maxIterations: 50,
+      idleTimeoutSeconds: 1200,
+      agent,
+      promptFile: "./.sandcastle/fix-prompt.md",
+      promptArgs: {
+        PR: pr.url,
+        BRANCH: pr.head,
+        BASE_BRANCH: pr.base,
+        PROBLEM: pr.isConflicting
+          ? `it conflicts with \`${pr.base}\``
+          : "its CI failed",
+        UPDATE_COMMAND: updateCommand,
+        CI_LOG: pr.isConflicting ? "" : failedCiLog(pr.url)
+      }
+    });
+  } finally {
+    await sandbox.close();
+  }
+
+  healHostRepo();
+  tearDownWorktree(pr.head);
+
+  if (sh(`git rev-parse ${pr.head}`).trim() === before) return false;
+
+  sh(`git push --force-with-lease=${pr.head}:${before} origin ${pr.head}`);
+
+  return true;
+}
+
+// ---------------------------------------------------------------------------
 // Main loop
 // ---------------------------------------------------------------------------
 for (let i = 1; i <= MAX_ITERATIONS; i++) {
@@ -713,9 +888,12 @@ for (let i = 1; i <= MAX_ITERATIONS; i++) {
 
   sweepAutoMergeablePrs();
 
+  const tookFixes = await fixBrokenPrs();
   const eligible = listEligibleIssues();
 
   if (eligible.length === 0) {
+    if (tookFixes) continue;
+
     console.log("No eligible AFK issues. Stopping.");
     break;
   }
