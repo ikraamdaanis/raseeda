@@ -1,4 +1,4 @@
-import type { Table } from "dexie";
+import type { Table, Transaction } from "dexie";
 import Dexie, { liveQuery } from "dexie";
 import { isEqual } from "lodash-es";
 import { DATABASE_NAME } from "~/consts/database";
@@ -64,6 +64,25 @@ function migrateStoredTemplate(template: InvoiceTemplate): InvoiceTemplate {
     ),
     schemaVersion: CURRENT_INVOICE_SCHEMA_VERSION
   };
+}
+
+// Runs every stored invoice and template through the invoice migration,
+// which brings old data up to date and stamps the schema version.
+async function migrateAllInvoiceData(tx: Transaction) {
+  await tx
+    .table("invoices")
+    .toCollection()
+    .modify(invoice => {
+      invoice.invoiceData = migrateInvoiceData(invoice.invoiceData, 0);
+      invoice.schemaVersion = CURRENT_INVOICE_SCHEMA_VERSION;
+    });
+  await tx
+    .table("templates")
+    .toCollection()
+    .modify(template => {
+      template.templateData = migrateInvoiceData(template.templateData, 0);
+      template.schemaVersion = CURRENT_INVOICE_SCHEMA_VERSION;
+    });
 }
 
 export interface StoredImage {
@@ -205,25 +224,7 @@ class InvoiceDatabase extends Dexie {
         invoices: "id, name, createdAt, updatedAt",
         images: "id"
       })
-      .upgrade(async tx => {
-        await tx
-          .table("invoices")
-          .toCollection()
-          .modify(invoice => {
-            invoice.invoiceData = migrateInvoiceData(invoice.invoiceData, 0);
-            invoice.schemaVersion = CURRENT_INVOICE_SCHEMA_VERSION;
-          });
-        await tx
-          .table("templates")
-          .toCollection()
-          .modify(template => {
-            template.templateData = migrateInvoiceData(
-              template.templateData,
-              0
-            );
-            template.schemaVersion = CURRENT_INVOICE_SCHEMA_VERSION;
-          });
-      });
+      .upgrade(migrateAllInvoiceData);
     // Version 4: Stopped persisting derived money fields (subtotal, total,
     // per-item amount, tax.amount); they are now computed at render. Re-run the
     // invoice migration, which strips those keys and stamps the schema version.
@@ -233,25 +234,7 @@ class InvoiceDatabase extends Dexie {
         invoices: "id, name, createdAt, updatedAt",
         images: "id"
       })
-      .upgrade(async tx => {
-        await tx
-          .table("invoices")
-          .toCollection()
-          .modify(invoice => {
-            invoice.invoiceData = migrateInvoiceData(invoice.invoiceData, 0);
-            invoice.schemaVersion = CURRENT_INVOICE_SCHEMA_VERSION;
-          });
-        await tx
-          .table("templates")
-          .toCollection()
-          .modify(template => {
-            template.templateData = migrateInvoiceData(
-              template.templateData,
-              0
-            );
-            template.schemaVersion = CURRENT_INVOICE_SCHEMA_VERSION;
-          });
-      });
+      .upgrade(migrateAllInvoiceData);
     // Version 5: Added the singleton business profile. Existing invoices,
     // templates, and images are untouched; the upgrade only provisions a
     // default (empty) profile so returning users have one to edit. The profile
@@ -558,7 +541,7 @@ export async function countInvoices(): Promise<number> {
 }
 
 // Writes a whole invoice record as given, for seeding and tests. The editor
-// writes through createInvoice and writeInvoiceContent instead.
+// writes through createInvoice and updateInvoiceContent instead.
 export async function saveInvoice(invoice: InvoiceDocument): Promise<string> {
   try {
     await ensureDbReady();
@@ -579,61 +562,6 @@ export async function createInvoice(invoice: InvoiceDocument): Promise<void> {
     await db.invoices.add({
       ...invoice,
       schemaVersion: CURRENT_INVOICE_SCHEMA_VERSION
-    });
-  } catch (error) {
-    throw createStorageError(error, "Failed to save invoice to local storage.");
-  }
-}
-
-// Writes an invoice's content as a compare-and-swap on its revision, in one
-// read-write transaction: when the stored revision isn't the one the content
-// was edited from, someone else wrote it in the meantime and nothing is
-// overwritten. Only the content, the revision and when it was edited change;
-// the name moves too only while it's still the automatic one, read inside the
-// same transaction so a rename made elsewhere always wins.
-export async function writeInvoiceContent({
-  id,
-  expectedRev,
-  invoiceData
-}: {
-  id: string;
-  expectedRev: number;
-  invoiceData: Invoice;
-}): Promise<
-  | { outcome: "saved"; rev: number }
-  | { outcome: "conflict"; document: InvoiceDocument }
-  | { outcome: "missing" }
-> {
-  try {
-    await ensureDbReady();
-
-    return await db.transaction("rw", db.invoices, async () => {
-      const stored: StoredInvoice | undefined = await db.invoices.get(id);
-
-      if (!stored) return { outcome: "missing" } as const;
-
-      const storedRev = stored.rev ?? 1;
-
-      if (storedRev !== expectedRev) {
-        return {
-          outcome: "conflict",
-          document: migrateStoredInvoice(stored)
-        } as const;
-      }
-
-      const rev = storedRev + 1;
-
-      await db.invoices.update(id, {
-        invoiceData,
-        rev,
-        updatedAt: new Date(),
-        schemaVersion: CURRENT_INVOICE_SCHEMA_VERSION,
-        ...(stored.nameSource === "auto"
-          ? { name: deriveInvoiceName(invoiceData) }
-          : {})
-      });
-
-      return { outcome: "saved", rev } as const;
     });
   } catch (error) {
     throw createStorageError(error, "Failed to save invoice to local storage.");
@@ -673,37 +601,6 @@ export async function updateInvoiceContent({
   } catch (error) {
     throw createStorageError(error, "Failed to save invoice to local storage.");
   }
-}
-
-// Calls back with an invoice whenever it changes, in this tab or another, and
-// with undefined once it no longer exists. Returns the unsubscribe.
-export function watchInvoice(
-  id: string,
-  onChange: (invoice: InvoiceDocument | undefined) => void,
-  onError: (error: Error) => void
-): () => void {
-  let subscription: { unsubscribe: () => void } | null = null;
-  let stopped = false;
-
-  ensureDbReady()
-    .then(() => {
-      if (stopped) return;
-
-      subscription = liveQuery(() => db.invoices.get(id)).subscribe({
-        next: invoice =>
-          onChange(invoice ? migrateStoredInvoice(invoice) : undefined),
-        error: (error: unknown) =>
-          onError(createStorageError(error, "Failed to load from storage."))
-      });
-    })
-    .catch((error: unknown) =>
-      onError(error instanceof Error ? error : new Error(String(error)))
-    );
-
-  return () => {
-    stopped = true;
-    subscription?.unsubscribe();
-  };
 }
 
 export async function getInvoice(
