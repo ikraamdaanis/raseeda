@@ -769,9 +769,8 @@ are 13px, labels `muted-foreground`, fields `muted` fills (`rounded-md`).
   Download while editing.
 - **Editor status banner:** under the top bar, only when something needs
   saying: a failed save (`destructive` 8% fill, `role="alert"` once per run of
-  failures, Retry and Download backup), the invoice open in another tab
-  (`muted`, Edit here), deleted elsewhere, storage unavailable or a reload
-  needed (`warning` 12%), and once in Safari a dismissible backup suggestion
+  failures, Retry and Download backup), deleted elsewhere, storage
+  unavailable or a reload needed (`warning` 12%), and once in Safari a dismissible backup suggestion
   (`muted`, Download backup, a close button). 16px text on phones, 13px from
   `sm`, `xs` buttons; on a phone the actions drop below the words, and the
   icon lines up with the first line.

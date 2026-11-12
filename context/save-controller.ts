@@ -203,25 +203,6 @@ export function createSaveController<TContent>({
     isPending,
     hasFailed() {
       return failure !== null;
-    },
-    // The newest content that isn't known to be written yet.
-    getUnsaved(): TContent | null {
-      return unsaved?.content ?? null;
-    },
-    // Takes back the content waiting to be written, so it isn't written,
-    // and carries on taking new edits. A failure to write it goes with it,
-    // so the next edit saves after the usual pause.
-    takeUnsaved(): TContent | null {
-      const taken = unsaved?.content ?? null;
-
-      unsaved = null;
-      writeWhenDone = false;
-      failure = null;
-      failedAttempts = 0;
-      clearTimers();
-      report();
-
-      return taken;
     }
   };
 }
