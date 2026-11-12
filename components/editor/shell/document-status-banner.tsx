@@ -27,7 +27,6 @@ export function DocumentStatusBanner() {
     dismissBackupReminder,
     copyReview,
     dismissCopyReview,
-    takeOver,
     keepDeletedCopy
   } = useInvoiceDocument();
   const { newInvoice } = useFileActions();
@@ -64,15 +63,6 @@ export function DocumentStatusBanner() {
           Download a backup
         </Action>{" "}
         to keep it.
-      </Banner>
-    );
-  }
-
-  if (status === "readOnly") {
-    return (
-      <Banner tone="info" busy={busy}>
-        This invoice is open in another tab, and changes made there show here.{" "}
-        <Action onClick={() => void act(takeOver)}>Edit here</Action> instead.
       </Banner>
     );
   }

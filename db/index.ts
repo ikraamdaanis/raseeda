@@ -13,7 +13,6 @@ import {
 import type {
   Invoice,
   InvoiceDocument,
-  InvoiceDraft,
   InvoiceTemplate,
   InvoiceVersion
 } from "~/types";
@@ -179,7 +178,6 @@ class InvoiceDatabase extends Dexie {
   templates!: Table<InvoiceTemplate, string>;
   invoices!: Table<InvoiceDocument, string>;
   images!: Table<StoredImage, string>;
-  drafts!: Table<InvoiceDraft, string>;
   versions!: Table<InvoiceVersion, string>;
   meta!: Table<{ key: string; value: unknown }, string>;
 
@@ -345,6 +343,18 @@ class InvoiceDatabase extends Dexie {
       invoices: "id, name, createdAt, updatedAt",
       images: "id",
       drafts: "id",
+      versions: "id, invoiceId, imageId",
+      meta: "key"
+    });
+    // Version 11: The editor moved to one tab at a time (docs/adr/0001), which
+    // an older build doesn't know about, so the bump stops a tab still running
+    // one before it writes beside the editor tab. The old working draft's
+    // table goes with it.
+    this.version(11).stores({
+      templates: "id, name, createdAt, updatedAt",
+      invoices: "id, name, createdAt, updatedAt",
+      images: "id",
+      drafts: null,
       versions: "id, invoiceId, imageId",
       meta: "key"
     });
@@ -947,22 +957,21 @@ export async function importDataAtomically(records: {
   }
 }
 
-// Empties every table: invoices and their versions, templates, logos, the old
-// working draft and the last-opened marker. One transaction, so a failure
-// leaves everything as it was.
+// Empties every table: invoices and their versions, templates, logos and the
+// last-opened marker. One transaction, so a failure leaves everything as it
+// was.
 export async function deleteAllData(): Promise<void> {
   try {
     await ensureDbReady();
     await db.transaction(
       "rw",
-      [db.invoices, db.versions, db.templates, db.images, db.drafts, db.meta],
+      [db.invoices, db.versions, db.templates, db.images, db.meta],
       async () => {
         await Promise.all([
           db.invoices.clear(),
           db.versions.clear(),
           db.templates.clear(),
           db.images.clear(),
-          db.drafts.clear(),
           db.meta.clear()
         ]);
       }
