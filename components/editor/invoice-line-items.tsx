@@ -1,10 +1,11 @@
 import { IconMinus, IconPlus } from "@tabler/icons-react";
 import { sum } from "lodash-es";
-import type { CSSProperties, FocusEvent } from "react";
+import type { CSSProperties } from "react";
 import { useEffect, useState } from "react";
 import { useShallow } from "zustand/react/shallow";
 import { InvoiceInput } from "~/components/editor/invoice-input";
 import { InvoiceTextArea } from "~/components/editor/invoice-textarea";
+import { NumberField, useNumberField } from "~/components/editor/number-field";
 import { Button } from "~/components/ui/button";
 import { useCurrencyConversion } from "~/hooks/use-currency-conversion";
 import { useIsPreview, useShownSections } from "~/hooks/use-shown-sections";
@@ -20,7 +21,6 @@ import type {
   Invoice,
   InvoiceItem,
   InvoiceLineItemRow,
-  InvoiceNumberFormat,
   InvoiceTheme,
   MoneyFormat,
   TableSettings,
@@ -31,15 +31,9 @@ import {
   showsTaxColumn
 } from "~/utils/build-invoice-view-model";
 import { calculateLineAmount } from "~/utils/calculate-invoice-totals";
-import {
-  formatDecimalDraft,
-  normalizeDecimalInput,
-  parseDecimalDraft
-} from "~/utils/decimal-input";
 import { formatPlainNumber } from "~/utils/format-number";
 import { getRoleSettings } from "~/utils/get-role-settings";
 import { getTextStyles } from "~/utils/get-text-styles";
-import { handlePercentageInput } from "~/utils/handle-percentage-input";
 import {
   forgetMeasuredWidths,
   measureTextWidth
@@ -806,103 +800,16 @@ function TableCell({
   setItemTax: SetItemTax;
   setItemAmount: SetItemAmount;
 }) {
-  const [isEditingNumeric, setIsEditingNumeric] = useState(false);
-  const [numericDraft, setNumericDraft] = useState("");
-  // Whether anything was typed since the field took focus. A yen price stored
-  // with a fraction shows whole, so tabbing through it mustn't write that back.
-  const [isNumericDirty, setIsNumericDirty] = useState(false);
-  // A quantity reads the invoice's decimal separator, with up to two places
-  // whatever the currency.
-  const quantityFormat = { numberFormat: money.numberFormat, decimals: 2 };
-  const storeNumber =
-    column.cell.kind === "currency"
-      ? item.unitPrice
-      : column.cell.kind === "integer"
-        ? item.quantity
-        : null;
-
-  // While typing, the draft already stands for the stored number ("5." is 5),
-  // so it's left alone. When the number changes from outside (undo, redo, an
-  // invoice from another tab), the draft takes the stored value, so the field
-  // never shows a number the invoice doesn't have.
-  useEffect(() => {
-    if (storeNumber === null) return;
-
-    setNumericDraft(draft =>
-      parseDecimalDraft(draft) === storeNumber ? draft : String(storeNumber)
-    );
-  }, [storeNumber]);
-
   const rowStyle = getTextStyles({
     settings: getRoleSettings(theme, column.rowRole)
   });
 
-  function handleChange(value: string) {
+  function handleTextChange(value: string) {
     const itemField = column.cell.itemField;
-    if (!itemField) {
-      return;
-    }
 
-    if (column.cell.kind === "text") {
-      updateItem(index, itemField, value);
-      return;
-    }
+    if (column.cell.kind !== "text" || !itemField) return;
 
-    if (column.cell.kind === "integer" || column.cell.kind === "currency") {
-      // Strip the symbol before sanitising: a symbol containing a dot (e.g. a
-      // custom "Rs.") would otherwise survive as a stray decimal point, turning
-      // a typed "5" into 0.05.
-      const withoutSymbol =
-        column.cell.kind === "currency"
-          ? value.replace(money.marker, "")
-          : value;
-      const numericValue = normalizeDecimalInput(
-        withoutSymbol,
-        column.cell.kind === "currency" ? money : quantityFormat
-      );
-
-      setNumericDraft(numericValue);
-      setIsNumericDirty(true);
-      updateItem(index, itemField, parseDecimalDraft(numericValue));
-      return;
-    }
-  }
-
-  function handleBlur({ target }: FocusEvent<HTMLInputElement>) {
-    const itemField = column.cell.itemField;
-    if (
-      (column.cell.kind !== "currency" && column.cell.kind !== "integer") ||
-      !itemField
-    ) {
-      return;
-    }
-
-    setIsEditingNumeric(false);
-    setNumericDraft("");
-    setIsNumericDirty(false);
-
-    if (!isNumericDirty) return;
-
-    // A leftover draft ("5.", "-") settles on its number; a credit keeps its
-    // minus.
-    const draft = normalizeDecimalInput(
-      target.value.replace(money.marker, ""),
-      column.cell.kind === "currency" ? money : quantityFormat
-    );
-
-    updateItem(index, itemField, parseDecimalDraft(draft));
-  }
-
-  function handleFocus() {
-    if (column.cell.kind === "currency") {
-      setNumericDraft(item.unitPrice.toString());
-    } else if (column.cell.kind === "integer") {
-      setNumericDraft(item.quantity.toString());
-    } else {
-      return;
-    }
-
-    setIsEditingNumeric(true);
+    updateItem(index, itemField, value);
   }
 
   const cellLabel = columnLabel || column.headerPlaceholder;
@@ -915,7 +822,7 @@ function TableCell({
           label={`${cellLabel}, item ${index + 1}`}
           index={index}
           invoiceTax={invoiceTax}
-          numberFormat={money.numberFormat}
+          money={money}
           style={rowStyle}
           setItemTax={setItemTax}
         />
@@ -960,28 +867,44 @@ function TableCell({
     );
   }
 
-  let inputValue = "";
-  if (column.cell.kind === "text" && column.cell.itemField) {
-    inputValue = String(item[column.cell.itemField]);
-  }
-
-  if (column.cell.kind === "integer") {
-    inputValue = formatPlainNumber(
-      isEditingNumeric ? numericDraft : item.quantity,
-      money.numberFormat
-    );
-  }
-
-  if (column.cell.kind === "currency") {
-    inputValue = isEditingNumeric
-      ? formatDecimalDraft(numericDraft, money)
-      : viewRow.unitPrice;
-  }
-
   const focusId =
     index === 0 && column.id === "description"
       ? "invoice-field-table"
       : undefined;
+  const fieldLabel = `${cellLabel}, item ${index + 1}`;
+  const dataField = `items.${item.id}.${column.cell.itemField}`;
+
+  // A quantity reads the invoice's decimal separator, with up to two places
+  // whatever the currency; a unit price takes the currency's. Either can be
+  // negative, so a line can be a credit.
+  if (column.cell.kind === "integer" || column.cell.kind === "currency") {
+    const isPrice = column.cell.kind === "currency";
+
+    return (
+      <div role="cell" className={column.cell.wrapperClassName}>
+        <NumberField
+          aria-label={fieldLabel}
+          data-field={dataField}
+          value={isPrice ? item.unitPrice : item.quantity}
+          onChange={value =>
+            updateItem(index, isPrice ? "unitPrice" : "quantity", value)
+          }
+          money={money}
+          decimals={isPrice ? money.decimals : 2}
+          display={isPrice ? viewRow.unitPrice : undefined}
+          showMarker={isPrice}
+          placeholder={column.cell.placeholder}
+          className={column.cell.inputClassName}
+          style={rowStyle}
+        />
+      </div>
+    );
+  }
+
+  const inputValue =
+    column.cell.itemField === "description" || column.cell.itemField === "unit"
+      ? item[column.cell.itemField]
+      : "";
 
   // A description wraps onto more lines, as it does in the PDF, rather than
   // scrolling out of sight in a narrow column.
@@ -990,11 +913,11 @@ function TableCell({
       <div role="cell" className={column.cell.wrapperClassName}>
         <InvoiceTextArea
           id={focusId}
-          aria-label={`${cellLabel}, item ${index + 1}`}
+          aria-label={fieldLabel}
           data-field={`items.${item.id}.description`}
           value={inputValue}
           placeholder={column.cell.placeholder}
-          onChange={handleChange}
+          onChange={handleTextChange}
           className={column.cell.inputClassName}
           style={rowStyle}
         />
@@ -1006,14 +929,12 @@ function TableCell({
     <div role="cell" className={column.cell.wrapperClassName}>
       <InvoiceInput
         id={focusId}
-        aria-label={`${cellLabel}, item ${index + 1}`}
-        data-field={`items.${item.id}.${column.cell.itemField}`}
+        aria-label={fieldLabel}
+        data-field={dataField}
         value={inputValue}
         placeholder={column.cell.placeholder}
-        onChange={handleChange}
+        onChange={handleTextChange}
         className={column.cell.inputClassName}
-        onFocus={handleFocus}
-        onBlur={handleBlur}
         style={rowStyle}
       />
     </div>
@@ -1038,56 +959,26 @@ function AmountCell({
   style: CSSProperties;
   setItemAmount: SetItemAmount;
 }) {
-  const [draft, setDraft] = useState<string | null>(null);
   const amount = calculateLineAmount(
     item.quantity,
     item.unitPrice,
     money.decimals
   );
 
-  // An outside change (undo, another tab) while focused shows the new figure.
-  useEffect(() => {
-    setDraft(previous =>
-      previous === null || parseDecimalDraft(previous) === amount
-        ? previous
-        : String(amount)
-    );
-  }, [amount]);
-
-  function handleChange(value: string) {
-    const numericValue = normalizeDecimalInput(
-      value.replace(money.marker, ""),
-      money
-    );
-
-    setDraft(numericValue);
-    setItemAmount(item.id, parseDecimalDraft(numericValue));
-  }
-
   return (
-    <InvoiceInput
+    <NumberField
       aria-label={label}
       data-field={`items.${item.id}.amount`}
-      value={
-        draft === null ? formattedAmount : formatDecimalDraft(draft, money)
-      }
-      onChange={handleChange}
-      onFocus={() => setDraft(String(amount))}
-      onBlur={() => setDraft(null)}
+      value={amount}
+      onChange={value => setItemAmount(item.id, value)}
+      money={money}
+      decimals={money.decimals}
+      display={formattedAmount}
+      showMarker
       className="w-full rounded-none border-none py-2 font-medium ring-0 outline-none focus-visible:py-2"
       style={style}
     />
   );
-}
-
-// What a line's rate field shows for its own rate: the digits being typed
-// while they stand for it ("5." is 5), otherwise the rate itself. A line on
-// the invoice's rate shows nothing, leaving the placeholder.
-function reconcileRateDraft(draft: string, percentage: number | undefined) {
-  if (percentage === undefined) return "";
-  if (draft !== "" && Number(draft) === percentage) return draft;
-
-  return String(percentage);
 }
 
 // A line's own tax rate. Left blank, the line is on the invoice's rate, which
@@ -1100,7 +991,7 @@ function TaxCell({
   label,
   index,
   invoiceTax,
-  numberFormat,
+  money,
   style,
   setItemTax
 }: {
@@ -1108,36 +999,22 @@ function TaxCell({
   label: string;
   index: number;
   invoiceTax: Invoice["tax"];
-  numberFormat: InvoiceNumberFormat;
+  money: MoneyFormat;
   style: CSSProperties;
   setItemTax: SetItemTax;
 }) {
   const ownTax = item.tax;
   const isExempt = ownTax?.exempt ?? false;
   const inheritsExempt = !ownTax && invoiceTax.exempt;
-  const [draft, setDraft] = useState(() =>
-    reconcileRateDraft("", ownTax?.percentage)
-  );
-
-  useEffect(() => {
-    setDraft(previous => reconcileRateDraft(previous, ownTax?.percentage));
-  }, [ownTax?.percentage]);
-
-  function handleChange(value: string) {
-    const numericValue = handlePercentageInput(value);
-
-    setDraft(numericValue);
-    setItemTax(
-      item.id,
-      numericValue === ""
-        ? undefined
-        : { percentage: Number(numericValue), exempt: false }
-    );
-  }
-
-  function handleBlur() {
-    if (draft.endsWith(".")) setDraft(draft.slice(0, -1));
-  }
+  const field = useNumberField({
+    value: ownTax?.percentage,
+    onChange: percentage => setItemTax(item.id, { percentage, exempt: false }),
+    onClear: () => setItemTax(item.id, undefined),
+    money,
+    decimals: 2,
+    min: 0,
+    max: 100
+  });
 
   function toggleExempt() {
     setItemTax(item.id, {
@@ -1148,10 +1025,10 @@ function TaxCell({
 
   const placeholder = invoiceTax.exempt
     ? "Exempt"
-    : formatPlainNumber(invoiceTax.percentage, numberFormat);
+    : formatPlainNumber(invoiceTax.percentage, money.numberFormat);
   // The field's width in characters, where the browser has no field-sizing
   // to fit it to its text and would otherwise make it 20 characters wide.
-  const fieldSize = Math.max(1, (draft || placeholder).length);
+  const fieldSize = Math.max(1, (field.value || placeholder).length);
 
   return (
     <span className="flex h-full items-center justify-center">
@@ -1159,10 +1036,8 @@ function TaxCell({
         <InvoiceInput
           aria-label={label}
           data-field={`items.${item.id}.tax.percentage`}
-          value={formatPlainNumber(draft, numberFormat)}
+          {...field}
           placeholder={placeholder}
-          onChange={handleChange}
-          onBlur={handleBlur}
           size={fieldSize}
           className="field-sizing-content w-auto min-w-[2ch] py-2 text-right focus:px-1 focus:py-2"
           style={style}
