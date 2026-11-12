@@ -8,121 +8,121 @@
 // You should NOT make any changes in this file as it will be overwritten.
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
-import { Route as rootRouteImport } from './routes/__root'
-import { Route as IndexRouteImport } from './routes/index'
-import { Route as TemplatePageRouteImport } from './routes/$templatePage'
-import { Route as CreateRouteImport } from './routes/create'
-import { Route as InvoiceTemplateRouteImport } from './routes/invoice-template'
-import { Route as PrivacyRouteImport } from './routes/privacy'
+import { Route as TemplatePageRouteImport } from "./routes/$templatePage";
+import { Route as rootRouteImport } from "./routes/__root";
+import { Route as CreateRouteImport } from "./routes/create";
+import { Route as IndexRouteImport } from "./routes/index";
+import { Route as InvoiceTemplateRouteImport } from "./routes/invoice-template";
+import { Route as PrivacyRouteImport } from "./routes/privacy";
 
 const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => rootRouteImport,
-} as any)
+  id: "/",
+  path: "/",
+  getParentRoute: () => rootRouteImport
+} as any);
 const TemplatePageRoute = TemplatePageRouteImport.update({
-  id: '/$templatePage',
-  path: '/$templatePage',
-  getParentRoute: () => rootRouteImport,
-} as any)
+  id: "/$templatePage",
+  path: "/$templatePage",
+  getParentRoute: () => rootRouteImport
+} as any);
 const CreateRoute = CreateRouteImport.update({
-  id: '/create',
-  path: '/create',
-  getParentRoute: () => rootRouteImport,
-} as any)
+  id: "/create",
+  path: "/create",
+  getParentRoute: () => rootRouteImport
+} as any);
 const InvoiceTemplateRoute = InvoiceTemplateRouteImport.update({
-  id: '/invoice-template',
-  path: '/invoice-template',
-  getParentRoute: () => rootRouteImport,
-} as any)
+  id: "/invoice-template",
+  path: "/invoice-template",
+  getParentRoute: () => rootRouteImport
+} as any);
 const PrivacyRoute = PrivacyRouteImport.update({
-  id: '/privacy',
-  path: '/privacy',
-  getParentRoute: () => rootRouteImport,
-} as any)
+  id: "/privacy",
+  path: "/privacy",
+  getParentRoute: () => rootRouteImport
+} as any);
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
-  '/$templatePage': typeof TemplatePageRoute
-  '/create': typeof CreateRoute
-  '/invoice-template': typeof InvoiceTemplateRoute
-  '/privacy': typeof PrivacyRoute
+  "/": typeof IndexRoute;
+  "/$templatePage": typeof TemplatePageRoute;
+  "/create": typeof CreateRoute;
+  "/invoice-template": typeof InvoiceTemplateRoute;
+  "/privacy": typeof PrivacyRoute;
 }
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute
-  '/$templatePage': typeof TemplatePageRoute
-  '/create': typeof CreateRoute
-  '/invoice-template': typeof InvoiceTemplateRoute
-  '/privacy': typeof PrivacyRoute
+  "/": typeof IndexRoute;
+  "/$templatePage": typeof TemplatePageRoute;
+  "/create": typeof CreateRoute;
+  "/invoice-template": typeof InvoiceTemplateRoute;
+  "/privacy": typeof PrivacyRoute;
 }
 export interface FileRoutesById {
-  __root__: typeof rootRouteImport
-  '/': typeof IndexRoute
-  '/$templatePage': typeof TemplatePageRoute
-  '/create': typeof CreateRoute
-  '/invoice-template': typeof InvoiceTemplateRoute
-  '/privacy': typeof PrivacyRoute
+  __root__: typeof rootRouteImport;
+  "/": typeof IndexRoute;
+  "/$templatePage": typeof TemplatePageRoute;
+  "/create": typeof CreateRoute;
+  "/invoice-template": typeof InvoiceTemplateRoute;
+  "/privacy": typeof PrivacyRoute;
 }
 export interface FileRouteTypes {
-  fileRoutesByFullPath: FileRoutesByFullPath
+  fileRoutesByFullPath: FileRoutesByFullPath;
   fullPaths:
-    '/' | '/$templatePage' | '/create' | '/invoice-template' | '/privacy'
-  fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/$templatePage' | '/create' | '/invoice-template' | '/privacy'
+    "/" | "/$templatePage" | "/create" | "/invoice-template" | "/privacy";
+  fileRoutesByTo: FileRoutesByTo;
+  to: "/" | "/$templatePage" | "/create" | "/invoice-template" | "/privacy";
   id:
-    | '__root__'
-    | '/'
-    | '/$templatePage'
-    | '/create'
-    | '/invoice-template'
-    | '/privacy'
-  fileRoutesById: FileRoutesById
+    | "__root__"
+    | "/"
+    | "/$templatePage"
+    | "/create"
+    | "/invoice-template"
+    | "/privacy";
+  fileRoutesById: FileRoutesById;
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute
-  TemplatePageRoute: typeof TemplatePageRoute
-  CreateRoute: typeof CreateRoute
-  InvoiceTemplateRoute: typeof InvoiceTemplateRoute
-  PrivacyRoute: typeof PrivacyRoute
+  IndexRoute: typeof IndexRoute;
+  TemplatePageRoute: typeof TemplatePageRoute;
+  CreateRoute: typeof CreateRoute;
+  InvoiceTemplateRoute: typeof InvoiceTemplateRoute;
+  PrivacyRoute: typeof PrivacyRoute;
 }
 
-declare module '@tanstack/react-router' {
+declare module "@tanstack/react-router" {
   interface FileRoutesByPath {
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/$templatePage': {
-      id: '/$templatePage'
-      path: '/$templatePage'
-      fullPath: '/$templatePage'
-      preLoaderRoute: typeof TemplatePageRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/create': {
-      id: '/create'
-      path: '/create'
-      fullPath: '/create'
-      preLoaderRoute: typeof CreateRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/invoice-template': {
-      id: '/invoice-template'
-      path: '/invoice-template'
-      fullPath: '/invoice-template'
-      preLoaderRoute: typeof InvoiceTemplateRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/privacy': {
-      id: '/privacy'
-      path: '/privacy'
-      fullPath: '/privacy'
-      preLoaderRoute: typeof PrivacyRouteImport
-      parentRoute: typeof rootRouteImport
-    }
+    "/": {
+      id: "/";
+      path: "/";
+      fullPath: "/";
+      preLoaderRoute: typeof IndexRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
+    "/$templatePage": {
+      id: "/$templatePage";
+      path: "/$templatePage";
+      fullPath: "/$templatePage";
+      preLoaderRoute: typeof TemplatePageRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
+    "/create": {
+      id: "/create";
+      path: "/create";
+      fullPath: "/create";
+      preLoaderRoute: typeof CreateRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
+    "/invoice-template": {
+      id: "/invoice-template";
+      path: "/invoice-template";
+      fullPath: "/invoice-template";
+      preLoaderRoute: typeof InvoiceTemplateRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
+    "/privacy": {
+      id: "/privacy";
+      path: "/privacy";
+      fullPath: "/privacy";
+      preLoaderRoute: typeof PrivacyRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
   }
 }
 
@@ -131,17 +131,17 @@ const rootRouteChildren: RootRouteChildren = {
   TemplatePageRoute: TemplatePageRoute,
   CreateRoute: CreateRoute,
   InvoiceTemplateRoute: InvoiceTemplateRoute,
-  PrivacyRoute: PrivacyRoute,
-}
+  PrivacyRoute: PrivacyRoute
+};
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
-  ._addFileTypes<FileRouteTypes>()
+  ._addFileTypes<FileRouteTypes>();
 
-import type { getRouter } from './router.tsx'
-import type { createStart } from '@tanstack/react-start'
-declare module '@tanstack/react-start' {
+import type { createStart } from "@tanstack/react-start";
+import type { getRouter } from "./router.tsx";
+declare module "@tanstack/react-start" {
   interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
+    ssr: true;
+    router: Awaited<ReturnType<typeof getRouter>>;
   }
 }
