@@ -15,13 +15,16 @@ describe("getLocaleDefaults", () => {
     ["en-CA", "comma-dot", "before", "Letter"],
     ["nl-BE", "dot-comma", "before", "A4"],
     ["zh-Hant-TW", "comma-dot", "before", "A4"]
-  ])("reads %s as %s, %s, %s", (tag, numberFormat, currencyPosition, paper) => {
-    expect(getLocaleDefaults(tag)).toEqual({
-      numberFormat,
-      currencyPosition,
-      paperSize: paper
-    });
-  });
+  ])(
+    "reads %s as %s, %s, %s",
+    (tag, numberFormat, currencyPosition, paperSize) => {
+      expect(getLocaleDefaults(tag)).toEqual({
+        numberFormat,
+        currencyPosition,
+        paperSize
+      });
+    }
+  );
 
   it("fills in a language's most common region when the tag has none", () => {
     expect(getLocaleDefaults("de")).toEqual(getLocaleDefaults("de-DE"));
