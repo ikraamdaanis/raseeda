@@ -182,11 +182,12 @@ export function InvoicePricing() {
       data-field-area="pricing"
       className="grid grid-cols-[auto_auto] justify-end gap-x-12 gap-y-1 text-right"
     >
-      {rows.map((row, index) => {
+      {rows.map(row => {
         if (!row.isVisible) return null;
 
+        // The tax rows render together, in the first one's place.
         if (row.id === "tax") {
-          return index === rows.indexOf(taxRows[0]) ? (
+          return row === taxRows.at(0) ? (
             <TaxRow key="tax" rows={taxRows} />
           ) : null;
         }
@@ -385,8 +386,9 @@ function getExemptTooltip(tax: { exempt: boolean; perLine: boolean }) {
 }
 
 // The invoice's own rate: its label, rate, Exempt and Per line toggles, and
-// what it comes to (its printed row's value). While the lines' rates are printed in rows of their own
-// below it, it's the default the lines without one follow, and says so.
+// what it comes to (its printed row's value). While the lines' rates are
+// printed in rows of their own below it, it's the default the lines without
+// one follow, and says so.
 function InvoiceTaxRow({
   isDefault,
   amount
