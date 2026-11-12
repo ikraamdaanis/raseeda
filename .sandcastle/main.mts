@@ -1,8 +1,8 @@
 // Sequential Reviewer: implement → review → PR loop
 //
 // Per iteration:
-//   1. Sweep: merge any open PR that is auto-eligible (targets a feature
-//      branch, MERGEABLE, linked issue lacks `gate-review`). Self-heals races
+//   1. Sweep: merge any open PR that is auto-eligible (MERGEABLE, linked
+//      issue lacks `gate-review`, CI passed if it targets main). Self-heals races
 //      where the inline merge step missed a PR (e.g. an issue's Parent ref was
 //      added after the implementer ran, or a PR was retargeted by hand).
 //   2. Pick the next eligible AFK issue from GitHub (not blocked by an open issue).
@@ -12,11 +12,11 @@
 //                             rebased on main if it exists), PR into that branch.
 //   4. Run the implementer agent on a dedicated child branch.
 //   5. Run the reviewer agent on the same branch (cleanup pass).
-//   6. Push and open a PR. PRs targeting a feature branch are merged immediately
-//      (unless the issue is labelled `gate-review`). PRs into `main` always wait
-//      for a human review.
+//   6. Push and open a PR. PRs targeting a feature branch are merged at once;
+//      PRs into `main` are merged once CI passes (left open if it fails).
+//      `gate-review` on the issue makes either wait for a human instead.
 //   7. If this was the last open child of its PRD, open a feature → main PR
-//      for the parent. Because it targets `main`, it is always gated.
+//      for the parent, merged once CI passes like any PR into main.
 //
 // GitHub conventions assumed:
 //   - Label `ready-for-agent`: sandcastle-eligible (the explicit opt-in).
@@ -24,7 +24,7 @@
 //   - Label `hitl`: never picked (informational; eligible issues just
 //     don't have it).
 //   - Label `gate-review`: the resulting PR awaits human review instead of
-//     being merged immediately.
+//     being merged by the loop.
 //   - `Parent: #N` or a `## Parent` section declares the PRD parent.
 //   - `Blocked by: #N, #M` or a `## Blocked by` section declares dependencies
 //     (open ones gate the issue from being picked).
@@ -299,22 +299,27 @@ function pickHighestPriority(issues: Issue[]): Issue {
 // Classification
 // ---------------------------------------------------------------------------
 
+// auto: merge at once (into a feature branch). afterChecks: merge once CI
+// passes (into main). gated: wait for a human.
+type MergeMode = "auto" | "afterChecks" | "gated";
+
 type Plan = {
   kind: "standalone" | "prd-child";
   base: string;
-  mergeMode: "auto" | "gated";
+  mergeMode: MergeMode;
   parent: number | null;
 };
 
 function planFor(issue: Issue): Plan {
-  // Auto-merge is only safe into a feature branch; anything landing on main
-  // gets a human review. `gate-review` can additionally force a feature-branch
-  // PR to wait for review.
+  // A PR into main merges once CI passes; one into a feature branch merges at
+  // once. `gate-review` makes either wait for a human instead.
+  const isGated = issue.labels.includes("gate-review");
+
   if (issue.parent === null) {
     return {
       kind: "standalone",
       base: "main",
-      mergeMode: "gated",
+      mergeMode: isGated ? "gated" : "afterChecks",
       parent: null
     };
   }
@@ -323,7 +328,7 @@ function planFor(issue: Issue): Plan {
 
   ensureFeatureBranch(featureBranch);
 
-  const mergeMode = issue.labels.includes("gate-review") ? "gated" : "auto";
+  const mergeMode = isGated ? "gated" : "auto";
 
   return {
     kind: "prd-child",
@@ -375,6 +380,54 @@ function ensureFeatureBranch(branch: string) {
 // PR helpers
 // ---------------------------------------------------------------------------
 
+// Where a PR's CI stands: passed once every check passed (or was skipped),
+// failed once any failed or was cancelled, pending otherwise, including
+// before GitHub has registered any.
+function checksState(url: string): "passed" | "failed" | "pending" {
+  let raw: string;
+
+  try {
+    raw = sh(`gh pr checks ${url} --json bucket`);
+  } catch (error) {
+    // gh exits non-zero while checks fail or are pending, and before any are
+    // registered; its JSON still says which.
+    raw = (error as { stdout?: string }).stdout ?? "";
+  }
+
+  let buckets: string[];
+
+  try {
+    buckets = (JSON.parse(raw) as { bucket: string }[]).map(
+      check => check.bucket
+    );
+  } catch {
+    return "pending";
+  }
+
+  if (buckets.some(bucket => bucket === "fail" || bucket === "cancel")) {
+    return "failed";
+  }
+
+  if (buckets.length === 0 || buckets.includes("pending")) return "pending";
+
+  return "passed";
+}
+
+// Waits up to 30 minutes for a PR's CI. Resolves whether it passed.
+function waitForChecks(url: string): boolean {
+  const deadline = Date.now() + 30 * 60_000;
+
+  while (Date.now() < deadline) {
+    const state = checksState(url);
+
+    if (state !== "pending") return state === "passed";
+
+    sh("sleep 20");
+  }
+
+  return false;
+}
+
 function findOpenPr(head: string, base: string): string | null {
   const raw = sh(
     `gh pr list --state open --base ${base} --head ${head} --json url --limit 1`
@@ -389,7 +442,7 @@ function openPr(args: {
   head: string;
   title: string;
   body: string;
-  mergeMode: "auto" | "gated";
+  mergeMode: MergeMode;
   closesIssue?: number;
   labels?: string[];
 }): string {
@@ -409,7 +462,13 @@ function openPr(args: {
     }
   }
 
-  if (args.mergeMode === "auto") {
+  if (args.mergeMode === "afterChecks" && !waitForChecks(url)) {
+    console.warn(`  CI didn't pass on ${url}; leaving it open.`);
+
+    return url;
+  }
+
+  if (args.mergeMode !== "gated") {
     mergePrAndCloseIssue({
       url,
       head: args.head,
@@ -462,8 +521,8 @@ function issueLabels(n: number): string[] {
 // Merge an auto-eligible PR via gh, clean up the local worktree first so
 // `--delete-branch` can succeed, and close the linked issue. GitHub's
 // `Closes #N` keyword only auto-closes when merging into the default branch,
-// and auto-merged PRs target a feature branch, so we close the issue
-// ourselves otherwise it stays open and gets re-picked next iteration.
+// and PRs into a feature branch don't, so we close the issue ourselves
+// otherwise it stays open and gets re-picked next iteration.
 function mergePrAndCloseIssue(args: {
   url: string;
   head: string;
@@ -516,7 +575,10 @@ function maybeOpenPrdWrapUp(parent: number) {
     head: featureBranch,
     title: `${issueTitle(parent)} (#${parent})`,
     body: wrapUpBody(parent, siblings),
-    mergeMode: "gated",
+    mergeMode: issueLabels(parent).includes("gate-review")
+      ? "gated"
+      : "afterChecks",
+    closesIssue: parent,
     labels: prLabelsFromPrd(issueLabels(parent))
   });
 
@@ -526,7 +588,8 @@ function maybeOpenPrdWrapUp(parent: number) {
 // Self-healing sweep run at the top of every iteration. Catches PRs that
 // became auto-eligible after the iteration that opened them (races: the
 // issue's Parent ref was added mid-iteration, a stale PR was retargeted
-// from main to a feature branch by hand, gate-review was removed, etc).
+// from main to a feature branch by hand, gate-review was removed, CI on a
+// PR into main went green after the inline wait gave up, etc).
 // Without this the loop would skip those issues forever because they have
 // open PRs but the merge step only fires inline with `openPr`.
 function sweepAutoMergeablePrs() {
@@ -548,12 +611,14 @@ function sweepAutoMergeablePrs() {
   let mergedCount = 0;
 
   for (const pr of prs) {
-    // PRs into main are always gated for human review.
-    if (pr.baseRefName === "main") continue;
-
     // Skip CONFLICTING and UNKNOWN. UNKNOWN is usually a transient state
     // (GitHub still computing the merge); next iteration will retry.
     if (pr.mergeable !== "MERGEABLE") continue;
+
+    // A PR into main merges only once CI has passed on it.
+    if (pr.baseRefName === "main" && checksState(pr.url) !== "passed") {
+      continue;
+    }
 
     const closeMatch = [...(pr.body ?? "").matchAll(closeRe)][0];
     const issueNum = closeMatch ? Number(closeMatch[1]) : null;
@@ -774,9 +839,9 @@ for (let i = 1; i <= MAX_ITERATIONS; i++) {
   });
 
   console.log(
-    plan.mergeMode === "auto"
-      ? `PR opened with auto-merge: ${url}`
-      : `PR opened (gated, awaiting review): ${url}`
+    plan.mergeMode === "gated"
+      ? `PR opened (gated, awaiting review): ${url}`
+      : `PR handled: ${url}`
   );
 
   // Phase 4: PRD wrap-up. If this was the last open child, open feature → main.
