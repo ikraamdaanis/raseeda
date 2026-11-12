@@ -78,11 +78,12 @@ function storePanels(panels: PanelState) {
 }
 
 // The editor shell's own state: whether the page is being edited or previewed,
-// which side panels are open and which tab the invoices panel shows. Previewing hides both panels and leaving it
-// puts back whichever were open. Both are remembered across reloads. Phones
-// have no Preview: the PDF that Download opens shows the page as it prints, so
-// there the page is always being edited, and a wider window's Preview comes
-// back when there is room again.
+// which side panels are open and which tab the invoices panel shows.
+// Previewing hides both panels and leaving it puts back whichever were open.
+// All three are remembered across reloads. Phones have no Preview: the PDF
+// that Download opens shows the page as it prints, so there the page is always
+// being edited, and a wider window's Preview comes back when there is room
+// again.
 const EditorUiContext = createContext<{
   mode: EditorMode;
   setMode: (mode: EditorMode) => void;

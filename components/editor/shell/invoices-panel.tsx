@@ -202,11 +202,7 @@ function useRowSelection(order: string[]) {
 
   // A modified click changes the selection; a plain one opens the row.
   function handleRowClick(event: MouseEvent, id: string, open: () => void) {
-    const gesture = event.shiftKey
-      ? "range"
-      : event.metaKey || event.ctrlKey
-        ? "toggle"
-        : null;
+    const gesture = clickGesture(event);
 
     if (gesture) {
       setSelection(
@@ -232,6 +228,14 @@ function useRowSelection(order: string[]) {
     // A selected row's menu acts on the whole selection when it holds more.
     isBulk: (id: string) => selectedIds.length > 1 && selectedIds.includes(id)
   };
+}
+
+// Shift extends a range from the anchor; ⌘/Ctrl adds or removes one row.
+function clickGesture(event: MouseEvent) {
+  if (event.shiftKey) return "range";
+  if (event.metaKey || event.ctrlKey) return "toggle";
+
+  return null;
 }
 
 function SearchField({
@@ -677,11 +681,11 @@ function LibraryItem({
             data-selected={selected ? "" : undefined}
             className={cn(
               "group/item relative flex rounded-md",
-              selected
-                ? "bg-brand-100 dark:bg-brand-500/20"
-                : current
-                  ? "bg-accent"
-                  : "hover:bg-muted has-aria-expanded:bg-muted data-popup-open:bg-muted"
+              selected && "bg-brand-100 dark:bg-brand-500/20",
+              !selected && current && "bg-accent",
+              !selected &&
+                !current &&
+                "hover:bg-muted has-aria-expanded:bg-muted data-popup-open:bg-muted"
             )}
           />
         }
