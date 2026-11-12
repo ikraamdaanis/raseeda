@@ -937,7 +937,7 @@ function scheduleIdleVersion(session: Session) {
   session.idleVersionTimer = setTimeout(() => {
     session.idleVersionTimer = null;
 
-    if (!isActive(session) || session.status !== "editing") return;
+    if (!isActive(session) || !isEditing(session)) return;
     if (session.deleting) return;
     if (Date.now() - session.lastVersionAt < VERSION_MIN_INTERVAL_MS) return;
 
@@ -953,12 +953,10 @@ function onInvoiceChange(state: InvoiceStore, previous: InvoiceStore) {
   if (INVOICE_DATA_KEYS.every(key => state[key] === previous[key])) return;
 
   const content = selectInvoiceData(state);
+  const previousContent = selectInvoiceData(previous);
 
-  if (
-    session.isRecord &&
-    isLargeRemoval(selectInvoiceData(previous), content)
-  ) {
-    keepVersionQuietly(session, selectInvoiceData(previous), "beforeRemoval");
+  if (session.isRecord && isLargeRemoval(previousContent, content)) {
+    keepVersionQuietly(session, previousContent, "beforeRemoval");
   }
 
   session.controller.schedule(content);
