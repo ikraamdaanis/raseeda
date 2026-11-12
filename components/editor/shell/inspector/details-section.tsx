@@ -3,6 +3,7 @@ import { format } from "date-fns";
 import { useId, useRef, useState } from "react";
 import { flushSync } from "react-dom";
 import { CustomCurrencyDialog } from "~/components/dialogs/custom-currency-dialog";
+import { useExchangeRateField } from "~/components/editor/invoice-exchange-rate";
 import {
   inspectorFieldClassName,
   InspectorRow,
@@ -29,7 +30,6 @@ import {
   DOCUMENT_TYPE_ROWS
 } from "~/consts/document-types";
 import { useCurrencyConversion } from "~/hooks/use-currency-conversion";
-import { useExchangeRateInput } from "~/hooks/use-exchange-rate-input";
 import { useSecondCurrency } from "~/hooks/use-second-currency";
 import { cn } from "~/lib/utils";
 import {
@@ -167,7 +167,7 @@ function ExchangeRateRows() {
   const conversion = useCurrencyConversion();
   const { currencyConversion, setCurrencyConversion } =
     useCurrencyConversionSlice();
-  const rateInput = useExchangeRateInput();
+  const rateInput = useExchangeRateField();
 
   if (!conversion) return null;
 
@@ -191,6 +191,7 @@ function ExchangeRateRows() {
             inputMode="decimal"
             value={rateInput.value}
             onChange={event => rateInput.onChange(event.target.value)}
+            onFocus={rateInput.onFocus}
             onBlur={rateInput.onBlur}
             placeholder={rateInput.placeholder}
             className="placeholder:text-muted-foreground min-w-0 flex-1 bg-transparent outline-none"
