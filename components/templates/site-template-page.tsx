@@ -21,6 +21,12 @@ const HEADING = "font-medium tracking-[-0.035em] text-balance";
 
 const BODY_TEXT = cn("text-balance text-zinc-600", typeClass("body"));
 
+const TEMPLATE_LINK = cn(
+  "hover:text-brand-600 inline-flex min-h-11 w-fit items-center rounded-sm font-medium sm:min-h-9",
+  typeClass("body"),
+  FOCUS_RING
+);
+
 // The picture's width as `sizes`: half of a column at most 1152px wide from
 // `lg`, otherwise the whole of it, less the panel's padding.
 const PICTURE_SIZES = [
@@ -121,14 +127,22 @@ export function SiteTemplatePage({ id }: { id: SiteTemplateId }) {
           <h2 className={cn(HEADING, typeClass("title"))}>More templates</h2>
           <ul className="grid gap-x-8 gap-y-6 sm:grid-cols-2 lg:grid-cols-3">
             <li className="flex flex-col gap-1">
-              <TemplateLink to="/invoice-template" name="Invoice templates" />
+              <Link to="/invoice-template" className={TEMPLATE_LINK}>
+                Invoice templates
+              </Link>
               <p className={BODY_TEXT}>
                 Six invoices, one for each line of work.
               </p>
             </li>
             {others.map(other => (
               <li key={other.id} className="flex flex-col gap-1">
-                <TemplateLink to={other.path} name={other.name} />
+                <Link
+                  to="/$templatePage"
+                  params={{ templatePage: other.path.slice(1) }}
+                  className={TEMPLATE_LINK}
+                >
+                  {other.name}
+                </Link>
                 <p className={BODY_TEXT}>{other.summary}</p>
               </li>
             ))}
@@ -137,26 +151,5 @@ export function SiteTemplatePage({ id }: { id: SiteTemplateId }) {
       </main>
       <SiteFooter />
     </div>
-  );
-}
-
-function TemplateLink({
-  to,
-  name
-}: {
-  to: (typeof SITE_TEMPLATES)[number]["path"] | "/invoice-template";
-  name: string;
-}) {
-  return (
-    <Link
-      to={to}
-      className={cn(
-        "hover:text-brand-600 inline-flex min-h-11 w-fit items-center rounded-sm font-medium sm:min-h-9",
-        typeClass("body"),
-        FOCUS_RING
-      )}
-    >
-      {name}
-    </Link>
   );
 }

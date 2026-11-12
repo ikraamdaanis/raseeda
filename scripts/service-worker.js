@@ -1,7 +1,8 @@
 // The app's service worker, so every visit after the first loads from the
 // device and the editor opens offline. vite.config.ts writes it into the build
-// as /sw.js, with BUILD ({ version, files }) defined above this code: files
-// lists the build's scripts, styles and latin fonts.
+// as /sw.js, with BUILD ({ version, pages, files }) defined above this code:
+// pages lists the site's pages, and files the build's scripts, styles and
+// latin fonts.
 //
 // - The pages are served from the cache at once and refreshed in the
 //   background, so a deploy shows from the visit after it lands.
@@ -18,19 +19,6 @@ const PRECACHE = PRECACHE_PREFIX + BUILD.version;
 const RUNTIME = "runtime";
 const LEGACY_PRECACHE_PREFIX = "billsend-precache-";
 const LEGACY_RUNTIME = "billsend-runtime";
-const PAGES = [
-  "/",
-  "/invoice-template",
-  "/quote-template",
-  "/proforma-invoice-template",
-  "/receipt-template",
-  "/credit-note-template",
-  "/freelance-invoice-template",
-  "/contractor-invoice-template",
-  "/retail-invoice-template",
-  "/privacy",
-  "/create"
-];
 
 self.addEventListener("install", event => {
   // Where the browser supports it, pictures skip the worker altogether rather
@@ -49,7 +37,7 @@ self.addEventListener("install", event => {
   event.waitUntil(
     caches
       .open(PRECACHE)
-      .then(cache => cache.addAll([...PAGES, ...BUILD.files]))
+      .then(cache => cache.addAll([...BUILD.pages, ...BUILD.files]))
       .then(() => self.skipWaiting())
   );
 });
@@ -91,7 +79,8 @@ self.addEventListener("fetch", event => {
   if (request.destination === "image") return;
 
   if (request.mode === "navigate") {
-    if (PAGES.includes(url.pathname)) event.respondWith(servePage(event, url));
+    if (BUILD.pages.includes(url.pathname))
+      event.respondWith(servePage(event, url));
 
     return;
   }

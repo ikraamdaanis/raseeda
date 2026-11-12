@@ -10,44 +10,26 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as ContractorInvoiceTemplateRouteImport } from './routes/contractor-invoice-template'
+import { Route as TemplatePageRouteImport } from './routes/$templatePage'
 import { Route as CreateRouteImport } from './routes/create'
-import { Route as CreditNoteTemplateRouteImport } from './routes/credit-note-template'
-import { Route as FreelanceInvoiceTemplateRouteImport } from './routes/freelance-invoice-template'
 import { Route as InvoiceTemplateRouteImport } from './routes/invoice-template'
 import { Route as PrivacyRouteImport } from './routes/privacy'
-import { Route as ProformaInvoiceTemplateRouteImport } from './routes/proforma-invoice-template'
-import { Route as QuoteTemplateRouteImport } from './routes/quote-template'
-import { Route as ReceiptTemplateRouteImport } from './routes/receipt-template'
-import { Route as RetailInvoiceTemplateRouteImport } from './routes/retail-invoice-template'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ContractorInvoiceTemplateRoute =
-  ContractorInvoiceTemplateRouteImport.update({
-    id: '/contractor-invoice-template',
-    path: '/contractor-invoice-template',
-    getParentRoute: () => rootRouteImport,
-  } as any)
+const TemplatePageRoute = TemplatePageRouteImport.update({
+  id: '/$templatePage',
+  path: '/$templatePage',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CreateRoute = CreateRouteImport.update({
   id: '/create',
   path: '/create',
   getParentRoute: () => rootRouteImport,
 } as any)
-const CreditNoteTemplateRoute = CreditNoteTemplateRouteImport.update({
-  id: '/credit-note-template',
-  path: '/credit-note-template',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const FreelanceInvoiceTemplateRoute =
-  FreelanceInvoiceTemplateRouteImport.update({
-    id: '/freelance-invoice-template',
-    path: '/freelance-invoice-template',
-    getParentRoute: () => rootRouteImport,
-  } as any)
 const InvoiceTemplateRoute = InvoiceTemplateRouteImport.update({
   id: '/invoice-template',
   path: '/invoice-template',
@@ -58,121 +40,50 @@ const PrivacyRoute = PrivacyRouteImport.update({
   path: '/privacy',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ProformaInvoiceTemplateRoute = ProformaInvoiceTemplateRouteImport.update({
-  id: '/proforma-invoice-template',
-  path: '/proforma-invoice-template',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const QuoteTemplateRoute = QuoteTemplateRouteImport.update({
-  id: '/quote-template',
-  path: '/quote-template',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ReceiptTemplateRoute = ReceiptTemplateRouteImport.update({
-  id: '/receipt-template',
-  path: '/receipt-template',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const RetailInvoiceTemplateRoute = RetailInvoiceTemplateRouteImport.update({
-  id: '/retail-invoice-template',
-  path: '/retail-invoice-template',
-  getParentRoute: () => rootRouteImport,
-} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/contractor-invoice-template': typeof ContractorInvoiceTemplateRoute
+  '/$templatePage': typeof TemplatePageRoute
   '/create': typeof CreateRoute
-  '/credit-note-template': typeof CreditNoteTemplateRoute
-  '/freelance-invoice-template': typeof FreelanceInvoiceTemplateRoute
   '/invoice-template': typeof InvoiceTemplateRoute
   '/privacy': typeof PrivacyRoute
-  '/proforma-invoice-template': typeof ProformaInvoiceTemplateRoute
-  '/quote-template': typeof QuoteTemplateRoute
-  '/receipt-template': typeof ReceiptTemplateRoute
-  '/retail-invoice-template': typeof RetailInvoiceTemplateRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/contractor-invoice-template': typeof ContractorInvoiceTemplateRoute
+  '/$templatePage': typeof TemplatePageRoute
   '/create': typeof CreateRoute
-  '/credit-note-template': typeof CreditNoteTemplateRoute
-  '/freelance-invoice-template': typeof FreelanceInvoiceTemplateRoute
   '/invoice-template': typeof InvoiceTemplateRoute
   '/privacy': typeof PrivacyRoute
-  '/proforma-invoice-template': typeof ProformaInvoiceTemplateRoute
-  '/quote-template': typeof QuoteTemplateRoute
-  '/receipt-template': typeof ReceiptTemplateRoute
-  '/retail-invoice-template': typeof RetailInvoiceTemplateRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/contractor-invoice-template': typeof ContractorInvoiceTemplateRoute
+  '/$templatePage': typeof TemplatePageRoute
   '/create': typeof CreateRoute
-  '/credit-note-template': typeof CreditNoteTemplateRoute
-  '/freelance-invoice-template': typeof FreelanceInvoiceTemplateRoute
   '/invoice-template': typeof InvoiceTemplateRoute
   '/privacy': typeof PrivacyRoute
-  '/proforma-invoice-template': typeof ProformaInvoiceTemplateRoute
-  '/quote-template': typeof QuoteTemplateRoute
-  '/receipt-template': typeof ReceiptTemplateRoute
-  '/retail-invoice-template': typeof RetailInvoiceTemplateRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    | '/'
-    | '/contractor-invoice-template'
-    | '/create'
-    | '/credit-note-template'
-    | '/freelance-invoice-template'
-    | '/invoice-template'
-    | '/privacy'
-    | '/proforma-invoice-template'
-    | '/quote-template'
-    | '/receipt-template'
-    | '/retail-invoice-template'
+    '/' | '/$templatePage' | '/create' | '/invoice-template' | '/privacy'
   fileRoutesByTo: FileRoutesByTo
-  to:
-    | '/'
-    | '/contractor-invoice-template'
-    | '/create'
-    | '/credit-note-template'
-    | '/freelance-invoice-template'
-    | '/invoice-template'
-    | '/privacy'
-    | '/proforma-invoice-template'
-    | '/quote-template'
-    | '/receipt-template'
-    | '/retail-invoice-template'
+  to: '/' | '/$templatePage' | '/create' | '/invoice-template' | '/privacy'
   id:
     | '__root__'
     | '/'
-    | '/contractor-invoice-template'
+    | '/$templatePage'
     | '/create'
-    | '/credit-note-template'
-    | '/freelance-invoice-template'
     | '/invoice-template'
     | '/privacy'
-    | '/proforma-invoice-template'
-    | '/quote-template'
-    | '/receipt-template'
-    | '/retail-invoice-template'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  ContractorInvoiceTemplateRoute: typeof ContractorInvoiceTemplateRoute
+  TemplatePageRoute: typeof TemplatePageRoute
   CreateRoute: typeof CreateRoute
-  CreditNoteTemplateRoute: typeof CreditNoteTemplateRoute
-  FreelanceInvoiceTemplateRoute: typeof FreelanceInvoiceTemplateRoute
   InvoiceTemplateRoute: typeof InvoiceTemplateRoute
   PrivacyRoute: typeof PrivacyRoute
-  ProformaInvoiceTemplateRoute: typeof ProformaInvoiceTemplateRoute
-  QuoteTemplateRoute: typeof QuoteTemplateRoute
-  ReceiptTemplateRoute: typeof ReceiptTemplateRoute
-  RetailInvoiceTemplateRoute: typeof RetailInvoiceTemplateRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -184,11 +95,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/contractor-invoice-template': {
-      id: '/contractor-invoice-template'
-      path: '/contractor-invoice-template'
-      fullPath: '/contractor-invoice-template'
-      preLoaderRoute: typeof ContractorInvoiceTemplateRouteImport
+    '/$templatePage': {
+      id: '/$templatePage'
+      path: '/$templatePage'
+      fullPath: '/$templatePage'
+      preLoaderRoute: typeof TemplatePageRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/create': {
@@ -196,20 +107,6 @@ declare module '@tanstack/react-router' {
       path: '/create'
       fullPath: '/create'
       preLoaderRoute: typeof CreateRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/credit-note-template': {
-      id: '/credit-note-template'
-      path: '/credit-note-template'
-      fullPath: '/credit-note-template'
-      preLoaderRoute: typeof CreditNoteTemplateRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/freelance-invoice-template': {
-      id: '/freelance-invoice-template'
-      path: '/freelance-invoice-template'
-      fullPath: '/freelance-invoice-template'
-      preLoaderRoute: typeof FreelanceInvoiceTemplateRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/invoice-template': {
@@ -226,49 +123,15 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PrivacyRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/proforma-invoice-template': {
-      id: '/proforma-invoice-template'
-      path: '/proforma-invoice-template'
-      fullPath: '/proforma-invoice-template'
-      preLoaderRoute: typeof ProformaInvoiceTemplateRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/quote-template': {
-      id: '/quote-template'
-      path: '/quote-template'
-      fullPath: '/quote-template'
-      preLoaderRoute: typeof QuoteTemplateRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/receipt-template': {
-      id: '/receipt-template'
-      path: '/receipt-template'
-      fullPath: '/receipt-template'
-      preLoaderRoute: typeof ReceiptTemplateRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/retail-invoice-template': {
-      id: '/retail-invoice-template'
-      path: '/retail-invoice-template'
-      fullPath: '/retail-invoice-template'
-      preLoaderRoute: typeof RetailInvoiceTemplateRouteImport
-      parentRoute: typeof rootRouteImport
-    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  ContractorInvoiceTemplateRoute: ContractorInvoiceTemplateRoute,
+  TemplatePageRoute: TemplatePageRoute,
   CreateRoute: CreateRoute,
-  CreditNoteTemplateRoute: CreditNoteTemplateRoute,
-  FreelanceInvoiceTemplateRoute: FreelanceInvoiceTemplateRoute,
   InvoiceTemplateRoute: InvoiceTemplateRoute,
   PrivacyRoute: PrivacyRoute,
-  ProformaInvoiceTemplateRoute: ProformaInvoiceTemplateRoute,
-  QuoteTemplateRoute: QuoteTemplateRoute,
-  ReceiptTemplateRoute: ReceiptTemplateRoute,
-  RetailInvoiceTemplateRoute: RetailInvoiceTemplateRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
