@@ -2,12 +2,8 @@ import { useShallow } from "zustand/react/shallow";
 import { getMoneyFormat } from "~/consts/currencies";
 import type { InvoiceStore } from "~/stores/invoice-store";
 import { useInvoiceStore } from "~/stores/invoice-store";
-import type { Invoice, InvoiceTotals, MoneyFormat } from "~/types";
+import type { Invoice, MoneyFormat } from "~/types";
 import { calculateInvoiceTotals } from "~/utils/calculate-invoice-totals";
-import {
-  calculateConvertedTotals,
-  getCurrencyConversion
-} from "~/utils/currency-conversion";
 
 // The persisted invoice fields, in one place. `satisfies` rejects typos and
 // keys that aren't on Invoice; the MissingKey assertion below rejects forgetting
@@ -286,40 +282,10 @@ export function useInvoiceTotals(): {
   );
 }
 
-const NO_CONVERTED_TOTALS = {
-  subtotal: 0,
-  total: 0,
-  amountPaid: 0,
-  balanceDue: 0
-};
-
-// The subtotal, total, amount paid and balance due in the second currency,
-// each added up from the converted rows above it. All 0 while there's no
-// conversion.
-export function useConvertedTotals(): {
-  subtotal: number;
-  total: number;
-  amountPaid: number;
-  balanceDue: number;
-} {
+// The pricing inputs the totals rows are worked out from, as the PDF's
+// summary rows read them.
+export function useSummaryInputs() {
   return useInvoiceStore(
-    useShallow(state => {
-      const conversion = getCurrencyConversion(state);
-
-      if (!conversion) return NO_CONVERTED_TOTALS;
-
-      return calculateConvertedTotals({
-        totals: calculateInvoiceTotals(state),
-        conversion
-      });
-    })
-  );
-}
-
-// The tax groups behind the totals' tax rows, one per rate the lines are
-// taxed at, recomputed from the pricing inputs.
-export function useTaxGroups(): Pick<InvoiceTotals, "taxGroups" | "taxAmount"> {
-  const pricing = useInvoiceStore(
     useShallow(state => ({
       documentType: state.documentType,
       items: state.items,
@@ -328,14 +294,17 @@ export function useTaxGroups(): Pick<InvoiceTotals, "taxGroups" | "taxAmount"> {
       discounts: state.discounts,
       discountType: state.discountType,
       amountPaid: state.amountPaid,
+      paidDate: state.paidDate,
       currency: state.currency,
       currencyCode: state.currencyCode,
-      sections: state.sections
+      labels: state.labels,
+      sections: state.sections,
+      dateFormat: state.dateFormat,
+      theme: state.theme,
+      numberFormat: state.numberFormat,
+      currencyPosition: state.currencyPosition
     }))
   );
-  const { taxGroups, taxAmount } = calculateInvoiceTotals(pricing);
-
-  return { taxGroups, taxAmount };
 }
 
 // Terms slice

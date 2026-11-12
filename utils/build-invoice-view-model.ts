@@ -368,8 +368,103 @@ function buildSummaryRows(input: {
   ];
 }
 
-export function buildInvoiceViewModel(invoice: Invoice): InvoiceViewModel {
+// The pricing inputs the closing rows are worked out from.
+type SummaryInputs = Pick<
+  Invoice,
+  | "documentType"
+  | "items"
+  | "tax"
+  | "fees"
+  | "discounts"
+  | "discountType"
+  | "amountPaid"
+  | "paidDate"
+  | "currency"
+  | "currencyCode"
+  | "labels"
+  | "sections"
+  | "dateFormat"
+  | "theme"
+  | "numberFormat"
+  | "currencyPosition"
+>;
+
+// The closing rows, with the switches and the second currency as they show:
+// the PDF passes what prints, the editor what the page shows.
+export function buildInvoiceSummaryRows({
+  invoice,
+  sections,
+  conversion
+}: {
+  invoice: SummaryInputs;
+  sections: Pick<InvoiceSections, "discounts" | "tax" | "fees" | "amountPaid">;
+  conversion: CurrencyConversion | null;
+}): InvoiceSummaryRow[] {
   const totals = calculateInvoiceTotals(invoice);
+  const money = getMoneyFormat(invoice);
+
+  return buildSummaryRows({
+    labels: invoice.labels,
+    subtotal: totals.subtotal,
+    taxRows: buildTaxRows({
+      label: invoice.labels.tax,
+      tax: invoice.tax,
+      taxGroups: totals.taxGroups,
+      taxAmount: totals.taxAmount,
+      money,
+      conversion,
+      isVisible: sections.tax
+    }),
+    fees: totals.fees,
+    discountAmount: totals.discountAmount,
+    discountType: invoice.discountType,
+    discountValue: invoice.discounts,
+    total: totals.total,
+    amountPaid: totals.amountPaid,
+    paidDate: invoice.paidDate,
+    dateFormat: invoice.dateFormat,
+    balanceDue: totals.balanceDue,
+    converted: calculateConvertedTotals({
+      totals,
+      conversion
+    }),
+    money,
+    currencyCode: invoice.currencyCode,
+    sections,
+    conversion
+  });
+}
+
+// The rows a switched-on section adds even at 0, which the PDF leaves out.
+const EDITOR_SECTION_ROWS = ["discounts", "fees", "amountPaid"] as const;
+
+// The totals rows the editor shows: the PDF's, with the same values, plus
+// every row whose section is on even at 0, so there's something to type into.
+export function buildEditorSummaryRows(input: {
+  invoice: SummaryInputs;
+  sections: Pick<InvoiceSections, "discounts" | "tax" | "fees" | "amountPaid">;
+  conversion: CurrencyConversion | null;
+}): InvoiceSummaryRow[] {
+  const money = getMoneyFormat(input.invoice);
+  const zero = withConvertedAmount({
+    value: formatCurrency(0, money),
+    amount: 0,
+    conversion: input.conversion,
+    money
+  });
+
+  return buildInvoiceSummaryRows(input).map(row => {
+    const sectionRow = EDITOR_SECTION_ROWS.find(id => id === row.id);
+
+    if (row.isVisible || !sectionRow || !input.sections[sectionRow]) {
+      return row;
+    }
+
+    return { ...row, value: zero, isVisible: true };
+  });
+}
+
+export function buildInvoiceViewModel(invoice: Invoice): InvoiceViewModel {
   // As the document's type reads them, so a quote's amount paid stays off.
   const sections = getTypeSections(invoice.sections, invoice.documentType);
   const conversion = getPrintedSections(invoice).currencyConversion
@@ -387,36 +482,7 @@ export function buildInvoiceViewModel(invoice: Invoice): InvoiceViewModel {
         tax: invoice.tax
       })
     ),
-    summaryRows: buildSummaryRows({
-      labels: invoice.labels,
-      subtotal: totals.subtotal,
-      taxRows: buildTaxRows({
-        label: invoice.labels.tax,
-        tax: invoice.tax,
-        taxGroups: totals.taxGroups,
-        taxAmount: totals.taxAmount,
-        money,
-        conversion,
-        isVisible: invoice.sections.tax
-      }),
-      fees: totals.fees,
-      discountAmount: totals.discountAmount,
-      discountType: invoice.discountType,
-      discountValue: invoice.discounts,
-      total: totals.total,
-      amountPaid: totals.amountPaid,
-      paidDate: invoice.paidDate,
-      dateFormat: invoice.dateFormat,
-      balanceDue: totals.balanceDue,
-      converted: calculateConvertedTotals({
-        totals,
-        conversion
-      }),
-      money,
-      currencyCode: invoice.currencyCode,
-      sections,
-      conversion
-    }),
+    summaryRows: buildInvoiceSummaryRows({ invoice, sections, conversion }),
     conversion,
     hasTaxColumn: showsTaxColumn({
       tax: invoice.tax,
