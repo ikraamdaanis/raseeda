@@ -8,10 +8,19 @@ import type { SiteTemplateId } from "~/types";
 // or city. The pictures are real PDFs of finished samples, rendered by
 // scripts/render-homepage-invoices.tsx, so they show the template in use
 // rather than the empty one it opens.
+//
+// This is the only list of these pages: one route (app/routes/$templatePage.tsx)
+// serves them, and their meta (utils/site-meta.ts), page view paths, service
+// worker cache and prerendering (vite.config.ts) are built from it. Only
+// public/_headers, a static file, names each one again. Each title is the
+// page's own, before the name; each description fits in a share preview.
 export const SITE_TEMPLATES = [
   {
     id: "quote",
     path: "/quote-template",
+    title: "Free Quote Template: Fill In Online, Download PDF",
+    description:
+      "Free quote template with a valid-until date. Fill it in online, download a PDF, and turn it into an invoice when it's agreed.",
     group: "document",
     name: "Quote template",
     heading: "Free quote template",
@@ -34,6 +43,9 @@ export const SITE_TEMPLATES = [
   {
     id: "proforma-invoice",
     path: "/proforma-invoice-template",
+    title: "Free Proforma Invoice Template, Download PDF",
+    description:
+      "Free proforma invoice template for payment up front or customs. Fill it in online and download a PDF, with no account.",
     group: "document",
     name: "Proforma invoice template",
     heading: "Free proforma invoice template",
@@ -56,6 +68,9 @@ export const SITE_TEMPLATES = [
   {
     id: "receipt",
     path: "/receipt-template",
+    title: "Free Receipt Template: Fill In Online, Download PDF",
+    description:
+      "Free receipt template showing the date paid and how it was paid. Fill it in online and download a PDF, with no account.",
     group: "document",
     name: "Receipt template",
     heading: "Free receipt template",
@@ -78,6 +93,9 @@ export const SITE_TEMPLATES = [
   {
     id: "credit-note",
     path: "/credit-note-template",
+    title: "Free Credit Note Template: Fill In Online, Download PDF",
+    description:
+      "Free credit note template that names the invoice it corrects. Fill it in online and download a PDF, with no account.",
     group: "document",
     name: "Credit note template",
     heading: "Free credit note template",
@@ -100,6 +118,9 @@ export const SITE_TEMPLATES = [
   {
     id: "freelance",
     path: "/freelance-invoice-template",
+    title: "Free Freelance Invoice Template for Hourly Work",
+    description:
+      "Free freelance invoice template with Hours and Rate columns. Fill it in online and download a PDF, with no account.",
     group: "trade",
     name: "Freelance invoice template",
     heading: "Free freelance invoice template",
@@ -122,6 +143,9 @@ export const SITE_TEMPLATES = [
   {
     id: "contractor",
     path: "/contractor-invoice-template",
+    title: "Free Contractor Invoice Template: Labour and Materials",
+    description:
+      "Free contractor invoice template with labour, materials, a job site and a deposit. Fill it in online and download a PDF.",
     group: "trade",
     name: "Contractor invoice template",
     heading: "Free contractor invoice template",
@@ -144,6 +168,9 @@ export const SITE_TEMPLATES = [
   {
     id: "retail",
     path: "/retail-invoice-template",
+    title: "Free Retail Invoice Template with Per-Line Tax",
+    description:
+      "Free retail invoice template with a tax rate on each line. Fill it in online and download a PDF, with no account.",
     group: "trade",
     name: "Retail invoice template",
     heading: "Free retail invoice template",
@@ -166,6 +193,8 @@ export const SITE_TEMPLATES = [
 ] as const satisfies readonly {
   id: SiteTemplateId;
   path: string;
+  title: string;
+  description: string;
   group: "document" | "trade";
   name: string;
   heading: string;

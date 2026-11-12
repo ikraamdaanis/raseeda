@@ -7,12 +7,13 @@ import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import type { Plugin } from "vite";
 import { defineConfig } from "vite";
+import { SITE_TEMPLATES } from "./consts/site-templates.ts";
 
 // Writes the service worker (scripts/service-worker.js) into the client build
-// as /sw.js, headed by the files it saves on install: every script and style,
-// and each font's latin subset. The version names its cache, so a build with
-// any changed file installs fresh.
-function serviceWorker(): Plugin {
+// as /sw.js, headed by what it saves on install: the pages, every script and
+// style, and each font's latin subset. The version names its cache, so a build
+// with any changed page list or file installs fresh.
+function serviceWorker(pages: string[]): Plugin {
   return {
     name: "service-worker",
     applyToEnvironment: environment => environment.name === "client",
@@ -30,6 +31,7 @@ function serviceWorker(): Plugin {
         "utf8"
       );
       const version = createHash("sha256")
+        .update(pages.join("\n"))
         .update(files.join("\n"))
         .update(template)
         .digest("hex")
@@ -38,7 +40,7 @@ function serviceWorker(): Plugin {
       this.emitFile({
         type: "asset",
         fileName: "sw.js",
-        source: `const BUILD = ${JSON.stringify({ version, files })};\n\n${template}`
+        source: `const BUILD = ${JSON.stringify({ version, pages, files })};\n\n${template}`
       });
     }
   };
@@ -98,6 +100,7 @@ const PAGE_FILES = {
     "utils/structured-data.ts"
   ],
   siteTemplates: [
+    "app/routes/$templatePage.tsx",
     "components/templates",
     "consts/site-templates.ts",
     "components/home/site-chrome.tsx",
@@ -111,17 +114,13 @@ const PAGE_FILES = {
   ]
 };
 
-// The pages that open the editor ready for one job, each pre-rendered and in
-// the sitemap (consts/site-templates.ts is their list; a unit test keeps this
-// one in step).
-const SITE_TEMPLATE_PAGES = [
-  "/quote-template",
-  "/proforma-invoice-template",
-  "/receipt-template",
-  "/credit-note-template",
-  "/freelance-invoice-template",
-  "/contractor-invoice-template",
-  "/retail-invoice-template"
+// The pages the service worker serves from its cache, so they open offline.
+const CACHED_PAGES = [
+  "/",
+  "/invoice-template",
+  ...SITE_TEMPLATES.map(template => template.path),
+  "/privacy",
+  "/create"
 ];
 
 export default defineConfig({
@@ -173,15 +172,10 @@ export default defineConfig({
           prerender: { enabled: true, autoSubfolderIndex: false },
           sitemap: { lastmod: lastChanged(PAGE_FILES.templates) }
         },
-        ...SITE_TEMPLATE_PAGES.map(path => ({
-          path,
+        ...SITE_TEMPLATES.map(template => ({
+          path: template.path,
           prerender: { enabled: true, autoSubfolderIndex: false },
-          sitemap: {
-            lastmod: lastChanged([
-              `app/routes${path}.tsx`,
-              ...PAGE_FILES.siteTemplates
-            ])
-          }
+          sitemap: { lastmod: lastChanged(PAGE_FILES.siteTemplates) }
         })),
         {
           path: "/privacy",
@@ -191,6 +185,6 @@ export default defineConfig({
       ]
     }),
     viteReact(),
-    serviceWorker()
+    serviceWorker(CACHED_PAGES)
   ]
 });
