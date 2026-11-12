@@ -2,11 +2,19 @@ import { describe, expect, it } from "vitest";
 import {
   DEFAULT_CURRENCY_CONVERSION,
   DEFAULT_INVOICE_SECTIONS,
-  DEFAULT_PAYMENT_LABELS
+  DEFAULT_PAYMENT_LABELS,
+  DOCUMENT_TYPES
 } from "~/schema/invoice";
 import type { Invoice, InvoiceItem } from "~/types";
-import { buildInvoiceViewModel } from "~/utils/build-invoice-view-model";
-import { buildExchangeRateLine } from "~/utils/currency-conversion";
+import {
+  buildEditorSummaryRows,
+  buildInvoiceViewModel
+} from "~/utils/build-invoice-view-model";
+import {
+  buildExchangeRateLine,
+  getCurrencyConversion
+} from "~/utils/currency-conversion";
+import { getTypeSections } from "~/utils/document-type";
 
 function makeInvoice(overrides: Partial<Invoice> = {}): Invoice {
   return {
@@ -923,5 +931,102 @@ describe("buildInvoiceViewModel with a tax rate per line", () => {
       ["VAT 20% on £1,000.00", "£200.00 / $250.00"],
       ["VAT 5% on £500.00", "£25.00 / $31.25"]
     ]);
+  });
+});
+
+describe("buildEditorSummaryRows", () => {
+  const cases = DOCUMENT_TYPES.flatMap(documentType =>
+    [false, true].flatMap(hasConversion =>
+      [0, 40].flatMap(amountPaid =>
+        [0, 10].map(discounts => ({
+          documentType,
+          hasConversion,
+          amountPaid,
+          discounts
+        }))
+      )
+    )
+  );
+
+  it.each(cases)(
+    "shows the PDF's rows for $documentType (conversion $hasConversion, paid $amountPaid, discount $discounts)",
+    ({ documentType, hasConversion, amountPaid, discounts }) => {
+      const invoice = makeInvoice({
+        documentType,
+        currency: "£",
+        currencyCode: "GBP",
+        items: [makeItem({ quantity: 2, unitPrice: 150 })],
+        tax: { percentage: 20, exempt: false, note: "", perLine: false },
+        fees: 15,
+        discounts,
+        amountPaid,
+        paidDate: "2026-01-15",
+        sections: {
+          ...DEFAULT_INVOICE_SECTIONS,
+          discounts: true,
+          fees: true,
+          amountPaid: true,
+          currencyConversion: hasConversion
+        },
+        currencyConversion: { ...DEFAULT_CURRENCY_CONVERSION, rate: 1.25 }
+      });
+      const printed = buildInvoiceViewModel(invoice).summaryRows.filter(
+        row => row.isVisible
+      );
+      const shown = buildEditorSummaryRows({
+        invoice,
+        sections: getTypeSections(invoice.sections, documentType),
+        conversion: hasConversion ? getCurrencyConversion(invoice) : null
+      });
+
+      expect(
+        shown.filter(row =>
+          printed.some(printedRow => printedRow.id === row.id)
+        )
+      ).toEqual(printed);
+    }
+  );
+
+  it("shows a switched-on row at 0 that the PDF leaves out", () => {
+    const invoice = makeInvoice({
+      items: [makeItem({ quantity: 1, unitPrice: 100 })],
+      sections: {
+        ...DEFAULT_INVOICE_SECTIONS,
+        discounts: true,
+        fees: true,
+        amountPaid: true
+      }
+    });
+    const shown = buildEditorSummaryRows({
+      invoice,
+      sections: invoice.sections,
+      conversion: null
+    });
+    const valueById = Object.fromEntries(
+      shown.filter(row => row.isVisible).map(row => [row.id, row.value])
+    );
+
+    expect(valueById).toEqual({
+      subtotal: "£100.00",
+      discounts: "£0.00",
+      tax: "£0.00",
+      fees: "£0.00",
+      total: "£100.00",
+      amountPaid: "£0.00"
+    });
+  });
+
+  it("leaves out a row whose section is off", () => {
+    const invoice = makeInvoice({
+      sections: { ...DEFAULT_INVOICE_SECTIONS, discounts: false, fees: true }
+    });
+    const shown = buildEditorSummaryRows({
+      invoice,
+      sections: invoice.sections,
+      conversion: null
+    });
+
+    expect(shown.find(row => row.id === "discounts")?.isVisible).toBe(false);
+    expect(shown.find(row => row.id === "fees")?.isVisible).toBe(true);
   });
 });

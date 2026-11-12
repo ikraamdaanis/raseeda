@@ -1,3 +1,4 @@
+import { kebabCase } from "lodash-es";
 import type { CSSProperties, ReactNode } from "react";
 import { InvoiceDateField } from "~/components/editor/invoice-date-field";
 import { InvoiceInput } from "~/components/editor/invoice-input";
@@ -13,22 +14,15 @@ import { useCurrencyConversion } from "~/hooks/use-currency-conversion";
 import { useIsPreview, useShownSections } from "~/hooks/use-shown-sections";
 import { cn } from "~/lib/utils";
 import {
-  useConvertedTotals,
   useDocumentType,
-  useInvoiceTotals,
   useMoneyFormat,
   usePricingSlice,
-  useTaxGroups,
+  useSummaryInputs,
   useTheme
 } from "~/stores/invoice-selectors";
 import type { InvoiceSummaryRow, MoneyFormat } from "~/types";
-import { buildTaxRows } from "~/utils/build-invoice-view-model";
-import {
-  formatDeduction,
-  formatInvoiceTotal,
-  withConvertedAmount
-} from "~/utils/currency-conversion";
-import { formatPlainNumber, roundToDecimals } from "~/utils/format-number";
+import { buildEditorSummaryRows } from "~/utils/build-invoice-view-model";
+import { formatPlainNumber } from "~/utils/format-number";
 import { getRoleSettings } from "~/utils/get-role-settings";
 import { getTextStyles } from "~/utils/get-text-styles";
 
@@ -138,84 +132,147 @@ function MoneyInput({
   );
 }
 
-/**
- * Displays the pricing information for the invoice.
- */
-// Two columns, as in the PDF: the labels right-aligned, 3rem left of values
-// as wide as the widest one, so the labels sit close to every figure.
+// What each row is called, for its label's placeholder and aria-label.
+const ROW_NAMES = {
+  subtotal: "Subtotal",
+  discounts: "Discounts",
+  fees: "Fees",
+  total: "Total",
+  amountPaid: "Amount paid",
+  balanceDue: "Balance due"
+} as const;
+
+// The inputs a row adds to its label and value, beyond the label itself:
+// toggles to the label's left, inputs after it, and the value typed in.
+const ROW_INPUTS: Partial<
+  Record<
+    keyof typeof ROW_NAMES,
+    {
+      Toggles?: () => ReactNode;
+      LabelInputs?: () => ReactNode;
+      Value?: (props: {
+        row: InvoiceSummaryRow;
+        style: CSSProperties;
+      }) => ReactNode;
+    }
+  >
+> = {
+  discounts: {
+    Toggles: DiscountTypeToggle,
+    LabelInputs: DiscountPercentageInput,
+    Value: DiscountValue
+  },
+  fees: { Value: FeesValue },
+  amountPaid: { LabelInputs: PaidDateInput, Value: AmountPaidValue }
+};
+
+// The totals rows: the PDF's summary rows, and while editing every row whose
+// section is on, even at 0. Two columns, as in the PDF: the labels
+// right-aligned, 3rem left of values as wide as the widest one, so the labels
+// sit close to every figure.
 export function InvoicePricing() {
+  const invoice = useSummaryInputs();
   const sections = useShownSections();
+  const conversion = useCurrencyConversion();
+  const rows = buildEditorSummaryRows({ invoice, sections, conversion });
+  const taxRows = rows.filter(row => row.id === "tax");
 
   return (
     <div
       data-field-area="pricing"
       className="grid grid-cols-[auto_auto] justify-end gap-x-12 gap-y-1 text-right"
     >
-      <SubtotalRow />
-      {sections.discounts && <DiscountsRow />}
-      {sections.tax && <TaxRow />}
-      {sections.fees && <FeesRow />}
-      <TotalRow />
-      {sections.amountPaid && <AmountPaidRow />}
-      {sections.amountPaid && <BalanceDueRow />}
+      {rows.map((row, index) => {
+        if (!row.isVisible) return null;
+
+        if (row.id === "tax") {
+          return index === rows.indexOf(taxRows[0]) ? (
+            <TaxRow key="tax" rows={taxRows} />
+          ) : null;
+        }
+
+        return <SummaryRow key={row.id} id={row.id} row={row} />;
+      })}
     </div>
   );
 }
 
-function SubtotalRow() {
+// A row's renameable label and its value as the PDF prints it, with the
+// inputs the row adds. The emphasised row (the total, or the balance due
+// once a payment counts) takes the grand total's style.
+function SummaryRow({
+  id,
+  row
+}: {
+  id: keyof typeof ROW_NAMES;
+  row: InvoiceSummaryRow;
+}) {
   const { labels, setLabels } = usePricingSlice();
-  const money = useMoneyFormat();
-  const { subtotal } = useInvoiceTotals();
-  const converted = useConvertedTotals();
-  const conversion = useCurrencyConversion();
+  const documentType = useDocumentType();
   const theme = useTheme();
-  const labelSettings = getRoleSettings(theme, "totalsLabel");
-  const valueSettings = getRoleSettings(theme, "totalsValue");
+  const labelSettings = getRoleSettings(
+    theme,
+    row.isTotal ? "grandTotalLabel" : "totalsLabel"
+  );
+  const valueSettings = getRoleSettings(
+    theme,
+    row.isTotal ? "grandTotalValue" : "totalsValue"
+  );
+  const valueStyle = getTextStyles({ settings: valueSettings });
+  const { Toggles, LabelInputs, Value } = ROW_INPUTS[id] ?? {};
+  const placeholder =
+    id === "total"
+      ? DOCUMENT_TYPE_DEFAULTS[documentType].labels.total
+      : ROW_NAMES[id];
 
   return (
-    <div className="col-span-2 grid grid-cols-subgrid items-center text-sm">
-      <InvoiceInput
-        aria-label="Subtotal label"
-        data-field="labels.subtotal"
-        value={labels.subtotal}
-        onChange={value => setLabels(prev => ({ ...prev, subtotal: value }))}
-        className="field-sizing-content w-full"
-        style={getTextStyles({ settings: labelSettings })}
-        placeholder="Subtotal"
-      />
-      <span
-        data-testid="subtotal-value"
-        className="text-paper-foreground text-right whitespace-nowrap"
-        style={getTextStyles({ settings: valueSettings })}
+    <div className="group/pricing-row col-span-2 grid grid-cols-subgrid items-center text-sm">
+      <div
+        className="flex w-full min-w-0 items-center gap-1"
+        style={{ justifyContent: labelSettings.align }}
       >
-        {withConvertedAmount({
-          value: formatCurrency(subtotal, money),
-          amount: subtotal,
-          conversion,
-          money,
-          convertedAmount: converted.subtotal
-        })}
-      </span>
+        <span className="relative flex min-w-0 items-center">
+          {Toggles && (
+            <PricingRowToggles>
+              <Toggles />
+            </PricingRowToggles>
+          )}
+          <InvoiceInput
+            aria-label={`${ROW_NAMES[id]} label`}
+            data-field={`labels.${id}`}
+            value={labels[id]}
+            onChange={value => setLabels(prev => ({ ...prev, [id]: value }))}
+            className="field-sizing-content w-auto min-w-0 pr-0.5"
+            style={getTextStyles({
+              settings: labelSettings,
+              remove: ["align"]
+            })}
+            placeholder={placeholder}
+          />
+        </span>
+        {LabelInputs && <LabelInputs />}
+      </div>
+      {Value ? (
+        <span
+          className="flex items-center"
+          style={{ justifyContent: valueSettings.align }}
+        >
+          <Value row={row} style={valueStyle} />
+        </span>
+      ) : (
+        <span
+          data-testid={`${kebabCase(id)}-value`}
+          className={cn(
+            "text-right whitespace-nowrap",
+            row.isTotal && "font-bold"
+          )}
+          style={valueStyle}
+        >
+          {row.value}
+        </span>
+      )}
     </div>
   );
-}
-
-// The tax rows the PDF prints: one per rate when the lines' rates differ.
-function usePrintedTaxRows(): InvoiceSummaryRow[] {
-  const { tax, labels } = usePricingSlice();
-  const money = useMoneyFormat();
-  const { taxGroups, taxAmount } = useTaxGroups();
-  const conversion = useCurrencyConversion();
-
-  return buildTaxRows({
-    label: labels.tax,
-    tax,
-    taxGroups,
-    taxAmount,
-    money,
-    conversion,
-    isVisible: true
-  });
 }
 
 // Whether a printed row reads as the tax row below does: the invoice's own
@@ -235,25 +292,26 @@ function isInvoiceTaxRow(
 // shows only those; editing keeps the invoice's rate as the first row, which
 // stays put whatever the rates do, so the control being used never swaps out
 // mid-edit.
-function TaxRow() {
+function TaxRow({ rows }: { rows: InvoiceSummaryRow[] }) {
   const { tax } = usePricingSlice();
   const isPreview = useIsPreview();
-  const printedRows = usePrintedTaxRows();
+  const firstRow = rows.at(0);
   const readsAsPrinted =
-    printedRows.length > 1 || !isInvoiceTaxRow(printedRows[0], tax);
+    rows.length > 1 || !firstRow || !isInvoiceTaxRow(firstRow, tax);
+  const amount = firstRow?.value ?? "";
 
   if (isPreview) {
     return readsAsPrinted ? (
-      <PrintedTaxRows rows={printedRows} />
+      <PrintedTaxRows rows={rows} />
     ) : (
-      <InvoiceTaxRow isDefault={false} />
+      <InvoiceTaxRow isDefault={false} amount={amount} />
     );
   }
 
   return (
     <>
-      <InvoiceTaxRow isDefault={readsAsPrinted} />
-      {readsAsPrinted && <PrintedTaxRows rows={printedRows} />}
+      <InvoiceTaxRow isDefault={readsAsPrinted} amount={amount} />
+      {readsAsPrinted && <PrintedTaxRows rows={rows} />}
     </>
   );
 }
@@ -327,13 +385,17 @@ function getExemptTooltip(tax: { exempt: boolean; perLine: boolean }) {
 }
 
 // The invoice's own rate: its label, rate, Exempt and Per line toggles, and
-// what it comes to. While the lines' rates are printed in rows of their own
+// what it comes to (its printed row's value). While the lines' rates are printed in rows of their own
 // below it, it's the default the lines without one follow, and says so.
-function InvoiceTaxRow({ isDefault }: { isDefault: boolean }) {
+function InvoiceTaxRow({
+  isDefault,
+  amount
+}: {
+  isDefault: boolean;
+  amount: string;
+}) {
   const { tax, setTax, labels, setLabels } = usePricingSlice();
   const money = useMoneyFormat();
-  const { taxAmount } = useInvoiceTotals();
-  const conversion = useCurrencyConversion();
   const isPreview = useIsPreview();
   const theme = useTheme();
   const labelSettings = getRoleSettings(theme, "totalsLabel");
@@ -429,349 +491,165 @@ function InvoiceTaxRow({ isDefault }: { isDefault: boolean }) {
           className="whitespace-nowrap"
           style={getTextStyles({ settings: valueSettings })}
         >
-          {withConvertedAmount({
-            value: formatCurrency(taxAmount, money),
-            amount: taxAmount,
-            conversion,
-            money
-          })}
+          {amount}
         </span>
       )}
     </div>
   );
 }
 
-function FeesRow() {
-  const { fees, setFees, labels, setLabels } = usePricingSlice();
+function DiscountTypeToggle() {
+  const { discountType, setDiscountType } = usePricingSlice();
   const money = useMoneyFormat();
-  const theme = useTheme();
-  const labelSettings = getRoleSettings(theme, "totalsLabel");
-  const valueSettings = getRoleSettings(theme, "totalsValue");
-  const conversion = useCurrencyConversion();
-
-  return (
-    <div className="col-span-2 grid grid-cols-subgrid items-center text-sm">
-      <InvoiceInput
-        aria-label="Fees label"
-        data-field="labels.fees"
-        value={labels.fees}
-        onChange={value => setLabels(prev => ({ ...prev, fees: value }))}
-        className="field-sizing-content w-full"
-        style={getTextStyles({ settings: labelSettings })}
-        placeholder="Fees"
-      />
-      <span
-        className="flex items-center"
-        style={{ justifyContent: valueSettings.align }}
-      >
-        <MoneyInput
-          label="Fees amount"
-          field="fees"
-          amount={fees}
-          display={withConvertedAmount({
-            value: formatCurrency(fees, money),
-            // As the total counts it, whole on a yen invoice, so the second
-            // currency's column adds up.
-            amount: roundToDecimals(fees, money.decimals),
-            conversion,
-            money
-          })}
-          money={money}
-          style={getTextStyles({ settings: valueSettings })}
-          onChange={setFees}
-        />
-      </span>
-    </div>
-  );
-}
-
-function DiscountsRow() {
-  const {
-    discounts,
-    discountType,
-    setDiscounts,
-    setDiscountType,
-    labels,
-    setLabels
-  } = usePricingSlice();
-  const money = useMoneyFormat();
-  const { discountAmount } = useInvoiceTotals();
-  const theme = useTheme();
-  const labelSettings = getRoleSettings(theme, "totalsLabel");
-  const valueSettings = getRoleSettings(theme, "totalsValue");
-  const conversion = useCurrencyConversion();
   const isPercentage = discountType === "percentage";
 
   return (
-    <div className="group/pricing-row col-span-2 grid grid-cols-subgrid items-center text-sm">
-      <div
-        className="flex w-full items-center gap-2"
-        style={{ justifyContent: labelSettings.align }}
-      >
-        <span className="relative flex items-center">
-          <PricingRowToggles>
-            <PricingRowToggle
-              label="Toggle discount type"
-              active={isPercentage}
-              onClick={() =>
-                setDiscountType(isPercentage ? "fixed" : "percentage")
-              }
-            >
-              {isPercentage ? "%" : money.marker}
-            </PricingRowToggle>
-          </PricingRowToggles>
-          <InvoiceInput
-            aria-label="Discounts label"
-            data-field="labels.discounts"
-            value={labels.discounts}
-            onChange={value =>
-              setLabels(prev => ({ ...prev, discounts: value }))
-            }
-            className="field-sizing-content w-auto min-w-fit pr-0.5"
-            style={getTextStyles({
-              settings: labelSettings,
-              remove: ["align"]
-            })}
-            placeholder="Discounts"
-          />
-        </span>
-        {isPercentage && (
-          <span className="flex items-center">
-            <NumberField
-              aria-label="Discount percentage"
-              data-field="discounts"
-              value={discounts}
-              onChange={setDiscounts}
-              money={money}
-              decimals={2}
-              min={0}
-              max={100}
-              className="field-sizing-content w-auto min-w-[1ch] text-right"
-              style={getTextStyles({
-                settings: labelSettings,
-                remove: ["align"]
-              })}
-            />
-            <span style={getTextStyles({ settings: labelSettings })}>%</span>
-          </span>
-        )}
-      </div>
-      {isPercentage ? (
-        <span
-          className="whitespace-nowrap"
-          style={getTextStyles({ settings: valueSettings })}
-        >
-          {formatDeduction({ amount: discountAmount, money, conversion })}
-        </span>
-      ) : (
-        <span
-          className="flex items-center"
-          style={{ justifyContent: valueSettings.align }}
-        >
-          <MoneyInput
-            label="Discounts amount"
-            field="discounts"
-            amount={discounts}
-            display={
-              discountAmount > 0
-                ? formatDeduction({
-                    amount: discountAmount,
-                    money,
-                    conversion
-                  })
-                : withConvertedAmount({
-                    value: formatCurrency(discounts, money),
-                    amount: discounts,
-                    conversion,
-                    money
-                  })
-            }
-            money={money}
-            style={getTextStyles({ settings: valueSettings })}
-            onChange={setDiscounts}
-          />
-        </span>
-      )}
-    </div>
+    <PricingRowToggle
+      label="Toggle discount type"
+      active={isPercentage}
+      onClick={() => setDiscountType(isPercentage ? "fixed" : "percentage")}
+    >
+      {isPercentage ? "%" : money.marker}
+    </PricingRowToggle>
   );
 }
 
-// The grand total suppresses its emphasis when a payment has been recorded, so
-// the balance-due row below reads as the figure to pay instead. A payment only
-// counts while its row is switched on, as in the PDF (a receipt's always is,
-// paid in full until an amount is typed; a quote's never is).
-function TotalRow() {
-  const { currencyCode, labels, setLabels } = usePricingSlice();
-  const documentType = useDocumentType();
+function DiscountPercentageInput() {
+  const { discounts, discountType, setDiscounts } = usePricingSlice();
   const money = useMoneyFormat();
-  const { total, amountPaid } = useInvoiceTotals();
-  const converted = useConvertedTotals();
-  const conversion = useCurrencyConversion();
   const theme = useTheme();
-  const sections = useShownSections();
-  const hasPayment = sections.amountPaid && amountPaid > 0;
-  const role = hasPayment ? "totalsLabel" : "grandTotalLabel";
-  const labelSettings = getRoleSettings(theme, role);
-  const valueSettings = getRoleSettings(
-    theme,
-    hasPayment ? "totalsValue" : "grandTotalValue"
-  );
+  const labelSettings = getRoleSettings(theme, "totalsLabel");
+
+  if (discountType !== "percentage") return null;
 
   return (
-    <div className="col-span-2 grid grid-cols-subgrid items-center text-sm">
-      <InvoiceInput
-        aria-label="Total label"
-        data-field="labels.total"
-        value={labels.total}
-        onChange={value => setLabels(prev => ({ ...prev, total: value }))}
-        className="field-sizing-content w-full"
-        style={getTextStyles({ settings: labelSettings })}
-        placeholder={DOCUMENT_TYPE_DEFAULTS[documentType].labels.total}
-      />
-      <span
-        data-testid="total-value"
-        className={cn(
-          "text-right whitespace-nowrap",
-          hasPayment ? "" : "font-bold"
-        )}
-        style={getTextStyles({ settings: valueSettings })}
-      >
-        {formatInvoiceTotal({
-          amount: total,
-          convertedAmount: converted.total,
-          money,
-          currencyCode,
-          conversion
+    <span className="flex items-center">
+      <NumberField
+        aria-label="Discount percentage"
+        data-field="discounts"
+        value={discounts}
+        onChange={setDiscounts}
+        money={money}
+        decimals={2}
+        min={0}
+        max={100}
+        className="field-sizing-content w-auto min-w-[1ch] text-right"
+        style={getTextStyles({
+          settings: labelSettings,
+          remove: ["align"]
         })}
+      />
+      <span style={getTextStyles({ settings: labelSettings })}>%</span>
+    </span>
+  );
+}
+
+// A percentage discount's amount is worked out; a fixed one is typed in.
+function DiscountValue({
+  row,
+  style
+}: {
+  row: InvoiceSummaryRow;
+  style: CSSProperties;
+}) {
+  const { discounts, discountType, setDiscounts } = usePricingSlice();
+  const money = useMoneyFormat();
+
+  if (discountType === "percentage") {
+    return (
+      <span className="whitespace-nowrap" style={style}>
+        {row.value}
       </span>
-    </div>
+    );
+  }
+
+  return (
+    <MoneyInput
+      label="Discounts amount"
+      field="discounts"
+      amount={discounts}
+      display={row.value}
+      money={money}
+      style={style}
+      onChange={setDiscounts}
+    />
+  );
+}
+
+function FeesValue({
+  row,
+  style
+}: {
+  row: InvoiceSummaryRow;
+  style: CSSProperties;
+}) {
+  const { fees, setFees } = usePricingSlice();
+  const money = useMoneyFormat();
+
+  return (
+    <MoneyInput
+      label="Fees amount"
+      field="fees"
+      amount={fees}
+      display={row.value}
+      money={money}
+      style={style}
+      onChange={setFees}
+    />
   );
 }
 
 // The payment's date sits in brackets after the label, as it prints:
-// "Amount paid (1 Oct 2026)". On a receipt with no amount typed it reads the
-// total, as it prints.
-function AmountPaidRow() {
-  const {
-    amountPaid,
-    paidDate,
-    setAmountPaid,
-    setPaidDate,
-    labels,
-    setLabels
-  } = usePricingSlice();
-  const money = useMoneyFormat();
+// "Amount paid (1 Oct 2026)".
+function PaidDateInput() {
+  const { paidDate, setPaidDate } = usePricingSlice();
   const theme = useTheme();
   const isPreview = useIsPreview();
-  const labelSettings = getRoleSettings(theme, "totalsLabel");
-  const valueSettings = getRoleSettings(theme, "totalsValue");
-  const labelStyle = getTextStyles({ settings: labelSettings });
-  const conversion = useCurrencyConversion();
-  const totals = useInvoiceTotals();
-  const converted = useConvertedTotals();
+  const labelStyle = getTextStyles({
+    settings: getRoleSettings(theme, "totalsLabel")
+  });
+
+  if (!paidDate && isPreview) return null;
 
   return (
-    <div className="col-span-2 grid grid-cols-subgrid items-center text-sm">
-      <span className="flex min-w-0 items-center gap-1">
-        <InvoiceInput
-          aria-label="Amount paid label"
-          data-field="labels.amountPaid"
-          value={labels.amountPaid}
-          onChange={value =>
-            setLabels(prev => ({ ...prev, amountPaid: value }))
-          }
-          className="field-sizing-content min-w-0"
-          style={labelStyle}
-          placeholder="Amount paid"
-        />
-        {(paidDate || !isPreview) && (
-          <span
-            className="text-paper-foreground flex shrink-0 items-center whitespace-nowrap"
-            style={labelStyle}
-          >
-            (
-            <InvoiceDateField
-              value={paidDate}
-              label="Payment date"
-              placeholder="date paid"
-              style={labelStyle}
-              canClear
-              onSelect={setPaidDate}
-            />
-            )
-          </span>
-        )}
-      </span>
-      <span
-        className="flex items-center"
-        style={{ justifyContent: valueSettings.align }}
-      >
-        <MoneyInput
-          label="Amount paid"
-          field="amountPaid"
-          amount={amountPaid}
-          display={
-            totals.amountPaid > 0
-              ? formatDeduction({
-                  amount: totals.amountPaid,
-                  money,
-                  conversion,
-                  convertedAmount: converted.amountPaid
-                })
-              : withConvertedAmount({
-                  value: formatCurrency(amountPaid, money),
-                  amount: roundToDecimals(amountPaid, money.decimals),
-                  conversion,
-                  money
-                })
-          }
-          money={money}
-          style={getTextStyles({ settings: valueSettings })}
-          onChange={setAmountPaid}
-        />
-      </span>
-    </div>
+    <span
+      className="text-paper-foreground flex shrink-0 items-center whitespace-nowrap"
+      style={labelStyle}
+    >
+      (
+      <InvoiceDateField
+        value={paidDate}
+        label="Payment date"
+        placeholder="date paid"
+        style={labelStyle}
+        canClear
+        onSelect={setPaidDate}
+      />
+      )
+    </span>
   );
 }
 
-function BalanceDueRow() {
-  const { currencyCode, labels, setLabels } = usePricingSlice();
+// On a receipt with no amount typed it reads the total, as it prints.
+function AmountPaidValue({
+  row,
+  style
+}: {
+  row: InvoiceSummaryRow;
+  style: CSSProperties;
+}) {
+  const { amountPaid, setAmountPaid } = usePricingSlice();
   const money = useMoneyFormat();
-  const { amountPaid, balanceDue } = useInvoiceTotals();
-  const converted = useConvertedTotals();
-  const conversion = useCurrencyConversion();
-  const theme = useTheme();
-  const labelSettings = getRoleSettings(theme, "grandTotalLabel");
-  const valueSettings = getRoleSettings(theme, "grandTotalValue");
-
-  if (amountPaid <= 0) {
-    return null;
-  }
 
   return (
-    <div className="col-span-2 grid grid-cols-subgrid items-center text-sm">
-      <InvoiceInput
-        aria-label="Balance due label"
-        data-field="labels.balanceDue"
-        value={labels.balanceDue}
-        onChange={value => setLabels(prev => ({ ...prev, balanceDue: value }))}
-        className="field-sizing-content w-full"
-        style={getTextStyles({ settings: labelSettings })}
-        placeholder="Balance due"
-      />
-      <span
-        data-testid="balance-due-value"
-        className="text-right font-bold whitespace-nowrap"
-        style={getTextStyles({ settings: valueSettings })}
-      >
-        {formatInvoiceTotal({
-          amount: balanceDue,
-          convertedAmount: converted.balanceDue,
-          money,
-          currencyCode,
-          conversion
-        })}
-      </span>
-    </div>
+    <MoneyInput
+      label="Amount paid"
+      field="amountPaid"
+      amount={amountPaid}
+      display={row.value}
+      money={money}
+      style={style}
+      onChange={setAmountPaid}
+    />
   );
 }
