@@ -16,6 +16,11 @@ RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
   && apt-get update && apt-get install -y gh \
   && rm -rf /var/lib/apt/lists/*
 
+# System libraries for Playwright's Chromium and WebKit (the e2e suite runs
+# both). Keep the version in step with @playwright/test in package.json.
+RUN npx -y playwright@1.64.0 install-deps chromium webkit \
+  && rm -rf /var/lib/apt/lists/*
+
 # Build-args for UID/GID alignment: sandcastle docker build-image
 # defaults these to the host user's UID/GID so image-built files
 # and bind-mounted files share an owner without runtime chown.
@@ -33,6 +38,10 @@ USER ${AGENT_UID}:${AGENT_GID}
 # Install Claude Code CLI and bun (main.mts runs `bun install` as its setup hook)
 RUN curl -fsSL https://claude.ai/install.sh | bash
 RUN curl -fsSL https://bun.sh/install | bash
+
+# The browsers themselves, in the agent's cache, so each sandbox starts with
+# them rather than downloading them per issue.
+RUN npx -y playwright@1.64.0 install chromium webkit
 
 # Add Claude and bun to PATH
 ENV PATH="/home/agent/.bun/bin:/home/agent/.local/bin:$PATH"

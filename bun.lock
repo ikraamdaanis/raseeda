@@ -56,7 +56,7 @@
         "zustand": "^5.0.15",
       },
       "devDependencies": {
-        "@ai-hero/sandcastle": "^0.12.0",
+        "@ai-hero/sandcastle": "0.14.0",
         "@cloudflare/vite-plugin": "^1.63.1",
         "@eslint/js": "^10.0.1",
         "@playwright/test": "^1.64.0",
@@ -96,7 +96,7 @@
     "unrs-resolver",
   ],
   "packages": {
-    "@ai-hero/sandcastle": ["@ai-hero/sandcastle@0.12.0", "", { "dependencies": { "@clack/prompts": "^1.1.0" }, "peerDependencies": { "@daytona/sdk": "^0.164.0", "@vercel/sandbox": ">=1.0.0" }, "optionalPeers": ["@daytona/sdk", "@vercel/sandbox"], "bin": { "sandcastle": "dist/main.js" } }, "sha512-kdQ414rM8t1QiWeqZ3Klz4KSd0PqQG4bRVuqGpRDUomWhojSZkEAc1tbcEcThVmBEaHkCt8LmYR49vqEPNIoYQ=="],
+    "@ai-hero/sandcastle": ["@ai-hero/sandcastle@0.14.0", "", { "dependencies": { "@clack/prompts": "^1.1.0" }, "peerDependencies": { "@daytona/sdk": ">=0.164.0 <1.0.0", "@fly/sprites": ">=0.2.4 <1.0.0", "@vercel/sandbox": ">=1.0.0", "e2b": ">=2.62.0 <3.0.0", "modal": ">=0.11.0 <1.0.0" }, "optionalPeers": ["@daytona/sdk", "@fly/sprites", "@vercel/sandbox", "e2b", "modal"], "bin": { "sandcastle": "dist/main.js" } }, "sha512-s9B/23nPWL6y2sZkVxksqTge0MqGWr2HtjneGDf/V1npReiqDRlUJUvQ4+7K0oWORLqgHU5wLK0pfukg+UqTqQ=="],
 
     "@babel/code-frame": ["@babel/code-frame@7.29.7", "", { "dependencies": { "@babel/helper-validator-identifier": "^7.29.7", "js-tokens": "^4.0.0", "picocolors": "^1.1.1" } }, "sha512-Aup7aUOfpbAUg2ROOJN6Iw5f9DMBlzu0mIkm/malLQFN/YQgO48wCj0Kxa3sEHJvPVFg7siR+qRInwXd2qhQKw=="],
 

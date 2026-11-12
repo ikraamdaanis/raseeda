@@ -76,11 +76,17 @@ const sandboxMounts = [
     : [])
 ];
 
-const agent = sandcastle.claudeCode("claude-opus-4-8");
+const agent = sandcastle.claudeCode("claude-opus-5-5");
 
+// The image already holds Playwright's browsers for the version it was built
+// with, so the install after `bun install` is a no-op unless the project's
+// Playwright has moved on since.
 const hooks = {
   sandbox: {
-    onSandboxReady: [{ command: "bun install", timeoutMs: 300_000 }]
+    onSandboxReady: [
+      { command: "bun install", timeoutMs: 300_000 },
+      { command: "bunx playwright install chromium webkit", timeoutMs: 600_000 }
+    ]
   }
 };
 
@@ -689,7 +695,7 @@ for (let i = 1; i <= MAX_ITERATIONS; i++) {
 
     implementedCommits = implement.commits.length;
 
-    // Phase 2: review (cleanup pass on the same branch) — only if there is work
+    // Phase 2: review (cleanup pass on the same branch), only if there is work
     if (implementedCommits > 0) {
       await sandbox.run({
         name: `reviewer-${issue.number}`,
@@ -743,7 +749,7 @@ for (let i = 1; i <= MAX_ITERATIONS; i++) {
 
     if (sh(`git status --porcelain`).trim()) {
       sh(`git add -A`);
-      sh(`git commit -m "style: apply prettier formatting"`);
+      sh(`git commit -m "Apply Prettier formatting"`);
     }
   }
 

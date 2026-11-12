@@ -4,10 +4,16 @@ The reviewer agent loads this during code review via `@.sandcastle/CODING_STANDA
 These mirror the repo's `CLAUDE.md` and the operator's global preferences (also
 mounted at `~/.claude/CLAUDE.md`). Enforce them on the lines the change touches.
 
-## Imports
+## Imports and exports
 
 - Absolute imports only (the `~/` alias). No relative imports. Enforced by ESLint.
-- Use `import type { X }` for type-only imports.
+- Types are imported only with a separate `import type { X }` line, never an inline
+  `type` qualifier inside a value import (`import { cva, type VariantProps }` is two
+  lines: a value import and an `import type`).
+- No namespace imports (`import * as X`). Import the bindings by name.
+- No blank lines between imports.
+- Export each declaration inline (`export function Foo`), never in a bottom
+  `export { ... }` block.
 - No barrel exports. Import directly from the source file.
 
 ## TypeScript
@@ -68,6 +74,13 @@ mounted at `~/.claude/CLAUDE.md`). Enforce them on the lines the change touches.
   Add no other network calls, telemetry or third-party analytics; the app's
   "local-first, no tracking" promise must hold.
 - Keep modules focused on a single responsibility; prefer composition.
+- Decisions recorded in `docs/adr/` hold unless an issue says otherwise. Use the terms
+  in `GLOSSARY.md`.
+
+## Forms
+
+- A submit button stays loading from the click until there's an error; only a failure
+  takes it out of its loading state (`isLoading={mutation.isPending || mutation.isSuccess}`).
 
 ## Testing
 
@@ -83,5 +96,7 @@ mounted at `~/.claude/CLAUDE.md`). Enforce them on the lines the change touches.
 
 ## Writing (commits, PR text, comments)
 
+- Commit messages are one short imperative line under about 50 characters, with no body
+  unless the reason can't be read from the diff.
 - Never use the em-dash `—`. Use a comma, semicolon, period, parentheses, or a sparing
   en-dash `–`.

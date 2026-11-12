@@ -47,8 +47,8 @@ Review the code changes on branch `{{BRANCH}}` and improve code clarity, consist
 If you find improvements to make:
 
 1. Make the changes directly on this branch
-2. Run `bun run check-types` and relevant tests to ensure nothing is broken. Do **NOT** run watch-mode commands (`ts-lint`, `ts-lint:watch`, `dev`, or anything with `--watch`).
-3. Commit describing the refinements
+2. Run `bun run check-types`, `bun run lint`, `bun run test` (never plain `bun test`) and the e2e specs for the area you changed (`bun run test:e2e e2e/<spec>.spec.ts`) to ensure nothing is broken. Do **NOT** run watch-mode commands (`ts-lint`, `dev`, `serve`, `test:e2e:ui`, or anything with `--watch`).
+3. Commit with one short imperative line under about 50 characters, such as `Simplify NumberField draft handling`, and no body
 
 If the code is already clean and well-structured, do nothing.
 
