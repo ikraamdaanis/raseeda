@@ -118,7 +118,7 @@ describe("the save controller", () => {
     await vi.advanceTimersByTimeAsync(500);
 
     expect(controller.hasFailed()).toBe(true);
-    expect(controller.getUnsaved()).toBe("kept");
+    expect(controller.isPending()).toBe(true);
     expect(states.at(-1)).toEqual({ pending: true, failure });
 
     await vi.advanceTimersByTimeAsync(1000);
@@ -185,7 +185,7 @@ describe("the save controller", () => {
     controller.schedule("x");
 
     await expect(controller.flush()).resolves.toBe(false);
-    expect(controller.getUnsaved()).toBe("x");
+    expect(controller.isPending()).toBe(true);
   });
 
   it("tries again straight away on retry", async () => {
@@ -199,51 +199,6 @@ describe("the save controller", () => {
     await vi.advanceTimersByTimeAsync(500);
 
     await expect(controller.retry()).resolves.toBe(true);
-    expect(write).toHaveBeenCalledTimes(2);
-  });
-
-  it("hands back queued content without writing it", async () => {
-    const write = vi.fn(async (_content: string) => {});
-    const controller = createSaveController({ write });
-
-    controller.schedule("queued");
-
-    expect(controller.takeUnsaved()).toBe("queued");
-
-    await vi.advanceTimersByTimeAsync(5000);
-
-    expect(write).not.toHaveBeenCalled();
-    expect(controller.isPending()).toBe(false);
-
-    controller.schedule("next");
-    await vi.advanceTimersByTimeAsync(500);
-
-    expect(write).toHaveBeenCalledExactlyOnceWith("next");
-  });
-
-  it("drops the failure with the content it hands back", async () => {
-    const write = vi
-      .fn<(content: string) => Promise<void>>()
-      .mockRejectedValueOnce(new Error("Full"))
-      .mockResolvedValue(undefined);
-    const onChange = vi.fn();
-    const controller = createSaveController({ write, onChange });
-
-    controller.schedule("failed");
-    await vi.advanceTimersByTimeAsync(500);
-
-    expect(controller.hasFailed()).toBe(true);
-    expect(controller.takeUnsaved()).toBe("failed");
-    expect(controller.hasFailed()).toBe(false);
-    expect(onChange).toHaveBeenLastCalledWith({
-      pending: false,
-      failure: null
-    });
-
-    controller.schedule("next");
-    await vi.advanceTimersByTimeAsync(500);
-
-    expect(write).toHaveBeenLastCalledWith("next");
     expect(write).toHaveBeenCalledTimes(2);
   });
 

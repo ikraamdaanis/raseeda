@@ -343,8 +343,8 @@ export const useInvoiceStore = create<InvoiceStore>()(
       // Whole state operations
       setInvoice: invoice =>
         set(() => {
-          // Every caller hands over current data (stored, imported and stashed
-          // invoices are migrated as they're read), so this only validates it:
+          // Every caller hands over current data (stored and imported invoices
+          // are migrated as they're read), so this only validates it:
           // re-running the migrations would undo a label typed to match an old
           // default. Totals are derived at render, so there is nothing to
           // recompute here.

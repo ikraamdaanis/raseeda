@@ -64,7 +64,7 @@ import { trackInvoice } from "~/utils/track";
 // only that tab opens the database, so nothing else writes the open invoice:
 // - each open invoice gets its own save controller, which creates it on its
 //   first real edit and after that updates its content;
-// - a failed write is shown, kept in memory and retried, never stashed;
+// - a failed write is shown, kept in memory and retried;
 // - an invoice with an automatic name edited back to blank is deleted when
 //   it's left;
 // - the invoice keeps a version history: when opened, after a pause in
