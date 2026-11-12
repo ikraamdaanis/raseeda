@@ -1,5 +1,4 @@
 import { IconMinus, IconPlus } from "@tabler/icons-react";
-import { sum } from "lodash-es";
 import type { CSSProperties } from "react";
 import { useEffect, useState } from "react";
 import { useShallow } from "zustand/react/shallow";
@@ -13,6 +12,7 @@ import { cn } from "~/lib/utils";
 import {
   useLineItemsSlice,
   useMoneyFormat,
+  usePaperSize,
   useTheme
 } from "~/stores/invoice-selectors";
 import { useInvoiceStore } from "~/stores/invoice-store";
@@ -21,6 +21,7 @@ import type {
   Invoice,
   InvoiceItem,
   InvoiceLineItemRow,
+  InvoicePaperSize,
   InvoiceTheme,
   MoneyFormat,
   TableSettings,
@@ -34,10 +35,12 @@ import { calculateLineAmount } from "~/utils/calculate-invoice-totals";
 import { formatPlainNumber } from "~/utils/format-number";
 import { getRoleSettings } from "~/utils/get-role-settings";
 import { getTextStyles } from "~/utils/get-text-styles";
+import { layoutColumns } from "~/utils/layout-columns";
 import {
   forgetMeasuredWidths,
   measureTextWidth
 } from "~/utils/measure-text-width";
+import { PDF_PAGE_PADDING, PDF_PAGE_SIZES } from "~/utils/pdf-styles";
 import {
   getAmountColumnLabel,
   getShownColumns,
@@ -292,25 +295,22 @@ function useVisibleColumns() {
   };
 }
 
-// The description keeps at least this much of the table while the figures
-// leave room for it.
-const DESCRIPTION_MIN_WIDTH = "15%";
-
 // What the description keeps however long the figures: a few characters.
 const DESCRIPTION_FLOOR_WIDTH = "4em";
 
 // The rows' gap between columns, gap-2.
 const COLUMN_GAP_WIDTH = 8;
 
-// Room a figure needs beyond its text at rest: a field's border, and the
-// amount columns' right padding. The padding a field gains while it's edited
-// comes out of the spare room, so in a table with none a focused figure
-// scrolls a little rather than the table overflowing.
-const CELL_PADDING_WIDTH = 10;
+// CSS pixels in a point: the canvas draws the page at the PDF's size.
+const PX_PER_PT = 96 / 72;
 
-// Room a column takes beyond that where the row has it, so the figures don't
-// crowd. A row short of room gives it up before the description shrinks.
-const COLUMN_SPARE_WIDTH = 12;
+// The width the columns share: the page inside its border and margins, less
+// the table's border.
+function getTableInnerWidth(paperSize: InvoicePaperSize) {
+  return (
+    (PDF_PAGE_SIZES[paperSize].width - PDF_PAGE_PADDING * 2) * PX_PER_PT - 4
+  );
+}
 
 // Bumps when a web font finishes loading, so text measured in a fallback font
 // is measured again.
@@ -332,11 +332,10 @@ function useFontLoads() {
   return fontLoads;
 }
 
-// The table's grid: every column but the description as wide as its widest
-// text, a label, its currency or a line's figure, and the description the
-// rest, the way the PDF sizes them, so Preview matches it. The grid grows a
-// column into its spare room only once each column has its text's width, and
-// the description takes what's left.
+// The table's grid, laid out as the PDF lays out its columns, so Preview
+// matches it. A blank header measures as its placeholder, and while editing a
+// blank unit as its placeholder. The description takes the rest, giving up
+// its share before a figure is clipped, down to a few characters.
 function useColumnTemplate({
   columns,
   items,
@@ -359,82 +358,73 @@ function useColumnTemplate({
   const tax = useInvoiceStore(state => state.tax);
   const taxLabel = useInvoiceStore(state => state.labels.tax);
   const hasTax = useInvoiceStore(state => state.sections.tax);
+  const paperSize = usePaperSize();
   const isPreview = useIsPreview();
-  const rows = items.map(item =>
-    buildLineItemRow({ item, money, conversion, tax })
-  );
+  const shownIds = new Set(columns.map(column => column.id));
+  const unitPlaceholder = isPreview
+    ? ""
+    : (LINE_ITEM_COLUMNS.find(column => column.id === "unit")?.cell
+        .placeholder ?? "");
+  const rows = items.map(item => ({
+    ...buildLineItemRow({ item, money, conversion, tax }),
+    unit: item.unit || unitPlaceholder
+  }));
 
-  function getCellTexts(column: LineItemColumnConfig) {
-    switch (column.id) {
-      case "quantity":
-        return rows.map(row => row.quantity);
-      case "unit":
-        return items.map(
-          item =>
-            item.unit || (isPreview ? "" : (column.cell.placeholder ?? ""))
-        );
-      case "unitPrice":
-        return rows.map(row => row.unitPrice);
-      case "tax":
-        return rows.map(row => row.tax);
-      case "amount":
-        return rows.map(row => row.amount);
-      case "convertedAmount":
-        return rows.map(row => row.convertedAmount ?? "");
-      default:
-        return [];
-    }
-  }
+  function getLabel(id: LineItemColumnConfig["id"]) {
+    const column = LINE_ITEM_COLUMNS.find(config => config.id === id);
 
-  // Each figure column's width: its widest text, header line or figure, and
-  // the field's padding.
-  function measureColumn(column: LineItemColumnConfig) {
-    const headerStyle = getTextStyles({
-      settings: getRoleSettings(theme, column.headerRole)
-    });
-    const rowStyle = getTextStyles({
-      settings: getRoleSettings(theme, column.rowRole)
-    });
-    const label =
+    if (!column) return "";
+
+    return (
       getPrintedColumnLabel({
         column,
         columnLabels: tableSettings.columnLabels,
         taxLabel,
         hasTax
-      }) || column.headerPlaceholder;
-    const headerWidths = [label, getColumnCurrency(column, conversion)].map(
-      line => measureTextWidth(line, headerStyle)
-    );
-    const cellWidths = getCellTexts(column).map(text =>
-      measureTextWidth(text, rowStyle)
-    );
-
-    return (
-      Math.ceil(Math.max(0, ...headerWidths, ...cellWidths)) +
-      CELL_PADDING_WIDTH
+      }) || column.headerPlaceholder
     );
   }
 
-  const widths = new Map(
-    columns
-      .filter(column => column.id !== "description")
-      .map(column => [column.id, measureColumn(column)])
+  const headerStyle = getTextStyles({
+    settings: getRoleSettings(theme, "tableHeaderRight")
+  });
+  const cellStyle = getTextStyles({
+    settings: getRoleSettings(theme, "tableRowRight")
+  });
+  const layout = layoutColumns({
+    columns: {
+      quantityAndPrice: shownIds.has("quantity"),
+      unit: shownIds.has("unit"),
+      tax: shownIds.has("tax")
+    },
+    rows,
+    labels: {
+      quantity: getLabel("quantity"),
+      unit: getLabel("unit"),
+      unitPrice: getLabel("unitPrice"),
+      tax: getLabel("tax"),
+      amount: getLabel("amount")
+    },
+    conversion: shownIds.has("convertedAmount") ? conversion : null,
+    tableWidth: getTableInnerWidth(paperSize),
+    columnGap: COLUMN_GAP_WIDTH,
+    measure: (text, part) =>
+      measureTextWidth(text, part === "header" ? headerStyle : cellStyle)
+  });
+  const widths = new Map<string, number>(
+    layout.columns.map(column => [column.id, column.width])
   );
-  // What the figures and the gaps between the columns take. The description
-  // keeps its share of the rest, but gives it up before a figure is clipped,
-  // as the PDF's does, down to a few characters.
-  const figuresWidth =
-    sum([...widths.values()]) + COLUMN_GAP_WIDTH * (columns.length - 1);
+  const descriptionMinWidth = `${layout.descriptionMinShare * 100}%`;
 
   return columns
     .map(column => {
       const width = widths.get(column.id);
 
       if (width === undefined) {
-        return `minmax(max(${DESCRIPTION_FLOOR_WIDTH}, min(${DESCRIPTION_MIN_WIDTH}, 100% - ${figuresWidth}px)), 1fr)`;
+        return `minmax(max(${DESCRIPTION_FLOOR_WIDTH}, min(${descriptionMinWidth}, 100% - ${layout.figuresWidth}px)), 1fr)`;
       }
 
-      return `minmax(${width}px, ${width + COLUMN_SPARE_WIDTH}px)`;
+      return `${width}px`;
     })
     .join(" ");
 }
