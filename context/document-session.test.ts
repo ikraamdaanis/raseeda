@@ -39,8 +39,8 @@ type FailWrites = {
   writes?: boolean;
   // Runs before each get from those tables, as getInvoice makes, with the key
   // it reads, its table and its transaction's mode ("readonly" for a live
-  // query). A promise it returns holds the read's result back until it
-  // settles.
+  // query or getInvoice, "readwrite" for the read inside a write). A promise
+  // it returns holds the read's result back until it settles.
   beforeRead?: (
     key: unknown,
     table: string,
