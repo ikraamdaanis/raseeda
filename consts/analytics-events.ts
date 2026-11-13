@@ -160,7 +160,8 @@ export const SECTION_BITS = [
   "terms",
   "latePayment",
   "paidStamp",
-  "signature"
+  "signature",
+  "paymentQrCode"
 ] as const satisfies readonly InvoiceSectionKey[];
 
 // The fields each event carries after its name, as `key=value` words:

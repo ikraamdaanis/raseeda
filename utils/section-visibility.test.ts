@@ -71,6 +71,36 @@ describe("printed sections", () => {
     expect(getPrintedSections(empty).signature).toBe(false);
   });
 
+  it("prints the payment QR code once switched on with a SEPA transfer", () => {
+    const blank = makeInvoice();
+    const invoice = makeInvoice({
+      currency: "€",
+      currencyCode: "EUR",
+      sections: { ...DEFAULT_INVOICE_SECTIONS, paymentQrCode: true },
+      paymentDetails: {
+        ...blank.paymentDetails,
+        accountName: "Acme Studio",
+        iban: "DE89 3704 0044 0532 0130 00"
+      }
+    });
+
+    expect(DEFAULT_INVOICE_SECTIONS.paymentQrCode).toBe(false);
+    expect(getPrintedSections(invoice).paymentQrCode).toBe(true);
+    expect(
+      getPrintedSections({
+        ...invoice,
+        sections: { ...invoice.sections, paymentQrCode: false }
+      }).paymentQrCode
+    ).toBe(false);
+    expect(
+      getPrintedSections({ ...invoice, currency: "$", currencyCode: "USD" })
+        .paymentQrCode
+    ).toBe(false);
+    expect(
+      getPrintedSections({ ...invoice, documentType: "receipt" }).paymentQrCode
+    ).toBe(false);
+  });
+
   it("never prints switched-off tax", () => {
     const printed = getPrintedSections(
       makeInvoice({

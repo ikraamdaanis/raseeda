@@ -11,6 +11,10 @@ import {
   OptionalSection,
   RemoveSectionButton
 } from "~/components/editor/invoice-optional-section";
+import {
+  PaymentQrCode,
+  PaymentQrCodeSwitch
+} from "~/components/editor/invoice-payment-qr-code";
 import { InvoiceTextArea } from "~/components/editor/invoice-textarea";
 import { Button } from "~/components/ui/button";
 import { NativeSelect } from "~/components/ui/select";
@@ -79,20 +83,24 @@ export function InvoicePaymentDetails() {
           onClick={() => setSection("paymentDetails", false)}
         />
       </div>
-      <div className="mt-2 flex flex-col gap-1">
-        {PAYMENT_FIELDS.map(field => (
+      <div className="mt-2 flex items-start gap-4">
+        <div className="flex min-w-0 flex-1 flex-col gap-1">
+          {PAYMENT_FIELDS.map(field => (
+            <PaymentDetailsField
+              key={field.key}
+              fieldKey={field.key}
+              placeholder={field.placeholder}
+            />
+          ))}
+          <PaymentMethods />
           <PaymentDetailsField
-            key={field.key}
-            fieldKey={field.key}
-            placeholder={field.placeholder}
+            fieldKey={PAYMENT_LINK_FIELD.key}
+            placeholder={PAYMENT_LINK_FIELD.placeholder}
           />
-        ))}
-        <PaymentMethods />
-        <PaymentDetailsField
-          fieldKey={PAYMENT_LINK_FIELD.key}
-          placeholder={PAYMENT_LINK_FIELD.placeholder}
-        />
+        </div>
+        <PaymentQrCode />
       </div>
+      <PaymentQrCodeSwitch />
       <PaymentDetailsTerms />
     </OptionalSection>
   );
