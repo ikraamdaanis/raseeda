@@ -6,9 +6,9 @@ import { useSectionsSlice } from "~/stores/invoice-selectors";
 
 /**
  * The optional sections at the foot of the invoice, in their fixed order. Each
- * shows while its section is switched on (the inspector's Sections switches
- * add them); the hover "×" beside a label switches it off again, keeping what
- * was typed.
+ * shows while its section is switched on (the footer's "+ Add" slot adds
+ * them); the hover "×" beside a label switches it off again, keeping what was
+ * typed.
  */
 export function InvoiceFooterSections() {
   const { setSection } = useSectionsSlice();

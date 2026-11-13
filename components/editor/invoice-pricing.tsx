@@ -1,7 +1,9 @@
 import type { CSSProperties, ReactNode } from "react";
 import { useEffect, useState } from "react";
+import { CurrencyPopover } from "~/components/editor/invoice-currency-popover";
 import { InvoiceDateField } from "~/components/editor/invoice-date-field";
 import { InvoiceInput } from "~/components/editor/invoice-input";
+import { RemoveSectionButton } from "~/components/editor/invoice-optional-section";
 import {
   Tooltip,
   TooltipContent,
@@ -18,10 +20,15 @@ import {
   useInvoiceTotals,
   useMoneyFormat,
   usePricingSlice,
+  useSectionsSlice,
   useTaxGroups,
   useTheme
 } from "~/stores/invoice-selectors";
-import type { InvoiceSummaryRow, MoneyFormat } from "~/types";
+import type {
+  InvoiceSectionKey,
+  InvoiceSummaryRow,
+  MoneyFormat
+} from "~/types";
 import { buildTaxRows } from "~/utils/build-invoice-view-model";
 import {
   formatDeduction,
@@ -29,6 +36,7 @@ import {
   withConvertedAmount
 } from "~/utils/currency-conversion";
 import { formatDecimalDraft } from "~/utils/decimal-input";
+import { getTypeSettledSections } from "~/utils/document-type";
 import { formatPlainNumber, roundToDecimals } from "~/utils/format-number";
 import { getRoleSettings } from "~/utils/get-role-settings";
 import { getTextStyles } from "~/utils/get-text-styles";
@@ -128,6 +136,31 @@ function PricingRowToggle({
       <TooltipTrigger render={button} />
       <TooltipContent className="max-w-60">{tooltip}</TooltipContent>
     </Tooltip>
+  );
+}
+
+// The "×" to the right of an optional totals row, which switches it off and
+// keeps what was typed. A row the document's type settles has none.
+function HideRowButton({
+  section,
+  label
+}: {
+  section: InvoiceSectionKey;
+  label: string;
+}) {
+  const { setSection } = useSectionsSlice();
+  const documentType = useDocumentType();
+  const settled: InvoiceSectionKey[] = getTypeSettledSections(documentType);
+
+  if (settled.includes(section)) return null;
+
+  return (
+    <span className="absolute top-1/2 left-full ml-1 -translate-y-1/2">
+      <RemoveSectionButton
+        label={label}
+        onClick={() => setSection(section, false)}
+      />
+    </span>
   );
 }
 
@@ -393,7 +426,8 @@ function InvoiceTaxRow({ isDefault }: { isDefault: boolean }) {
   const [taxInput, setTaxInput] = usePricingInput(tax.percentage);
 
   return (
-    <div className="group/pricing-row col-span-2 grid grid-cols-subgrid items-center text-sm">
+    <div className="group/pricing-row group/optional relative col-span-2 grid grid-cols-subgrid items-center text-sm">
+      <HideRowButton section="tax" label="Hide tax" />
       <div
         className="flex w-full items-center gap-2"
         style={{ justifyContent: labelSettings.align }}
@@ -510,7 +544,8 @@ function FeesRow() {
   const [feesInput, setFeesInput] = usePricingInput(fees);
 
   return (
-    <div className="col-span-2 grid grid-cols-subgrid items-center text-sm">
+    <div className="group/optional relative col-span-2 grid grid-cols-subgrid items-center text-sm">
+      <HideRowButton section="fees" label="Hide fees" />
       <InvoiceInput
         aria-label="Fees label"
         data-field="labels.fees"
@@ -570,7 +605,8 @@ function DiscountsRow() {
   const isPercentage = discountType === "percentage";
 
   return (
-    <div className="group/pricing-row col-span-2 grid grid-cols-subgrid items-center text-sm">
+    <div className="group/pricing-row group/optional relative col-span-2 grid grid-cols-subgrid items-center text-sm">
+      <HideRowButton section="discounts" label="Hide discounts" />
       <div
         className="flex w-full items-center gap-2"
         style={{ justifyContent: labelSettings.align }}
@@ -673,7 +709,8 @@ function DiscountsRow() {
   );
 }
 
-// The grand total suppresses its emphasis when a payment has been recorded, so
+// In Edit mode the total opens the currency and the second one, since every
+// amount it adds up is on the page. The grand total suppresses its emphasis when a payment has been recorded, so
 // the balance-due row below reads as the figure to pay instead. A payment only
 // counts while its row is switched on, as in the PDF (a receipt's always is,
 // paid in full until an amount is typed; a quote's never is).
@@ -693,6 +730,26 @@ function TotalRow() {
     theme,
     hasPayment ? "totalsValue" : "grandTotalValue"
   );
+  const isPreview = useIsPreview();
+  const totalText = formatInvoiceTotal({
+    amount: total,
+    convertedAmount: converted.total,
+    money,
+    currencyCode,
+    conversion
+  });
+  const totalValue = (
+    <span
+      data-testid="total-value"
+      className={cn(
+        "block text-right whitespace-nowrap",
+        hasPayment ? "" : "font-bold"
+      )}
+      style={getTextStyles({ settings: valueSettings })}
+    >
+      {totalText}
+    </span>
+  );
 
   return (
     <div className="col-span-2 grid grid-cols-subgrid items-center text-sm">
@@ -705,22 +762,16 @@ function TotalRow() {
         style={getTextStyles({ settings: labelSettings })}
         placeholder={DOCUMENT_TYPE_DEFAULTS[documentType].labels.total}
       />
-      <span
-        data-testid="total-value"
-        className={cn(
-          "text-right whitespace-nowrap",
-          hasPayment ? "" : "font-bold"
-        )}
-        style={getTextStyles({ settings: valueSettings })}
-      >
-        {formatInvoiceTotal({
-          amount: total,
-          convertedAmount: converted.total,
-          money,
-          currencyCode,
-          conversion
-        })}
-      </span>
+      {isPreview ? (
+        totalValue
+      ) : (
+        <CurrencyPopover
+          label={`Change currency, total ${totalText}`}
+          className="justify-self-end"
+        >
+          {totalValue}
+        </CurrencyPopover>
+      )}
     </div>
   );
 }
@@ -749,8 +800,10 @@ function AmountPaidRow() {
   const [amountPaidInput, setAmountPaidInput] = usePricingInput(amountPaid);
 
   return (
-    <div className="col-span-2 grid grid-cols-subgrid items-center text-sm">
-      <span className="flex min-w-0 items-center gap-1">
+    <div className="group/pricing-row group/optional relative col-span-2 grid grid-cols-subgrid items-center text-sm">
+      <HideRowButton section="amountPaid" label="Hide amount paid" />
+      <span className="relative flex min-w-0 items-center gap-1">
+        <PaidStampToggle />
         <InvoiceInput
           aria-label="Amount paid label"
           data-field="labels.amountPaid"
@@ -816,6 +869,36 @@ function AmountPaidRow() {
         />
       </span>
     </div>
+  );
+}
+
+// The PAID stamp prints by the title once nothing is left to pay, which is
+// what this row records, so its switch sits here. A quote, proforma invoice
+// or credit note never prints one, so it isn't offered there.
+function PaidStampToggle() {
+  const { sections, setSection } = useSectionsSlice();
+  const documentType = useDocumentType();
+  const settled: InvoiceSectionKey[] = getTypeSettledSections(documentType);
+
+  if (settled.includes("paidStamp")) return null;
+
+  return (
+    <PricingRowToggles>
+      <PricingRowToggle
+        label="Toggle paid stamp"
+        field="sections.paidStamp"
+        active={sections.paidStamp}
+        isAlwaysVisible
+        tooltip={
+          sections.paidStamp
+            ? "A PAID stamp prints by the title once the amount paid covers the total. Click to leave it off."
+            : "Click to print a PAID stamp by the title once the amount paid covers the total."
+        }
+        onClick={() => setSection("paidStamp", !sections.paidStamp)}
+      >
+        PAID
+      </PricingRowToggle>
+    </PricingRowToggles>
   );
 }
 

@@ -1,10 +1,15 @@
 import { InvoiceDateField } from "~/components/editor/invoice-date-field";
 import { InvoiceInput } from "~/components/editor/invoice-input";
-import { DOCUMENT_TYPE_DEFAULTS } from "~/consts/document-types";
+import { RemoveSectionButton } from "~/components/editor/invoice-optional-section";
+import {
+  DOCUMENT_TYPE_DEFAULTS,
+  DOCUMENT_TYPE_ROWS
+} from "~/consts/document-types";
 import { useIsPreview, useShownSections } from "~/hooks/use-shown-sections";
 import {
   useDetailsSlice,
   useDocumentType,
+  useSectionsSlice,
   useTheme
 } from "~/stores/invoice-selectors";
 import type { DocumentType, InvoiceDetailRow } from "~/types";
@@ -12,8 +17,27 @@ import { buildDetailRows } from "~/utils/build-invoice-view-model";
 import { formatServicePeriod } from "~/utils/format-invoice-date";
 import { getRoleSettings } from "~/utils/get-role-settings";
 import { getTextStyles } from "~/utils/get-text-styles";
-import { dueDateForNewInvoiceDate } from "~/utils/payment-terms";
+import {
+  addDaysToIsoDate,
+  dueDateForNewInvoiceDate,
+  getPaymentTermsDays
+} from "~/utils/payment-terms";
+import { readInvoiceDate } from "~/utils/read-invoice-date";
+
 import { hasText } from "~/utils/section-visibility";
+
+// The rows that are optional parts, each hidden with its own "×".
+const OPTIONAL_ROWS = {
+  poNumber: "Hide PO number",
+  supplyDate: "Hide date of supply",
+  servicePeriod: "Hide service period"
+} as const;
+
+function isOptionalRow(
+  id: InvoiceDetailRow["id"]
+): id is keyof typeof OPTIONAL_ROWS {
+  return id in OPTIONAL_ROWS;
+}
 
 // The number and due date are named for the document's type, so an emptied
 // "Valid until" on a quote suggests that, not "Due date".
@@ -82,7 +106,12 @@ export function InvoiceDetails() {
   return (
     <div data-field-area="details" className="flex flex-col">
       {rows.map(row => (
-        <DetailRow key={row.id} row={row} placeholders={placeholders[row.id]} />
+        <DetailRow
+          key={row.id}
+          row={row}
+          placeholders={placeholders[row.id]}
+          hasPaymentTerms={DOCUMENT_TYPE_ROWS[documentType].paymentTerms}
+        />
       ))}
     </div>
   );
@@ -90,10 +119,12 @@ export function InvoiceDetails() {
 
 function DetailRow({
   row,
-  placeholders
+  placeholders,
+  hasPaymentTerms
 }: {
   row: InvoiceDetailRow;
   placeholders: { label: string; value: string };
+  hasPaymentTerms: boolean;
 }) {
   const {
     invoiceDate,
@@ -110,6 +141,7 @@ function DetailRow({
     setServicePeriod,
     setLabels
   } = useDetailsSlice();
+  const { setSection } = useSectionsSlice();
   const theme = useTheme();
   const labelStyle = getTextStyles({
     settings: getRoleSettings(theme, "detailLabel")
@@ -148,12 +180,28 @@ function DetailRow({
     if (nextDueDate) setDueDate(nextDueDate);
   }
 
+  // Net 7 and the rest set the due date that many days after the issue date,
+  // so they wait until there is one. A receipt or credit note has none.
+  const terms =
+    row.id === "dueDate" && hasPaymentTerms
+      ? {
+          days: getPaymentTermsDays(invoiceDate, dueDate),
+          isDisabled: readInvoiceDate(invoiceDate) === null,
+          onPick: (days: number) => {
+            const nextDueDate = addDaysToIsoDate(invoiceDate, days);
+
+            if (nextDueDate) setDueDate(nextDueDate);
+          }
+        }
+      : undefined;
+  const optionalRow = isOptionalRow(row.id) ? row.id : null;
+
   function handleLabelChange(value: string) {
     setLabels(prev => ({ ...prev, [row.labelKey]: value }));
   }
 
   return (
-    <div className="flex items-center">
+    <div className="group/optional relative flex items-center">
       <div className="flex min-w-32 items-center" style={labelStyle}>
         <InvoiceInput
           aria-label={`${placeholders.label} field label`}
@@ -178,6 +226,7 @@ function DetailRow({
           formatValue={
             row.id === "servicePeriod" ? formatServicePeriod : undefined
           }
+          terms={terms}
           onSelect={handleDateSelect}
         />
       ) : (
@@ -191,6 +240,14 @@ function DetailRow({
           style={valueStyle}
           placeholder={placeholders.value}
         />
+      )}
+      {optionalRow && (
+        <span className="absolute top-1/2 right-0 -translate-y-1/2">
+          <RemoveSectionButton
+            label={OPTIONAL_ROWS[optionalRow]}
+            onClick={() => setSection(optionalRow, false)}
+          />
+        </span>
       )}
     </div>
   );

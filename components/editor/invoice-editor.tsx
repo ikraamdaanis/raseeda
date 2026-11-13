@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { AddSectionSlot } from "~/components/editor/invoice-add-section";
 import { InvoiceCanvas } from "~/components/editor/invoice-canvas";
 import { InvoiceClientDetails } from "~/components/editor/invoice-client-details";
 import { InvoiceDetails } from "~/components/editor/invoice-details";
@@ -123,9 +124,11 @@ function Mid() {
       <div className="flex flex-1 flex-col gap-4">
         <InvoiceClientDetails />
         <InvoiceShipping />
+        <AddSectionSlot area="shipping" className="-mt-2" />
       </div>
       <div className="flex flex-1 flex-col items-start">
         <InvoiceDetails />
+        <AddSectionSlot area="details" className="mt-1" />
       </div>
     </div>
   );
@@ -137,10 +140,12 @@ function Bottom() {
       <div className="mt-6 max-w-full">
         <InvoiceLineItems />
         <InvoicePricing />
+        <AddSectionSlot area="totals" className="mt-1 flex justify-end" />
         <InvoiceExchangeRate />
       </div>
       <InvoicePaymentDetails />
       <InvoiceFooterSections />
+      <AddSectionSlot area="footer" className="mt-6" />
     </>
   );
 }

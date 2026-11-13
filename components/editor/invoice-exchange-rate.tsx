@@ -1,8 +1,12 @@
+import { IconPlus } from "@tabler/icons-react";
 import { InvoiceDateField } from "~/components/editor/invoice-date-field";
 import { InvoiceInput } from "~/components/editor/invoice-input";
+import { RemoveSectionButton } from "~/components/editor/invoice-optional-section";
+import { Button } from "~/components/ui/button";
 import { useCurrencyConversion } from "~/hooks/use-currency-conversion";
 import { useExchangeRateInput } from "~/hooks/use-exchange-rate-input";
 import { useIsPreview } from "~/hooks/use-shown-sections";
+import { cn } from "~/lib/utils";
 import {
   useCurrencyConversionSlice,
   useTheme
@@ -13,7 +17,9 @@ import { getTextStyles } from "~/utils/get-text-styles";
 
 // The rate under the totals, typed into the line as it prints: "Exchange
 // rate: 1 GBP = 1.2875 USD (Bank of England rate, 30 Oct 2026)". The brackets
-// and comma hug the fields beside them, as they do in print.
+// and comma hug the fields beside them, as they do in print. Its "×" leaves
+// the line out of print; while editing it stays, faint, since the amounts in
+// the second currency still need the rate, and its "+" prints it again.
 export function InvoiceExchangeRate() {
   const conversion = useCurrencyConversion();
   const {
@@ -30,9 +36,11 @@ export function InvoiceExchangeRate() {
   });
   const rateInput = useExchangeRateInput();
 
-  if (!conversion || !currencyConversion.showRate) return null;
+  if (!conversion) return null;
 
   if (isPreview) {
+    if (!currencyConversion.showRate) return null;
+
     return (
       <p
         data-field-area="pricing"
@@ -59,9 +67,15 @@ export function InvoiceExchangeRate() {
       : [];
 
   return (
-    <div data-field-area="pricing" className="mt-3 flex flex-col gap-1">
+    <div
+      data-field-area="pricing"
+      className="group/optional mt-3 flex flex-col gap-1"
+    >
       <div
-        className="text-paper-foreground flex flex-wrap items-center justify-end gap-x-1 text-sm"
+        className={cn(
+          "text-paper-foreground flex flex-wrap items-center justify-end gap-x-1 text-sm",
+          !currencyConversion.showRate && "opacity-50"
+        )}
         style={style}
       >
         <span>{`Exchange rate: 1 ${conversion.fromCode} =`}</span>
@@ -105,8 +119,28 @@ export function InvoiceExchangeRate() {
           />
           )
         </span>
+        {currencyConversion.showRate ? (
+          <RemoveSectionButton
+            label="Hide exchange rate"
+            onClick={() =>
+              setCurrencyConversion(prev => ({ ...prev, showRate: false }))
+            }
+          />
+        ) : (
+          <Button
+            size="icon-xs"
+            variant="ghost"
+            aria-label="Show exchange rate"
+            onClick={() =>
+              setCurrencyConversion(prev => ({ ...prev, showRate: true }))
+            }
+            className="text-paper-muted-foreground hover:text-paper-foreground pointer-coarse:size-11"
+          >
+            <IconPlus aria-hidden="true" />
+          </Button>
+        )}
       </div>
-      {missing.length > 0 && (
+      {currencyConversion.showRate && missing.length > 0 && (
         <p className="text-right text-xs text-pretty text-amber-700">
           {`Add the rate’s ${missing.join(" and ")}: tax invoices that show a converted amount usually have to say whose rate it is and from when.`}
         </p>

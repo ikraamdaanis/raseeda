@@ -749,12 +749,22 @@ menu), the light/dark switch, and the quick actions (⌘K) button.
 
 ### Inspector (signature)
 
-The right panel holds every whole-invoice setting, in collapsible sections:
-Style (font tiles, weight and size segmented controls), Details (currency,
-issue date, payment terms, date format), and Sections (switches for each
-optional part of the invoice). Dates are always picked from a calendar, on
-the page and in the inspector, and written in the invoice's date format. Rows
+If it prints, it's changed on the page; the right panel is how the invoice
+looks and reads, in collapsible sections: Style (font tiles, weight and size
+segmented controls), Format (document type, date format, number format,
+symbol position, paper) and Table (borders, header, which columns show). Rows
 are 13px, labels `muted-foreground`, fields `muted` fills (`rounded-md`).
+
+On the page, every value is typed or picked where it prints. Dates are always
+picked from a calendar, written in the invoice's date format; the due date's
+calendar has a row of payment terms (Net 7 to 60) above it. In Edit mode the
+total opens the currency and the second currency. Each optional part hides
+with its own hover "×", and a part that's off is added back from a faint
+"+ Add" slot where its area prints (the details, the totals, the footer),
+which opens a short menu of that area's switched-off parts, or names the part
+when there's only one ("+ Logo", "+ Shipping"). Slots are muted text that
+strengthens on hover, and never show in Preview or the PDF. The PAID stamp's
+toggle sits beside Amount paid, the row it depends on.
 
 ### Navigation
 

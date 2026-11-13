@@ -42,8 +42,7 @@ function formatRateInput(rate: number) {
 }
 
 // The exchange rate as it's being typed: "1." stays "1." while the invoice
-// already has 1, and leaving the field writes it as it prints. The rate is
-// typed on the page and in the inspector, so a change from the other one,
+// already has 1, and leaving the field writes it as it prints. A change from
 // undo, redo or another tab replaces the draft.
 export function useExchangeRateInput() {
   const { currencyConversion, numberFormat, setCurrencyConversion } =

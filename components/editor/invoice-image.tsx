@@ -3,6 +3,8 @@ import { useState } from "react";
 import type { FileRejection } from "react-dropzone";
 import Dropzone from "react-dropzone";
 import { toast } from "sonner";
+import { AddSectionSlot } from "~/components/editor/invoice-add-section";
+import { RemoveSectionButton } from "~/components/editor/invoice-optional-section";
 import { Button } from "~/components/ui/button";
 import { cleanupOrphanedImages, getImageBlob, saveImage } from "~/db";
 import { useImageLoader } from "~/hooks/use-image-loader";
@@ -22,7 +24,7 @@ const MAX_IMAGE_SIZE_BYTES = 5 * 1024 * 1024;
  */
 export function InvoiceImage() {
   const { image: imageId, setImage } = useImageSlice();
-  const { sections } = useSectionsSlice();
+  const { sections, setSection } = useSectionsSlice();
   const isPreview = useIsPreview();
   const imageUrl = useImageLoader(imageId);
   const [isDragging, setIsDragging] = useState(false);
@@ -78,7 +80,7 @@ export function InvoiceImage() {
     void cleanupOrphanedImages();
   }
 
-  if (!sections.logo) return null;
+  if (!sections.logo) return <AddSectionSlot area="logo" />;
 
   // Preview shows the logo as the PDF prints it, or nothing.
   if (isPreview) {
@@ -105,7 +107,14 @@ export function InvoiceImage() {
       maxSize={MAX_IMAGE_SIZE_BYTES}
     >
       {({ getRootProps, getInputProps }) => (
-        <div data-field-area="logo" className="group relative shrink-0">
+        <div
+          data-field-area="logo"
+          className="group group/optional relative flex shrink-0 items-start gap-1"
+        >
+          <RemoveSectionButton
+            label="Hide logo"
+            onClick={() => setSection("logo", false)}
+          />
           <div
             {...getRootProps()}
             role="button"

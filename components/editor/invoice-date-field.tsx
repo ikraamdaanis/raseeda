@@ -14,6 +14,7 @@ import { cn } from "~/lib/utils";
 import { useInvoiceStore } from "~/stores/invoice-store";
 import type { Invoice } from "~/types";
 import { formatInvoiceDate } from "~/utils/format-invoice-date";
+import { PAYMENT_TERMS } from "~/utils/payment-terms";
 import {
   readInvoiceDate,
   readInvoiceDateRange
@@ -24,7 +25,9 @@ import {
 // a range takes the first click as the date, and a second click as the other
 // end of a range, stored as yyyy-MM-dd/yyyy-MM-dd. An optional date can be
 // cleared from under the calendar. formatValue writes the stored value, for a
-// field that doesn't follow the invoice's date format to the letter.
+// field that doesn't follow the invoice's date format to the letter. `terms`
+// puts a row of payment terms (Net 7 and the rest) above the calendar, each
+// setting the date that many days after the issue date.
 export function InvoiceDateField({
   value,
   label,
@@ -33,6 +36,7 @@ export function InvoiceDateField({
   allowsRange = false,
   canClear = false,
   formatValue = formatInvoiceDate,
+  terms,
   onSelect
 }: {
   value: string;
@@ -42,6 +46,11 @@ export function InvoiceDateField({
   allowsRange?: boolean;
   canClear?: boolean;
   formatValue?: (value: string, dateFormat: Invoice["dateFormat"]) => string;
+  terms?: {
+    days: number | null;
+    isDisabled: boolean;
+    onPick: (days: number) => void;
+  };
   onSelect: (isoDate: string) => void;
 }) {
   const dateFormat = useInvoiceStore(state => state.dateFormat);
@@ -108,7 +117,31 @@ export function InvoiceDateField({
       >
         <span id={textId}>{text || placeholder}</span>
       </PopoverTrigger>
-      <PopoverContent align="start" className="w-auto p-0">
+      <PopoverContent align="start" className="w-auto gap-0 p-0">
+        {terms && (
+          <div
+            role="group"
+            aria-label="Payment terms"
+            title={terms.isDisabled ? "Pick an issue date first" : undefined}
+            className="flex w-0 min-w-full flex-wrap gap-1 px-3 pt-3"
+          >
+            {PAYMENT_TERMS.map(term => (
+              <Button
+                key={term.days}
+                variant={terms.days === term.days ? "secondary" : "outline"}
+                size="xs"
+                aria-pressed={terms.days === term.days}
+                disabled={terms.isDisabled}
+                onClick={() => {
+                  terms.onPick(term.days);
+                  handleOpenChange(false);
+                }}
+              >
+                {term.label}
+              </Button>
+            ))}
+          </div>
+        )}
         {allowsRange ? (
           <>
             <Calendar

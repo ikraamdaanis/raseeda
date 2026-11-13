@@ -13,7 +13,7 @@ import {
 import { getRoleSettings } from "~/utils/get-role-settings";
 import { getTextStyles } from "~/utils/get-text-styles";
 
-// Shown while the Shipping address section is switched on in the inspector.
+// Shown while the Shipping address section is switched on; its slot adds it.
 export function InvoiceShipping() {
   const { setSection } = useSectionsSlice();
   const sections = useShownSections();

@@ -108,11 +108,12 @@ test("the Amount header reads Net amount while tax is on, until it's given a lab
   await expect(header).toHaveAttribute("placeholder", "Net amount");
   await expect(page.getByLabel("Net amount, item 1")).toBeVisible();
 
-  await page.getByRole("switch", { name: "Tax", exact: true }).click();
+  await page.getByLabel("Tax label").hover();
+  await page.getByRole("button", { name: "Hide tax" }).click();
 
   await expect(header).toHaveAttribute("placeholder", "Amount");
 
-  await page.getByRole("switch", { name: "Tax", exact: true }).click();
+  await page.getByRole("button", { name: "Tax", exact: true }).click();
   await header.fill("Total");
   await modeButton(page, "Preview").click();
 

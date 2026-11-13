@@ -1,11 +1,10 @@
 import type { ReactNode } from "react";
-import { DetailsSection } from "~/components/editor/shell/inspector/details-section";
-import { SectionsSection } from "~/components/editor/shell/inspector/sections-section";
+import { FormatSection } from "~/components/editor/shell/inspector/format-section";
 import { StyleSection } from "~/components/editor/shell/inspector/style-section";
 import { TableSection } from "~/components/editor/shell/inspector/table-section";
 
-// Settings that apply to the whole invoice, moved off the old Edit menu and
-// out of the page so the page only holds the invoice itself.
+// How the invoice looks and reads. Whatever prints, values and the parts that
+// are on, is changed on the page instead.
 export function InspectorPanel({ children }: { children?: ReactNode }) {
   return (
     <div
@@ -13,9 +12,8 @@ export function InspectorPanel({ children }: { children?: ReactNode }) {
       className="min-h-0 flex-1 overflow-y-auto overscroll-contain"
     >
       <StyleSection />
-      <DetailsSection />
+      <FormatSection />
       <TableSection />
-      <SectionsSection />
       {children}
     </div>
   );
