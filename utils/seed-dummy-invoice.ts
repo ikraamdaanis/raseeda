@@ -236,6 +236,8 @@ function buildPaymentDetails(sellerName: string): InvoicePaymentDetails {
     bic,
     sortCode,
     paymentLink: "",
+    qrCodeContent: "sepa",
+    upiId: "",
     terms: pickRandom(PAYMENT_INSTRUCTIONS)
   };
 }

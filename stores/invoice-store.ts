@@ -144,6 +144,8 @@ export const invoiceDefault: Invoice = {
     bic: "",
     sortCode: "",
     paymentLink: "",
+    qrCodeContent: "sepa",
+    upiId: "",
     terms: ""
   },
   pdfSettings: {

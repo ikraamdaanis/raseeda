@@ -265,6 +265,8 @@ describe("migrateInvoiceData", () => {
       bic: "",
       sortCode: "",
       paymentLink: "",
+      qrCodeContent: "sepa",
+      upiId: "",
       terms: ""
     });
   });

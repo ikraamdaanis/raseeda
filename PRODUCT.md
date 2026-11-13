@@ -25,7 +25,7 @@ raseeda's job ends when the PDF is saved. A feature belongs if it makes the docu
 ### In scope
 
 - Invoices, and four close cousins made the same way: quotes, proforma invoices, receipts and credit notes. Each is a one-off document with its own title, dates and closing rows, and turning a quote into an invoice is a duplicate with the type changed. All five exist today, and a document can be duplicated as another type.
-- Everything the printed document needs to say, including how to pay: bank details, other ways to pay such as PayPal, Venmo, Zelle, UPI or Wise, a payment QR code built on the device, or a payment link the user types in. Bank details (under labels the user can rename), other ways to pay, the payment link and a SEPA payment QR code exist today; QR codes for UPI and the payment link don't yet.
+- Everything the printed document needs to say, including how to pay: bank details, other ways to pay such as PayPal, Venmo, Zelle, UPI or Wise, a payment QR code built on the device, or a payment link the user types in. Bank details (under labels the user can rename), other ways to pay, the payment link and a payment QR code (a SEPA transfer, a UPI payment or the payment link) exist today.
 - A printed invoice that works in any language and region: renameable labels, a language preset that sets every label at once, any script, local date and number formats, and A4 or Letter paper. Renameable labels, a language preset (English, German, French, Spanish, Italian, Dutch, Portuguese and Polish), local number formats and A4 or Letter exist today.
 - Styling the document: fonts, size, weight, colours, a logo, a signature (uploaded or drawn), section switches and renamed labels.
 - Printing straight from the editor as well as downloading the PDF.

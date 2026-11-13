@@ -2,9 +2,9 @@ import { Link, StyleSheet, Text, View } from "@react-pdf/renderer";
 import { InvoicePdfPaymentQrCode } from "~/components/pdf/invoice-pdf-payment-qr-code";
 import type { Invoice } from "~/types";
 import { getPaymentRows } from "~/utils/payment-details";
+import { getPaymentQrCode } from "~/utils/payment-qr-code";
 import { pdfRoleStyle } from "~/utils/pdf-styles";
 import { getPrintedSections } from "~/utils/section-visibility";
-import { getSepaQrCode } from "~/utils/sepa-qr-code";
 
 const styles = StyleSheet.create({
   section: {
@@ -49,7 +49,7 @@ export function InvoicePdfPaymentDetails({ invoice }: { invoice: Invoice }) {
     return null;
   }
 
-  const qrCode = getSepaQrCode(invoice);
+  const qrCode = getPaymentQrCode(invoice);
   const qrPayload =
     getPrintedSections(invoice).paymentQrCode && "payload" in qrCode
       ? qrCode.payload

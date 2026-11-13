@@ -172,6 +172,10 @@ export const DEFAULT_PAYMENT_LABELS = {
   paymentLink: "Pay online"
 } as const;
 
+// What the payment QR code encodes (issue #138): a SEPA transfer, a UPI
+// payment or the payment link.
+export const PAYMENT_QR_CODE_CONTENTS = ["sepa", "upi", "paymentLink"] as const;
+
 const DEFAULT_PAYMENT_DETAILS = {
   label: "Payment details",
   labels: DEFAULT_PAYMENT_LABELS,
@@ -183,6 +187,8 @@ const DEFAULT_PAYMENT_DETAILS = {
   bic: "",
   sortCode: "",
   paymentLink: "",
+  qrCodeContent: "sepa",
+  upiId: "",
   terms: ""
 } as const;
 
@@ -290,6 +296,11 @@ const paymentDetailsSchema = z
     // A link to pay online (issue #136), typed in and printed after the other
     // ways to pay; the PDF makes it clickable.
     paymentLink: z.string().catch(""),
+    // What the QR code encodes, and the UPI ID a UPI code pays (issue #138).
+    qrCodeContent: z
+      .enum(PAYMENT_QR_CODE_CONTENTS)
+      .catch(DEFAULT_PAYMENT_DETAILS.qrCodeContent),
+    upiId: z.string().catch(""),
     terms: z.string().catch("")
   })
   .catch(() => ({ ...DEFAULT_PAYMENT_DETAILS, methods: [] }));
