@@ -16,8 +16,8 @@ function reportFailure(error: unknown) {
 }
 
 // Builds the open invoice's PDF and saves it (downloadPdf), opens it in a new
-// tab (openPdf) or prints it (printPdf). `prefetch` warms the PDF engine early (call it on hover
-// or focus of whatever leads to a download).
+// tab (openPdf) or prints it (printPdf). `prefetch` warms the PDF engine early
+// (call it on hover or focus of whatever leads to a download).
 export function useInvoicePdf() {
   const invoice = useInvoiceData();
   const documentName = useDocumentName();
