@@ -123,11 +123,13 @@ export function getSepaQrCode(
   | { payload: string }
   | { missing: "currency" | "iban" | "name" | "nothingDue" | "amount" } {
   const { paymentDetails } = invoice;
-  const { balanceDue } = calculateInvoiceTotals(invoice);
 
   if (invoice.currencyCode !== "EUR") return { missing: "currency" };
   if (!readIban(paymentDetails.iban)) return { missing: "iban" };
   if (!toEpcText(paymentDetails.accountName, 1)) return { missing: "name" };
+
+  const { balanceDue } = calculateInvoiceTotals(invoice);
+
   if (balanceDue <= 0) return { missing: "nothingDue" };
 
   const payload = buildEpcPayload({
