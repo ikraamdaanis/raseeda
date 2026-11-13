@@ -7,7 +7,7 @@ import type { SignatureStrokePoint } from "~/types";
 
 // The ink's width as a fraction of the drawing's width: about 0.4mm in print.
 const INK_WIDTH = 0.008;
-export const SIGNATURE_INK = "#1a1a1a";
+const SIGNATURE_INK = "#1a1a1a";
 
 const CSS_PIXELS_PER_MM = 96 / 25.4;
 
