@@ -11,10 +11,9 @@ import { useSectionsSlice } from "~/stores/invoice-selectors";
 
 /**
  * The optional sections at the foot of the invoice, in their fixed order, the
- * signature last. Each
- * shows while its section is switched on; the hover "×" beside a label
- * switches it off again, keeping what was typed, and the footer's slot below
- * them adds the ones that are off.
+ * signature last. Each shows while its section is switched on; the hover "×"
+ * beside a label switches it off again, keeping what was typed, and the
+ * footer's slot below them adds the ones that are off.
  */
 export function InvoiceFooterSections() {
   const { setSection } = useSectionsSlice();

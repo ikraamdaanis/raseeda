@@ -142,11 +142,20 @@ function SignaturePad({
 
     const png = await renderSignaturePng(strokesRef.current);
 
-    if (!png) toast.error("Couldn't make the signature. Please try again.");
+    if (!png) {
+      toast.error("Couldn't make the signature. Please try again.");
+      setIsSaving(false);
 
-    const imageId = png ? await storeImageBlob(png, "image/png") : null;
+      return;
+    }
 
-    if (!imageId) return setIsSaving(false);
+    const imageId = await storeImageBlob(png, "image/png");
+
+    if (!imageId) {
+      setIsSaving(false);
+
+      return;
+    }
 
     onDone(imageId);
   }
