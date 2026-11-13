@@ -52,15 +52,16 @@ export function buildUpiUri({
   return `upi://pay?${params.join("&")}`;
 }
 
-function getUpiQrCode(invoice: Parameters<typeof getSepaQrCode>[0]) {
+function getUpiQrCode(
+  invoice: Parameters<typeof getSepaQrCode>[0]
+):
+  | { payload: string }
+  | { missing: "upiCurrency" | "upiId" | "upiName" | "nothingDue" } {
   const { paymentDetails } = invoice;
 
-  if (invoice.currencyCode !== "INR")
-    return { missing: "upiCurrency" } as const;
-  if (!readUpiId(paymentDetails.upiId)) return { missing: "upiId" } as const;
-  if (!toUpiText(paymentDetails.accountName)) {
-    return { missing: "upiName" } as const;
-  }
+  if (invoice.currencyCode !== "INR") return { missing: "upiCurrency" };
+  if (!readUpiId(paymentDetails.upiId)) return { missing: "upiId" };
+  if (!toUpiText(paymentDetails.accountName)) return { missing: "upiName" };
 
   const { balanceDue } = calculateInvoiceTotals(invoice);
   const payload = buildUpiUri({
@@ -70,7 +71,7 @@ function getUpiQrCode(invoice: Parameters<typeof getSepaQrCode>[0]) {
     reference: invoice.number
   });
 
-  if (!payload) return { missing: "nothingDue" } as const;
+  if (!payload) return { missing: "nothingDue" };
 
   return { payload };
 }
