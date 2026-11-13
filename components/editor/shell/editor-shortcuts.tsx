@@ -1,7 +1,8 @@
 import { useEffect, useEffectEvent } from "react";
 import { stepZoom, useCanvasView } from "~/context/canvas-view-context";
 import { useEditorUi } from "~/context/editor-ui-context";
-import { hasOpenOverlay } from "~/utils/open-overlay";
+import { useInvoicePdf } from "~/hooks/use-invoice-pdf";
+import { hasOpenModal, hasOpenOverlay } from "~/utils/open-overlay";
 import { hasPrimaryModifier } from "~/utils/shortcut-label";
 
 // True when a key press belongs to a field (typing a "p" into an address must
@@ -15,8 +16,8 @@ function isTypingTarget(target: EventTarget | null) {
   );
 }
 
-// The editor's single-key and view shortcuts. File shortcuts (⌘S, ⌘O, ⇧⌘S)
-// live with the file actions.
+// The editor's single-key, view and print shortcuts. File shortcuts (⌘S, ⌘O,
+// ⇧⌘S) live with the file actions.
 export function EditorShortcuts() {
   const {
     mode,
@@ -31,6 +32,7 @@ export function EditorShortcuts() {
     setPaletteOpen
   } = useEditorUi();
   const { setView, zoom } = useCanvasView();
+  const { pending, printPdf } = useInvoicePdf();
 
   const handleKeyDown = useEffectEvent((event: KeyboardEvent) => {
     const mod = hasPrimaryModifier(event);
@@ -41,6 +43,18 @@ export function EditorShortcuts() {
       event.preventDefault();
 
       if (paletteOpen || !hasOpenOverlay()) setPaletteOpen(!paletteOpen);
+
+      return;
+    }
+
+    // ⌘P prints the invoice's PDF, never the editor page, so the browser's
+    // own print is held back even under a modal dialog, where it does nothing.
+    const isPrintKey = event.key.toLowerCase() === "p" || event.code === "KeyP";
+
+    if (mod && isPrintKey && !event.shiftKey && !event.altKey) {
+      event.preventDefault();
+
+      if (!hasOpenModal() && !event.repeat && !pending) printPdf();
 
       return;
     }

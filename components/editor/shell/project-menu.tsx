@@ -14,6 +14,7 @@ import {
   IconFolderOpen,
   IconHistory,
   IconPalette,
+  IconPrinter,
   IconTrash,
   IconUpload
 } from "@tabler/icons-react";
@@ -42,6 +43,7 @@ import {
 import { useEditorUi } from "~/context/editor-ui-context";
 import { useFileActions } from "~/context/file-actions-context";
 import { useInvoiceDocument } from "~/context/invoice-document-context";
+import { useInvoicePdf } from "~/hooks/use-invoice-pdf";
 import { DOCUMENT_TYPES } from "~/schema/invoice";
 import {
   redoInvoiceChange,
@@ -66,6 +68,7 @@ export function ProjectMenu() {
   const canDuplicate = !actions.pending && isRecord && status === "editing";
   const history = useInvoiceHistory();
   const navigate = useNavigate();
+  const pdf = useInvoicePdf();
 
   return (
     <DropdownMenu>
@@ -180,6 +183,15 @@ export function ProjectMenu() {
           Save As Template
         </DropdownMenuItem>
         <DropdownMenuSeparator />
+        <DropdownMenuItem
+          onClick={pdf.printPdf}
+          onPointerEnter={pdf.prefetch}
+          disabled={pdf.pending}
+        >
+          <IconPrinter aria-hidden="true" />
+          Print
+          <DropdownMenuShortcut>{shortcutLabel("⌘P")}</DropdownMenuShortcut>
+        </DropdownMenuItem>
         <DropdownMenuItem
           onClick={actions.exportData}
           disabled={actions.pending}

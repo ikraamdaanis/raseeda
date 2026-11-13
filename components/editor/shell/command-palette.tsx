@@ -14,6 +14,7 @@ import {
   IconHistory,
   IconLayoutSidebar,
   IconLayoutSidebarRight,
+  IconPrinter,
   IconTrash,
   IconTypography,
   IconUpload,
@@ -121,7 +122,7 @@ function PaletteCommands() {
     useEditorUi();
   const { togglePanel, toggleAllPanels } = useEditorUi();
   const actions = useFileActions();
-  const { downloadPdf, openPdf } = useInvoicePdf();
+  const { downloadPdf, openPdf, printPdf } = useInvoicePdf();
   const { setView } = useCanvasView();
   const { preference, setPreference } = useEditorTheme();
   const { theme, setTheme } = useThemeSlice();
@@ -161,9 +162,17 @@ function PaletteCommands() {
         <PaletteItem
           icon={<IconExternalLink />}
           onSelect={run(openPdf)}
-          keywords={["pdf", "print", "view", "tab"]}
+          keywords={["pdf", "view", "tab"]}
         >
           Open PDF in a new tab
+        </PaletteItem>
+        <PaletteItem
+          icon={<IconPrinter />}
+          onSelect={run(printPdf)}
+          shortcut="⌘P"
+          keywords={["pdf", "paper"]}
+        >
+          Print
         </PaletteItem>
         <PaletteItem icon={<IconFilePlus />} onSelect={run(actions.newInvoice)}>
           New invoice

@@ -885,7 +885,7 @@ const PROOFS: {
       `  "font-src 'self' data:",`,
       `  "connect-src 'self' data: blob:",`,
       `  "worker-src 'self' blob:",`,
-      `  "frame-src 'none'",`
+      `  "frame-src blob:",`
     ],
     highlight: 14,
     hues: [TILE_HUES.sky, TILE_HUES.sage]
