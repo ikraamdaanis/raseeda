@@ -412,6 +412,14 @@ function isLoopBranch(branch: string): boolean {
   return /^(sandcastle\/|feature\/prd-)/.test(branch);
 }
 
+function openLoopPrs(): { url: string }[] {
+  const prs = JSON.parse(
+    sh(`gh pr list --state open --json url,headRefName --limit 200`)
+  ) as { url: string; headRefName: string }[];
+
+  return prs.filter(pr => isLoopBranch(pr.headRefName));
+}
+
 // Where a PR's CI stands: passed once every check passed (or was skipped),
 // failed once any failed or was cancelled, pending otherwise, including
 // before GitHub has registered any.
@@ -447,13 +455,16 @@ function checksState(url: string): "passed" | "failed" | "pending" {
 
 // Waits up to 30 minutes for a PR's CI. Resolves whether it passed.
 function waitForChecks(url: string): boolean {
-  const deadline = Date.now() + 30 * 60_000;
+  const started = Date.now();
+  const deadline = started + 30 * 60_000;
 
   while (Date.now() < deadline) {
-    // CI never runs on a PR that conflicts with its base.
+    // CI never runs on a PR that conflicts with its base. GitHub takes a while
+    // to recompute that after a push, so trust it only after two minutes.
     if (
+      Date.now() - started > 2 * 60_000 &&
       sh(`gh pr view ${url} --json mergeable -q .mergeable`).trim() ===
-      "CONFLICTING"
+        "CONFLICTING"
     ) {
       return false;
     }
@@ -950,6 +961,21 @@ for (let i = 1; i <= MAX_ITERATIONS; i++) {
 
   if (eligible.length === 0) {
     if (tookFixes) continue;
+
+    // Nothing to start, but a PR of the loop's may still be waiting on CI;
+    // the issues it unblocks can't be picked until it merges.
+    const waiting = openLoopPrs().filter(
+      pr => checksState(pr.url) === "pending"
+    );
+
+    if (waiting.length > 0) {
+      for (const pr of waiting) {
+        console.log(`Waiting for CI on ${pr.url}`);
+        waitForChecks(pr.url);
+      }
+
+      continue;
+    }
 
     console.log("No eligible AFK issues. Stopping.");
     break;
