@@ -99,24 +99,18 @@ export function InspectorSection({
   );
 }
 
-// A nested row indents its label, for rows that belong to the one above.
 export function InspectorRow({
   label,
   htmlFor,
-  nested = false,
   children
 }: {
   label: string;
   htmlFor?: string;
-  nested?: boolean;
   children: ReactNode;
 }) {
   return (
     <div className="grid grid-cols-[6rem_minmax(0,1fr)] items-center gap-2">
-      <label
-        htmlFor={htmlFor}
-        className={cn("text-muted-foreground text-[13px]", nested && "pl-3")}
-      >
+      <label htmlFor={htmlFor} className="text-muted-foreground text-[13px]">
         {label}
       </label>
       {children}

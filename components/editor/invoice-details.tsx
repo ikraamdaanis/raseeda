@@ -1,18 +1,34 @@
+import {
+  AddPartSlot,
+  useAddableParts
+} from "~/components/editor/invoice-add-part";
 import { InvoiceDateField } from "~/components/editor/invoice-date-field";
 import { InvoiceInput } from "~/components/editor/invoice-input";
-import { DOCUMENT_TYPE_DEFAULTS } from "~/consts/document-types";
+import { RemoveSectionButton } from "~/components/editor/invoice-optional-section";
+import {
+  DOCUMENT_TYPE_DEFAULTS,
+  DOCUMENT_TYPE_ROWS
+} from "~/consts/document-types";
 import { useIsPreview, useShownSections } from "~/hooks/use-shown-sections";
 import {
   useDetailsSlice,
   useDocumentType,
+  useSectionsSlice,
   useTheme
 } from "~/stores/invoice-selectors";
-import type { DocumentType, InvoiceDetailRow } from "~/types";
+import type {
+  DocumentType,
+  InvoiceDetailRow,
+  InvoiceSectionKey
+} from "~/types";
 import { buildDetailRows } from "~/utils/build-invoice-view-model";
 import { formatServicePeriod } from "~/utils/format-invoice-date";
 import { getRoleSettings } from "~/utils/get-role-settings";
 import { getTextStyles } from "~/utils/get-text-styles";
-import { dueDateForNewInvoiceDate } from "~/utils/payment-terms";
+import {
+  dueDateForNewInvoiceDate,
+  getPaymentTermsOptions
+} from "~/utils/payment-terms";
 import { hasText } from "~/utils/section-visibility";
 
 // The number and due date are named for the document's type, so an emptied
@@ -40,6 +56,15 @@ function buildDetailPlaceholders(
   };
 }
 
+// The rows that are a section of their own, hidden with their own ×.
+const ROW_SECTIONS: Partial<
+  Record<InvoiceDetailRow["id"], { key: InvoiceSectionKey; name: string }>
+> = {
+  poNumber: { key: "poNumber", name: "PO number" },
+  supplyDate: { key: "supplyDate", name: "date of supply" },
+  servicePeriod: { key: "servicePeriod", name: "service period" }
+};
+
 export function InvoiceDetails() {
   const {
     number,
@@ -57,6 +82,7 @@ export function InvoiceDetails() {
   const isPreview = useIsPreview();
   const documentType = useDocumentType();
   const placeholders = buildDetailPlaceholders(documentType);
+  const addableParts = useAddableParts("details");
   // Preview leaves out an empty "Refers to invoice" or "Paid by", as the PDF
   // does.
   const rows = buildDetailRows({
@@ -84,6 +110,11 @@ export function InvoiceDetails() {
       {rows.map(row => (
         <DetailRow key={row.id} row={row} placeholders={placeholders[row.id]} />
       ))}
+      <AddPartSlot
+        areaName="details"
+        parts={addableParts}
+        className="-mx-1 mt-1"
+      />
     </div>
   );
 }
@@ -110,7 +141,10 @@ function DetailRow({
     setServicePeriod,
     setLabels
   } = useDetailsSlice();
+  const { setSection } = useSectionsSlice();
+  const documentType = useDocumentType();
   const theme = useTheme();
+  const section = ROW_SECTIONS[row.id];
   const labelStyle = getTextStyles({
     settings: getRoleSettings(theme, "detailLabel")
   });
@@ -129,6 +163,16 @@ function DetailRow({
     servicePeriod: setServicePeriod
   }[row.id];
   const dateValues = { invoiceDate, supplyDate, dueDate, servicePeriod };
+  // Net 7 to 60 count from the issue date; a receipt or a credit note has no
+  // terms to offer.
+  const presets =
+    row.id === "dueDate" && DOCUMENT_TYPE_ROWS[documentType].paymentTerms
+      ? getPaymentTermsOptions(invoiceDate, dueDate).map(option => ({
+          label: option.label,
+          value: option.dueDate,
+          isSelected: option.isSelected
+        }))
+      : [];
 
   // Moving the invoice date carries a Net 7/14/30/60 due date along with it.
   function handleDateSelect(isoDate: string) {
@@ -153,7 +197,14 @@ function DetailRow({
   }
 
   return (
-    <div className="flex items-center">
+    <div className="group/optional relative flex items-center">
+      {section && (
+        <RemoveSectionButton
+          label={`Hide ${section.name}`}
+          onClick={() => setSection(section.key, false)}
+          className="absolute top-1/2 right-full mr-1 -translate-y-1/2"
+        />
+      )}
       <div className="flex min-w-32 items-center" style={labelStyle}>
         <InvoiceInput
           aria-label={`${placeholders.label} field label`}
@@ -178,6 +229,7 @@ function DetailRow({
           formatValue={
             row.id === "servicePeriod" ? formatServicePeriod : undefined
           }
+          presets={presets}
           onSelect={handleDateSelect}
         />
       ) : (

@@ -86,7 +86,7 @@ export const DOCUMENT_TYPE_DEFAULTS = {
 // or what paying late costs. The switches keep what was chosen, so switching
 // back to an invoice brings the rows back with what was typed in them.
 // `dueDate` is whether the due date row prints (a credit note has nothing to
-// pay by a date), `paymentTerms` whether the inspector offers Net 7 to 60 for
+// pay by a date), `paymentTerms` whether the due date offers Net 7 to 60 for
 // it, `refersTo` whether the "Refers to invoice" row is there and `paidBy`
 // whether the "Paid by" row is.
 export const DOCUMENT_TYPE_ROWS = {

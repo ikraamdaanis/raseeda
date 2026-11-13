@@ -1,7 +1,13 @@
+import { IconX } from "@tabler/icons-react";
 import { kebabCase } from "lodash-es";
 import type { CSSProperties, ReactNode } from "react";
+import {
+  AddPartSlot,
+  useAddableParts
+} from "~/components/editor/invoice-add-part";
 import { InvoiceDateField } from "~/components/editor/invoice-date-field";
 import { InvoiceInput } from "~/components/editor/invoice-input";
+import { InvoiceTotalCurrency } from "~/components/editor/invoice-total-currency";
 import { NumberField } from "~/components/editor/number-field";
 import {
   Tooltip,
@@ -14,14 +20,21 @@ import { useCurrencyConversion } from "~/hooks/use-currency-conversion";
 import { useIsPreview, useShownSections } from "~/hooks/use-shown-sections";
 import { cn } from "~/lib/utils";
 import {
+  useCurrencyConversionSlice,
   useDocumentType,
   useMoneyFormat,
   usePricingSlice,
+  useSectionsSlice,
   useSummaryInputs,
   useTheme
 } from "~/stores/invoice-selectors";
-import type { InvoiceSummaryRow, MoneyFormat } from "~/types";
+import type {
+  InvoiceSectionKey,
+  InvoiceSummaryRow,
+  MoneyFormat
+} from "~/types";
 import { buildEditorSummaryRows } from "~/utils/build-invoice-view-model";
+import { getTypeSettledSections } from "~/utils/document-type";
 import { formatPlainNumber } from "~/utils/format-number";
 import { getRoleSettings } from "~/utils/get-role-settings";
 import { getTextStyles } from "~/utils/get-text-styles";
@@ -89,6 +102,33 @@ function PricingRowToggle({
       <TooltipTrigger render={button} />
       <TooltipContent className="max-w-60">{tooltip}</TooltipContent>
     </Tooltip>
+  );
+}
+
+// Hides a row's section, kept out of sight until the row is hovered or
+// focused. A row the document's type settles (a receipt's amount paid) can't
+// be hidden.
+function HideRowButton({
+  section,
+  name
+}: {
+  section: InvoiceSectionKey;
+  name: string;
+}) {
+  const { setSection } = useSectionsSlice();
+  const documentType = useDocumentType();
+
+  if (getTypeSettledSections(documentType).includes(section)) return null;
+
+  return (
+    <button
+      type="button"
+      aria-label={`Hide ${name.toLowerCase()}`}
+      onClick={() => setSection(section, false)}
+      className="text-paper-muted-foreground hover:text-paper-foreground hover:bg-paper-muted focus-visible:ring-ring flex size-5 shrink-0 items-center justify-center rounded opacity-0 transition-opacity outline-none group-focus-within/pricing-row:opacity-100 group-hover/pricing-row:opacity-100 focus-visible:ring-1 pointer-coarse:size-11 pointer-coarse:opacity-100"
+    >
+      <IconX aria-hidden="true" className="size-3.5" />
+    </button>
   );
 }
 
@@ -163,8 +203,21 @@ const ROW_INPUTS: Partial<
     Value: DiscountValue
   },
   fees: { Value: FeesValue },
-  amountPaid: { LabelInputs: PaidDateInput, Value: AmountPaidValue }
+  total: { Value: TotalValue },
+  amountPaid: {
+    Toggles: PaidStampToggle,
+    LabelInputs: PaidDateInput,
+    Value: AmountPaidValue
+  }
 };
+
+// The rows that are a section of their own, hidden with their own ×.
+const ROW_SECTIONS: Partial<Record<keyof typeof ROW_NAMES, InvoiceSectionKey>> =
+  {
+    discounts: "discounts",
+    fees: "fees",
+    amountPaid: "amountPaid"
+  };
 
 // The totals rows: the PDF's summary rows, and while editing every row whose
 // section is on, even at 0. Two columns, as in the PDF: the labels
@@ -198,6 +251,36 @@ export function InvoicePricing() {
   );
 }
 
+// The totals' switched-off rows, and the exchange rate line once there's a
+// second currency, added back from under the totals.
+export function InvoiceTotalsSlot() {
+  const parts = useAddableParts("totals");
+  const conversion = useCurrencyConversion();
+  const { currencyConversion, setCurrencyConversion } =
+    useCurrencyConversionSlice();
+  const rateParts =
+    conversion && !currencyConversion.showRate
+      ? [
+          {
+            id: "exchangeRate",
+            label: "Exchange rate",
+            onAdd: () =>
+              setCurrencyConversion(prev => ({ ...prev, showRate: true }))
+          }
+        ]
+      : [];
+
+  return (
+    <div className="mt-1 flex justify-end">
+      <AddPartSlot
+        areaName="totals"
+        parts={[...parts, ...rateParts]}
+        align="end"
+      />
+    </div>
+  );
+}
+
 // A row's renameable label and its value as the PDF prints it, with the
 // inputs the row adds. The emphasised row (the total, or the balance due
 // once a payment counts) takes the grand total's style.
@@ -221,6 +304,7 @@ function SummaryRow({
   );
   const valueStyle = getTextStyles({ settings: valueSettings });
   const { Toggles, LabelInputs, Value } = ROW_INPUTS[id] ?? {};
+  const section = ROW_SECTIONS[id];
   const placeholder =
     id === "total"
       ? DOCUMENT_TYPE_DEFAULTS[documentType].labels.total
@@ -233,9 +317,12 @@ function SummaryRow({
         style={{ justifyContent: labelSettings.align }}
       >
         <span className="relative flex min-w-0 items-center">
-          {Toggles && (
+          {(Toggles || section) && (
             <PricingRowToggles>
-              <Toggles />
+              {section && (
+                <HideRowButton section={section} name={ROW_NAMES[id]} />
+              )}
+              {Toggles && <Toggles />}
             </PricingRowToggles>
           )}
           <InvoiceInput
@@ -411,6 +498,7 @@ function InvoiceTaxRow({
       >
         <span className="relative flex items-center">
           <PricingRowToggles>
+            <HideRowButton section="tax" name="Tax" />
             <PricingRowToggle
               label="Toggle tax per line"
               field="tax.perLine"
@@ -598,6 +686,49 @@ function FeesValue({
       style={style}
       onChange={setFees}
     />
+  );
+}
+
+// The total opens the invoice's currencies while editing.
+function TotalValue({
+  row,
+  style
+}: {
+  row: InvoiceSummaryRow;
+  style: CSSProperties;
+}) {
+  return (
+    <InvoiceTotalCurrency
+      value={row.value}
+      isEmphasised={row.isTotal}
+      style={style}
+    />
+  );
+}
+
+// The PAID stamp's switch, beside the amount paid it depends on: the stamp
+// prints by the title once the payment leaves nothing to pay. A document whose
+// type never prints it (a proforma invoice) doesn't offer it.
+function PaidStampToggle() {
+  const { sections, setSection } = useSectionsSlice();
+  const documentType = useDocumentType();
+
+  if (getTypeSettledSections(documentType).includes("paidStamp")) return null;
+
+  return (
+    <PricingRowToggle
+      label="Toggle paid stamp"
+      field="sections.paidStamp"
+      active={sections.paidStamp}
+      tooltip={
+        sections.paidStamp
+          ? "A PAID stamp prints by the title once the amount paid covers the total. Click to leave it off."
+          : "Click to print a PAID stamp by the title once the amount paid covers the total."
+      }
+      onClick={() => setSection("paidStamp", !sections.paidStamp)}
+    >
+      PAID
+    </PricingRowToggle>
   );
 }
 

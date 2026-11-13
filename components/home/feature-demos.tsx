@@ -450,7 +450,7 @@ const DEMO_CURRENCIES = [
   { symbol: "¥", code: "JPY", label: "Yen" }
 ];
 
-// Any currency: the inspector's Currency row moving through four currencies,
+// Any currency: the total's Currency picker moving through four currencies,
 // and the invoice's total, written by the editor's own formatter, following.
 export function CurrencyDemo({
   width,

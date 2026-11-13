@@ -196,17 +196,6 @@ export function useTableSettingsSlice() {
   );
 }
 
-// The tax row's Exempt setting, for the inspector's switch
-export function useTaxExemptSlice() {
-  return useInvoiceStore(
-    useShallow(state => ({
-      isExempt: state.tax.exempt,
-      isPerLine: state.tax.perLine,
-      setTax: state.setTax
-    }))
-  );
-}
-
 // Pricing slice (inputs only; the derived totals come from useInvoiceTotals)
 export function usePricingSlice() {
   return useInvoiceStore(

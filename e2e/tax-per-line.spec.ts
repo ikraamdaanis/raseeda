@@ -221,13 +221,12 @@ test("a rate typed from a leading dot is a fraction", async ({ page }) => {
   await expect(page.getByTestId("total-value")).toHaveText("$170.25 USD");
 });
 
-test("the tax row's % toggle is always shown, explains itself and matches the panel's switch", async ({
+test("the tax row's % toggle is always shown and explains itself", async ({
   page
 }) => {
   await gotoTwoLineInvoice(page);
 
   const toggle = page.getByRole("button", { name: "Toggle tax exempt" });
-  const exempt = page.getByRole("switch", { name: "Tax exempt" });
 
   await page.mouse.move(0, 0);
 
@@ -236,20 +235,13 @@ test("the tax row's % toggle is always shown, explains itself and matches the pa
   await toggle.hover();
 
   await expect(page.getByText("Tax is charged at this rate.")).toBeVisible();
-  await expect(exempt).not.toBeChecked();
 
   await toggle.click();
 
-  await expect(exempt).toBeChecked();
   await expect(toggle).toHaveText("Exempt");
+  await expect(toggle).toHaveAttribute("aria-pressed", "true");
 
-  await exempt.click();
+  await toggle.click();
 
   await expect(toggle).toHaveText("%");
-
-  await page.getByRole("switch", { name: "Tax per line" }).click();
-
-  await expect(
-    page.getByRole("switch", { name: "Exempt by default" })
-  ).toBeVisible();
 });

@@ -737,8 +737,16 @@ the user's chosen invoice font and tracking.
 Editing controls on the page stay out of sight until reached for: "Add item" is
 a quiet row under the table on hover or focus, remove buttons and the pricing
 type toggles appear on row hover, and the empty logo box is a faint dashed
-square whose label shows on hover. On touch they are always shown. Preview
-hides all of them, every placeholder, and every empty row the PDF would skip.
+square whose label shows on hover. Each optional part hides with its own ×,
+and a part that's off leaves a faint slot where it would print: muted 12px
+text that strengthens on hover, naming the part where an area has one
+("+ Logo", "+ Shipping") and "+ Add" opening a short menu of the area's
+switched-off parts where it has more (details, totals, footer). The total
+opens the currency and second currency; the due date's calendar has the
+payment terms above it; the PAID stamp toggles beside Amount paid. Dates are
+always picked from a calendar and written in the invoice's date format. On
+touch these controls are always shown. Preview hides all of them, every
+placeholder, and every empty row the PDF would skip.
 
 ### Canvas Pill (signature)
 
@@ -749,12 +757,11 @@ menu), the light/dark switch, and the quick actions (⌘K) button.
 
 ### Inspector (signature)
 
-The right panel holds every whole-invoice setting, in collapsible sections:
-Style (font tiles, weight and size segmented controls), Details (currency,
-issue date, payment terms, date format), and Sections (switches for each
-optional part of the invoice). Dates are always picked from a calendar, on
-the page and in the inspector, and written in the invoice's date format. Rows
-are 13px, labels `muted-foreground`, fields `muted` fills (`rounded-md`).
+If it prints, it's changed on the page; the right panel is how the invoice
+looks and reads, in collapsible sections: Style (font tiles, weight and size
+segmented controls), Format (document type, date format, number format,
+symbol position, paper) and Table (columns, labels and colours). Rows are
+13px, labels `muted-foreground`, fields `muted` fills (`rounded-md`).
 
 ### Navigation
 

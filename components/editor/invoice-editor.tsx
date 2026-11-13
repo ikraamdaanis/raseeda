@@ -7,7 +7,10 @@ import { InvoiceFooterSections } from "~/components/editor/invoice-footer-sectio
 import { InvoiceImage } from "~/components/editor/invoice-image";
 import { InvoiceLineItems } from "~/components/editor/invoice-line-items";
 import { InvoicePaymentDetails } from "~/components/editor/invoice-payment-details";
-import { InvoicePricing } from "~/components/editor/invoice-pricing";
+import {
+  InvoicePricing,
+  InvoiceTotalsSlot
+} from "~/components/editor/invoice-pricing";
 import { InvoiceSellerDetails } from "~/components/editor/invoice-seller-details";
 import { InvoiceShipping } from "~/components/editor/invoice-shipping";
 import { InvoiceTitle } from "~/components/editor/invoice-title";
@@ -138,6 +141,7 @@ function Bottom() {
         <InvoiceLineItems />
         <InvoicePricing />
         <InvoiceExchangeRate />
+        <InvoiceTotalsSlot />
       </div>
       <InvoicePaymentDetails />
       <InvoiceFooterSections />

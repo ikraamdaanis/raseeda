@@ -1,3 +1,7 @@
+import {
+  AddPartSlot,
+  useAddableParts
+} from "~/components/editor/invoice-add-part";
 import { InvoiceLatePayment } from "~/components/editor/invoice-late-payment";
 import { InvoiceNotes } from "~/components/editor/invoice-notes";
 import { InvoiceTerms } from "~/components/editor/invoice-terms";
@@ -6,13 +10,14 @@ import { useSectionsSlice } from "~/stores/invoice-selectors";
 
 /**
  * The optional sections at the foot of the invoice, in their fixed order. Each
- * shows while its section is switched on (the inspector's Sections switches
- * add them); the hover "×" beside a label switches it off again, keeping what
- * was typed.
+ * shows while its section is switched on; the hover "×" beside a label
+ * switches it off again, keeping what was typed, and the footer's slot below
+ * them adds the ones that are off.
  */
 export function InvoiceFooterSections() {
   const { setSection } = useSectionsSlice();
   const sections = useShownSections();
+  const addableParts = useAddableParts("footer");
 
   return (
     <>
@@ -33,6 +38,11 @@ export function InvoiceFooterSections() {
           />
         </div>
       )}
+      <AddPartSlot
+        areaName="footer"
+        parts={addableParts}
+        className="-mx-1 mt-6"
+      />
     </>
   );
 }
