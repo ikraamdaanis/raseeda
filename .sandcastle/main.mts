@@ -668,6 +668,10 @@ function mergePrAndCloseIssue(args: {
 // PR. Idempotent: bails if a wrap-up PR is already open for this feature
 // branch. Used both by the inline post-PR step and the sweep.
 function maybeOpenPrdWrapUp(parent: number) {
+  // GitHub's issue list lags a close by a few seconds, so a parent this run
+  // just closed (its wrap-up merged) can still come back as open.
+  if (recentlyClosed.has(parent)) return;
+
   const siblings = siblingsOf(parent);
   const stillOpen = siblings.filter(sibling => sibling.state === "OPEN").length;
 
@@ -675,6 +679,11 @@ function maybeOpenPrdWrapUp(parent: number) {
   if (siblings.length === 0 || stillOpen !== 0) return;
 
   const featureBranch = featureBranchFor(parent);
+
+  // Merging the wrap-up deletes the branch; with no branch there's nothing
+  // left to bring to main.
+  if (!sh(`git ls-remote --heads origin ${featureBranch}`).trim()) return;
+
   const existing = findOpenPr(featureBranch, "main");
 
   if (existing) {
@@ -934,6 +943,24 @@ async function runFixAgent(pr: {
   return true;
 }
 
+// Runs a housekeeping step, logging a failure instead of ending the run: a
+// GitHub hiccup in the sweep or a wrap-up shouldn't stop the issues after it.
+async function safely<T>(
+  label: string,
+  fallback: T,
+  task: () => T | Promise<T>
+): Promise<T> {
+  try {
+    return await task();
+  } catch (error) {
+    console.warn(
+      `  ${label} failed, carrying on: ${(error as Error).message.split("\n")[0]}`
+    );
+
+    return fallback;
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Main loop
 // ---------------------------------------------------------------------------
@@ -946,17 +973,19 @@ for (let i = 1; i <= MAX_ITERATIONS; i++) {
   sh(`git fetch origin main`);
   sh(`git merge --ff-only origin/main`);
 
-  sweepAutoMergeablePrs();
+  await safely("Sweep", undefined, sweepAutoMergeablePrs);
 
   // A PRD whose children all closed but has no wrap-up PR yet (one was missed,
   // or the loop stopped in between) gets one now.
-  for (const prd of JSON.parse(
-    sh(`gh issue list --state open --label prd --json number --limit 100`)
-  ) as { number: number }[]) {
-    maybeOpenPrdWrapUp(prd.number);
-  }
+  await safely("PRD wrap-up check", undefined, () => {
+    for (const prd of JSON.parse(
+      sh(`gh issue list --state open --label prd --json number --limit 100`)
+    ) as { number: number }[]) {
+      maybeOpenPrdWrapUp(prd.number);
+    }
+  });
 
-  const tookFixes = await fixBrokenPrs();
+  const tookFixes = await safely("Fix pass", false, fixBrokenPrs);
   const eligible = listEligibleIssues();
 
   if (eligible.length === 0) {
@@ -964,14 +993,14 @@ for (let i = 1; i <= MAX_ITERATIONS; i++) {
 
     // Nothing to start, but a PR of the loop's may still be waiting on CI;
     // the issues it unblocks can't be picked until it merges.
-    const waiting = openLoopPrs().filter(
-      pr => checksState(pr.url) === "pending"
+    const waiting = await safely("CI wait", [] as { url: string }[], () =>
+      openLoopPrs().filter(pr => checksState(pr.url) === "pending")
     );
 
     if (waiting.length > 0) {
       for (const pr of waiting) {
         console.log(`Waiting for CI on ${pr.url}`);
-        waitForChecks(pr.url);
+        await safely("CI wait", false, () => waitForChecks(pr.url));
       }
 
       continue;
@@ -1111,7 +1140,9 @@ for (let i = 1; i <= MAX_ITERATIONS; i++) {
   // a human merges, so stillOpen will be at least 1 here, and the wrap-up fires
   // on a later iteration (via the sweep) when that PR lands.
   if (plan.kind === "prd-child" && plan.parent !== null) {
-    maybeOpenPrdWrapUp(plan.parent);
+    const parent = plan.parent;
+
+    await safely("PRD wrap-up", undefined, () => maybeOpenPrdWrapUp(parent));
   }
 
   sh(`git checkout ${HOST_BRANCH}`);
