@@ -135,7 +135,8 @@ export const INVOICE_SECTION_KEYS = [
   "notes",
   "terms",
   "latePayment",
-  "signature"
+  "signature",
+  "paymentQrCode"
 ] as const;
 
 export const DEFAULT_INVOICE_SECTIONS = {
@@ -154,7 +155,8 @@ export const DEFAULT_INVOICE_SECTIONS = {
   notes: false,
   terms: false,
   latePayment: false,
-  signature: false
+  signature: false,
+  paymentQrCode: false
 } as const satisfies Record<(typeof INVOICE_SECTION_KEYS)[number], boolean>;
 
 // What each bank field is called on the page. Renameable, so "Routing number"
@@ -311,7 +313,8 @@ const invoiceSectionsSchema = z
     notes: z.boolean().catch(DEFAULT_INVOICE_SECTIONS.notes),
     terms: z.boolean().catch(DEFAULT_INVOICE_SECTIONS.terms),
     latePayment: z.boolean().catch(DEFAULT_INVOICE_SECTIONS.latePayment),
-    signature: z.boolean().catch(DEFAULT_INVOICE_SECTIONS.signature)
+    signature: z.boolean().catch(DEFAULT_INVOICE_SECTIONS.signature),
+    paymentQrCode: z.boolean().catch(DEFAULT_INVOICE_SECTIONS.paymentQrCode)
   })
   .catch(DEFAULT_INVOICE_SECTIONS);
 

@@ -4,6 +4,7 @@ import { getCurrencyConversion } from "~/utils/currency-conversion";
 import { getTypeSections } from "~/utils/document-type";
 import { isPaidInFull } from "~/utils/is-paid-in-full";
 import { getPaymentRows } from "~/utils/payment-details";
+import { getSepaQrCode } from "~/utils/sepa-qr-code";
 
 export function hasText(value: string): boolean {
   return value.trim().length > 0;
@@ -29,6 +30,7 @@ export function getPrintedSections(
     | "fees"
     | "amountPaid"
     | "items"
+    | "number"
     | "discountType"
     | "currency"
     | "currencyCode"
@@ -66,6 +68,11 @@ export function getPrintedSections(
     notes: sections.notes && hasText(invoice.notes.content),
     terms: sections.terms && hasText(invoice.terms.content),
     latePayment: sections.latePayment && hasText(invoice.latePayment.content),
-    signature: sections.signature && invoice.signature.image !== ""
+    signature: sections.signature && invoice.signature.image !== "",
+    // Inside the payment details, once it has all a SEPA transfer needs.
+    paymentQrCode:
+      sections.paymentDetails &&
+      sections.paymentQrCode &&
+      "payload" in getSepaQrCode(invoice)
   };
 }

@@ -1,6 +1,7 @@
 import { isValidElement } from "react";
 import { describe, expect, it } from "vitest";
 import { InvoicePdfPaymentDetails } from "~/components/pdf/invoice-pdf-payment-details";
+import { InvoicePdfPaymentQrCode } from "~/components/pdf/invoice-pdf-payment-qr-code";
 import { migrateInvoiceData } from "~/schema/migrations";
 import type { Invoice, InvoicePaymentDetails } from "~/types";
 
@@ -89,5 +90,67 @@ describe("InvoicePdfPaymentDetails other ways to pay", () => {
     });
 
     expect(InvoicePdfPaymentDetails({ invoice })).toBeNull();
+  });
+});
+
+// The payment QR codes the rendered section holds, by the text they encode.
+function qrPayloadsOf(node: unknown): string[] {
+  if (Array.isArray(node)) return node.flatMap(qrPayloadsOf);
+  if (!isValidElement<{ children?: unknown; payload?: string }>(node)) {
+    return [];
+  }
+  if (node.type === InvoicePdfPaymentQrCode) return [node.props.payload ?? ""];
+
+  return qrPayloadsOf(node.props.children);
+}
+
+describe("InvoicePdfPaymentDetails payment QR code", () => {
+  function sepaInvoice(): Invoice {
+    const invoice = invoiceWithPayment({
+      accountName: "Acme Studio",
+      iban: "DE89370400440532013000"
+    });
+
+    return {
+      ...invoice,
+      currency: "€",
+      currencyCode: "EUR",
+      number: "INV-0007",
+      items: [
+        { id: "a", description: "Design", quantity: 1, unit: "", unitPrice: 50 }
+      ],
+      tax: { ...invoice.tax, percentage: 0 },
+      sections: { ...invoice.sections, paymentQrCode: true }
+    };
+  }
+
+  it("prints the SEPA code beside the bank rows once switched on", () => {
+    expect(
+      qrPayloadsOf(InvoicePdfPaymentDetails({ invoice: sepaInvoice() }))
+    ).toEqual([
+      "BCD\n002\n1\nSCT\n\nAcme Studio\nDE89370400440532013000\nEUR50.00\n\n\nINV-0007"
+    ]);
+  });
+
+  it("prints no code while switched off or not in euros", () => {
+    const invoice = sepaInvoice();
+
+    expect(
+      qrPayloadsOf(
+        InvoicePdfPaymentDetails({
+          invoice: {
+            ...invoice,
+            sections: { ...invoice.sections, paymentQrCode: false }
+          }
+        })
+      )
+    ).toEqual([]);
+    expect(
+      qrPayloadsOf(
+        InvoicePdfPaymentDetails({
+          invoice: { ...invoice, currency: "$", currencyCode: "USD" }
+        })
+      )
+    ).toEqual([]);
   });
 });

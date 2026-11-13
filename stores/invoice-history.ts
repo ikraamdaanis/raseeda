@@ -102,7 +102,8 @@ const SECTION_NAMES: Record<InvoiceSectionKey, string> = {
   notes: "Notes",
   terms: "Terms",
   latePayment: "Late payment",
-  signature: "Signature"
+  signature: "Signature",
+  paymentQrCode: "Payment QR code"
 };
 
 const SECTION_AREAS: Record<InvoiceSectionKey, string> = {
@@ -121,7 +122,8 @@ const SECTION_AREAS: Record<InvoiceSectionKey, string> = {
   notes: "notes",
   terms: "terms",
   latePayment: "latePayment",
-  signature: "signature"
+  signature: "signature",
+  paymentQrCode: "paymentDetails"
 };
 
 function describeAction(

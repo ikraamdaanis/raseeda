@@ -112,7 +112,12 @@ export const DOCUMENT_TYPE_ROWS = {
     paidBy: false
   },
   receipt: {
-    sections: { amountPaid: true, paymentDetails: false, latePayment: false },
+    sections: {
+      amountPaid: true,
+      paymentDetails: false,
+      paymentQrCode: false,
+      latePayment: false
+    },
     dueDate: true,
     paymentTerms: false,
     refersTo: false,
@@ -123,6 +128,7 @@ export const DOCUMENT_TYPE_ROWS = {
       amountPaid: false,
       paidStamp: false,
       paymentDetails: false,
+      paymentQrCode: false,
       latePayment: false
     },
     dueDate: false,
@@ -136,7 +142,11 @@ export const DOCUMENT_TYPE_ROWS = {
     sections: Partial<
       Pick<
         InvoiceSections,
-        "amountPaid" | "paidStamp" | "paymentDetails" | "latePayment"
+        | "amountPaid"
+        | "paidStamp"
+        | "paymentDetails"
+        | "paymentQrCode"
+        | "latePayment"
       >
     >;
     dueDate: boolean;
