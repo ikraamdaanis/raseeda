@@ -41,6 +41,7 @@ export const INVOICE_DATA_KEYS = [
   "notes",
   "latePayment",
   "paymentDetails",
+  "signature",
   "pdfSettings",
   "currency",
   "currencyCode",
@@ -343,6 +344,16 @@ export function useImageSlice() {
     useShallow(state => ({
       image: state.image,
       setImage: state.setImage
+    }))
+  );
+}
+
+// Signature slice
+export function useSignatureSlice() {
+  return useInvoiceStore(
+    useShallow(state => ({
+      signature: state.signature,
+      setSignature: state.setSignature
     }))
   );
 }

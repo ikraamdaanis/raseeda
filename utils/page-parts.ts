@@ -21,7 +21,8 @@ const PAGE_AREA_PARTS = {
     { key: "paymentDetails", label: "Payment details" },
     { key: "notes", label: "Notes" },
     { key: "terms", label: "Terms" },
-    { key: "latePayment", label: "Late payment fee" }
+    { key: "latePayment", label: "Late payment fee" },
+    { key: "signature", label: "Signature" }
   ]
 } satisfies Record<string, { key: InvoiceSectionKey; label: string }[]>;
 

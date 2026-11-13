@@ -13,7 +13,7 @@ describe("getAddableParts", () => {
         sections: { ...allOff, notes: true },
         documentType: "invoice"
       }).map(part => part.key)
-    ).toEqual(["paymentDetails", "terms", "latePayment"]);
+    ).toEqual(["paymentDetails", "terms", "latePayment", "signature"]);
   });
 
   it("leaves out the parts the document's type settles", () => {
@@ -30,7 +30,7 @@ describe("getAddableParts", () => {
         sections: allOff,
         documentType: "receipt"
       }).map(part => part.key)
-    ).toEqual(["notes", "terms"]);
+    ).toEqual(["notes", "terms", "signature"]);
   });
 
   it("names each part as the page does", () => {

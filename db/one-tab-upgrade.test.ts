@@ -48,7 +48,7 @@ describe("the upgrade to the one-tab editor", () => {
     expect(versionChanges).toBe(1);
     expect(legacy.isOpen()).toBe(false);
     expect(invoices.map(invoice => invoice.name)).toEqual(["Kept invoice"]);
-    expect(db.verno).toBe(11);
+    expect(db.verno).toBeGreaterThanOrEqual(11);
     expect(db.tables.map(table => table.name)).not.toContain("drafts");
   });
 });

@@ -87,7 +87,8 @@ const SECTION_LABELS: Record<InvoiceSectionKey, string> = {
   paymentDetails: "payment details",
   notes: "notes",
   terms: "terms",
-  latePayment: "late payment fee"
+  latePayment: "late payment fee",
+  signature: "signature"
 };
 
 const SIZE_LABELS: Record<InvoiceSize, string> = {

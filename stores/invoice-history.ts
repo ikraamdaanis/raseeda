@@ -101,7 +101,8 @@ const SECTION_NAMES: Record<InvoiceSectionKey, string> = {
   paymentDetails: "Payment details",
   notes: "Notes",
   terms: "Terms",
-  latePayment: "Late payment"
+  latePayment: "Late payment",
+  signature: "Signature"
 };
 
 const SECTION_AREAS: Record<InvoiceSectionKey, string> = {
@@ -119,7 +120,8 @@ const SECTION_AREAS: Record<InvoiceSectionKey, string> = {
   paymentDetails: "paymentDetails",
   notes: "notes",
   terms: "terms",
-  latePayment: "latePayment"
+  latePayment: "latePayment",
+  signature: "signature"
 };
 
 function describeAction(
@@ -163,6 +165,8 @@ function describeAction(
       return { label: "Line items", area: "items" };
     case "image":
       return { label: "Logo", area: "logo" };
+    case "signature":
+      return { label: "Signature", area: "signature" };
     case "theme":
       return { label: "Style", area: "page" };
     case "dateFormat":

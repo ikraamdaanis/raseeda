@@ -306,7 +306,7 @@ describe("handleAnalyticsEvent", () => {
     ],
     [
       "sections out of range",
-      { body: "pdf_opened r=direct s=- l=en d=browser c=USD n=1 x=32768" }
+      { body: "pdf_opened r=direct s=- l=en d=browser c=USD n=1 x=65536" }
     ],
     [
       "sections that aren't a number",

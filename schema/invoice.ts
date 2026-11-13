@@ -134,7 +134,8 @@ export const INVOICE_SECTION_KEYS = [
   "paymentDetails",
   "notes",
   "terms",
-  "latePayment"
+  "latePayment",
+  "signature"
 ] as const;
 
 export const DEFAULT_INVOICE_SECTIONS = {
@@ -152,7 +153,8 @@ export const DEFAULT_INVOICE_SECTIONS = {
   paymentDetails: true,
   notes: false,
   terms: false,
-  latePayment: false
+  latePayment: false,
+  signature: false
 } as const satisfies Record<(typeof INVOICE_SECTION_KEYS)[number], boolean>;
 
 // What each bank field is called on the page. Renameable, so "Routing number"
@@ -308,7 +310,8 @@ const invoiceSectionsSchema = z
     paymentDetails: z.boolean().catch(DEFAULT_INVOICE_SECTIONS.paymentDetails),
     notes: z.boolean().catch(DEFAULT_INVOICE_SECTIONS.notes),
     terms: z.boolean().catch(DEFAULT_INVOICE_SECTIONS.terms),
-    latePayment: z.boolean().catch(DEFAULT_INVOICE_SECTIONS.latePayment)
+    latePayment: z.boolean().catch(DEFAULT_INVOICE_SECTIONS.latePayment),
+    signature: z.boolean().catch(DEFAULT_INVOICE_SECTIONS.signature)
   })
   .catch(DEFAULT_INVOICE_SECTIONS);
 
@@ -475,6 +478,14 @@ export const invoiceSchema = z.object({
   notes: textSectionSchema("Notes"),
   latePayment: textSectionSchema("Late payment"),
   paymentDetails: paymentDetailsSchema,
+  // The signature at the foot of the page (issue #128): an image id like the
+  // logo's, uploaded or drawn in the editor, with a name or caption under it.
+  signature: z
+    .object({
+      image: z.string().catch(""),
+      caption: z.string().catch("")
+    })
+    .catch({ image: "", caption: "" }),
   pdfSettings: z
     .object({ backgroundColor: z.string().catch("#ffffff") })
     .catch({ backgroundColor: "#ffffff" }),

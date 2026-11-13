@@ -3,6 +3,7 @@ import { InvoicePdfDetails } from "~/components/pdf/invoice-pdf-details";
 import { InvoicePdfHeader } from "~/components/pdf/invoice-pdf-header";
 import { InvoicePdfItemsTable } from "~/components/pdf/invoice-pdf-items-table";
 import { InvoicePdfPaymentDetails } from "~/components/pdf/invoice-pdf-payment-details";
+import { InvoicePdfSignature } from "~/components/pdf/invoice-pdf-signature";
 import { InvoicePdfTerms } from "~/components/pdf/invoice-pdf-terms";
 import { InvoicePdfTextSection } from "~/components/pdf/invoice-pdf-text-section";
 import { InvoicePdfTotals } from "~/components/pdf/invoice-pdf-totals";
@@ -17,7 +18,8 @@ import { getPrintedSections } from "~/utils/section-visibility";
 registerInvoicePdfFonts();
 
 export function InvoicePDF({ invoice }: { invoice: Invoice }) {
-  // invoice.image should already be a blob URL or empty string
+  // invoice.image and invoice.signature.image should already be blob URLs or
+  // empty strings
   const printed = getPrintedSections(invoice);
   const imageUrl = printed.logo ? invoice.image : "";
   // Sets the PDF's /Title metadata, which the browser's viewer uses as the
@@ -71,6 +73,13 @@ export function InvoicePDF({ invoice }: { invoice: Invoice }) {
             theme={invoice.theme}
             label={invoice.latePayment.label}
             content={invoice.latePayment.content}
+          />
+        )}
+        {printed.signature && (
+          <InvoicePdfSignature
+            theme={invoice.theme}
+            imageUrl={invoice.signature.image}
+            caption={invoice.signature.caption}
           />
         )}
       </Page>

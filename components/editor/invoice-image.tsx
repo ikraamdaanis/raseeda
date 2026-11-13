@@ -2,23 +2,21 @@ import { IconUpload } from "@tabler/icons-react";
 import { useState } from "react";
 import type { FileRejection } from "react-dropzone";
 import Dropzone from "react-dropzone";
-import { toast } from "sonner";
 import {
   AddPartSlot,
   useAddableParts
 } from "~/components/editor/invoice-add-part";
 import { RemoveSectionButton } from "~/components/editor/invoice-optional-section";
 import { Button } from "~/components/ui/button";
-import { getImageBlob, saveImage } from "~/db";
 import { useImageLoader } from "~/hooks/use-image-loader";
 import { useIsPreview } from "~/hooks/use-shown-sections";
 import { cn } from "~/lib/utils";
 import { useImageSlice, useSectionsSlice } from "~/stores/invoice-selectors";
-
-// A logo is embedded verbatim into every data export (base64), so an oversized
-// image bloats storage and later slows exports to a crawl. Cap it well above any
-// reasonable logo.
-const MAX_IMAGE_SIZE_BYTES = 5 * 1024 * 1024;
+import {
+  MAX_IMAGE_SIZE_BYTES,
+  storeUploadedImage,
+  UPLOADED_IMAGE_TYPES
+} from "~/utils/store-uploaded-image";
 
 /**
  * The invoice logo dropzone. Remove sits beside the dropzone rather than inside
@@ -39,37 +37,9 @@ export function InvoiceImage() {
   ) {
     setIsDragging(false);
 
-    // Only complain when nothing usable came through; a valid image dropped
-    // alongside a stray non-image should still upload rather than be discarded.
-    if (acceptedFiles.length === 0) {
-      const tooLarge = fileRejections.some(rejection =>
-        rejection.errors.some(error => error.code === "file-too-large")
-      );
+    const newImageId = await storeUploadedImage(acceptedFiles, fileRejections);
 
-      return toast.error(
-        tooLarge
-          ? "That image is too large. Please upload an image under 5 MB."
-          : "That file isn't a supported image. Upload a PNG, JPG, or WebP."
-      );
-    }
-
-    const file = acceptedFiles[0];
-    const newImageId = crypto.randomUUID();
-
-    try {
-      await saveImage(newImageId, file, file.type);
-
-      const verifyBlob = await getImageBlob(newImageId);
-      if (!verifyBlob) throw new Error("Image was not saved correctly");
-
-      setImage(newImageId);
-    } catch (error) {
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : "Failed to save image. Please try again."
-      );
-    }
+    if (newImageId) setImage(newImageId);
   }
 
   function handleRemoveImage() {
@@ -101,9 +71,7 @@ export function InvoiceImage() {
       onDrop={handleDrop}
       onDragEnter={() => setIsDragging(true)}
       onDragLeave={() => setIsDragging(false)}
-      accept={{
-        "image/*": [".png", ".jpg", ".jpeg", ".webp"]
-      }}
+      accept={UPLOADED_IMAGE_TYPES}
       maxSize={MAX_IMAGE_SIZE_BYTES}
     >
       {({ getRootProps, getInputProps }) => (

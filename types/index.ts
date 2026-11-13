@@ -32,6 +32,14 @@ export type BlankDefaults = Pick<
   "numberFormat" | "currencyPosition" | "paperSize"
 > & { language?: LabelLanguage };
 
+// The invoice's signature (issue #128): an image id and the name or caption
+// printed under it.
+export type InvoiceSignature = Invoice["signature"];
+
+// A point of a signature drawn in the editor, as a fraction of the pad's width
+// and height, so it draws the same at any size.
+export type SignatureStrokePoint = { x: number; y: number };
+
 export type TextSettings = {
   align: "left" | "center" | "right";
   size: string;
@@ -351,7 +359,7 @@ export type InvoiceVersionReason =
   | "beforeAutosave";
 
 // A snapshot of an invoice in its version history. Images are kept by id, so
-// a version never copies a logo.
+// a version never copies a logo or a signature.
 export type InvoiceVersion = {
   id: string;
   invoiceId: string;
@@ -360,6 +368,8 @@ export type InvoiceVersion = {
   // The logo it names (invoiceData.image), indexed so the image sweep can
   // read which logos versions keep without loading every snapshot.
   imageId: string;
+  // The signature it names (invoiceData.signature.image), indexed likewise.
+  signatureId: string;
   reason: InvoiceVersionReason;
   schemaVersion?: number;
   createdAt: Date;

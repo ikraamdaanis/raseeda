@@ -45,7 +45,8 @@ test("a part that's off is added from its slot and hidden with its ×", async ({
   await expect(menu.getByRole("menuitem")).toHaveText([
     "Notes",
     "Terms",
-    "Late payment fee"
+    "Late payment fee",
+    "Signature"
   ]);
 
   await menu.getByRole("menuitem", { name: "Terms" }).click();
@@ -56,7 +57,8 @@ test("a part that's off is added from its slot and hidden with its ×", async ({
 
   await expect(page.getByRole("menu").getByRole("menuitem")).toHaveText([
     "Notes",
-    "Late payment fee"
+    "Late payment fee",
+    "Signature"
   ]);
 
   await expect(page.getByRole("menu")).toBeFocused();

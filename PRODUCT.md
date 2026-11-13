@@ -70,7 +70,7 @@ raseeda's job ends when the PDF is saved. A feature belongs if it makes the docu
 - Seller and client details, line items, tax (one rate or a rate per line), fees, discounts, terms, and payment details (bank name, account number, IBAN, BIC/SWIFT, sort code, each under a renameable label, other ways to pay such as PayPal or Pix, notes).
 - Every amount can also show in a second currency, at a rate the user types in.
 - Autosave with no Save step, undo and redo, and a version history per invoice.
-- Customisable look: eleven invoice fonts, font weight, three sizes, an accent and a text colour, and logo upload. The invoice font library is a user-facing feature, separate from the app's own typography.
+- Customisable look: eleven invoice fonts, font weight, three sizes, an accent and a text colour, logo upload, and a signature, uploaded or drawn. The invoice font library is a user-facing feature, separate from the app's own typography.
 - Any currency, with custom symbols.
 - Save/load documents and templates in IndexedDB; full data import/export.
 - PDF export via @react-pdf/renderer; print is a first-class target (A4 or Letter).

@@ -37,6 +37,7 @@ export function getPrintedSections(
     | "notes"
     | "terms"
     | "latePayment"
+    | "signature"
     | "theme"
   >
 ): Record<InvoiceSectionKey, boolean> {
@@ -64,6 +65,7 @@ export function getPrintedSections(
         hasText(invoice.paymentDetails.terms)),
     notes: sections.notes && hasText(invoice.notes.content),
     terms: sections.terms && hasText(invoice.terms.content),
-    latePayment: sections.latePayment && hasText(invoice.latePayment.content)
+    latePayment: sections.latePayment && hasText(invoice.latePayment.content),
+    signature: sections.signature && invoice.signature.image !== ""
   };
 }
