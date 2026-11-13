@@ -7,6 +7,7 @@ import {
 } from "~/consts/label-presets";
 import { DOCUMENT_TYPES, STORED_INVOICE_FORMATS } from "~/schema/invoice";
 import { createBlankDocument, invoiceDefault } from "~/stores/invoice-store";
+import type { DocumentType } from "~/types";
 import { buildInvoiceViewModel } from "~/utils/build-invoice-view-model";
 import {
   applyLabelPreset,
@@ -16,7 +17,7 @@ import {
 } from "~/utils/label-preset";
 import { getPaymentRows } from "~/utils/payment-details";
 
-function blank(documentType: (typeof DOCUMENT_TYPES)[number] = "invoice") {
+function blank(documentType: DocumentType = "invoice") {
   return createBlankDocument(documentType, STORED_INVOICE_FORMATS);
 }
 
