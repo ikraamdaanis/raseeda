@@ -261,10 +261,20 @@ function siblingsOf(
 ): { number: number; title: string; state: string }[] {
   const raw = sh(
     `gh issue list --state all --search "Parent: #${parent} in:body" ` +
-      `--json number,title,state --limit 200`
+      `--json number,title,state,body --limit 200`
   );
+  const found = JSON.parse(raw) as {
+    number: number;
+    title: string;
+    state: string;
+    body: string;
+  }[];
 
-  return JSON.parse(raw);
+  // The search is fuzzy: it also returns issues that merely mention the
+  // parent (a sibling PRD naming it, say), so keep only real children.
+  return found
+    .filter(issue => parseParent(issue.body ?? "") === parent)
+    .map(({ number, title, state }) => ({ number, title, state }));
 }
 
 function issueTitle(n: number): string {
@@ -432,6 +442,14 @@ function waitForChecks(url: string): boolean {
   const deadline = Date.now() + 30 * 60_000;
 
   while (Date.now() < deadline) {
+    // CI never runs on a PR that conflicts with its base.
+    if (
+      sh(`gh pr view ${url} --json mergeable -q .mergeable`).trim() ===
+      "CONFLICTING"
+    ) {
+      return false;
+    }
+
     const state = checksState(url);
 
     if (state !== "pending") return state === "passed";
@@ -515,9 +533,16 @@ function openPr(args: {
   // Apply labels best-effort. The PR and its pushed branch already exist by
   // this point, so a label that is missing from the repo must never abort the
   // run (that would strand the branch and the agent's work). Skip any that fail.
+  // Through the REST API: `gh pr edit` asks GraphQL for the viewer's login,
+  // which needs a read:org scope the loop's token doesn't have.
+  const prNumber = url.split("/").pop();
+
   for (const label of args.labels ?? []) {
     try {
-      sh(`gh pr edit ${url} --add-label ${shellQuote(label)}`);
+      sh(
+        `gh api -X POST repos/{owner}/{repo}/issues/${prNumber}/labels ` +
+          `-f ${shellQuote(`labels[]=${label}`)}`
+      );
     } catch {
       console.warn(`  skipped label '${label}' (not found in repo) on ${url}`);
     }
@@ -627,7 +652,8 @@ function maybeOpenPrdWrapUp(parent: number) {
   const siblings = siblingsOf(parent);
   const stillOpen = siblings.filter(sibling => sibling.state === "OPEN").length;
 
-  if (stillOpen !== 0) return;
+  // A tracking issue with no `Parent:` children has no feature branch.
+  if (siblings.length === 0 || stillOpen !== 0) return;
 
   const featureBranch = featureBranchFor(parent);
   const existing = findOpenPr(featureBranch, "main");
@@ -787,7 +813,7 @@ const fixAttempts = new Map<string, number>();
 async function fixBrokenPrs(): Promise<boolean> {
   const prs = JSON.parse(
     sh(
-      `gh pr list --state open --label sandcastle ` +
+      `gh pr list --state open ` +
         `--json url,baseRefName,headRefName,mergeable --limit 200`
     )
   ) as {
@@ -799,6 +825,9 @@ async function fixBrokenPrs(): Promise<boolean> {
   let tookAny = false;
 
   for (const pr of prs) {
+    // Only the loop's own branches.
+    if (!/^(sandcastle|feature\/prd-)/.test(pr.headRefName)) continue;
+
     const isConflicting = pr.mergeable === "CONFLICTING";
 
     if (!isConflicting && checksState(pr.url) !== "failed") continue;
@@ -896,7 +925,20 @@ async function runFixAgent(pr: {
 for (let i = 1; i <= MAX_ITERATIONS; i++) {
   console.log(`\n=== Iteration ${i}/${MAX_ITERATIONS} ===\n`);
 
+  // Standalone branches fork from the local main, which only ever moves here:
+  // merges land on GitHub.
+  sh(`git fetch origin main`);
+  sh(`git merge --ff-only origin/main`);
+
   sweepAutoMergeablePrs();
+
+  // A PRD whose children all closed but has no wrap-up PR yet (one was missed,
+  // or the loop stopped in between) gets one now.
+  for (const prd of JSON.parse(
+    sh(`gh issue list --state open --label prd --json number --limit 100`)
+  ) as { number: number }[]) {
+    maybeOpenPrdWrapUp(prd.number);
+  }
 
   const tookFixes = await fixBrokenPrs();
   const eligible = listEligibleIssues();
