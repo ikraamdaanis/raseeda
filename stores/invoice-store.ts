@@ -17,6 +17,7 @@ import {
   migrateInvoiceData
 } from "~/schema/migrations";
 import type {
+  BlankDefaults,
   DocumentType,
   Invoice,
   InvoiceClient,
@@ -28,6 +29,7 @@ import type {
   InvoiceSeller,
   InvoiceTerms,
   InvoiceTheme,
+  LabelLanguage,
   PdfSettings,
   TableSettings
 } from "~/types";
@@ -36,6 +38,7 @@ import {
   pickSecondCurrency
 } from "~/utils/currency-conversion";
 import { applyDocumentType } from "~/utils/document-type";
+import { applyLabelPreset } from "~/utils/label-preset";
 import { getBrowserLanguage, getLocaleDefaults } from "~/utils/locale-defaults";
 
 export const invoiceDefault: Invoice = {
@@ -158,40 +161,40 @@ export const invoiceDefault: Invoice = {
  * dates are stamped from the clock at call time (due the type's `dueDays`
  * out: 30 days, or the same day for a receipt's date paid), so a document
  * created today is dated today rather than whenever the module was loaded.
- * Its number format, currency position and paper size come from the browser's
- * language (issue #117) unless given, as the automation API gives the
- * stored-invoice defaults so the same data always makes the same invoice.
+ * Its number format, currency position, paper size and labels' language come
+ * from the browser's language (issues #117 and #126) unless given, as the
+ * automation API gives the stored-invoice defaults so the same data always
+ * makes the same invoice. Defaults given without a language are in English.
  */
 export function createBlankDocument(
   documentType: DocumentType,
-  formats: Pick<
-    Invoice,
-    "numberFormat" | "currencyPosition" | "paperSize"
-  > = getLocaleDefaults(getBrowserLanguage())
+  defaults: BlankDefaults = getLocaleDefaults(getBrowserLanguage())
 ): Invoice {
+  const { language = "en", ...formats } = defaults;
   const now = new Date();
   const { dueDays } = DOCUMENT_TYPE_DEFAULTS[documentType];
 
-  return applyDocumentType(
-    {
-      ...structuredClone(invoiceDefault),
-      ...formats,
-      invoiceDate: format(now, "yyyy-MM-dd"),
-      dueDate: format(addDays(now, dueDays), "yyyy-MM-dd"),
-      items: invoiceDefault.items.map(item => ({
-        ...item,
-        id: crypto.randomUUID()
-      }))
-    },
-    documentType
+  return applyLabelPreset(
+    applyDocumentType(
+      {
+        ...structuredClone(invoiceDefault),
+        ...formats,
+        invoiceDate: format(now, "yyyy-MM-dd"),
+        dueDate: format(addDays(now, dueDays), "yyyy-MM-dd"),
+        items: invoiceDefault.items.map(item => ({
+          ...item,
+          id: crypto.randomUUID()
+        }))
+      },
+      documentType
+    ),
+    language
   );
 }
 
 // A new blank invoice, the document most start from.
-export function createBlankInvoice(
-  formats?: Pick<Invoice, "numberFormat" | "currencyPosition" | "paperSize">
-): Invoice {
-  return createBlankDocument("invoice", formats);
+export function createBlankInvoice(defaults?: BlankDefaults): Invoice {
+  return createBlankDocument("invoice", defaults);
 }
 
 // Helper to apply updater (value or function)
@@ -224,6 +227,10 @@ interface InvoiceActions {
   // Document type: swaps the title, sample number and labels still on the
   // old type's defaults for the new type's.
   setDocumentType: (documentType: DocumentType) => void;
+
+  // Language preset: every printed label in a language, overwriting what was
+  // typed.
+  setLabelLanguage: (language: LabelLanguage) => void;
 
   // Title
   setTitle: (title: string) => void;
@@ -407,6 +414,37 @@ export const useInvoiceStore = create<InvoiceStore>()(
           state.title = next.title;
           state.number = next.number;
           state.labels = next.labels;
+        }),
+
+      setLabelLanguage: language =>
+        set(state => {
+          const next = applyLabelPreset(
+            {
+              documentType: state.documentType,
+              title: state.title,
+              labels: state.labels,
+              tableSettings: state.tableSettings,
+              seller: state.seller,
+              client: state.client,
+              shipping: state.shipping,
+              paymentDetails: state.paymentDetails,
+              terms: state.terms,
+              notes: state.notes,
+              latePayment: state.latePayment
+            },
+            language
+          );
+
+          state.title = next.title;
+          state.labels = next.labels;
+          state.tableSettings = next.tableSettings;
+          state.seller = next.seller;
+          state.client = next.client;
+          state.shipping = next.shipping;
+          state.paymentDetails = next.paymentDetails;
+          state.terms = next.terms;
+          state.notes = next.notes;
+          state.latePayment = next.latePayment;
         }),
 
       // Title

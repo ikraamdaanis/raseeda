@@ -4,6 +4,7 @@ import type { InvoiceStore } from "~/stores/invoice-store";
 import { useInvoiceStore } from "~/stores/invoice-store";
 import type { Invoice, MoneyFormat } from "~/types";
 import { calculateInvoiceTotals } from "~/utils/calculate-invoice-totals";
+import { findLabelLanguage } from "~/utils/label-preset";
 
 // The persisted invoice fields, in one place. `satisfies` rejects typos and
 // keys that aren't on Invoice; the MissingKey assertion below rejects forgetting
@@ -363,6 +364,17 @@ export function useDocumentTypeSlice() {
     useShallow(state => ({
       documentType: state.documentType,
       setDocumentType: state.setDocumentType
+    }))
+  );
+}
+
+// The language every printed label is still in (null once one is renamed),
+// for the inspector's Language row.
+export function useLabelLanguageSlice() {
+  return useInvoiceStore(
+    useShallow(state => ({
+      language: findLabelLanguage(state),
+      setLabelLanguage: state.setLabelLanguage
     }))
   );
 }

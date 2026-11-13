@@ -4,6 +4,7 @@ import type {
   REFERRERS,
   SOURCES
 } from "~/consts/analytics-events";
+import type { LABEL_LANGUAGES } from "~/consts/label-presets";
 import type { Invoice } from "~/schema/invoice";
 
 // The persisted invoice shape is defined and validated by the Zod schema; its
@@ -19,6 +20,17 @@ export type InvoiceNumberFormat = Invoice["numberFormat"];
 export type CurrencyPosition = Invoice["currencyPosition"];
 
 export type InvoicePaperSize = Invoice["paperSize"];
+
+// A language a preset sets every printed label in (issue #126).
+export type LabelLanguage = (typeof LABEL_LANGUAGES)[number];
+
+// What a new blank document takes from the browser's language: how amounts
+// are written, the paper and the labels' language. Left out, the language is
+// English.
+export type BlankDefaults = Pick<
+  Invoice,
+  "numberFormat" | "currencyPosition" | "paperSize"
+> & { language?: LabelLanguage };
 
 export type TextSettings = {
   align: "left" | "center" | "right";

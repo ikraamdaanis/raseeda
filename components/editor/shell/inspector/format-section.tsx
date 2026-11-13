@@ -7,6 +7,7 @@ import {
 import { NativeSelect } from "~/components/ui/select";
 import { formatCurrency } from "~/consts/currencies";
 import { DOCUMENT_TYPE_NAMES } from "~/consts/document-types";
+import { LABEL_LANGUAGE_NAMES, LABEL_LANGUAGES } from "~/consts/label-presets";
 import { cn } from "~/lib/utils";
 import {
   CURRENCY_POSITIONS,
@@ -15,23 +16,26 @@ import {
   INVOICE_NUMBER_FORMATS,
   INVOICE_PAPER_SIZES
 } from "~/schema/invoice";
+import { recordHistoryAction } from "~/stores/invoice-history";
 import {
   useAmountFormatSlice,
   useDetailsSlice,
   useDocumentTypeSlice,
+  useLabelLanguageSlice,
   useMoneyFormat,
   usePaperSizeSlice
 } from "~/stores/invoice-selectors";
 import { formatNumber } from "~/utils/format-number";
 
-// How the invoice reads: its type, and how its dates and amounts are written
-// and the paper it's cut to. Every value is changed on the page. The id stays
-// "details", the section's name before it held only formats, so it opens as
-// it was left.
+// How the invoice reads: its type, the language of its labels, how its dates
+// and amounts are written and the paper it's cut to. Every value is changed
+// on the page. The id stays "details", the section's name before it held only
+// formats, so it opens as it was left.
 export function FormatSection() {
   return (
     <InspectorSection id="details" title="Format">
       <DocumentTypeRow />
+      <LanguageRow />
       <DateFormatRow />
       <NumberFormatRow />
       <CurrencyPositionRow />
@@ -150,6 +154,45 @@ function DocumentTypeRow() {
         {DOCUMENT_TYPES.map(option => (
           <option key={option} value={option}>
             {DOCUMENT_TYPE_NAMES[option]}
+          </option>
+        ))}
+      </NativeSelect>
+    </InspectorRow>
+  );
+}
+
+// The language every printed label is in. Picking one overwrites them all as
+// one undo step; renaming one afterwards keeps what's typed, and the row then
+// reads "Custom labels" until a language is picked again.
+function LanguageRow() {
+  const { language, setLabelLanguage } = useLabelLanguageSlice();
+
+  return (
+    <InspectorRow label="Language" htmlFor="inspector-label-language">
+      <NativeSelect
+        id="inspector-label-language"
+        value={language ?? ""}
+        onChange={event => {
+          const next = LABEL_LANGUAGES.find(
+            option => option === event.target.value
+          );
+
+          if (!next) return;
+
+          recordHistoryAction("Language", "page", () => {
+            setLabelLanguage(next);
+          });
+        }}
+        className={cn(inspectorFieldClassName, "pr-7")}
+      >
+        {language === null && (
+          <option value="" disabled>
+            Custom labels
+          </option>
+        )}
+        {LABEL_LANGUAGES.map(option => (
+          <option key={option} value={option}>
+            {LABEL_LANGUAGE_NAMES[option]}
           </option>
         ))}
       </NativeSelect>

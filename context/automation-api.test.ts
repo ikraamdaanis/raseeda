@@ -22,6 +22,8 @@ const { raseeda } = globalThis as unknown as {
       dueDate: string;
       title: string;
       labels: Record<string, string>;
+      seller: { label: string; content: string };
+      paymentDetails: { labels: Record<string, string>; iban: string };
     }>;
     listInvoices: () => Promise<{ id: string; documentType: string }[]>;
   };
@@ -109,5 +111,45 @@ describe("automation API document types", () => {
     const [row] = await raseeda.listInvoices();
 
     expect(row).toMatchObject({ id, documentType: "credit-note" });
+  });
+});
+
+describe("automation API language presets", () => {
+  beforeEach(async () => {
+    await deleteAllData();
+  });
+
+  it("keeps the labels English when no language is given", async () => {
+    const invoice = await raseeda.getInvoice(await raseeda.createInvoice({}));
+
+    expect(invoice.title).toBe("Invoice");
+    expect(invoice.seller.label).toBe("From");
+  });
+
+  it("sets every label from the language given, under what's given", async () => {
+    const id = await raseeda.createInvoice({
+      language: "de",
+      documentType: "quote",
+      labels: { total: "Summe" },
+      seller: { content: "Acme GmbH" },
+      paymentDetails: { iban: "DE89 3704" }
+    });
+    const invoice = await raseeda.getInvoice(id);
+
+    expect(invoice.title).toBe("Angebot");
+    expect(invoice.labels.paymentDue).toBe("Gültig bis");
+    expect(invoice.labels.total).toBe("Summe");
+    expect(invoice.seller).toMatchObject({
+      label: "Von",
+      content: "Acme GmbH"
+    });
+    expect(invoice.paymentDetails.iban).toBe("DE89 3704");
+    expect(invoice.paymentDetails.labels.accountName).toBe("Kontoinhaber");
+  });
+
+  it("reads a language it has no preset for as English", async () => {
+    const id = await raseeda.createInvoice({ language: "sv" });
+
+    expect((await raseeda.getInvoice(id)).title).toBe("Invoice");
   });
 });
