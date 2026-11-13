@@ -99,6 +99,7 @@ export async function migrateToAutosave(
         name: record.name,
         invoiceData: saved,
         imageId: saved.image,
+        signatureId: saved.signature.image,
         reason: "beforeAutosave",
         schemaVersion: CURRENT_INVOICE_SCHEMA_VERSION,
         createdAt: now

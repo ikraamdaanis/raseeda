@@ -53,6 +53,24 @@ describe("printed sections", () => {
     expect(printed.fees).toBe(false);
   });
 
+  it("prints a signature while switched on, and keeps it while off", () => {
+    const signature = { image: "signature-id", caption: "Jane Doe" };
+    const on = makeInvoice({
+      sections: { ...DEFAULT_INVOICE_SECTIONS, signature: true },
+      signature
+    });
+    const off = makeInvoice({ signature });
+    const empty = makeInvoice({
+      sections: { ...DEFAULT_INVOICE_SECTIONS, signature: true }
+    });
+
+    expect(DEFAULT_INVOICE_SECTIONS.signature).toBe(false);
+    expect(getPrintedSections(on).signature).toBe(true);
+    expect(getPrintedSections(off).signature).toBe(false);
+    expect(off.signature).toEqual(signature);
+    expect(getPrintedSections(empty).signature).toBe(false);
+  });
+
   it("never prints switched-off tax", () => {
     const printed = getPrintedSections(
       makeInvoice({

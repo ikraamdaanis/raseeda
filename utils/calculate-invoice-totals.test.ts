@@ -69,6 +69,7 @@ function makeInvoice(overrides: Partial<Invoice> = {}): Invoice {
     terms: { label: "Terms", content: "" },
     notes: { label: "Notes", content: "" },
     latePayment: { label: "Late payment", content: "" },
+    signature: { image: "", caption: "" },
     paymentDetails: {
       label: "Payment details",
       labels: DEFAULT_PAYMENT_LABELS,

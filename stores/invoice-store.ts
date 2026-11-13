@@ -27,6 +27,7 @@ import type {
   InvoicePaymentDetails,
   InvoiceSectionKey,
   InvoiceSeller,
+  InvoiceSignature,
   InvoiceTerms,
   InvoiceTheme,
   LabelLanguage,
@@ -126,6 +127,10 @@ export const invoiceDefault: Invoice = {
   latePayment: {
     label: "Late payment",
     content: ""
+  },
+  signature: {
+    image: "",
+    caption: ""
   },
   paymentDetails: {
     label: "Payment details",
@@ -324,6 +329,11 @@ interface InvoiceActions {
   // Late payment
   setLatePayment: (
     latePayment: InvoiceTerms | ((prev: InvoiceTerms) => InvoiceTerms)
+  ) => void;
+
+  // Signature
+  setSignature: (
+    signature: InvoiceSignature | ((prev: InvoiceSignature) => InvoiceSignature)
   ) => void;
 
   // Payment details
@@ -682,6 +692,12 @@ export const useInvoiceStore = create<InvoiceStore>()(
       setLatePayment: latePayment =>
         set(state => {
           state.latePayment = applyUpdater(state.latePayment, latePayment);
+        }),
+
+      // Signature
+      setSignature: signature =>
+        set(state => {
+          state.signature = applyUpdater(state.signature, signature);
         }),
 
       // Payment details

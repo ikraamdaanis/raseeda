@@ -341,6 +341,26 @@ class InvoiceDatabase extends Dexie {
       versions: "id, invoiceId, imageId",
       meta: "key"
     });
+    // Version 12: Invoices gained a signature (issue #128), an image like the
+    // logo, which an older build drops as it reads, so the bump stops a tab
+    // still running one before it saves an invoice back without it. Versions
+    // index the signature they name too, for the image sweep.
+    this.version(12)
+      .stores({
+        templates: "id, name, createdAt, updatedAt",
+        invoices: "id, name, createdAt, updatedAt",
+        images: "id",
+        versions: "id, invoiceId, imageId, signatureId",
+        meta: "key"
+      })
+      .upgrade(tx =>
+        tx
+          .table("versions")
+          .toCollection()
+          .modify(version => {
+            version.signatureId = version.invoiceData?.signature?.image ?? "";
+          })
+      );
   }
 }
 
@@ -667,7 +687,7 @@ export async function renameInvoice(id: string, name: string): Promise<void> {
 export async function addInvoiceVersion(
   version: Omit<
     InvoiceVersion,
-    "id" | "createdAt" | "schemaVersion" | "imageId"
+    "id" | "createdAt" | "schemaVersion" | "imageId" | "signatureId"
   >
 ): Promise<boolean> {
   try {
@@ -697,6 +717,7 @@ export async function addInvoiceVersion(
       const added: InvoiceVersion = {
         ...version,
         imageId: version.invoiceData.image,
+        signatureId: version.invoiceData.signature.image,
         id: crypto.randomUUID(),
         schemaVersion: CURRENT_INVOICE_SCHEMA_VERSION,
         createdAt: now
@@ -890,10 +911,17 @@ export async function getAllImages(): Promise<StoredImage[]> {
   }
 }
 
+// The signature a stored invoice or template names. Records are read as
+// stored, so one saved before signatures existed has none.
+function readSignatureImage(data: Partial<Pick<Invoice, "signature">>) {
+  return data.signature?.image ?? "";
+}
+
 /**
  * Delete image blobs that no saved invoice, template or version references.
  * The editor runs it once as it opens, after taking the editor lock and
- * before loading anything, when nothing in memory can point at a logo.
+ * before loading anything, when nothing in memory can point at a logo or a
+ * signature.
  *
  * Best-effort: failures are logged but never thrown, since this is background
  * garbage collection that must not keep the editor from opening.
@@ -902,16 +930,25 @@ export async function cleanupOrphanedImages(): Promise<void> {
   try {
     await ensureDbReady();
 
-    const [invoices, templates, versionImageIds, images] = await Promise.all([
-      db.invoices.toArray(),
-      db.templates.toArray(),
-      db.versions.orderBy("imageId").uniqueKeys(),
-      db.images.toArray()
-    ]);
+    const [invoices, templates, versionImageIds, versionSignatureIds, images] =
+      await Promise.all([
+        db.invoices.toArray(),
+        db.templates.toArray(),
+        db.versions.orderBy("imageId").uniqueKeys(),
+        db.versions.orderBy("signatureId").uniqueKeys(),
+        db.images.toArray()
+      ]);
     const referencedImageIds = [
-      ...invoices.map(invoice => invoice.invoiceData.image),
-      ...templates.map(template => template.templateData.image),
-      ...versionImageIds.map(String)
+      ...invoices.flatMap(invoice => [
+        invoice.invoiceData.image,
+        readSignatureImage(invoice.invoiceData)
+      ]),
+      ...templates.flatMap(template => [
+        template.templateData.image,
+        readSignatureImage(template.templateData)
+      ]),
+      ...versionImageIds.map(String),
+      ...versionSignatureIds.map(String)
     ];
     const orphanedImageIds = selectOrphanedImageIds(
       images.map(image => image.id),

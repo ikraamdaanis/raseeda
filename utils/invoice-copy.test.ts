@@ -64,6 +64,26 @@ describe("nextInvoiceNumber", () => {
 });
 
 describe("prepareInvoiceCopy", () => {
+  it("keeps the signature and its caption, in any type", () => {
+    const signature = { image: "signature-id", caption: "Jane Doe" };
+    const invoice = invoiceWith({
+      sections: { ...createBlankInvoice().sections, signature: true },
+      signature
+    });
+
+    for (const documentType of ["invoice", "receipt"] as const) {
+      const copy = prepareInvoiceCopy({
+        invoice,
+        documentType,
+        library: [],
+        today: new Date(2026, 10, 2)
+      });
+
+      expect(copy.signature).toEqual(signature);
+      expect(copy.sections.signature).toBe(true);
+    }
+  });
+
   it("numbers, dates and clears the payment of the copy", () => {
     const copy = prepareInvoiceCopy({
       invoice: invoiceWith({

@@ -99,6 +99,7 @@ export function measureInvoiceContent(invoice: Invoice): number {
       invoice.notes.content,
       invoice.terms.content,
       invoice.latePayment.content,
+      invoice.signature.caption,
       invoice.tax.note,
       paymentDetails.bankName,
       paymentDetails.accountName,

@@ -15,7 +15,8 @@
 -- double2 logo, double3 PO number, double4 service period, double5 date of
 -- supply, double6 shipping, double7 discounts, double8 tax, double9 fees,
 -- double10 amount paid, double11 second currency, double12 payment details,
--- double13 notes, double14 terms, double15 late payment, double16 paid stamp.
+-- double13 notes, double14 terms, double15 late payment, double16 paid stamp,
+-- double17 signature.
 -- page_view is the closest thing to visits, pdf_opened and pdf_downloaded to
 -- invoices made and invoice_saved to invoices kept. Rows written before issue #104 have the
 -- newer columns empty.
@@ -138,7 +139,8 @@ SELECT
   SUM(double13 * _sample_interval) AS notes,
   SUM(double14 * _sample_interval) AS terms,
   SUM(double15 * _sample_interval) AS late_payment,
-  SUM(double16 * _sample_interval) AS paid_stamp
+  SUM(double16 * _sample_interval) AS paid_stamp,
+  SUM(double17 * _sample_interval) AS signature
 FROM usage_events
 WHERE blob1 IN ('pdf_opened', 'pdf_downloaded') AND blob12 != ''
   AND timestamp > NOW() - INTERVAL '30' DAY;

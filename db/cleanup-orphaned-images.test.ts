@@ -4,7 +4,8 @@ import {
   cleanupOrphanedImages,
   db,
   getAllImages,
-  saveInvoice
+  saveInvoice,
+  saveTemplate
 } from "~/db";
 import { createBlankInvoice } from "~/stores/invoice-store";
 
@@ -47,6 +48,7 @@ describe("cleanupOrphanedImages", () => {
     await Promise.all([
       db.images.clear(),
       db.invoices.clear(),
+      db.templates.clear(),
       db.versions.clear()
     ]);
   });
@@ -85,5 +87,54 @@ describe("cleanupOrphanedImages", () => {
     await cleanupOrphanedImages();
 
     expect(await storedImageIds()).toEqual([]);
+  });
+
+  it("keeps a signature an invoice, a template or a version names", async () => {
+    const now = new Date();
+    const invoiceData = createBlankInvoice();
+    const templateData = createBlankInvoice();
+    const versionData = createBlankInvoice();
+
+    invoiceData.signature.image = "invoice-signature";
+    templateData.signature.image = "template-signature";
+    versionData.signature.image = "versioned-signature";
+    await storeBlob("invoice-signature");
+    await storeBlob("template-signature");
+    await storeBlob("versioned-signature");
+    await storeBlob("orphan-signature");
+    await saveInvoice({
+      id: "inv-a",
+      name: "inv-a",
+      nameSource: "user",
+      invoiceData,
+      templateId: null,
+      rev: 1,
+      createdAt: now,
+      updatedAt: now
+    });
+    await saveTemplate({
+      id: "tpl-a",
+      name: "tpl-a",
+      description: null,
+      isDefault: false,
+      templateData,
+      screenshotUrl: null,
+      createdAt: now,
+      updatedAt: now
+    });
+    await addInvoiceVersion({
+      invoiceId: "inv-b",
+      name: "Acme",
+      invoiceData: versionData,
+      reason: "opened"
+    });
+
+    await cleanupOrphanedImages();
+
+    expect(await storedImageIds()).toEqual([
+      "invoice-signature",
+      "template-signature",
+      "versioned-signature"
+    ]);
   });
 });

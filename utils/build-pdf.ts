@@ -2,7 +2,7 @@ import { getImageBlob } from "~/db";
 import type { Invoice } from "~/types";
 import { isDirectImageUrl } from "~/utils/is-direct-image-url";
 
-// react-pdf can only decode PNG and JPEG. Any other logo format the uploader
+// react-pdf can only decode PNG and JPEG. Any other image format the uploader
 // accepts (WebP, GIF, ...) is silently dropped from the PDF, so re-encode it as
 // PNG first.
 async function toPdfSafeImageBlob(blob: Blob): Promise<Blob> {
@@ -20,7 +20,7 @@ async function toPdfSafeImageBlob(blob: Blob): Promise<Blob> {
       if (pngBlob) {
         resolve(pngBlob);
       } else {
-        reject(new Error("Failed to convert the logo to PNG"));
+        reject(new Error("Failed to convert the image to PNG"));
       }
     }, "image/png");
   });
@@ -40,31 +40,51 @@ export function prefetchPdfBuilder() {
   });
 }
 
-// Builds an invoice's PDF. The logo is read from IndexedDB here rather than
-// taken from the reactive image loader, which can still be an empty string
-// right after opening a saved invoice.
+// An image the invoice names (an id in IndexedDB, or a blob: or data: URL) as
+// a URL react-pdf can read, and whether it was minted here to be released.
+async function resolvePdfImage(
+  image: string
+): Promise<{ url: string; isOwned: boolean }> {
+  if (isDirectImageUrl(image)) return { url: image, isOwned: false };
+  if (!image) return { url: "", isOwned: false };
+
+  const blob = await getImageBlob(image);
+
+  if (!blob) return { url: "", isOwned: false };
+
+  return {
+    url: URL.createObjectURL(await toPdfSafeImageBlob(blob)),
+    isOwned: true
+  };
+}
+
+// Builds an invoice's PDF. The logo and signature are read from IndexedDB
+// here rather than taken from the reactive image loader, which can still be
+// an empty string right after opening a saved invoice.
 export async function buildPdf(invoice: Invoice): Promise<Blob> {
-  let logoUrl = "";
-  let logoUrlIsOwned = false;
+  const images: { url: string; isOwned: boolean }[] = [];
 
   try {
-    if (isDirectImageUrl(invoice.image)) {
-      logoUrl = invoice.image;
-    } else if (invoice.image) {
-      const blob = await getImageBlob(invoice.image);
+    const logo = await resolvePdfImage(invoice.image);
 
-      if (blob) {
-        logoUrl = URL.createObjectURL(await toPdfSafeImageBlob(blob));
-        logoUrlIsOwned = true;
-      }
-    }
+    images.push(logo);
+
+    const signature = await resolvePdfImage(invoice.signature.image);
+
+    images.push(signature);
 
     const { buildInvoicePdfBlob } = await loadPdfBuilder();
 
-    return await buildInvoicePdfBlob({ ...invoice, image: logoUrl });
+    return await buildInvoicePdfBlob({
+      ...invoice,
+      image: logo.url,
+      signature: { ...invoice.signature, image: signature.url }
+    });
   } finally {
-    // toBlob() has already embedded the logo, so the source URL we minted for
-    // it can be released regardless of success.
-    if (logoUrlIsOwned) URL.revokeObjectURL(logoUrl);
+    // toBlob() has already embedded the images, so the source URLs we minted
+    // for them can be released regardless of success.
+    for (const image of images) {
+      if (image.isOwned) URL.revokeObjectURL(image.url);
+    }
   }
 }
