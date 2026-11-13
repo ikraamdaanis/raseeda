@@ -765,37 +765,6 @@ html[data-header-ready]:not([data-header-pill]) .home-header-pill {
   --leading-paper-row: calc(1.5em - 2px);
 }
 
-@page {
-  size: A4;
-  margin: 16mm;
-}
-
-/* A Letter invoice's canvas adds its own @page size (invoice-canvas.tsx). */
-
-@media print {
-  html,
-  body {
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
-  }
-  @page {
-    margin: 16mm;
-  }
-  .invoice-page {
-    page-break-after: always;
-  }
-  .avoid-break {
-    break-inside: avoid;
-    page-break-inside: avoid;
-  }
-  .no-print {
-    display: none !important;
-  }
-  .invoice-preview-container {
-    box-shadow: none !important;
-  }
-}
-
 /* Undo and redo flash the part of the page they changed when there's no field
    to put the caret back in (a switch, a removed row, a new style). */
 [data-history-flash] {

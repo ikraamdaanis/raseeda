@@ -15,11 +15,6 @@ const PAGE_SIZE_CLASSES: Record<InvoicePaperSize, string> = {
   Letter: "min-h-[11in] w-[8.5in]"
 };
 
-// @page can't read the invoice, and a named page set on the paper alone would
-// leave the editor's chrome before it on an A4 sheet, so a Letter invoice sets
-// the size for the whole print while it's open.
-const LETTER_PAGE_STYLE = "@page { size: letter; }";
-
 const CANVAS_STATIC_STYLES: CSSProperties = {
   WebkitFontSmoothing: "antialiased",
   MozOsxFontSmoothing: "grayscale"
@@ -174,7 +169,6 @@ export function InvoiceCanvas({ children }: { children: ReactNode }) {
       onFocus={handleFocus}
       className="relative flex min-h-0 flex-1 touch-pan-x touch-pan-y flex-col items-center-safe justify-center-safe overflow-auto overscroll-none p-3 md:p-8 md:pb-20"
     >
-      {paperSize === "Letter" && <style>{LETTER_PAGE_STYLE}</style>}
       <div
         ref={sizerRef}
         className="shrink-0 origin-top-left"

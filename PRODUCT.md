@@ -28,7 +28,7 @@ raseeda's job ends when the PDF is saved. A feature belongs if it makes the docu
 - Everything the printed document needs to say, including how to pay: bank details, other ways to pay such as PayPal, Venmo, Zelle, UPI or Wise, a payment QR code built on the device, or a payment link the user types in. Bank details (under labels the user can rename) and other ways to pay exist today; the QR code and payment link don't yet.
 - A printed invoice that works in any language and region: renameable labels, a language preset that sets every label at once, any script, local date and number formats, and A4 or Letter paper. Renameable labels, a language preset (English, German, French, Spanish, Italian, Dutch, Portuguese and Polish), local number formats and A4 or Letter exist today.
 - Styling the document: fonts, size, weight, colours, a logo, a signature (uploaded or drawn), section switches and renamed labels.
-- Printing straight from the editor as well as downloading the PDF. Only the download exists today.
+- Printing straight from the editor as well as downloading the PDF.
 - The fields a valid invoice needs, such as a supply date, per-line tax and a tax note. What goes on the invoice is the user's responsibility.
 - Reuse: templates, duplicating, and suggesting clients from past invoices while the client block is filled in.
 - The library as a working set for finding, reopening, duplicating and fixing past documents. Its search, sort, grouping and filters exist to find one.

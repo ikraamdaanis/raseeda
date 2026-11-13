@@ -3,6 +3,7 @@ import { toast } from "sonner";
 import { useDocumentName } from "~/context/invoice-document-context";
 import { useInvoiceData } from "~/stores/invoice-selectors";
 import { buildPdf, prefetchPdfBuilder } from "~/utils/build-pdf";
+import { printPdfInFrame, printsInFrame } from "~/utils/print-pdf";
 import { saveFile, toPdfFileName } from "~/utils/save-file";
 import { trackInvoice } from "~/utils/track";
 
@@ -14,8 +15,8 @@ function reportFailure(error: unknown) {
   );
 }
 
-// Builds the open invoice's PDF and saves it (downloadPdf) or opens it in a
-// new tab (openPdf). `prefetch` warms the PDF engine early (call it on hover
+// Builds the open invoice's PDF and saves it (downloadPdf), opens it in a new
+// tab (openPdf) or prints it (printPdf). `prefetch` warms the PDF engine early (call it on hover
 // or focus of whatever leads to a download).
 export function useInvoicePdf() {
   const invoice = useInvoiceData();
@@ -72,5 +73,24 @@ export function useInvoicePdf() {
     });
   }
 
-  return { pending, downloadPdf, openPdf, prefetch: prefetchPdfBuilder };
+  // Where the browser can't print a framed PDF, the new tab's viewer prints it.
+  function printPdf() {
+    if (!printsInFrame(navigator.userAgent)) return openPdf();
+
+    startTransition(async () => {
+      try {
+        printPdfInFrame(await buildPdf(invoice));
+      } catch (error) {
+        reportFailure(error);
+      }
+    });
+  }
+
+  return {
+    pending,
+    downloadPdf,
+    openPdf,
+    printPdf,
+    prefetch: prefetchPdfBuilder
+  };
 }

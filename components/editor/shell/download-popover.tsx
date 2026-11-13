@@ -1,7 +1,8 @@
 import {
   IconDownload,
   IconExternalLink,
-  IconFileTypePdf
+  IconFileTypePdf,
+  IconPrinter
 } from "@tabler/icons-react";
 import { formatDistanceToNow } from "date-fns";
 import { useState } from "react";
@@ -35,7 +36,7 @@ export function DownloadPopover() {
   const { isNarrow } = useEditorUi();
   const [open, setOpen] = useState(false);
   const [savedAt, setSavedAt] = useState<Date | null>(null);
-  const { pending, downloadPdf, openPdf, prefetch } = useInvoicePdf();
+  const { pending, downloadPdf, openPdf, printPdf, prefetch } = useInvoicePdf();
   const { exportData } = useFileActions();
   const { libraryDocumentId } = useInvoiceDocument();
   const documentName = useDocumentName();
@@ -137,6 +138,17 @@ export function DownloadPopover() {
           >
             <IconExternalLink aria-hidden="true" />
             Open in a new tab
+          </Button>
+          <Button
+            variant="secondary"
+            disabled={pending}
+            onClick={() => {
+              printPdf();
+              setOpen(false);
+            }}
+          >
+            <IconPrinter aria-hidden="true" />
+            Print
           </Button>
           <Button
             variant="secondary"
