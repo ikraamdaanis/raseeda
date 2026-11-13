@@ -384,25 +384,33 @@ function ensureFeatureBranch(branch: string) {
     sh(`git branch ${branch} origin/${branch}`);
   }
 
-  // Keep the feature branch fresh against main. We merge (not rebase) so this
-  // works under branch protection; feature/** is protected with required CI
-  // checks but no required approvals, which means force-push is blocked.
-  // Merge commits accumulate inside the feature branch but get squashed away
-  // when the final feature → main PR lands.
+  // Keep the feature branch fresh against main by rebasing it, so it never
+  // holds a merge commit: PRs merge with --rebase, which GitHub refuses for a
+  // branch whose merge commits resolved conflicts. The remote copy is the
+  // truth (child PRs merge into it on GitHub). A rebase that conflicts is
+  // left for the fix pass to resolve once the wrap-up PR opens.
   sh(`git checkout ${branch}`);
+  sh(`git reset --hard origin/${branch}`);
 
-  // Fast-forward to remote first to pick up any auto-merged child PRs.
-  // --ff-only fails loudly if local has diverged, since the only writer to
-  // the remote feature branch should be the auto-merger.
-  sh(`git merge --ff-only origin/${branch}`);
-  sh(`git merge --no-edit origin/main`);
-  sh(`git push origin ${branch}`);
+  try {
+    sh(`git rebase origin/main`);
+    sh(`git push --force-with-lease origin ${branch}`);
+  } catch {
+    sh(`git rebase --abort`);
+    console.warn(`  ${branch} conflicts with main; the fix pass resolves it.`);
+  }
+
   sh(`git checkout ${HOST_BRANCH}`);
 }
 
 // ---------------------------------------------------------------------------
 // PR helpers
 // ---------------------------------------------------------------------------
+
+// Branches the loop creates. It never merges or rewrites anyone else's PR.
+function isLoopBranch(branch: string): boolean {
+  return /^(sandcastle\/|feature\/prd-)/.test(branch);
+}
 
 // Where a PR's CI stands: passed once every check passed (or was skipped),
 // failed once any failed or was cancelled, pending otherwise, including
@@ -705,6 +713,8 @@ function sweepAutoMergeablePrs() {
   let mergedCount = 0;
 
   for (const pr of prs) {
+    if (!isLoopBranch(pr.headRefName)) continue;
+
     // Skip CONFLICTING and UNKNOWN. UNKNOWN is usually a transient state
     // (GitHub still computing the merge); next iteration will retry.
     if (pr.mergeable !== "MERGEABLE") continue;
@@ -825,8 +835,7 @@ async function fixBrokenPrs(): Promise<boolean> {
   let tookAny = false;
 
   for (const pr of prs) {
-    // Only the loop's own branches.
-    if (!/^(sandcastle|feature\/prd-)/.test(pr.headRefName)) continue;
+    if (!isLoopBranch(pr.headRefName)) continue;
 
     const isConflicting = pr.mergeable === "CONFLICTING";
 
@@ -875,11 +884,6 @@ async function runFixAgent(pr: {
   sh(`git branch -f ${pr.head} origin/${pr.head}`);
 
   const before = sh(`git rev-parse ${pr.head}`).trim();
-  // A PRD feature branch already carries merges from main, so it's brought
-  // up to date the same way; every other branch is rebased.
-  const updateCommand = pr.head.startsWith("feature/")
-    ? `git merge origin/${pr.base}`
-    : `git rebase origin/${pr.base}`;
   const sandbox = await sandcastle.createSandbox({
     branch: pr.head,
     sandbox: docker({ mounts: sandboxMounts }),
@@ -901,7 +905,7 @@ async function runFixAgent(pr: {
         PROBLEM: pr.isConflicting
           ? `it conflicts with \`${pr.base}\``
           : "its CI failed",
-        UPDATE_COMMAND: updateCommand,
+        UPDATE_COMMAND: `git rebase origin/${pr.base}`,
         CI_LOG: pr.isConflicting ? "" : failedCiLog(pr.url)
       }
     });
@@ -927,6 +931,7 @@ for (let i = 1; i <= MAX_ITERATIONS; i++) {
 
   // Standalone branches fork from the local main, which only ever moves here:
   // merges land on GitHub.
+  sh(`git checkout ${HOST_BRANCH}`);
   sh(`git fetch origin main`);
   sh(`git merge --ff-only origin/main`);
 
