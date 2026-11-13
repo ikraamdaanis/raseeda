@@ -28,6 +28,8 @@ import { isSameCurrency } from "~/utils/currency-conversion";
 const CUSTOM_CURRENCY = "__custom";
 const CURRENCY_ID = "invoice-currency";
 const SECOND_CURRENCY_ID = "invoice-second-currency";
+const secondCurrencyButtonClassName =
+  "text-muted-foreground hover:text-foreground focus-visible:ring-ring -mx-1 flex h-6 w-fit items-center gap-1 rounded-md px-1 text-xs outline-none focus-visible:ring-1 pointer-coarse:h-11";
 
 /**
  * The total on the page, which in Edit mode opens the invoice's currency and
@@ -117,7 +119,7 @@ export function CurrencyPopover({
               <button
                 type="button"
                 onClick={handleRemove}
-                className="text-muted-foreground hover:text-foreground focus-visible:ring-ring -mx-1 flex h-6 w-fit items-center gap-1 rounded-md px-1 text-xs outline-none focus-visible:ring-1 pointer-coarse:h-11"
+                className={secondCurrencyButtonClassName}
               >
                 <IconX aria-hidden="true" className="size-3.5 shrink-0" />
                 Remove second currency
@@ -128,7 +130,7 @@ export function CurrencyPopover({
               id={`${SECOND_CURRENCY_ID}-add`}
               type="button"
               onClick={handleAdd}
-              className="text-muted-foreground hover:text-foreground focus-visible:ring-ring -mx-1 flex h-6 w-fit items-center gap-1 rounded-md px-1 text-xs outline-none focus-visible:ring-1 pointer-coarse:h-11"
+              className={secondCurrencyButtonClassName}
             >
               <IconPlus aria-hidden="true" className="size-3.5 shrink-0" />
               Also show in another currency

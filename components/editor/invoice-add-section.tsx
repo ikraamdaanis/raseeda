@@ -61,7 +61,7 @@ export function AddSectionSlot({
       setSection: state.setSection
     }))
   );
-  const settled: InvoiceSectionKey[] = getTypeSettledSections(documentType);
+  const settled = getTypeSettledSections(documentType);
   const offered = AREA_SECTIONS[area].filter(
     part => !sections[part.key] && !settled.includes(part.key)
   );

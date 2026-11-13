@@ -150,7 +150,7 @@ function HideRowButton({
 }) {
   const { setSection } = useSectionsSlice();
   const documentType = useDocumentType();
-  const settled: InvoiceSectionKey[] = getTypeSettledSections(documentType);
+  const settled = getTypeSettledSections(documentType);
 
   if (settled.includes(section)) return null;
 
@@ -710,10 +710,11 @@ function DiscountsRow() {
 }
 
 // In Edit mode the total opens the currency and the second one, since every
-// amount it adds up is on the page. The grand total suppresses its emphasis when a payment has been recorded, so
-// the balance-due row below reads as the figure to pay instead. A payment only
-// counts while its row is switched on, as in the PDF (a receipt's always is,
-// paid in full until an amount is typed; a quote's never is).
+// amount it adds up is on the page. The grand total suppresses its emphasis
+// when a payment has been recorded, so the balance-due row below reads as the
+// figure to pay instead. A payment only counts while its row is switched on,
+// as in the PDF (a receipt's always is, paid in full until an amount is
+// typed; a quote's never is).
 function TotalRow() {
   const { currencyCode, labels, setLabels } = usePricingSlice();
   const documentType = useDocumentType();
@@ -878,7 +879,7 @@ function AmountPaidRow() {
 function PaidStampToggle() {
   const { sections, setSection } = useSectionsSlice();
   const documentType = useDocumentType();
-  const settled: InvoiceSectionKey[] = getTypeSettledSections(documentType);
+  const settled = getTypeSettledSections(documentType);
 
   if (settled.includes("paidStamp")) return null;
 

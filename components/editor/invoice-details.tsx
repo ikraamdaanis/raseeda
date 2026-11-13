@@ -23,7 +23,6 @@ import {
   getPaymentTermsDays
 } from "~/utils/payment-terms";
 import { readInvoiceDate } from "~/utils/read-invoice-date";
-
 import { hasText } from "~/utils/section-visibility";
 
 // The rows that are optional parts, each hidden with its own "×".
