@@ -82,6 +82,8 @@ function makeInvoice(overrides: Partial<Invoice> = {}): Invoice {
       bic: "",
       sortCode: "",
       paymentLink: "",
+      qrCodeContent: "sepa",
+      upiId: "",
       terms: ""
     },
     pdfSettings: { backgroundColor: "#ffffff" },

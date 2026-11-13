@@ -133,7 +133,10 @@ const api = {
   // browser's language. `paymentDetails.labels` renames the bank fields, and
   // `paymentDetails.methods` (`{ id, name, detail }[]`) lists other ways to
   // pay, printed below them. `paymentDetails.paymentLink` is a link to pay
-  // online, printed last and clickable in the PDF. `documentType` ("invoice",
+  // online, printed last and clickable in the PDF. With
+  // `sections.paymentQrCode` on, `paymentDetails.qrCodeContent` ("sepa",
+  // "upi", "paymentLink") picks what the QR code encodes, and
+  // `paymentDetails.upiId` is a UPI code's payee. `documentType` ("invoice",
   // "quote", "proforma-invoice", "receipt", "credit-note") is "invoice" when
   // left out; a title, number, or number, due date or total label left out
   // takes that type's ("Quote", "QUO-0001", "Valid until" and so on). A

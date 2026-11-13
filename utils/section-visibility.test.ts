@@ -99,6 +99,12 @@ describe("printed sections", () => {
     expect(
       getPrintedSections({ ...invoice, documentType: "receipt" }).paymentQrCode
     ).toBe(false);
+    expect(
+      getPrintedSections({
+        ...invoice,
+        paymentDetails: { ...invoice.paymentDetails, qrCodeContent: "upi" }
+      }).paymentQrCode
+    ).toBe(false);
   });
 
   it("never prints switched-off tax", () => {

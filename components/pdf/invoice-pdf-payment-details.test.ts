@@ -153,4 +153,41 @@ describe("InvoicePdfPaymentDetails payment QR code", () => {
       )
     ).toEqual([]);
   });
+
+  it("prints a UPI code or the payment link when picked", () => {
+    const invoice = sepaInvoice();
+
+    expect(
+      qrPayloadsOf(
+        InvoicePdfPaymentDetails({
+          invoice: {
+            ...invoice,
+            currency: "₹",
+            currencyCode: "INR",
+            paymentDetails: {
+              ...invoice.paymentDetails,
+              qrCodeContent: "upi",
+              upiId: "acme@okaxis"
+            }
+          }
+        })
+      )
+    ).toEqual([
+      "upi://pay?pa=acme@okaxis&pn=Acme%20Studio&am=50.00&cu=INR&tn=INV-0007"
+    ]);
+    expect(
+      qrPayloadsOf(
+        InvoicePdfPaymentDetails({
+          invoice: {
+            ...invoice,
+            paymentDetails: {
+              ...invoice.paymentDetails,
+              qrCodeContent: "paymentLink",
+              paymentLink: "https://buy.stripe.com/acme"
+            }
+          }
+        })
+      )
+    ).toEqual(["https://buy.stripe.com/acme"]);
+  });
 });
