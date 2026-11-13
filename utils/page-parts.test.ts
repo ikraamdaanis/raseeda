@@ -1,11 +1,9 @@
+import { mapValues } from "lodash-es";
 import { describe, expect, it } from "vitest";
 import { DEFAULT_INVOICE_SECTIONS } from "~/schema/invoice";
-import type { InvoiceSections } from "~/types";
 import { getAddableParts } from "~/utils/page-parts";
 
-const allOff = Object.fromEntries(
-  Object.keys(DEFAULT_INVOICE_SECTIONS).map(key => [key, false])
-) as InvoiceSections;
+const allOff = mapValues(DEFAULT_INVOICE_SECTIONS, () => false);
 
 describe("getAddableParts", () => {
   it("lists an area's switched-off parts in the order they print", () => {
