@@ -4,9 +4,14 @@ import {
   STORED_INVOICE_FORMATS,
   STORED_INVOICE_THEME_FALLBACK
 } from "~/schema/invoice";
-import { createBlankInvoice, invoiceDefault } from "~/stores/invoice-store";
+import {
+  createBlankDocument,
+  createBlankInvoice,
+  invoiceDefault
+} from "~/stores/invoice-store";
 import { applyDocumentType } from "~/utils/document-type";
 import { isBlankInvoice, isLargeRemoval } from "~/utils/invoice-content";
+import { applyLabelPreset } from "~/utils/label-preset";
 import { getLocaleDefaults } from "~/utils/locale-defaults";
 
 describe("isBlankInvoice", () => {
@@ -95,6 +100,24 @@ describe("isBlankInvoice", () => {
         isBlankInvoice(createBlankInvoice(getLocaleDefaults("de-DE")))
       ).toBe(true);
       expect(isBlankInvoice(createBlankInvoice())).toBe(true);
+    });
+
+    it("treats the labels the language picked as filled in for you", () => {
+      vi.stubGlobal("navigator", { language: "de-DE" });
+
+      expect(isBlankInvoice(createBlankDocument("quote"))).toBe(true);
+      expect(
+        isBlankInvoice({
+          ...createBlankInvoice(),
+          labels: { ...createBlankInvoice().labels, subtotal: "Netto" }
+        })
+      ).toBe(false);
+      expect(
+        isBlankInvoice(
+          applyLabelPreset(createBlankInvoice(), "en"),
+          getLocaleDefaults("de-DE")
+        )
+      ).toBe(false);
     });
 
     it("keeps a format someone chose", () => {

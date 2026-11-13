@@ -2,38 +2,62 @@ import {
   DOCUMENT_TYPE_DEFAULTS,
   DOCUMENT_TYPE_ROWS
 } from "~/consts/document-types";
+import { DOCUMENT_TYPE_LABEL_PRESETS } from "~/consts/label-presets";
 import { DOCUMENT_TYPES, INVOICE_SECTION_KEYS } from "~/schema/invoice";
 import type { DocumentType, Invoice, InvoiceSectionKey } from "~/types";
+import { rankLabelLanguages } from "~/utils/label-preset";
 
-const TYPED_LABEL_KEYS = ["invoiceNumber", "paymentDue", "total"] as const;
-
-// The value if it's still the old type's default, else what was typed.
-function follow(value: string, oldDefault: string, newDefault: string) {
-  return value === oldDefault ? newDefault : value;
-}
+const TYPED_LABEL_KEYS = [
+  "invoiceNumber",
+  "invoiceDate",
+  "paymentDue",
+  "total"
+] as const;
 
 /**
  * The invoice as another document type. The title, the sample number and the
  * labels that differ between types swap to the new type's defaults only where
- * they're still on the old type's defaults; a changed one (an emptied one
- * included) stays as typed, even when it matches some other type's default.
+ * they're still on the old type's defaults, in any preset language (a German
+ * "Rechnung" becomes "Angebot"), in the language the labels are most in
+ * first; a changed one (an emptied one included) stays as typed, even when it
+ * matches some other type's default.
  */
 export function applyDocumentType<
   T extends Pick<Invoice, "documentType" | "title" | "number" | "labels">
 >(invoice: T, documentType: DocumentType): T {
-  const before = DOCUMENT_TYPE_DEFAULTS[invoice.documentType];
-  const after = DOCUMENT_TYPE_DEFAULTS[documentType];
+  const before = DOCUMENT_TYPE_LABEL_PRESETS[invoice.documentType];
+  const after = DOCUMENT_TYPE_LABEL_PRESETS[documentType];
+  const languages = rankLabelLanguages(invoice);
+
+  // The value if it's still the old type's default in a language, else what
+  // was typed.
+  function follow(
+    key: "title" | (typeof TYPED_LABEL_KEYS)[number],
+    value: string
+  ) {
+    const language = languages.find(
+      candidate => before[key][candidate] === value
+    );
+
+    return language ? after[key][language] : value;
+  }
+
   const labels = { ...invoice.labels };
 
   for (const key of TYPED_LABEL_KEYS) {
-    labels[key] = follow(labels[key], before.labels[key], after.labels[key]);
+    labels[key] = follow(key, labels[key]);
   }
+
+  const oldNumber = DOCUMENT_TYPE_DEFAULTS[invoice.documentType].number;
 
   return {
     ...invoice,
     documentType,
-    title: follow(invoice.title, before.title, after.title),
-    number: follow(invoice.number, before.number, after.number),
+    title: follow("title", invoice.title),
+    number:
+      invoice.number === oldNumber
+        ? DOCUMENT_TYPE_DEFAULTS[documentType].number
+        : invoice.number,
     labels
   };
 }

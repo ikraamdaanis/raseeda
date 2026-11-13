@@ -1,6 +1,11 @@
 import { addDays, format } from "date-fns";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { createBlankInvoice, invoiceDefault } from "~/stores/invoice-store";
+import { STORED_INVOICE_FORMATS } from "~/schema/invoice";
+import {
+  createBlankDocument,
+  createBlankInvoice,
+  invoiceDefault
+} from "~/stores/invoice-store";
 import { getLocaleDefaults } from "~/utils/locale-defaults";
 
 describe("createBlankInvoice", () => {
@@ -97,6 +102,23 @@ describe("createBlankInvoice", () => {
       });
       vi.stubGlobal("navigator", { language: "en-US" });
       expect(createBlankInvoice().paperSize).toBe("Letter");
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it("starts the labels in the browser's language, English without a preset", () => {
+    vi.stubGlobal("navigator", { language: "de-DE" });
+
+    try {
+      expect(createBlankInvoice()).toMatchObject({
+        title: "Rechnung",
+        labels: { invoiceDate: "Rechnungsdatum" }
+      });
+      expect(createBlankDocument("quote").title).toBe("Angebot");
+      expect(createBlankInvoice(STORED_INVOICE_FORMATS).title).toBe("Invoice");
+      vi.stubGlobal("navigator", { language: "sv-SE" });
+      expect(createBlankInvoice().title).toBe("Invoice");
     } finally {
       vi.unstubAllGlobals();
     }

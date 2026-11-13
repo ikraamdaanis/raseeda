@@ -81,6 +81,16 @@ The invoice's colours are `theme.accent`, for the title, the section headings, t
 
 How amounts are written is `numberFormat` and `currencyPosition`. `numberFormat` is one of `"comma-dot"` (1,234.56), `"dot-comma"` (1.234,56), `"space-comma"` (1 234,56), `"apostrophe-dot"` (1’234.56) or `"indian"` (12,34,567.89); `currencyPosition` is `"before"` ($1,234.56) or `"after"` (1.234,56 €). `paperSize` is `"A4"` or `"Letter"`, for the PDF, the page in the editor and print. A script's invoice left without them is `"comma-dot"`, `"before"` and `"A4"`, whatever the browser's language; a blank invoice made in the editor starts on the browser's. Currencies with no minor unit (JPY, KRW, VND and the rest of ISO 4217's zero-decimal list) are reckoned and printed in whole units.
 
+`language` sets every printed label at once from a language preset: `"en"` (the default), `"de"`, `"fr"`, `"es"`, `"it"`, `"nl"`, `"pt"` or `"pl"`. The title, the details' and totals' labels, the table's headers, the From, To and Ship to headings, the payment details' labels and the notes, terms and late payment headings take that language's wording for the document's type (a German quote is titled "Angebot", with "Gültig bis" for its due date). Labels, a title or headings given in the data are laid over it. Left out, or any other value, the labels are English, whatever the browser's language; a blank invoice made in the editor starts in the browser's language when there's a preset for it.
+
+```js
+await raseeda.createInvoice({
+  language: "de",
+  seller: { content: "Muster GmbH\nBerlin" },
+  items: [{ description: "Beratung", quantity: 4, unitPrice: 120 }]
+});
+```
+
 `paymentDetails.labels` names each bank field on the page (`{ bankName, accountName, accountNumber, routingNumber, iban, bic, sortCode }`, left out it reads "Bank name", "Routing number" and so on), and `paymentDetails.methods` lists other ways to pay, printed below the bank fields in order: `[{ id, name, detail }]`, such as `{ id: "venmo", name: "Venmo", detail: "@jane-designs" }`. A method with no `detail` doesn't print. `paymentDetails.paymentLink` is a link to pay online, such as `"https://paypal.me/janedesigns"`, printed last under `paymentDetails.labels.paymentLink` ("Pay online" when left out) and clickable in the PDF.
 
 ```js

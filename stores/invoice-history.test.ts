@@ -10,6 +10,7 @@ import {
   noteComposition,
   noteFocusChange,
   notePaste,
+  recordHistoryAction,
   redoInvoiceChange,
   setInvoiceHistoryEnabled,
   startInvoiceHistory,
@@ -92,6 +93,27 @@ describe("invoice history", () => {
 
     expect(data()).toEqual(start);
     expect(useInvoiceHistory.getState().canUndo).toBe(false);
+  });
+
+  it("undoes a language preset in one step, labels typed before it included", () => {
+    blurAll();
+    store().setLabels(labels => ({ ...labels, subtotal: "Net" }));
+    closeHistoryStep();
+
+    const beforePreset = data();
+
+    recordHistoryAction("Language", "page", () => {
+      store().setLabelLanguage("de");
+    });
+
+    expect(data().labels.subtotal).toBe("Zwischensumme");
+    expect(data().title).toBe("Rechnung");
+    expect(useInvoiceHistory.getState().undoLabel).toBe("Language");
+
+    undoInvoiceChange();
+
+    expect(data()).toEqual(beforePreset);
+    expect(data().labels.subtotal).toBe("Net");
   });
 
   it("starts a new step after a 500ms pause", () => {

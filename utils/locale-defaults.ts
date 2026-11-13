@@ -1,8 +1,10 @@
+import { LABEL_LANGUAGES } from "~/consts/label-presets";
 import { STORED_INVOICE_FORMATS } from "~/schema/invoice";
 import type {
   CurrencyPosition,
   InvoiceNumberFormat,
-  InvoicePaperSize
+  InvoicePaperSize,
+  LabelLanguage
 } from "~/types";
 
 // Where Letter is the paper size, as CLDR's paper-size territories have it.
@@ -92,15 +94,18 @@ function getLocale(tag: string) {
 // from the browser's language as Intl writes an amount in it: someone in
 // Berlin starts on 1.234,56 € and A4, someone in Chicago on $1,234.56 and
 // Letter. A bare language takes its most common region ("de" is Germany).
-// Whatever Intl can't answer gets the stored-invoice defaults.
+// Whatever Intl can't answer gets the stored-invoice defaults. Its labels
+// start in the browser's language when there's a preset for it (issue #126),
+// and in English otherwise.
 export function getLocaleDefaults(tag: string | undefined): {
   numberFormat: InvoiceNumberFormat;
   currencyPosition: CurrencyPosition;
   paperSize: InvoicePaperSize;
+  language: LabelLanguage;
 } {
   const locale = tag ? getLocale(tag) : null;
 
-  if (!locale) return { ...STORED_INVOICE_FORMATS };
+  if (!locale) return { ...STORED_INVOICE_FORMATS, language: "en" };
 
   const region = locale.maximize().region;
   // Where the currency sits doesn't depend on which currency it is, so any
@@ -117,7 +122,9 @@ export function getLocaleDefaults(tag: string | undefined): {
     paperSize:
       region && LETTER_REGIONS.has(region)
         ? "Letter"
-        : STORED_INVOICE_FORMATS.paperSize
+        : STORED_INVOICE_FORMATS.paperSize,
+    language:
+      LABEL_LANGUAGES.find(language => language === locale.language) ?? "en"
   };
 }
 

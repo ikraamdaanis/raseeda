@@ -19,6 +19,10 @@ _Avoid_: Open dialog, invoice list
 A saved starting point for new documents, carrying the user's own details.
 _Avoid_: Profile, preset
 
+**Language preset**:
+One language's wording for every printed label, set on a document all at once; the editor's own interface stays in English.
+_Avoid_: Translation, locale
+
 **Editor tab**:
 The one browser tab that has the editor open and saves the open document; any other tab on `/create` waits until it's handed over.
 _Avoid_: Read-only tab, editing tab

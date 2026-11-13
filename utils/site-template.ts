@@ -3,6 +3,7 @@ import {
   createBlankInvoice
 } from "~/stores/invoice-store";
 import type { Invoice, InvoiceItem, SiteTemplateId } from "~/types";
+import { getBrowserLanguage, getLocaleDefaults } from "~/utils/locale-defaults";
 
 function lines(
   rows: [description: string, quantity: number, unit: string][]
@@ -32,8 +33,19 @@ export function createSiteTemplateInvoice(id: SiteTemplateId): Invoice {
   return createBlankDocument(id);
 }
 
+// A trade's template renames labels in English ("Hours", "Job site"), so its
+// labels stay English whatever the browser's language, and its formats are
+// still the browser's. A document type's template is a blank of that type, so
+// it starts in the browser's language like any blank.
+function createTradeBlank(): Invoice {
+  return createBlankInvoice({
+    ...getLocaleDefaults(getBrowserLanguage()),
+    language: "en"
+  });
+}
+
 function freelanceInvoice(): Invoice {
-  const blank = createBlankInvoice();
+  const blank = createTradeBlank();
 
   return {
     ...blank,
@@ -55,7 +67,7 @@ function freelanceInvoice(): Invoice {
 }
 
 function contractorInvoice(): Invoice {
-  const blank = createBlankInvoice();
+  const blank = createTradeBlank();
 
   return {
     ...blank,
@@ -72,7 +84,7 @@ function contractorInvoice(): Invoice {
 }
 
 function retailInvoice(): Invoice {
-  const blank = createBlankInvoice();
+  const blank = createTradeBlank();
   const [standard, reduced, exempt] = lines([
     ["Standard-rate product", 1, "ea"],
     ["Reduced-rate product", 1, "ea"],

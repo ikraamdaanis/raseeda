@@ -4,25 +4,24 @@ import {
   STORED_INVOICE_THEME_FALLBACK
 } from "~/schema/invoice";
 import { invoiceDefault } from "~/stores/invoice-store";
-import type { Invoice } from "~/types";
+import type { BlankDefaults, Invoice } from "~/types";
 import { applyDocumentType } from "~/utils/document-type";
+import { applyLabelPreset } from "~/utils/label-preset";
 import { getBrowserLanguage, getLocaleDefaults } from "~/utils/locale-defaults";
-
-type BlankFormats = Pick<
-  Invoice,
-  "numberFormat" | "currencyPosition" | "paperSize"
->;
 
 // The invoice with what's filled in for you (its dates, the line items' ids
 // and the formats a new blank took) left out, so two blanks made on different
 // days compare equal. Formats someone chose aren't left out, so changing only
 // the number format still counts as an edit.
-function withoutAutoFilledValues(invoice: Invoice, blankFormats: BlankFormats) {
+function withoutAutoFilledValues(
+  invoice: Invoice,
+  blankDefaults: BlankDefaults
+) {
   const formatKeys = Object.keys(STORED_INVOICE_FORMATS);
   const formats = pick(invoice, formatKeys);
   // Only the blank's own: an invoice set to the stored defaults by hand (an
   // American picking A4) was changed on purpose.
-  const isAutoFilled = isEqual(formats, blankFormats);
+  const isAutoFilled = isEqual(formats, pick(blankDefaults, formatKeys));
 
   return {
     ...omit(invoice, formatKeys),
@@ -46,19 +45,24 @@ const GEIST_BLANK: Invoice = {
 // the browser's formats; one from before they existed (a pre-autosave draft)
 // read as the stored ones, so it's compared in those. A quote or a receipt is
 // compared with a blank of its own type, so its own title and labels don't
-// count as an edit either.
+// count as an edit either, and in the language a new blank's labels take, so
+// a German blank's German labels don't.
 export function isBlankInvoice(
   invoice: Invoice,
-  blankFormats: BlankFormats = getLocaleDefaults(getBrowserLanguage())
+  blankDefaults: BlankDefaults = getLocaleDefaults(getBrowserLanguage())
 ): boolean {
-  const content = withoutAutoFilledValues(invoice, blankFormats);
+  const { language = "en", ...formats } = blankDefaults;
+  const content = withoutAutoFilledValues(invoice, blankDefaults);
 
   return [invoiceDefault, GEIST_BLANK].some(blank =>
     isEqual(
       content,
       withoutAutoFilledValues(
-        applyDocumentType({ ...blank, ...blankFormats }, invoice.documentType),
-        blankFormats
+        applyLabelPreset(
+          applyDocumentType({ ...blank, ...formats }, invoice.documentType),
+          language
+        ),
+        blankDefaults
       )
     )
   );

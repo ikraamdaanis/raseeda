@@ -3,28 +3,37 @@ import { getLocaleDefaults } from "~/utils/locale-defaults";
 
 describe("getLocaleDefaults", () => {
   it.each([
-    ["en-US", "comma-dot", "before", "Letter"],
-    ["en-GB", "comma-dot", "before", "A4"],
-    ["de-DE", "dot-comma", "after", "A4"],
-    ["de-AT", "dot-comma", "before", "A4"],
-    ["fr-FR", "space-comma", "after", "A4"],
-    ["de-CH", "apostrophe-dot", "before", "A4"],
-    ["en-IN", "indian", "before", "A4"],
-    ["ja", "comma-dot", "before", "A4"],
-    ["fr-CA", "space-comma", "after", "Letter"],
-    ["en-CA", "comma-dot", "before", "Letter"],
-    ["nl-BE", "dot-comma", "before", "A4"],
-    ["zh-Hant-TW", "comma-dot", "before", "A4"]
+    ["en-US", "comma-dot", "before", "Letter", "en"],
+    ["en-GB", "comma-dot", "before", "A4", "en"],
+    ["de-DE", "dot-comma", "after", "A4", "de"],
+    ["de-AT", "dot-comma", "before", "A4", "de"],
+    ["fr-FR", "space-comma", "after", "A4", "fr"],
+    ["de-CH", "apostrophe-dot", "before", "A4", "de"],
+    ["en-IN", "indian", "before", "A4", "en"],
+    ["ja", "comma-dot", "before", "A4", "en"],
+    ["fr-CA", "space-comma", "after", "Letter", "fr"],
+    ["en-CA", "comma-dot", "before", "Letter", "en"],
+    ["nl-BE", "dot-comma", "before", "A4", "nl"],
+    ["zh-Hant-TW", "comma-dot", "before", "A4", "en"]
   ])(
-    "reads %s as %s, %s, %s",
-    (tag, numberFormat, currencyPosition, paperSize) => {
+    "reads %s as %s, %s, %s, %s",
+    (tag, numberFormat, currencyPosition, paperSize, language) => {
       expect(getLocaleDefaults(tag)).toEqual({
         numberFormat,
         currencyPosition,
-        paperSize
+        paperSize,
+        language
       });
     }
   );
+
+  it("starts the labels in the browser's language when there's a preset", () => {
+    expect(getLocaleDefaults("es-MX").language).toBe("es");
+    expect(getLocaleDefaults("pt-BR").language).toBe("pt");
+    expect(getLocaleDefaults("pl").language).toBe("pl");
+    expect(getLocaleDefaults("it-CH").language).toBe("it");
+    expect(getLocaleDefaults("sv-SE").language).toBe("en");
+  });
 
   it("fills in a language's most common region when the tag has none", () => {
     expect(getLocaleDefaults("de")).toEqual(getLocaleDefaults("de-DE"));
@@ -49,7 +58,8 @@ describe("getLocaleDefaults", () => {
     const stored = {
       numberFormat: "comma-dot",
       currencyPosition: "before",
-      paperSize: "A4"
+      paperSize: "A4",
+      language: "en"
     };
 
     expect(getLocaleDefaults(undefined)).toEqual(stored);

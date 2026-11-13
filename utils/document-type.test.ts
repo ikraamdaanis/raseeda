@@ -7,6 +7,7 @@ import {
 } from "~/stores/invoice-store";
 import type { DocumentType, Invoice } from "~/types";
 import { applyDocumentType, readDocumentType } from "~/utils/document-type";
+import { applyLabelPreset } from "~/utils/label-preset";
 
 // A blank document of the type given, with that type's title and labels.
 function blankOf(documentType: DocumentType): Invoice {
@@ -133,6 +134,33 @@ describe("applyDocumentType", () => {
     expect(applyDocumentType(invoice, "credit-note").labels.subtotal).toBe(
       "Net"
     );
+  });
+
+  it("swaps defaults in the language the labels are in", () => {
+    const german = applyLabelPreset(createBlankInvoice(), "de");
+    const quote = applyDocumentType(german, "quote");
+
+    expect(quote.title).toBe("Angebot");
+    expect(quote.labels).toMatchObject({
+      invoiceNumber: "Angebotsnummer",
+      invoiceDate: "Angebotsdatum",
+      paymentDue: "Gültig bis",
+      total: "Gesamtbetrag",
+      subtotal: "Zwischensumme"
+    });
+    expect(applyDocumentType(quote, "invoice")).toEqual(german);
+  });
+
+  it("reads a label two languages share as the invoice's language", () => {
+    // "Total" is the invoice's total in English and in French.
+    const french = applyLabelPreset(createBlankInvoice(), "fr");
+
+    expect(applyDocumentType(french, "credit-note").labels.total).toBe(
+      "Total de l'avoir"
+    );
+    expect(
+      applyDocumentType(createBlankInvoice(), "credit-note").labels.total
+    ).toBe("Total credit");
   });
 
   it("comes back to the same document after a round trip", () => {
