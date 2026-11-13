@@ -1,4 +1,3 @@
-import { LABEL_LANGUAGES } from "~/consts/label-presets";
 import { STORED_INVOICE_FORMATS } from "~/schema/invoice";
 import type {
   CurrencyPosition,
@@ -6,6 +5,7 @@ import type {
   InvoicePaperSize,
   LabelLanguage
 } from "~/types";
+import { readLabelLanguage } from "~/utils/label-preset";
 
 // Where Letter is the paper size, as CLDR's paper-size territories have it.
 // Everywhere else is A4. Intl has nothing for paper, so this stays a list.
@@ -123,8 +123,7 @@ export function getLocaleDefaults(tag: string | undefined): {
       region && LETTER_REGIONS.has(region)
         ? "Letter"
         : STORED_INVOICE_FORMATS.paperSize,
-    language:
-      LABEL_LANGUAGES.find(language => language === locale.language) ?? "en"
+    language: readLabelLanguage(locale.language)
   };
 }
 
