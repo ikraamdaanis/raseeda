@@ -1,3 +1,7 @@
+import {
+  AddPartSlot,
+  useAddableParts
+} from "~/components/editor/invoice-add-part";
 import { InvoiceInput } from "~/components/editor/invoice-input";
 import {
   OptionalSection,
@@ -13,12 +17,18 @@ import {
 import { getRoleSettings } from "~/utils/get-role-settings";
 import { getTextStyles } from "~/utils/get-text-styles";
 
-// Shown while the Shipping address section is switched on in the inspector.
+// Shown while the Shipping address section is on; while it's off, a slot
+// under the client adds it.
 export function InvoiceShipping() {
   const { setSection } = useSectionsSlice();
   const sections = useShownSections();
+  const addableParts = useAddableParts("shipping");
 
-  if (!sections.shipping) return null;
+  if (!sections.shipping) {
+    return (
+      <AddPartSlot areaName="shipping" parts={addableParts} className="-mx-1" />
+    );
+  }
 
   return (
     <OptionalSection data-field-area="shipping" className="gap-1">

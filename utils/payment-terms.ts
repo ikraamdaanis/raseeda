@@ -30,6 +30,29 @@ export function getPaymentTermsDays(
   return PAYMENT_TERMS.some(term => term.days === days) ? days : null;
 }
 
+// The presets offered beside the due date's calendar, each with the due date
+// it sets; none until there's an issue date to count from.
+export function getPaymentTermsOptions(
+  invoiceDate: string,
+  dueDate: string
+): { label: string; dueDate: string; isSelected: boolean }[] {
+  const termsDays = getPaymentTermsDays(invoiceDate, dueDate);
+
+  return PAYMENT_TERMS.flatMap(term => {
+    const termDueDate = addDaysToIsoDate(invoiceDate, term.days);
+
+    return termDueDate
+      ? [
+          {
+            label: term.label,
+            dueDate: termDueDate,
+            isSelected: term.days === termsDays
+          }
+        ]
+      : [];
+  });
+}
+
 // The due date to go with a new invoice date: a preset gap (Net 30 and so on)
 // moves with it; a custom due date stays put (null means leave it).
 export function dueDateForNewInvoiceDate({

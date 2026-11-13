@@ -29,10 +29,12 @@ export function OptionalSection({
  */
 export function RemoveSectionButton({
   label,
-  onClick
+  onClick,
+  className
 }: {
   label: string;
   onClick: () => void;
+  className?: string;
 }) {
   const isPreview = useIsPreview();
 
@@ -44,7 +46,10 @@ export function RemoveSectionButton({
       variant="ghost"
       aria-label={label}
       onClick={onClick}
-      className="text-paper-muted-foreground hover:text-paper-foreground opacity-0 group-focus-within/optional:opacity-100 group-hover/optional:opacity-100 pointer-coarse:size-11 pointer-coarse:opacity-100"
+      className={cn(
+        "text-paper-muted-foreground hover:text-paper-foreground opacity-0 group-focus-within/optional:opacity-100 group-hover/optional:opacity-100 pointer-coarse:size-11 pointer-coarse:opacity-100",
+        className
+      )}
     >
       <IconX aria-hidden="true" />
     </Button>

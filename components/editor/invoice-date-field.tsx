@@ -24,7 +24,9 @@ import {
 // a range takes the first click as the date, and a second click as the other
 // end of a range, stored as yyyy-MM-dd/yyyy-MM-dd. An optional date can be
 // cleared from under the calendar. formatValue writes the stored value, for a
-// field that doesn't follow the invoice's date format to the letter.
+// field that doesn't follow the invoice's date format to the letter. Presets,
+// such as the due date's payment terms, sit above the calendar, each a date
+// it picks in one click.
 export function InvoiceDateField({
   value,
   label,
@@ -33,6 +35,7 @@ export function InvoiceDateField({
   allowsRange = false,
   canClear = false,
   formatValue = formatInvoiceDate,
+  presets = [],
   onSelect
 }: {
   value: string;
@@ -42,6 +45,7 @@ export function InvoiceDateField({
   allowsRange?: boolean;
   canClear?: boolean;
   formatValue?: (value: string, dateFormat: Invoice["dateFormat"]) => string;
+  presets?: { label: string; value: string; isSelected: boolean }[];
   onSelect: (isoDate: string) => void;
 }) {
   const dateFormat = useInvoiceStore(state => state.dateFormat);
@@ -109,6 +113,29 @@ export function InvoiceDateField({
         <span id={textId}>{text || placeholder}</span>
       </PopoverTrigger>
       <PopoverContent align="start" className="w-auto p-0">
+        {presets.length > 0 && (
+          <div
+            role="group"
+            aria-label="Payment terms"
+            className="flex max-w-min min-w-full flex-wrap gap-1 px-3 pt-3"
+          >
+            {presets.map(preset => (
+              <Button
+                key={preset.label}
+                variant="outline"
+                size="xs"
+                aria-pressed={preset.isSelected}
+                className="aria-pressed:bg-accent aria-pressed:text-accent-foreground whitespace-nowrap"
+                onClick={() => {
+                  onSelect(preset.value);
+                  handleOpenChange(false);
+                }}
+              >
+                {preset.label}
+              </Button>
+            ))}
+          </div>
+        )}
         {allowsRange ? (
           <>
             <Calendar

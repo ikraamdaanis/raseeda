@@ -2,7 +2,8 @@ import { describe, expect, it } from "vitest";
 import {
   addDaysToIsoDate,
   dueDateForNewInvoiceDate,
-  getPaymentTermsDays
+  getPaymentTermsDays,
+  getPaymentTermsOptions
 } from "~/utils/payment-terms";
 
 describe("payment terms", () => {
@@ -53,5 +54,21 @@ describe("moving the invoice date", () => {
         nextInvoiceDate: "2026-10-20"
       })
     ).toBeNull();
+  });
+});
+
+describe("getPaymentTermsOptions", () => {
+  it("gives each preset the due date it sets, marking the one in use", () => {
+    expect(getPaymentTermsOptions("2026-10-17", "2026-11-16")).toEqual([
+      { label: "Due on receipt", dueDate: "2026-10-17", isSelected: false },
+      { label: "Net 7", dueDate: "2026-10-24", isSelected: false },
+      { label: "Net 14", dueDate: "2026-10-31", isSelected: false },
+      { label: "Net 30", dueDate: "2026-11-16", isSelected: true },
+      { label: "Net 60", dueDate: "2026-12-16", isSelected: false }
+    ]);
+  });
+
+  it("offers none until there's an issue date to count from", () => {
+    expect(getPaymentTermsOptions("", "2026-11-16")).toEqual([]);
   });
 });

@@ -67,7 +67,7 @@ export function getTypeSections<T extends Partial<Invoice["sections"]>>(
   return result;
 }
 
-// The switches a type settles, which the inspector and the command palette
+// The switches a type settles, which the page and the command palette
 // don't offer while the document is that type.
 export function getTypeSettledSections(
   documentType: DocumentType

@@ -110,18 +110,16 @@ test("a removed row comes back, and the table flashes", async ({ page }) => {
   );
 });
 
-test("a section switch flips back with undo", async ({ page }) => {
+test("a part added on the page goes again with undo", async ({ page }) => {
   await gotoEditorReady(page);
 
-  const notes = page.getByRole("switch", { name: "Notes" });
-
-  await notes.click();
+  await page.getByRole("button", { name: "Add to the footer" }).click();
+  await page.getByRole("menuitem", { name: "Notes" }).click();
   await expect(page.getByLabel("Notes content")).toBeVisible();
 
   await pressShortcut(page, UNDO);
 
   await expect(page.getByLabel("Notes content")).toHaveCount(0);
-  await expect(notes).not.toBeChecked();
 
   await pressShortcut(page, REDO);
 

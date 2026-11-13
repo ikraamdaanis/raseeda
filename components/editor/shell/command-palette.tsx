@@ -127,8 +127,8 @@ function PaletteCommands() {
   const { theme, setTheme } = useThemeSlice();
   const { currency, setCurrency } = useCurrencySlice();
   const { sections, setSection } = useSectionsSlice();
-  // The switches the document's type settles aren't offered, as in the
-  // inspector.
+  // The switches the document's type settles aren't offered, as on the
+  // page.
   const documentType = useDocumentType();
   const settledSections = getTypeSettledSections(documentType);
   const secondCurrency = useSecondCurrency();

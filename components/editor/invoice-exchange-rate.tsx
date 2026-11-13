@@ -1,5 +1,6 @@
 import { InvoiceDateField } from "~/components/editor/invoice-date-field";
 import { InvoiceInput } from "~/components/editor/invoice-input";
+import { RemoveSectionButton } from "~/components/editor/invoice-optional-section";
 import { useNumberField } from "~/components/editor/number-field";
 import { useCurrencyConversion } from "~/hooks/use-currency-conversion";
 import { useIsPreview } from "~/hooks/use-shown-sections";
@@ -18,7 +19,7 @@ import { getRoleSettings } from "~/utils/get-role-settings";
 import { getTextStyles } from "~/utils/get-text-styles";
 import { readInvoiceDate } from "~/utils/read-invoice-date";
 
-// The exchange rate's field, typed on the page and in the inspector: up to
+// The exchange rate's field: up to
 // six decimal places, as central banks quote rates, and empty while there's
 // no rate. At rest it reads as it prints.
 export function useExchangeRateField() {
@@ -62,7 +63,8 @@ export function useExchangeRateField() {
 
 // The rate under the totals, typed into the line as it prints: "Exchange
 // rate: 1 GBP = 1.2875 USD (Bank of England rate, 30 Oct 2026)". The brackets
-// and comma hug the fields beside them, as they do in print.
+// and comma hug the fields beside them, as they do in print. Its × leaves the
+// line out of print; the totals' slot brings it back.
 export function InvoiceExchangeRate() {
   const conversion = useCurrencyConversion();
   const {
@@ -108,11 +110,20 @@ export function InvoiceExchangeRate() {
       : [];
 
   return (
-    <div data-field-area="pricing" className="mt-3 flex flex-col gap-1">
+    <div
+      data-field-area="pricing"
+      className="group/optional mt-3 flex flex-col gap-1"
+    >
       <div
         className="text-paper-foreground flex flex-wrap items-center justify-end gap-x-1 text-sm"
         style={style}
       >
+        <RemoveSectionButton
+          label="Hide exchange rate"
+          onClick={() =>
+            setCurrencyConversion(prev => ({ ...prev, showRate: false }))
+          }
+        />
         <span>{`Exchange rate: 1 ${conversion.fromCode} =`}</span>
         <InvoiceInput
           aria-label={`Exchange rate, ${conversion.toCode} per ${conversion.fromCode}`}

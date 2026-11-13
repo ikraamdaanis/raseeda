@@ -3,6 +3,11 @@ import { useState } from "react";
 import type { FileRejection } from "react-dropzone";
 import Dropzone from "react-dropzone";
 import { toast } from "sonner";
+import {
+  AddPartSlot,
+  useAddableParts
+} from "~/components/editor/invoice-add-part";
+import { RemoveSectionButton } from "~/components/editor/invoice-optional-section";
 import { Button } from "~/components/ui/button";
 import { getImageBlob, saveImage } from "~/db";
 import { useImageLoader } from "~/hooks/use-image-loader";
@@ -22,7 +27,8 @@ const MAX_IMAGE_SIZE_BYTES = 5 * 1024 * 1024;
  */
 export function InvoiceImage() {
   const { image: imageId, setImage } = useImageSlice();
-  const { sections } = useSectionsSlice();
+  const { sections, setSection } = useSectionsSlice();
+  const addableParts = useAddableParts("logo");
   const isPreview = useIsPreview();
   const imageUrl = useImageLoader(imageId);
   const [isDragging, setIsDragging] = useState(false);
@@ -72,7 +78,9 @@ export function InvoiceImage() {
     setImage("");
   }
 
-  if (!sections.logo) return null;
+  if (!sections.logo) {
+    return <AddPartSlot areaName="header" parts={addableParts} align="end" />;
+  }
 
   // Preview shows the logo as the PDF prints it, or nothing.
   if (isPreview) {
@@ -99,7 +107,10 @@ export function InvoiceImage() {
       maxSize={MAX_IMAGE_SIZE_BYTES}
     >
       {({ getRootProps, getInputProps }) => (
-        <div data-field-area="logo" className="group relative shrink-0">
+        <div
+          data-field-area="logo"
+          className="group group/optional relative shrink-0"
+        >
           <div
             {...getRootProps()}
             role="button"
@@ -129,6 +140,11 @@ export function InvoiceImage() {
               </div>
             )}
           </div>
+          <RemoveSectionButton
+            label="Hide logo"
+            onClick={() => setSection("logo", false)}
+            className="bg-paper/90 absolute top-1 right-1"
+          />
           {imageUrl && (
             <Button
               variant="outline"

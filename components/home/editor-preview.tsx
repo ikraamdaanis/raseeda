@@ -1,6 +1,5 @@
 import {
   IconAdjustmentsHorizontal,
-  IconCalendar,
   IconChevronDown,
   IconCommand,
   IconEye,
@@ -333,7 +332,8 @@ function InvoicesPanelReplica() {
 }
 
 // Mirrors components/editor/shell/inspector/*, set to the hero invoice:
-// Schibsted Grotesk, the default, at Regular and Medium, US dollars, issued 5 Oct 2026 on Net 30.
+// Schibsted Grotesk, the default, at Regular and Medium, an invoice on A4 with
+// quantities and prices.
 function InspectorReplica() {
   return (
     <div className="min-h-0 flex-1 overflow-hidden">
@@ -383,19 +383,18 @@ function InspectorReplica() {
           />
         </div>
       </InspectorSectionReplica>
-      <InspectorSectionReplica title="Details">
-        <InspectorRowReplica label="Currency" value="$ Dollar · USD" />
-        <InspectorRowReplica label="Issue date" value="5 Oct 2026" isDate />
-        <InspectorRowReplica label="Payment terms" value="Net 30" />
+      <InspectorSectionReplica title="Format">
+        <InspectorRowReplica label="Type" value="Invoice" />
         <InspectorRowReplica label="Date format" value="18 Oct 2026" />
+        <InspectorRowReplica label="Number format" value="1,234,567.89" />
+        <InspectorRowReplica label="Paper" value="A4 · 210 × 297 mm" />
       </InspectorSectionReplica>
-      <InspectorSectionReplica title="Sections">
+      <InspectorSectionReplica title="Table">
         <div className="flex flex-col gap-0.5">
-          <InspectorLabelReplica>Header</InspectorLabelReplica>
-          <SwitchRowReplica label="Logo" isOn />
-          <SwitchRowReplica label="PO number" />
-          <SwitchRowReplica label="Service period" />
-          <SwitchRowReplica label="Shipping address" />
+          <InspectorLabelReplica>Columns</InspectorLabelReplica>
+          <SwitchRowReplica label="Quantity and price" isOn />
+          <SwitchRowReplica label="Unit" />
+          <SwitchRowReplica label="Tax per line" />
         </div>
       </InspectorSectionReplica>
     </div>
@@ -433,34 +432,23 @@ function InspectorLabelReplica({ children }: { children: ReactNode }) {
 
 function InspectorRowReplica({
   label,
-  value,
-  isDate = false
+  value
 }: {
   label: string;
   value: string;
-  isDate?: boolean;
 }) {
-  const Icon = isDate ? IconCalendar : IconChevronDown;
-
   return (
     <div className="grid grid-cols-[6rem_minmax(0,1fr)] items-center gap-2">
       <span className="text-muted-foreground text-[13px]">{label}</span>
       <span className="bg-muted text-foreground flex h-8 min-w-0 items-center justify-between gap-2 rounded-md border border-transparent px-2 text-[13px] tabular-nums">
         <span className="truncate">{value}</span>
-        <Icon
-          aria-hidden="true"
-          className={cn(
-            "shrink-0",
-            isDate ? "text-muted-foreground size-3.5" : "size-4"
-          )}
-        />
+        <IconChevronDown aria-hidden="true" className="size-4 shrink-0" />
       </span>
     </div>
   );
 }
 
-// Mirrors the Switch in components/ui/switch.tsx. The hero invoice has a
-// logo but no PO number, service period or shipping address.
+// Mirrors the Switch in components/ui/switch.tsx.
 function SwitchRowReplica({
   label,
   isOn = false
