@@ -20,7 +20,7 @@ The orchestrator has already selected this issue and checked out a dedicated bra
    - Lint: `bun run lint`
    - Unit tests: `bun run test` (never plain `bun test`, which skips the IndexedDB shim)
    - Build: `bun run build`
-   - E2E: `bun run test:e2e` (starts its own dev server; Chromium and WebKit are installed in the sandbox)
+   - E2E: only the specs for the area you touched, the ones you added or changed and the ones covering the components you changed (`bun run test:e2e e2e/<spec>.spec.ts`; it starts its own dev server, and Chromium and WebKit are installed in the sandbox). Never the whole suite: it takes longer than a command may run here, and CI runs it on the pull request
    - Use **bun**, never npm.
    - Do **NOT** run watch-mode or persistent commands (`ts-lint`, `dev`, `serve`, `test:e2e:ui`, or anything with `--watch`). They never exit and will hang the sandbox.
 5. **Commit**: make a single git commit on the current branch. The message is one short imperative line under about 50 characters, ending with `(#{{ISSUE}})`, for example `Add NumberField for money inputs (#{{ISSUE}})`. No body, unless the reason for the change can't be read from the diff, and then one or two short lines. Never narrate what changed, list what was verified or use bullet points.
