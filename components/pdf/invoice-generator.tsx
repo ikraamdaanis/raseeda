@@ -2,6 +2,7 @@ import { Document, Page, StyleSheet } from "@react-pdf/renderer";
 import { InvoicePdfDetails } from "~/components/pdf/invoice-pdf-details";
 import { InvoicePdfHeader } from "~/components/pdf/invoice-pdf-header";
 import { InvoicePdfItemsTable } from "~/components/pdf/invoice-pdf-items-table";
+import { InvoicePdfPageNumber } from "~/components/pdf/invoice-pdf-page-number";
 import { InvoicePdfPaymentDetails } from "~/components/pdf/invoice-pdf-payment-details";
 import { InvoicePdfSignature } from "~/components/pdf/invoice-pdf-signature";
 import { InvoicePdfTerms } from "~/components/pdf/invoice-pdf-terms";
@@ -44,6 +45,7 @@ export function InvoicePDF({ invoice }: { invoice: Invoice }) {
   return (
     <Document title={documentTitle}>
       <Page size={PDF_PAGE_SIZES[invoice.paperSize]} style={styles.page}>
+        <InvoicePdfPageNumber theme={invoice.theme} />
         <InvoicePdfHeader invoice={invoice} imageUrl={imageUrl} />
         <InvoicePdfDetails invoice={invoice} detailRows={detailRows} />
         <InvoicePdfItemsTable
