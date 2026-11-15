@@ -2,7 +2,7 @@ import type { CSSProperties, FocusEvent, ReactNode } from "react";
 import { useLayoutEffect, useRef, useState } from "react";
 import { flushSync } from "react-dom";
 import { getInvoiceFontDefinition } from "~/consts/invoice-fonts";
-import { getFieldZoom, useCanvasView } from "~/context/canvas-view-context";
+import { FIELD_ZOOM, useCanvasView } from "~/context/canvas-view-context";
 import { useEditorUi } from "~/context/editor-ui-context";
 import { settleGesture, useCanvasGestures } from "~/hooks/use-canvas-gestures";
 import { cn } from "~/lib/utils";
@@ -150,24 +150,17 @@ export function InvoiceCanvas({ children }: { children: ReactNode }) {
   });
 
   // On a phone the fitted page is too small to type into, so tapping a field
-  // zooms in around it until its text shows at 16px or more; Done in the phone
-  // tab bar fits it again.
+  // zooms in to full size around it; Done in the phone tab bar fits it again.
   function handleFocus(event: FocusEvent<HTMLElement>) {
     const field = event.target;
     const isTextField =
       field instanceof HTMLInputElement || field instanceof HTMLTextAreaElement;
 
     if (!isNarrow || mode !== "edit" || !isTextField) return;
-    if (!pageRef.current?.contains(field)) return;
-
-    const fieldZoom = getFieldZoom(
-      parseFloat(getComputedStyle(field).fontSize)
-    );
-
-    if (zoom >= fieldZoom) return;
+    if (zoom >= FIELD_ZOOM || !pageRef.current?.contains(field)) return;
 
     fieldToRevealRef.current = field;
-    zoomToField(fieldZoom);
+    zoomToField();
   }
 
   return (

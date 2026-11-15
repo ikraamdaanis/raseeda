@@ -6,6 +6,10 @@ import { InvoiceInput } from "~/components/editor/invoice-input";
 import { InvoiceTextArea } from "~/components/editor/invoice-textarea";
 import { NumberField, useNumberField } from "~/components/editor/number-field";
 import { Button } from "~/components/ui/button";
+import {
+  NARROW_FIELD_TEXT_SIZE,
+  useEditorUi
+} from "~/context/editor-ui-context";
 import { useCurrencyConversion } from "~/hooks/use-currency-conversion";
 import { useIsPreview, useShownSections } from "~/hooks/use-shown-sections";
 import { cn } from "~/lib/utils";
@@ -360,6 +364,7 @@ function useColumnTemplate({
   const hasTax = useInvoiceStore(state => state.sections.tax);
   const paperSize = usePaperSize();
   const isPreview = useIsPreview();
+  const { isNarrow } = useEditorUi();
   const shownIds = new Set(columns.map(column => column.id));
   const unitPlaceholder = isPreview
     ? ""
@@ -385,11 +390,16 @@ function useColumnTemplate({
     );
   }
 
+  // A phone types the table's fields at a larger size, so it measures them
+  // at that size too.
+  const minSize = isNarrow ? NARROW_FIELD_TEXT_SIZE : 0;
   const headerStyle = getTextStyles({
-    settings: getRoleSettings(theme, "tableHeaderRight")
+    settings: getRoleSettings(theme, "tableHeaderRight"),
+    minSize
   });
   const cellStyle = getTextStyles({
-    settings: getRoleSettings(theme, "tableRowRight")
+    settings: getRoleSettings(theme, "tableRowRight"),
+    minSize
   });
   const layout = layoutColumns({
     columns: {

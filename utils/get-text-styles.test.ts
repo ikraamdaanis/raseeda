@@ -28,10 +28,27 @@ describe("getTextStyles", () => {
     expect(styles.textAlign).toBe("center");
   });
 
+  it("sets the size as --text-size in the editor, not in the PDF", () => {
+    expect(getTextStyles({ settings })["--text-size"]).toBe("16px");
+    expect(
+      getTextStyles({ settings, isPdf: true })["--text-size"]
+    ).toBeUndefined();
+  });
+
+  it("raises the size to minSize, leaving --text-size as set", () => {
+    const small = { ...settings, size: "13" };
+    const styles = getTextStyles({ settings: small, minSize: 16 });
+
+    expect(styles.fontSize).toBe("16px");
+    expect(styles["--text-size"]).toBe("13px");
+    expect(getTextStyles({ settings, minSize: 12 }).fontSize).toBe("16px");
+  });
+
   it("removes fontSize when size is requested", () => {
     const styles = getTextStyles({ settings, remove: ["size"] });
 
     expect(styles).not.toHaveProperty("fontSize");
+    expect(styles).not.toHaveProperty("--text-size");
     expect(styles.color).toBe("#ff0000");
     expect(styles.fontWeight).toBe(700);
     expect(styles.textAlign).toBe("center");

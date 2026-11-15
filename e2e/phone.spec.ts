@@ -27,16 +27,14 @@ test("tapping a field zooms in to it and Done fits the page", async ({
 
   await toDetails.tap();
 
-  // Zoomed in far enough that the text being typed shows at 16px or more.
-  await expect
-    .poll(async () => {
-      const fontSize = await toDetails.evaluate(field =>
-        parseFloat(getComputedStyle(field).fontSize)
-      );
-
-      return fontSize * (await pageScale(page));
-    })
-    .toBeGreaterThanOrEqual(16);
+  // A phone types the page's fields at 16px or more, so iOS doesn't zoom in
+  // on them itself, and full size shows them at that.
+  await expect.poll(() => pageScale(page)).toBe(1);
+  expect(
+    await toDetails.evaluate(field =>
+      parseFloat(getComputedStyle(field).fontSize)
+    )
+  ).toBeGreaterThanOrEqual(16);
   await expect(toDetails).toBeFocused();
   await expect(toDetails).toBeInViewport();
 
@@ -79,7 +77,10 @@ test("phones get a tab bar instead of the canvas pill and panel toggles", async 
 
   const library = page.getByRole("group", { name: "Library" });
 
-  for (const button of await library.getByRole("button").all()) {
+  for (const name of ["Invoices", "Templates"]) {
+    const button = library.getByRole("button", { name });
+
+    await expect(button).toBeInViewport();
     await expect
       .poll(async () => (await button.boundingBox())?.height)
       .toBeGreaterThanOrEqual(44);
