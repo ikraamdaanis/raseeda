@@ -34,7 +34,7 @@ Anything past the basics is off by default and added from the page, so it never 
 - Styling the document: fonts, size, weight, colours, a logo, a signature (uploaded or drawn), section switches and renamed labels.
 - Printing straight from the editor as well as downloading the PDF.
 - The fields a basic valid invoice needs, such as a supply date, a tax rate (one, or one per line) and a tax note like "Reverse charge". What goes on the invoice is the user's responsibility.
-- Reuse: templates, duplicating, and suggesting clients from past invoices while the client block is filled in. Suggesting line items, and the user's own From details with the payment details printed alongside them, from past invoices would fit the same way; neither is built yet.
+- Reuse: templates, duplicating, and suggesting clients and line items from past invoices while the client block or a line's description is filled in. Suggesting the user's own From details, with the payment details printed alongside them, from past invoices would fit the same way; it isn't built yet.
 - The library as a working set for finding, reopening, duplicating and fixing past documents. Its search, sort, grouping and filters exist to find one.
 - Backup and restore through an export file, which is also how invoices move to another device.
 - Scripts and AI assistants making, opening and exporting documents through `window.raseeda` in the open tab, within the same scope as the editor.

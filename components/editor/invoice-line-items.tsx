@@ -2,18 +2,26 @@ import { IconMinus, IconPlus } from "@tabler/icons-react";
 import type { CSSProperties } from "react";
 import { useEffect, useState } from "react";
 import { useShallow } from "zustand/react/shallow";
+import {
+  SuggestionList,
+  useFieldSuggestions
+} from "~/components/editor/field-suggestions";
 import { InvoiceInput } from "~/components/editor/invoice-input";
 import { InvoiceTextArea } from "~/components/editor/invoice-textarea";
 import { NumberField, useNumberField } from "~/components/editor/number-field";
 import { Button } from "~/components/ui/button";
+import { formatCurrency } from "~/consts/currencies";
 import {
   NARROW_FIELD_TEXT_SIZE,
   useEditorUi
 } from "~/context/editor-ui-context";
+import { useInvoiceDocument } from "~/context/invoice-document-context";
 import { useCurrencyConversion } from "~/hooks/use-currency-conversion";
 import { useIsPreview, useShownSections } from "~/hooks/use-shown-sections";
 import { cn } from "~/lib/utils";
+import { recordHistoryAction } from "~/stores/invoice-history";
 import {
+  useCurrencySlice,
   useLineItemsSlice,
   useMoneyFormat,
   usePaperSize,
@@ -40,6 +48,7 @@ import { formatPlainNumber } from "~/utils/format-number";
 import { getRoleSettings } from "~/utils/get-role-settings";
 import { getTextStyles } from "~/utils/get-text-styles";
 import { layoutColumns } from "~/utils/layout-columns";
+import { getLineItemSuggestions } from "~/utils/line-item-suggestions";
 import {
   forgetMeasuredWidths,
   measureTextWidth
@@ -95,7 +104,7 @@ const LINE_ITEM_COLUMNS: LineItemColumnConfig[] = [
       kind: "text",
       itemField: "description",
       placeholder: "Enter a description",
-      wrapperClassName: "col-span-1 flex h-full items-center",
+      wrapperClassName: "relative col-span-1 flex h-full items-center",
       inputClassName:
         "w-full rounded-none border-none py-2 pl-2 ring-0 outline-none focus-visible:py-2"
     }
@@ -901,29 +910,30 @@ function TableCell({
     );
   }
 
-  const inputValue =
-    column.cell.itemField === "description" || column.cell.itemField === "unit"
-      ? item[column.cell.itemField]
-      : "";
-
   // A description wraps onto more lines, as it does in the PDF, rather than
   // scrolling out of sight in a narrow column.
   if (column.id === "description") {
     return (
       <div role="cell" className={column.cell.wrapperClassName}>
-        <InvoiceTextArea
+        <DescriptionCell
           id={focusId}
-          aria-label={fieldLabel}
-          data-field={`items.${item.id}.description`}
-          value={inputValue}
+          label={fieldLabel}
+          item={item}
+          index={index}
+          money={money}
           placeholder={column.cell.placeholder}
-          onChange={handleTextChange}
           className={column.cell.inputClassName}
           style={rowStyle}
+          updateItem={updateItem}
         />
       </div>
     );
   }
+
+  const inputValue =
+    column.cell.itemField === "description" || column.cell.itemField === "unit"
+      ? item[column.cell.itemField]
+      : "";
 
   return (
     <div role="cell" className={column.cell.wrapperClassName}>
@@ -938,6 +948,102 @@ function TableCell({
         style={rowStyle}
       />
     </div>
+  );
+}
+
+// A line's description. While it's focused, items billed on past invoices in
+// this currency are offered below it (issue #205), as `useFieldSuggestions`
+// describes. Picking one fills the description, unit and unit price as one
+// undo step and leaves the quantity.
+function DescriptionCell({
+  id,
+  label,
+  item,
+  index,
+  money,
+  placeholder,
+  className,
+  style,
+  updateItem
+}: {
+  id: string | undefined;
+  label: string;
+  item: InvoiceItem;
+  index: number;
+  money: MoneyFormat;
+  placeholder: string | undefined;
+  className: string | undefined;
+  style: CSSProperties;
+  updateItem: UpdateItem;
+}) {
+  const currency = useCurrencySlice();
+  const { libraryDocumentId } = useInvoiceDocument();
+  const {
+    suggestions,
+    isShown,
+    activeIndex,
+    listId,
+    pick,
+    onType,
+    fieldProps
+  } = useFieldSuggestions({
+    getSuggestions: documents =>
+      getLineItemSuggestions({
+        documents,
+        item,
+        currency,
+        excludeId: libraryDocumentId
+      }),
+    onPick: (suggestion: {
+      description: string;
+      unit: string;
+      unitPrice: number;
+    }) =>
+      recordHistoryAction("Line items", "items", () => {
+        updateItem(index, "description", suggestion.description);
+        updateItem(index, "unit", suggestion.unit);
+        updateItem(index, "unitPrice", suggestion.unitPrice);
+      })
+  });
+
+  return (
+    <>
+      <InvoiceTextArea
+        id={id}
+        aria-label={label}
+        {...fieldProps}
+        data-field={`items.${item.id}.description`}
+        value={item.description}
+        placeholder={placeholder}
+        onChange={value => {
+          updateItem(index, "description", value);
+          onType();
+        }}
+        className={className}
+        style={style}
+      />
+      {isShown && (
+        <SuggestionList
+          listId={listId}
+          label="Items from past invoices"
+          suggestions={suggestions}
+          activeIndex={activeIndex}
+          pick={pick}
+          getKey={suggestion => suggestion.description}
+          renderSuggestion={suggestion => (
+            <span className="flex items-baseline gap-3">
+              <span className="min-w-0 flex-1 truncate font-medium">
+                {suggestion.description}
+              </span>
+              <span className="text-muted-foreground shrink-0 text-xs">
+                {formatCurrency(suggestion.unitPrice, money)}
+                {suggestion.unit && ` / ${suggestion.unit}`}
+              </span>
+            </span>
+          )}
+        />
+      )}
+    </>
   );
 }
 

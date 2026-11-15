@@ -1,4 +1,5 @@
 import type { InvoiceDocument } from "~/types";
+import { matchesWords, toMatchable, toTypedWords } from "~/utils/match-words";
 
 // Clients from past invoices to fill the "To" block with (issue #130). Each
 // client shows once, matched on its first line (the name), as its most
@@ -20,7 +21,7 @@ export function getClientSuggestions({
   if (typed.includes("\n")) return [];
 
   const query = typed.trim();
-  const words = toMatchable(query).split(/\s+/).filter(Boolean);
+  const words = toTypedWords(query);
   const newestFirst = [...documents].sort(
     (a, b) => b.updatedAt.getTime() - a.updatedAt.getTime()
   );
@@ -57,22 +58,5 @@ function getFirstLine(content: string) {
       .split("\n")
       .map(line => line.trim())
       .find(Boolean) ?? ""
-  );
-}
-
-// A name as it's compared: lower case, without accents, so "cafe" finds
-// "Café", a pasted decomposed "Café" is the same client, and "ist" finds
-// "İstanbul".
-function toMatchable(text: string) {
-  return text.normalize("NFKD").replace(/\p{M}/gu, "").toLocaleLowerCase();
-}
-
-// Every typed word starts one of the name's words, so "ac" finds "Acme Ltd"
-// and "Black Acme", and "acme l" finds "Acme Ltd".
-function matchesWords(name: string, typedWords: string[]) {
-  const nameWords = name.split(/\s+/);
-
-  return typedWords.every(typedWord =>
-    nameWords.some(nameWord => nameWord.startsWith(typedWord))
   );
 }
