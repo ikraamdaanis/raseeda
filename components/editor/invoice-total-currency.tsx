@@ -97,7 +97,7 @@ export function InvoiceTotalCurrency({
           aria-describedby={textId}
           className={cn(
             valueClassName,
-            "rounded-surface hover:bg-brand-50 aria-expanded:bg-brand-50 focus-visible:border-brand-500 -mx-px border border-transparent outline-none"
+            "rounded-surface hover:bg-brand-50 aria-expanded:bg-brand-50 focus-visible:border-brand-500 relative -mx-px border border-transparent outline-none pointer-coarse:after:absolute pointer-coarse:after:inset-x-0 pointer-coarse:after:inset-y-[calc((100%-2.75rem)/2)]"
           )}
           style={style}
         >

@@ -84,7 +84,7 @@ function PricingRowToggle({
       data-field={field}
       onClick={onClick}
       className={cn(
-        "hover:bg-paper-muted focus-visible:ring-ring shrink-0 rounded px-1.5 py-0.5 text-xs whitespace-nowrap transition-[color,opacity] outline-none focus-visible:ring-1",
+        "hover:bg-paper-muted focus-visible:ring-ring shrink-0 rounded px-1.5 py-0.5 text-xs whitespace-nowrap transition-[color,opacity] outline-none focus-visible:ring-1 pointer-coarse:h-11 pointer-coarse:min-w-11",
         active ? "text-paper-foreground" : "text-paper-muted-foreground",
         !active &&
           !isAlwaysVisible &&

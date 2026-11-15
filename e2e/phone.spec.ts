@@ -111,6 +111,36 @@ test("a phone opens to editing even when Preview was left on", async ({
   );
 });
 
+test("the totals' toggles are 44px tap targets at full size", async ({
+  page
+}) => {
+  await page.goto("/create");
+  await page
+    .getByRole("navigation", { name: "Editor" })
+    .getByRole("button", { name: "Zoom in" })
+    .tap();
+  await expect.poll(() => pageScale(page)).toBe(1);
+
+  for (const name of ["Toggle discount type", "Toggle tax exempt"]) {
+    const toggle = page.getByRole("button", { name });
+
+    await expect
+      .poll(async () => (await toggle.boundingBox())?.height)
+      .toBeGreaterThanOrEqual(44);
+    await expect
+      .poll(async () => (await toggle.boundingBox())?.width)
+      .toBeGreaterThanOrEqual(44);
+  }
+
+  // The total's currency button sits in its row, so its tap area is an
+  // ::after reaching past it.
+  const currencyTapHeight = await page
+    .getByRole("button", { name: "Change currency" })
+    .evaluate(button => parseFloat(getComputedStyle(button, "::after").height));
+
+  expect(currencyTapHeight).toBeGreaterThanOrEqual(44);
+});
+
 // Mean difference per channel (0 to 255) between two screenshots of the same
 // size, worked out in the page's own canvas.
 async function imageDifference(page: Page, first: Buffer, second: Buffer) {
