@@ -8,3 +8,4 @@ build
 .cursor
 *.md
 worker-configuration.d.ts
+app/routeTree.gen.ts
