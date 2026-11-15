@@ -13,8 +13,8 @@ type CanvasView = "fit" | number;
 
 const VIEW_STORAGE_KEY = "editor-zoom";
 
-// The zoom a phone jumps to when a field on the fitted page is tapped, so the
-// text being typed is full size.
+// The least zoom a phone jumps to when a field on the fitted page is tapped,
+// so the text being typed is at least full size.
 export const FIELD_ZOOM = 1;
 
 // How far a pinch can take the page, and the stops the zoom buttons and
@@ -24,6 +24,20 @@ export const MIN_ZOOM = 0.25;
 export const MAX_ZOOM = 3;
 
 export const ZOOM_STEPS = [0.5, 0.75, 1, 1.25, 1.5, 2];
+
+// The smallest text a tapped field shows at on a phone, the size iOS reads as
+// legible.
+const FIELD_TEXT_SIZE = 16;
+
+// The zoom that shows a field's text at FIELD_TEXT_SIZE or more, given its
+// size on the page in px.
+export function getFieldZoom(fontSize: number) {
+  if (!(fontSize > 0)) return FIELD_ZOOM;
+
+  const zoom = Math.ceil((FIELD_TEXT_SIZE / fontSize) * 100) / 100;
+
+  return Math.min(MAX_ZOOM, Math.max(FIELD_ZOOM, zoom));
+}
 
 // The zoom stop beyond `zoom` in either direction, if there is one.
 export function stepZoom(zoom: number, direction: "in" | "out") {
@@ -46,7 +60,7 @@ const CanvasViewContext = createContext<{
   zoom: number;
   setZoom: (zoom: number) => void;
   isZoomedToField: boolean;
-  zoomToField: () => void;
+  zoomToField: (zoom: number) => void;
 } | null>(null);
 
 export function CanvasViewProvider({ children }: { children: ReactNode }) {
@@ -86,8 +100,8 @@ export function CanvasViewProvider({ children }: { children: ReactNode }) {
     zoom,
     setZoom,
     isZoomedToField,
-    zoomToField: () => {
-      setViewState(FIELD_ZOOM);
+    zoomToField: (fieldZoom: number) => {
+      setViewState(fieldZoom);
       setIsZoomedToField(true);
     }
   };

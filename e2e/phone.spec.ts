@@ -27,7 +27,16 @@ test("tapping a field zooms in to it and Done fits the page", async ({
 
   await toDetails.tap();
 
-  await expect.poll(() => pageScale(page)).toBe(1);
+  // Zoomed in far enough that the text being typed shows at 16px or more.
+  await expect
+    .poll(async () => {
+      const fontSize = await toDetails.evaluate(field =>
+        parseFloat(getComputedStyle(field).fontSize)
+      );
+
+      return fontSize * (await pageScale(page));
+    })
+    .toBeGreaterThanOrEqual(16);
   await expect(toDetails).toBeFocused();
   await expect(toDetails).toBeInViewport();
 
@@ -65,6 +74,18 @@ test("phones get a tab bar instead of the canvas pill and panel toggles", async 
     "aria-pressed",
     "false"
   );
+
+  await tabBar.getByRole("button", { name: "Invoices" }).tap();
+
+  const library = page.getByRole("group", { name: "Library" });
+
+  for (const button of await library.getByRole("button").all()) {
+    await expect
+      .poll(async () => (await button.boundingBox())?.height)
+      .toBeGreaterThanOrEqual(44);
+  }
+
+  await page.keyboard.press("Escape");
 
   // The PDF that Download opens is the preview, so there's no Preview tab.
   await expect(tabBar.getByRole("button")).toHaveText([

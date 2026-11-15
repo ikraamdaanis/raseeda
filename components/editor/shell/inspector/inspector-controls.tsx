@@ -182,7 +182,7 @@ export function SegmentedControl<TValue extends string>({
           aria-pressed={value === option.value}
           onClick={() => onChange(option.value)}
           className={cn(
-            "text-muted-foreground hover:text-foreground focus-visible:ring-ring flex h-7 min-w-0 flex-1 items-center justify-center truncate rounded-md px-1.5 text-xs outline-none focus-visible:ring-1 pointer-coarse:h-10",
+            "text-muted-foreground hover:text-foreground focus-visible:ring-ring flex h-7 min-w-0 flex-1 items-center justify-center truncate rounded-md px-1.5 text-xs outline-none focus-visible:ring-1 pointer-coarse:h-11",
             value === option.value &&
               "bg-popover text-foreground ring-foreground/10 shadow-xs ring-1",
             option.className
