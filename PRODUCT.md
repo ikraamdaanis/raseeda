@@ -34,7 +34,7 @@ Anything past the basics is off by default and added from the page, so it never 
 - Styling the document: fonts, size, weight, colours, a logo, a signature (uploaded or drawn), section switches and renamed labels.
 - Printing straight from the editor as well as downloading the PDF.
 - The fields a basic valid invoice needs, such as a supply date, a tax rate (one, or one per line) and a tax note like "Reverse charge". What goes on the invoice is the user's responsibility.
-- Reuse: templates, duplicating, and suggesting clients from past invoices while the client block is filled in. Suggesting line items from past invoices would fit the same way; it isn't built yet.
+- Reuse: templates, duplicating, and suggesting clients from past invoices while the client block is filled in. Suggesting line items, and the user's own From details with the payment details printed alongside them, from past invoices would fit the same way; neither is built yet.
 - The library as a working set for finding, reopening, duplicating and fixing past documents. Its search, sort, grouping and filters exist to find one.
 - Backup and restore through an export file, which is also how invoices move to another device.
 - Scripts and AI assistants making, opening and exporting documents through `window.raseeda` in the open tab, within the same scope as the editor.
@@ -45,7 +45,7 @@ Anything past the basics is off by default and added from the page, so it never 
 - Tracking: sent, paid or overdue status in the library, reminders, follow-ups. A payment written on the document (amount paid, the PAID stamp) is document content and stays.
 - Reporting: totals per client, month or year, dashboards, exports for accounting.
 - A client list kept apart from the invoices. Client suggestions come from past invoices only.
-- A saved sender profile or a stored numbering sequence. A template carries the user's own details, and the next number is typed in; a counter kept between invoices is the start of tracking. Both existed once and were removed.
+- A saved sender profile or a stored numbering sequence. A template carries the user's own details, past invoices can suggest them, and the next number is typed in; a counter kept between invoices is the start of tracking. Both existed once and were removed.
 - Free-form layout: moving blocks around, a layout designer, custom CSS. One well-made layout stays correct in print.
 - Accounting-grade detail: withholding tax (such as Spain's IRPF), split or compound taxes on a line (CGST and SGST, GST and QST), amount in words, per-country payment slips such as the Swiss QR-bill. Someone who needs these should use accounting software.
 - E-invoices (Factur-X / ZUGFeRD, XRechnung, Peppol). They bring structured tax and party data and strict validation, and the businesses that must send them (Germany from 2027) need accounting software anyway.
