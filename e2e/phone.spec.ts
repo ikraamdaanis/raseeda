@@ -141,34 +141,58 @@ test("the totals' toggles are 44px tap targets at full size", async ({
   expect(currencyTapHeight).toBeGreaterThanOrEqual(44);
 });
 
-// Mean difference per channel (0 to 255) between two screenshots of the same
-// size, worked out in the page's own canvas.
-async function imageDifference(page: Page, first: Buffer, second: Buffer) {
+// How two screenshots of the same size compare, worked out in the page's own
+// canvas: the mean difference per channel (0 to 255) between them, and how
+// sharp each is, as the mean change between neighbouring pixels. A stretched
+// copy of a smaller page loses a quarter or more of its sharpness, while
+// text drawn again at the same zoom only differs in its anti-aliasing.
+async function compareImages(page: Page, first: Buffer, second: Buffer) {
   return await page.evaluate(
-    async ([a, b]) => {
-      const load = async (base64: string) =>
-        await createImageBitmap(
+    async ([firstBase64, secondBase64]) => {
+      async function readPixels(base64: string) {
+        const image = await createImageBitmap(
           await (await fetch(`data:image/png;base64,${base64}`)).blob()
         );
-      const [imageA, imageB] = await Promise.all([load(a), load(b)]);
-      const canvas = new OffscreenCanvas(imageA.width, imageA.height);
-      const context = canvas.getContext("2d");
+        const canvas = new OffscreenCanvas(image.width, image.height);
+        const context = canvas.getContext("2d");
 
-      if (!context) return 255;
+        if (!context) throw new Error("No 2D canvas");
 
-      context.drawImage(imageA, 0, 0);
-      const pixelsA = context.getImageData(0, 0, imageA.width, imageA.height);
+        context.drawImage(image, 0, 0);
 
-      context.clearRect(0, 0, imageA.width, imageA.height);
-      context.drawImage(imageB, 0, 0);
-      const pixelsB = context.getImageData(0, 0, imageA.width, imageA.height);
+        return context.getImageData(0, 0, image.width, image.height);
+      }
+
+      function sharpness({ data, width, height }: ImageData) {
+        let total = 0;
+
+        for (let y = 0; y < height - 1; y++) {
+          for (let x = 0; x < width - 1; x++) {
+            const i = (y * width + x) * 4;
+
+            total +=
+              Math.abs(data[i] - data[i + 4]) +
+              Math.abs(data[i] - data[i + width * 4]);
+          }
+        }
+
+        return total / (width * height);
+      }
+
+      const [pixelsA, pixelsB] = await Promise.all([
+        readPixels(firstBase64),
+        readPixels(secondBase64)
+      ]);
       let total = 0;
 
       for (let i = 0; i < pixelsA.data.length; i++) {
         total += Math.abs(pixelsA.data[i] - pixelsB.data[i]);
       }
 
-      return total / pixelsA.data.length;
+      return {
+        difference: total / pixelsA.data.length,
+        sharpness: [sharpness(pixelsA), sharpness(pixelsB)]
+      };
     },
     [first.toString("base64"), second.toString("base64")] as const
   );
@@ -245,9 +269,16 @@ test("a pinch zooms the page sharp the whole way, not just once it ends", async 
 
   const afterPinch = await page.screenshot({ clip: box });
 
-  // What the pinch showed is what it settled on: drawn at the same zoom in
-  // the same place, not a stretched, blurry copy of the smaller page.
-  const difference = await imageDifference(page, duringPinch, afterPinch);
-  expect(difference).toBeLessThan(1);
+  // What the pinch showed is what it settled on: drawn in the same place, and
+  // as sharp, not a stretched, blurry copy of the smaller page.
+  const { difference, sharpness } = await compareImages(
+    page,
+    duringPinch,
+    afterPinch
+  );
+  const [sharpnessDuring, sharpnessAfter] = sharpness;
+
+  expect(difference).toBeLessThan(2);
+  expect(sharpnessDuring / sharpnessAfter).toBeGreaterThan(0.95);
   await expect(desk).toHaveCSS("overflow", "auto");
 });
