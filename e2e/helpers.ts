@@ -116,7 +116,7 @@ export async function gotoEditorReady(page: Page, title = "Test invoice") {
 // must not dirty the editor (e.g. empty-state and menu-only flows).
 export async function gotoEditorSettled(page: Page) {
   await page.goto("/create");
-  await expect(page.getByLabel("Date", { exact: true })).toHaveAttribute(
+  await expect(page.getByRole("button", { name: /^Date, / })).toHaveAttribute(
     "data-date",
     /\d{4}-\d{2}-\d{2}/
   );

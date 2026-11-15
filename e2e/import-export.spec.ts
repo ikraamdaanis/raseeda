@@ -36,7 +36,7 @@ test("a full export/import round-trip restores the data", async ({
 
   await resetDb();
   await page.reload();
-  await expect(page.getByLabel("Date", { exact: true })).toHaveAttribute(
+  await expect(page.getByRole("button", { name: /^Date, / })).toHaveAttribute(
     "data-date",
     /\d{4}-\d{2}-\d{2}/
   );
@@ -162,7 +162,7 @@ test("pasting an export's JSON imports it like a chosen file", async ({
 
   await resetDb();
   await page.reload();
-  await expect(page.getByLabel("Date", { exact: true })).toHaveAttribute(
+  await expect(page.getByRole("button", { name: /^Date, / })).toHaveAttribute(
     "data-date",
     /\d{4}-\d{2}-\d{2}/
   );

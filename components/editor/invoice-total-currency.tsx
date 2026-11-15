@@ -54,7 +54,6 @@ export function InvoiceTotalCurrency({
   const { currency, currencyCode, setCurrency } = useCurrencySlice();
   const { currencyConversion, setSecondCurrency } =
     useCurrencyConversionSlice();
-  const textId = useId();
   const valueClassName = cn(
     "text-right whitespace-nowrap",
     isEmphasised && "font-bold"
@@ -93,17 +92,14 @@ export function InvoiceTotalCurrency({
     <>
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger
-          aria-label="Change currency"
-          aria-describedby={textId}
+          aria-label={`${value}, change currency`}
           className={cn(
             valueClassName,
             "rounded-surface hover:bg-brand-50 aria-expanded:bg-brand-50 focus-visible:border-brand-500 relative -mx-px border border-transparent outline-none pointer-coarse:after:absolute pointer-coarse:after:inset-x-0 pointer-coarse:after:inset-y-[calc((100%-2.75rem)/2)]"
           )}
           style={style}
         >
-          <span id={textId} data-testid="total-value">
-            {value}
-          </span>
+          <span data-testid="total-value">{value}</span>
         </PopoverTrigger>
         <PopoverContent align="end" className="gap-3 p-3">
           <CurrencyRows onCustom={handleCustom} />

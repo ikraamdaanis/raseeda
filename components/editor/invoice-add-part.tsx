@@ -11,7 +11,7 @@ import { useDocumentType, useSectionsSlice } from "~/stores/invoice-selectors";
 import { getAddableParts } from "~/utils/page-parts";
 
 const slotClassName =
-  "text-paper-muted-foreground/70 hover:text-paper-foreground aria-expanded:text-paper-foreground focus-visible:ring-ring flex h-6 w-fit items-center gap-1 rounded px-1 text-xs whitespace-nowrap transition-colors outline-none focus-visible:ring-1 pointer-coarse:h-11";
+  "text-paper-muted-foreground hover:text-paper-foreground aria-expanded:text-paper-foreground focus-visible:ring-ring flex h-6 w-fit items-center gap-1 rounded px-1 text-xs whitespace-nowrap transition-colors outline-none focus-visible:ring-1 pointer-coarse:h-11";
 
 // An area's switched-off parts, turned on from where they print: the area's
 // parts that are off as one entry each, for adding to its slot.

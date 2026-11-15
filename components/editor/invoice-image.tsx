@@ -1,5 +1,5 @@
 import { IconUpload } from "@tabler/icons-react";
-import { useState } from "react";
+import { useId, useState } from "react";
 import type { FileRejection } from "react-dropzone";
 import Dropzone from "react-dropzone";
 import {
@@ -19,9 +19,10 @@ import {
 } from "~/utils/store-uploaded-image";
 
 /**
- * The invoice logo dropzone. Remove sits beside the dropzone rather than inside
- * it: a control nested in a role="button" is flattened away for assistive
- * technology.
+ * The invoice logo dropzone. Remove and the file input sit beside the dropzone
+ * rather than inside it: a control nested in a role="button" is flattened away
+ * for assistive technology. It's named by what it shows ("Upload logo"), with
+ * dropping a file as its description.
  */
 export function InvoiceImage() {
   const { image: imageId, setImage } = useImageSlice();
@@ -30,6 +31,7 @@ export function InvoiceImage() {
   const isPreview = useIsPreview();
   const imageUrl = useImageLoader(imageId);
   const [isDragging, setIsDragging] = useState(false);
+  const hintId = useId();
 
   async function handleDrop(
     acceptedFiles: File[],
@@ -82,7 +84,8 @@ export function InvoiceImage() {
           <div
             {...getRootProps()}
             role="button"
-            aria-label={`${imageUrl ? "Change" : "Upload"} invoice logo. Drop an image or activate to browse.`}
+            aria-label={imageUrl ? "Change logo" : "Upload logo"}
+            aria-describedby={hintId}
             className={cn(
               "rounded-surface focus-visible:ring-ring flex aspect-square h-32 min-w-32 cursor-pointer items-center justify-center overflow-hidden outline-none focus-visible:ring-2",
               isDragging
@@ -92,7 +95,6 @@ export function InvoiceImage() {
                   : "border-paper-border hover:border-paper-muted-foreground hover:bg-paper-muted focus-visible:bg-paper-muted border border-dashed transition-colors"
             )}
           >
-            <input {...getInputProps()} />
             {imageUrl ? (
               <img
                 src={imageUrl}
@@ -108,6 +110,10 @@ export function InvoiceImage() {
               </div>
             )}
           </div>
+          <input {...getInputProps()} />
+          <span id={hintId} hidden>
+            Drop an image, or press to browse.
+          </span>
           <RemoveSectionButton
             label="Hide logo"
             onClick={() => setSection("logo", false)}

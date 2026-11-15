@@ -102,14 +102,14 @@ test("the logo hides with its × and comes back from its slot", async ({
 
   await page.getByRole("button", { name: "Hide logo" }).click();
 
-  await expect(page.getByRole("button", { name: /invoice logo/ })).toHaveCount(
-    0
-  );
+  await expect(
+    page.getByRole("button", { name: "Upload logo", exact: true })
+  ).toHaveCount(0);
 
   await page.getByRole("button", { name: "Add logo" }).click();
 
   await expect(
-    page.getByRole("button", { name: /Upload invoice logo/ })
+    page.getByRole("button", { name: "Upload logo", exact: true })
   ).toBeVisible();
 });
 
@@ -140,7 +140,7 @@ test("payment terms set the due date from its calendar and follow the issue date
 }) => {
   await gotoEditorReady(page);
 
-  const dueDate = page.getByLabel("Due date", { exact: true });
+  const dueDate = page.getByRole("button", { name: /^Due date, / });
 
   await dueDate.click();
 
@@ -165,10 +165,10 @@ test("payment terms set the due date from its calendar and follow the issue date
     return { offset, day: date.toLocaleDateString() };
   });
 
-  await page.getByLabel("Date", { exact: true }).click();
+  await page.getByRole("button", { name: /^Date, / }).click();
   await page.locator(`[data-day="${nextDay.day}"]`).click();
 
-  await expect(page.getByLabel("Date", { exact: true })).toHaveAttribute(
+  await expect(page.getByRole("button", { name: /^Date, / })).toHaveAttribute(
     "data-date",
     isoToday(nextDay.offset)
   );

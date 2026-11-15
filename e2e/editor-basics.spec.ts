@@ -11,14 +11,13 @@ test("blank invoice is dated today and due 30 days out", async ({ page }) => {
   // than requiring an edit first.
   // The page shows dates in the invoice's format and keeps the stored
   // yyyy-MM-dd value on the picker as data-date.
-  await expect(page.getByLabel("Date", { exact: true })).toHaveAttribute(
+  await expect(page.getByRole("button", { name: /^Date, / })).toHaveAttribute(
     "data-date",
     isoToday()
   );
-  await expect(page.getByLabel("Due date", { exact: true })).toHaveAttribute(
-    "data-date",
-    isoToday(30)
-  );
+  await expect(
+    page.getByRole("button", { name: /^Due date, / })
+  ).toHaveAttribute("data-date", isoToday(30));
 });
 
 test("editing identity fields holds their values", async ({ page }) => {
