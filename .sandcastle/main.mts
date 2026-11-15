@@ -60,15 +60,17 @@ const MAX_ITERATIONS = 50;
 // of re-fetching 1100+ packages, which would blow the hook timeout. We do NOT
 // copyToWorktree node_modules: at ~1.1GB the host-side copy is slow on macOS
 // and risks the copy timeout, and the cache-backed in-container install is both
-// correct (Linux-native binaries) and fast.
+// correct (Linux-native binaries) and fast. The host's cache is wherever bun
+// says it is (XDG_CACHE_HOME moves it to ~/.cache/.bun/install/cache).
 //
 // The operator's global ~/.claude/CLAUDE.md is mounted read-only so the
 // in-container agent applies personal preferences on top of the project's
 // CLAUDE.md. Mounting the single file (not ~/.claude/) avoids exposing session
 // state, settings.json (API keys / MCP credentials), and other unrelated state.
 const globalClaudeMd = `${homedir()}/.claude/CLAUDE.md`;
+const hostBunCache = execSync("bun pm cache", { encoding: "utf8" }).trim();
 const sandboxMounts = [
-  { hostPath: "~/.bun/install/cache", sandboxPath: "~/.bun/install/cache" },
+  { hostPath: hostBunCache, sandboxPath: "~/.bun/install/cache" },
   ...(existsSync(globalClaudeMd)
     ? [
         {
