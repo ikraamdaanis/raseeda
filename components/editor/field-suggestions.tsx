@@ -6,7 +6,8 @@ import { cn } from "~/lib/utils";
 import type { InvoiceDocument } from "~/types";
 
 // What a field offers from past invoices while it's focused: clients in the
-// "To" block (issue #130), items in a description cell (issue #205). Arrow
+// "To" block (issue #130), the user's own details in the "From" block (issue
+// #207), items in a description cell (issue #205). Arrow
 // keys move through them and Enter picks one; without one highlighted, Enter
 // does what it usually does. Pointing at one only shades it, so Enter never
 // picks one the mouse happens to rest on. One is picked on mouse down, which
@@ -157,5 +158,31 @@ export function SuggestionList<TSuggestion>({
         </li>
       ))}
     </ul>
+  );
+}
+
+// A contact suggested for the "To" or "From" block: its name, then the rest of
+// its lines on one line.
+export function ContactSuggestion({
+  name,
+  content
+}: {
+  name: string;
+  content: string;
+}) {
+  const rest = content
+    .split("\n")
+    .slice(1)
+    .map(line => line.trim())
+    .filter(Boolean)
+    .join(", ");
+
+  return (
+    <>
+      <span className="truncate font-medium">{name}</span>
+      {rest && (
+        <span className="text-muted-foreground truncate text-xs">{rest}</span>
+      )}
+    </>
   );
 }

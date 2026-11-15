@@ -17,6 +17,7 @@ raseeda makes the document and stops there: it isn't an invoice tracker, CRM or 
 - Reusable templates for repeat work
 - Start from a page for each document type or trade: quote, proforma invoice, receipt, credit note, and freelance, contractor and retail invoices
 - Fill in a client from your past invoices as you type their name
+- Fill in your own details and payment details from your past invoices
 - Fill in a line item, with its unit and price, from your past invoices as you type it
 - Upload your logo
 - Any currency, with custom symbols when you need them

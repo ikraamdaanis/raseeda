@@ -1,7 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { invoiceDefault } from "~/stores/invoice-store";
 import type { InvoicePaymentDetails } from "~/types";
-import { getPaymentLinkHref, getPaymentRows } from "~/utils/payment-details";
+import {
+  getPaymentLinkHref,
+  getPaymentRows,
+  hasPaymentDetails
+} from "~/utils/payment-details";
 
 function paymentDetails(
   overrides: Partial<InvoicePaymentDetails>
@@ -152,5 +156,32 @@ describe("getPaymentLinkHref", () => {
     expect(getPaymentLinkHref("e.g.")).toBeUndefined();
     expect(getPaymentLinkHref("1.234,56")).toBeUndefined();
     expect(getPaymentLinkHref("")).toBeUndefined();
+  });
+});
+
+describe("hasPaymentDetails", () => {
+  it("is false while only the labels differ from a blank's", () => {
+    expect(hasPaymentDetails(paymentDetails({}))).toBe(false);
+    expect(
+      hasPaymentDetails(
+        paymentDetails({
+          label: "Bank",
+          labels: { ...invoiceDefault.paymentDetails.labels, iban: "Konto" },
+          bankName: "  "
+        })
+      )
+    ).toBe(false);
+  });
+
+  it("is true once a field, way to pay, link, UPI ID or terms is typed", () => {
+    for (const overrides of [
+      { iban: "GB29" },
+      { methods: [{ id: "m1", name: "PayPal", detail: "" }] },
+      { paymentLink: "paypal.me/acme" },
+      { upiId: "acme@upi" },
+      { terms: "Net 30" }
+    ]) {
+      expect(hasPaymentDetails(paymentDetails(overrides))).toBe(true);
+    }
   });
 });

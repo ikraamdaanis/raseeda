@@ -1,19 +1,23 @@
 import type { InvoiceDocument } from "~/types";
 import { matchesWords, toMatchable, toTypedWords } from "~/utils/match-words";
 
-// Clients from past invoices to fill the "To" block with (issue #130). Each
-// client shows once, matched on its first line (the name), as its most
-// recently edited invoice wrote it, so a changed address replaces the old one.
-// Nothing is stored apart from the invoices: a client whose invoices are
-// deleted stops being suggested. Once a second line is typed the block is
-// being written by hand, so nothing is suggested.
-export function getClientSuggestions({
+// Contacts from past invoices to fill a block with: clients in the "To" block
+// (issue #130), the user's own details in the "From" block (issue #207). Each
+// contact shows once, matched on its first line (the name), as its most
+// recently edited invoice wrote it, so a changed address replaces the old one;
+// that invoice comes with it, for what else a pick copies. Nothing is stored
+// apart from the invoices: a contact whose invoices are deleted stops being
+// suggested. Once a second line is typed the block is being written by hand,
+// so nothing is suggested.
+export function getContactSuggestions({
   documents,
+  contact,
   typed,
   excludeId,
   limit = 5
 }: {
   documents: InvoiceDocument[];
+  contact: "client" | "seller";
   typed: string;
   excludeId: string | null;
   limit?: number;
@@ -26,13 +30,17 @@ export function getClientSuggestions({
     (a, b) => b.updatedAt.getTime() - a.updatedAt.getTime()
   );
   const seen = new Set<string>();
-  const suggestions: { name: string; content: string }[] = [];
+  const suggestions: {
+    name: string;
+    content: string;
+    invoiceDocument: InvoiceDocument;
+  }[] = [];
 
   for (const invoiceDocument of newestFirst) {
     if (suggestions.length === limit) break;
     if (invoiceDocument.id === excludeId) continue;
 
-    const content = invoiceDocument.invoiceData.client.content.trim();
+    const content = invoiceDocument.invoiceData[contact].content.trim();
     const name = getFirstLine(content);
 
     if (!name) continue;
@@ -46,7 +54,7 @@ export function getClientSuggestions({
     if (content === query) continue;
     if (!matchesWords(key, words)) continue;
 
-    suggestions.push({ name, content });
+    suggestions.push({ name, content, invoiceDocument });
   }
 
   return suggestions;
