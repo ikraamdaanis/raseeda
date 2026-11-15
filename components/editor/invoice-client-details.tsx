@@ -61,7 +61,7 @@ function ClientContent() {
         typed: client.content,
         excludeId: libraryDocumentId
       }),
-    onPick: (suggestion: { name: string; content: string }) =>
+    onPick: suggestion =>
       recordHistoryAction(client.label.trim() || "Client", "client", () =>
         setClient(prev => ({ ...prev, content: suggestion.content }))
       )

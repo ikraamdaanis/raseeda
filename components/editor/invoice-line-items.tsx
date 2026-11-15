@@ -994,11 +994,7 @@ function DescriptionCell({
         currency,
         excludeId: libraryDocumentId
       }),
-    onPick: (suggestion: {
-      description: string;
-      unit: string;
-      unitPrice: number;
-    }) =>
+    onPick: suggestion =>
       recordHistoryAction("Line items", "items", () => {
         updateItem(index, "description", suggestion.description);
         updateItem(index, "unit", suggestion.unit);
