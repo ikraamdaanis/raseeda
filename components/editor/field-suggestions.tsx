@@ -7,13 +7,12 @@ import type { InvoiceDocument } from "~/types";
 
 // What a field offers from past invoices while it's focused: clients in the
 // "To" block (issue #130), the user's own details in the "From" block (issue
-// #207), items in a description cell (issue #205). Arrow
-// keys move through them and Enter picks one; without one highlighted, Enter
-// does what it usually does. Pointing at one only shades it, so Enter never
-// picks one the mouse happens to rest on. One is picked on mouse down, which
-// keeps the focus in the field, so the list doesn't close under the click.
-// The library is read each time the field takes focus. Nothing is offered in
-// Preview.
+// #207), items in a description cell (issue #205). Arrow keys move through
+// them and Enter picks one; without one highlighted, Enter does what it
+// usually does. Pointing at one only shades it, so Enter never picks one the
+// mouse happens to rest on. One is picked on mouse down, which keeps the focus
+// in the field, so the list doesn't close under the click. The library is read
+// each time the field takes focus. Nothing is offered in Preview.
 export function useFieldSuggestions<TSuggestion>({
   getSuggestions,
   onPick
