@@ -146,6 +146,7 @@ export function InvoicePdfItemsTable({
   return (
     <View style={styles.table}>
       <View
+        fixed
         style={[
           styles.tableHeader,
           { borderTopLeftRadius: 4, borderTopRightRadius: 4 }
@@ -216,6 +217,7 @@ export function InvoicePdfItemsTable({
         return (
           <View
             key={row.id}
+            wrap={false}
             style={isLastItem ? styles.tableLastRow : styles.tableRow}
           >
             <View style={[styles.tableCell, descriptionWidth]}>

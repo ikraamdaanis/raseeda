@@ -1,6 +1,8 @@
 import { isValidElement } from "react";
 import { describe, expect, it } from "vitest";
 import { InvoicePDF } from "~/components/pdf/invoice-generator";
+import { InvoicePdfItemsTable } from "~/components/pdf/invoice-pdf-items-table";
+import { InvoicePdfPageNumber } from "~/components/pdf/invoice-pdf-page-number";
 import { InvoicePdfSignature } from "~/components/pdf/invoice-pdf-signature";
 import { DEFAULT_INVOICE_SECTIONS } from "~/schema/invoice";
 import { invoiceDefault } from "~/stores/invoice-store";
@@ -53,5 +55,73 @@ describe("InvoicePDF", () => {
         child => isValidElement(child) && child.type === InvoicePdfSignature
       )
     ).toBe(false);
+  });
+
+  it("numbers every page of a PDF that runs onto another", () => {
+    const children = pageOf(invoiceDefault).props.children;
+    const pageNumber = children.find(
+      child => isValidElement(child) && child.type === InvoicePdfPageNumber
+    );
+
+    expect(pageNumber).toBeDefined();
+  });
+});
+
+describe("InvoicePdfPageNumber", () => {
+  it("sits on every page and reads the page against the total", () => {
+    const text = InvoicePdfPageNumber({ theme: invoiceDefault.theme });
+    const { fixed, render } = text.props as {
+      fixed: boolean;
+      render: (page: { pageNumber: number; totalPages: number }) => string;
+    };
+
+    expect(fixed).toBe(true);
+    expect(render({ pageNumber: 2, totalPages: 3 })).toBe("2 / 3");
+    expect(render({ pageNumber: 1, totalPages: 1 })).toBe("");
+  });
+});
+
+describe("InvoicePdfItemsTable", () => {
+  const lineItems = [
+    {
+      id: "a",
+      description: "Design",
+      quantity: "1",
+      unit: "",
+      unitPrice: "£10.00",
+      tax: "",
+      amount: "£10.00",
+      convertedAmount: ""
+    },
+    {
+      id: "b",
+      description: "Build",
+      quantity: "1",
+      unit: "",
+      unitPrice: "£10.00",
+      tax: "",
+      amount: "£10.00",
+      convertedAmount: ""
+    }
+  ];
+  const table = InvoicePdfItemsTable({
+    invoice: invoiceDefault,
+    lineItems,
+    conversion: null,
+    hasTaxColumn: false
+  });
+  const [header, rows] = (table.props as { children: [unknown, unknown[]] })
+    .children;
+
+  it("repeats its header on each page it continues onto", () => {
+    expect(
+      isValidElement<{ fixed?: boolean }>(header) && header.props.fixed
+    ).toBe(true);
+  });
+
+  it("never splits an item row across pages", () => {
+    expect(
+      rows.map(row => isValidElement<{ wrap?: boolean }>(row) && row.props.wrap)
+    ).toEqual([false, false]);
   });
 });
