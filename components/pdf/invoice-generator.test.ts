@@ -69,11 +69,18 @@ describe("InvoicePDF", () => {
 
 describe("InvoicePdfPageNumber", () => {
   it("sits on every page and reads the page against the total", () => {
-    const text = InvoicePdfPageNumber({ theme: invoiceDefault.theme });
-    const { fixed, render } = text.props as {
-      fixed: boolean;
-      render: (page: { pageNumber: number; totalPages: number }) => string;
-    };
+    const text: unknown = InvoicePdfPageNumber({ theme: invoiceDefault.theme });
+
+    if (
+      !isValidElement<{
+        fixed: boolean;
+        render: (page: { pageNumber: number; totalPages: number }) => string;
+      }>(text)
+    ) {
+      throw new Error("The page number is not an element");
+    }
+
+    const { fixed, render } = text.props;
 
     expect(fixed).toBe(true);
     expect(render({ pageNumber: 2, totalPages: 3 })).toBe("2 / 3");
@@ -104,14 +111,18 @@ describe("InvoicePdfItemsTable", () => {
       convertedAmount: ""
     }
   ];
-  const table = InvoicePdfItemsTable({
+  const table: unknown = InvoicePdfItemsTable({
     invoice: invoiceDefault,
     lineItems,
     conversion: null,
     hasTaxColumn: false
   });
-  const [header, rows] = (table.props as { children: [unknown, unknown[]] })
-    .children;
+
+  if (!isValidElement<{ children: [unknown, unknown[]] }>(table)) {
+    throw new Error("The items table is not an element");
+  }
+
+  const [header, rows] = table.props.children;
 
   it("repeats its header on each page it continues onto", () => {
     expect(
