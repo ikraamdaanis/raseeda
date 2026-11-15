@@ -154,12 +154,23 @@ test("prints a code of the payment link once it's a web address", async ({
   await page
     .getByRole("combobox", { name: "Encodes", exact: true })
     .selectOption("paymentLink");
-  await expect(page.getByText("Add a payment link")).toBeVisible();
+  await expect(
+    page.getByText("Add your link in the “Pay online” row.")
+  ).toBeVisible();
 
   const link = page.getByRole("textbox", { name: "Pay online", exact: true });
 
+  // The note's button goes to the row the link is typed in.
+  await page.getByRole("button", { name: "Add the link" }).click();
+  await expect(link).toBeFocused();
+
   await link.fill("jane@example.com");
-  await expect(page.getByText("Add a payment link")).toBeVisible();
+  await expect(
+    page.getByText("The “Pay online” row needs a web address")
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Fix the link" })
+  ).toBeVisible();
   await link.fill("https://buy.stripe.com/acme");
   await expect(page.getByText("The QR code is left out")).toHaveCount(0);
   await expect(

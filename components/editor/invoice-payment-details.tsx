@@ -44,7 +44,7 @@ const PAYMENT_FIELDS = [
 // Printed after the other ways to pay; the PDF links it.
 const PAYMENT_LINK_FIELD = {
   key: "paymentLink",
-  placeholder: "https://paypal.me/acme"
+  placeholder: "Link, e.g. paypal.me/acme"
 } as const;
 
 // Offered as the name of another way to pay. "Other…" takes any other name.

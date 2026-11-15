@@ -9,7 +9,10 @@ import {
 } from "~/consts/payment-qr-code";
 import { useQrCodePath } from "~/hooks/use-qr-code-path";
 import { useIsPreview, useShownSections } from "~/hooks/use-shown-sections";
-import { PAYMENT_QR_CODE_CONTENTS } from "~/schema/invoice";
+import {
+  DEFAULT_PAYMENT_LABELS,
+  PAYMENT_QR_CODE_CONTENTS
+} from "~/schema/invoice";
 import {
   usePaymentDetailsSlice,
   useSectionsSlice,
@@ -28,15 +31,31 @@ const MISSING_NOTES = {
   amount: "A SEPA code can't ask for more than €999,999,999.99.",
   upiCurrency: "A UPI code prints on invoices in rupees (INR) only.",
   upiId: "Add a valid UPI ID, such as name@bank.",
-  upiName: "Add the account name, which UPI apps show as the payee.",
-  paymentLink: "Add a payment link that's a web address."
+  upiName: "Add the account name, which UPI apps show as the payee."
 } as const;
 
 const QR_CODE_CONTENT_LABELS = {
   sepa: "SEPA transfer",
   upi: "UPI payment",
-  paymentLink: "Payment link"
+  paymentLink: "Link to pay online"
 } as const satisfies Record<(typeof PAYMENT_QR_CODE_CONTENTS)[number], string>;
+
+// The payment link's row, which a code of the link reads.
+const PAYMENT_LINK_FIELD = "paymentDetails.paymentLink";
+
+// What a code of the payment link is missing, by the name its row prints
+// under: a link, or one that's a web address.
+function getPaymentLinkNote({
+  linkLabel,
+  hasLink
+}: {
+  linkLabel: string;
+  hasLink: boolean;
+}) {
+  return hasLink
+    ? `The “${linkLabel}” row needs a web address, such as paypal.me/acme.`
+    : `Add your link in the “${linkLabel}” row.`;
+}
 
 // What the code encodes, or what it's missing.
 function usePaymentQrCode() {
@@ -106,6 +125,8 @@ export function PaymentQrCode() {
 
 // The switch for the code, while editing, then what it encodes (and the UPI
 // ID a UPI code pays), with a note on what it's missing when it can't print.
+// A code of the payment link names the row the link is typed in, which shows
+// an example link until then, and its button goes to it.
 export function PaymentQrCodeSwitch() {
   const { sections, setSection } = useSectionsSlice();
   const { paymentDetails, setPaymentDetails } = usePaymentDetailsSlice();
@@ -119,6 +140,10 @@ export function PaymentQrCodeSwitch() {
   if (isPreview) return null;
 
   const isOn = sections.paymentQrCode;
+  const linkLabel =
+    paymentDetails.labels.paymentLink.trim() ||
+    DEFAULT_PAYMENT_LABELS.paymentLink;
+  const hasLink = paymentDetails.paymentLink.trim() !== "";
 
   return (
     <div className="mt-2 flex flex-col gap-1">
@@ -183,9 +208,30 @@ export function PaymentQrCodeSwitch() {
         </div>
       )}
       {isOn && missing && (
-        <p id={noteId} className="text-paper-muted-foreground text-xs">
-          {`The QR code is left out. ${MISSING_NOTES[missing]}`}
-        </p>
+        <div className="flex flex-wrap items-baseline gap-x-2 text-xs">
+          <p id={noteId} className="text-paper-muted-foreground">
+            {`The QR code is left out. ${
+              missing === "paymentLink"
+                ? getPaymentLinkNote({ linkLabel, hasLink })
+                : MISSING_NOTES[missing]
+            }`}
+          </p>
+          {missing === "paymentLink" && (
+            <button
+              type="button"
+              onClick={() =>
+                document
+                  .querySelector<HTMLElement>(
+                    `[data-field="${PAYMENT_LINK_FIELD}"]`
+                  )
+                  ?.focus()
+              }
+              className="text-paper-foreground decoration-paper-border hover:decoration-paper-foreground focus-visible:ring-ring relative rounded-sm underline underline-offset-2 outline-none focus-visible:ring-1 pointer-coarse:after:absolute pointer-coarse:after:inset-x-0 pointer-coarse:after:inset-y-[calc((100%-2.75rem)/2)]"
+            >
+              {hasLink ? "Fix the link" : "Add the link"}
+            </button>
+          )}
+        </div>
       )}
     </div>
   );
