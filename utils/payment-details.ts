@@ -12,6 +12,22 @@ export const PAYMENT_BANK_FIELDS = [
   "sortCode"
 ] as const;
 
+// Whether anything is typed into the payment details: a bank field, another
+// way to pay, the payment link, a UPI ID or payment terms. Labels don't count.
+export function hasPaymentDetails(paymentDetails: InvoicePaymentDetails) {
+  return (
+    PAYMENT_BANK_FIELDS.some(field => paymentDetails[field].trim()) ||
+    paymentDetails.methods.some(
+      method => method.name.trim() || method.detail.trim()
+    ) ||
+    [
+      paymentDetails.paymentLink,
+      paymentDetails.upiId,
+      paymentDetails.terms
+    ].some(value => value.trim())
+  );
+}
+
 // The label and value rows the payment details print: each filled-in bank
 // field under its label (the default one when it was cleared), then each other
 // way to pay that has a detail, in the order they were put in, then the

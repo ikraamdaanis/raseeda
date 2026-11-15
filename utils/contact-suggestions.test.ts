@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { createBlankInvoice } from "~/stores/invoice-store";
 import type { InvoiceDocument } from "~/types";
-import { getClientSuggestions } from "~/utils/client-suggestions";
+import { getContactSuggestions } from "~/utils/contact-suggestions";
 
 function libraryDocument(
   id: string,
@@ -25,6 +25,15 @@ function libraryDocument(
   };
 }
 
+// What the client block shows of each suggestion.
+function clientSuggestions(
+  options: Omit<Parameters<typeof getContactSuggestions>[0], "contact">
+) {
+  return getContactSuggestions({ ...options, contact: "client" }).map(
+    ({ name, content }) => ({ name, content })
+  );
+}
+
 const library = [
   libraryDocument("a", "Acme Ltd\n1 Old Road\nLondon", "2026-01-10"),
   libraryDocument("b", "Acme Ltd\n2 New Street\nLondon", "2026-03-01"),
@@ -33,9 +42,9 @@ const library = [
   libraryDocument("e", "", "2026-04-01")
 ];
 
-describe("getClientSuggestions", () => {
+describe("getContactSuggestions", () => {
   it("suggests each client once, with its newest address", () => {
-    const suggestions = getClientSuggestions({
+    const suggestions = clientSuggestions({
       documents: library,
       typed: "Ac",
       excludeId: null
@@ -49,7 +58,7 @@ describe("getClientSuggestions", () => {
 
   it("matches the start of each typed word", () => {
     const names = (typed: string) =>
-      getClientSuggestions({ documents: library, typed, excludeId: null }).map(
+      clientSuggestions({ documents: library, typed, excludeId: null }).map(
         suggestion => suggestion.name
       );
 
@@ -59,7 +68,7 @@ describe("getClientSuggestions", () => {
   });
 
   it("lists recent clients, newest first, while the block is empty", () => {
-    const suggestions = getClientSuggestions({
+    const suggestions = clientSuggestions({
       documents: library,
       typed: "  ",
       excludeId: null,
@@ -74,14 +83,14 @@ describe("getClientSuggestions", () => {
 
   it("leaves out the open invoice and a client already filled in", () => {
     expect(
-      getClientSuggestions({
+      clientSuggestions({
         documents: library,
         typed: "Zenith",
         excludeId: "d"
       })
     ).toEqual([]);
     expect(
-      getClientSuggestions({
+      clientSuggestions({
         documents: library,
         typed: "Zenith Studio",
         excludeId: null
@@ -92,7 +101,7 @@ describe("getClientSuggestions", () => {
   it("suggests nothing once a second line is started", () => {
     for (const typed of ["Acme Ltd\n1", "Acme Ltd\n", "\n\nAc"]) {
       expect(
-        getClientSuggestions({ documents: library, typed, excludeId: null })
+        clientSuggestions({ documents: library, typed, excludeId: null })
       ).toEqual([]);
     }
   });
@@ -104,7 +113,7 @@ describe("getClientSuggestions", () => {
       libraryDocument("h", "İstanbul Tekstil", "2026-03-01")
     ];
     const names = (typed: string) =>
-      getClientSuggestions({ documents: accented, typed, excludeId: null }).map(
+      clientSuggestions({ documents: accented, typed, excludeId: null }).map(
         suggestion => suggestion.name
       );
 
@@ -114,7 +123,37 @@ describe("getClientSuggestions", () => {
 
   it("suggests nothing from an empty library", () => {
     expect(
-      getClientSuggestions({ documents: [], typed: "", excludeId: null })
+      clientSuggestions({ documents: [], typed: "", excludeId: null })
     ).toEqual([]);
+  });
+
+  it("suggests senders from the From block, with their invoice", () => {
+    const invoiceData = createBlankInvoice();
+    const older = libraryDocument("s1", "", "2026-01-01");
+    const newer = libraryDocument("s2", "", "2026-02-01");
+
+    older.invoiceData = {
+      ...invoiceData,
+      seller: { ...invoiceData.seller, content: "Jane Doe\nOld Lane" }
+    };
+    newer.invoiceData = {
+      ...invoiceData,
+      seller: { ...invoiceData.seller, content: "Jane Doe\nNew Lane" }
+    };
+
+    const suggestions = getContactSuggestions({
+      documents: [...library, older, newer],
+      contact: "seller",
+      typed: "jan",
+      excludeId: null
+    });
+
+    expect(suggestions).toEqual([
+      {
+        name: "Jane Doe",
+        content: "Jane Doe\nNew Lane",
+        invoiceDocument: newer
+      }
+    ]);
   });
 });

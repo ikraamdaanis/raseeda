@@ -1,4 +1,5 @@
 import {
+  ContactSuggestion,
   SuggestionList,
   useFieldSuggestions
 } from "~/components/editor/field-suggestions";
@@ -7,7 +8,7 @@ import { InvoiceTextArea } from "~/components/editor/invoice-textarea";
 import { useInvoiceDocument } from "~/context/invoice-document-context";
 import { recordHistoryAction } from "~/stores/invoice-history";
 import { useClientSlice, useTheme } from "~/stores/invoice-selectors";
-import { getClientSuggestions } from "~/utils/client-suggestions";
+import { getContactSuggestions } from "~/utils/contact-suggestions";
 import { getRoleSettings } from "~/utils/get-role-settings";
 import { getTextStyles } from "~/utils/get-text-styles";
 
@@ -56,8 +57,9 @@ function ClientContent() {
     fieldProps
   } = useFieldSuggestions({
     getSuggestions: documents =>
-      getClientSuggestions({
+      getContactSuggestions({
         documents,
+        contact: "client",
         typed: client.content,
         excludeId: libraryDocumentId
       }),
@@ -94,19 +96,10 @@ function ClientContent() {
           pick={pick}
           getKey={suggestion => suggestion.name}
           renderSuggestion={suggestion => (
-            <>
-              <span className="truncate font-medium">{suggestion.name}</span>
-              {suggestion.content.includes("\n") && (
-                <span className="text-muted-foreground truncate text-xs">
-                  {suggestion.content
-                    .split("\n")
-                    .slice(1)
-                    .map(line => line.trim())
-                    .filter(Boolean)
-                    .join(", ")}
-                </span>
-              )}
-            </>
+            <ContactSuggestion
+              name={suggestion.name}
+              content={suggestion.content}
+            />
           )}
         />
       )}
