@@ -365,7 +365,7 @@ function SummaryRow({
 
 // Whether a printed row reads as the tax row below does: the invoice's own
 // rate, or its exempt note.
-function isInvoiceTaxRow(
+export function isInvoiceTaxRow(
   row: InvoiceSummaryRow,
   tax: { percentage: number; exempt: boolean }
 ) {

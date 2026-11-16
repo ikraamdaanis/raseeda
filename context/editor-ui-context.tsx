@@ -9,6 +9,8 @@ import type { LibraryTab } from "~/types";
 
 type EditorMode = "edit" | "preview";
 
+type PhoneView = "form" | "page";
+
 type PanelState = { left: boolean; right: boolean };
 
 const PANELS_STORAGE_KEY = "editor-panels";
@@ -84,15 +86,17 @@ function storePanels(panels: PanelState) {
 // The editor shell's own state: whether the page is being edited or previewed,
 // which side panels are open and which tab the invoices panel shows.
 // Previewing hides both panels and leaving it puts back whichever were open.
-// All three are remembered across reloads. Phones have no Preview: the PDF
-// that Download opens shows the page as it prints, so there the page is always
-// being edited, and a wider window's Preview comes back when there is room
-// again.
+// All three are remembered across reloads. A phone edits in a form instead of
+// on the page (issue #213): its Edit and Page tabs (`phoneView`) say which one
+// shows, and the Page tab is the page in Preview. It always opens on Edit, and
+// a wider window's own Preview comes back when there is room again.
 const EditorUiContext = createContext<{
   mode: EditorMode;
   setMode: (mode: EditorMode) => void;
   toggleMode: () => void;
   isNarrow: boolean;
+  phoneView: PhoneView;
+  setPhoneView: (view: PhoneView) => void;
   leftPanelOpen: boolean;
   rightPanelOpen: boolean;
   setPanelOpen: (side: keyof PanelState, open: boolean) => void;
@@ -122,13 +126,15 @@ export function EditorUiProvider({ children }: { children: ReactNode }) {
       readStoredValue(LIBRARY_TAB_STORAGE_KEY, parseLibraryTab) ?? "invoices"
   );
   const [librarySearchRequest, setLibrarySearchRequest] = useState(0);
+  const [phoneView, setPhoneView] = useState<PhoneView>("form");
   const isNarrow = useMediaQuery(NARROW_VIEWPORT_QUERY);
   const isCompact = useMediaQuery(COMPACT_VIEWPORT_QUERY);
   // Both panels can be remembered open from a wider window; a compact one
   // shows only the inspector, and both come back when there is room again.
   const leftPanelOpen = panels.left && !(isCompact && panels.right);
   const rightPanelOpen = panels.right;
-  const mode = isNarrow ? "edit" : chosenMode;
+  const phoneMode = phoneView === "page" ? "preview" : "edit";
+  const mode = isNarrow ? phoneMode : chosenMode;
 
   function setModeState(next: EditorMode) {
     setChosenMode(next);
@@ -183,6 +189,8 @@ export function EditorUiProvider({ children }: { children: ReactNode }) {
     setMode,
     toggleMode: () => setMode(chosenMode === "edit" ? "preview" : "edit"),
     isNarrow,
+    phoneView,
+    setPhoneView,
     leftPanelOpen,
     rightPanelOpen,
     setPanelOpen,

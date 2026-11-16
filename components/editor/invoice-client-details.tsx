@@ -42,20 +42,12 @@ function ClientLabel() {
 
 // While the block is focused and has at most its first line, clients from
 // past invoices are offered below it (issue #130), as `useFieldSuggestions`
-// describes.
-function ClientContent() {
+// describes. The phone's form offers the same.
+export function useClientSuggestions() {
   const { client, setClient } = useClientSlice();
-  const theme = useTheme();
   const { libraryDocumentId } = useInvoiceDocument();
-  const {
-    suggestions,
-    isShown,
-    activeIndex,
-    listId,
-    pick,
-    onType,
-    fieldProps
-  } = useFieldSuggestions({
+
+  return useFieldSuggestions({
     getSuggestions: documents =>
       getContactSuggestions({
         documents,
@@ -68,6 +60,20 @@ function ClientContent() {
         setClient(prev => ({ ...prev, content: suggestion.content }))
       )
   });
+}
+
+function ClientContent() {
+  const { client, setClient } = useClientSlice();
+  const theme = useTheme();
+  const {
+    suggestions,
+    isShown,
+    activeIndex,
+    listId,
+    pick,
+    onType,
+    fieldProps
+  } = useClientSuggestions();
 
   return (
     <div className="relative w-full max-w-[500px]">

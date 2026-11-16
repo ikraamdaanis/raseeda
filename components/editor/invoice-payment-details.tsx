@@ -31,7 +31,7 @@ import { getRoleSettings } from "~/utils/get-role-settings";
 import { getTextStyles } from "~/utils/get-text-styles";
 import { getPaymentLinkHref } from "~/utils/payment-details";
 
-const PAYMENT_FIELDS = [
+export const PAYMENT_FIELDS = [
   { key: "bankName", placeholder: "Acme Bank" },
   { key: "accountName", placeholder: "Acme Studio Ltd" },
   { key: "accountNumber", placeholder: "12345678" },
@@ -42,13 +42,13 @@ const PAYMENT_FIELDS = [
 ] as const;
 
 // Printed after the other ways to pay; the PDF links it.
-const PAYMENT_LINK_FIELD = {
+export const PAYMENT_LINK_FIELD = {
   key: "paymentLink",
   placeholder: "Link, e.g. paypal.me/acme"
 } as const;
 
 // Offered as the name of another way to pay. "Other…" takes any other name.
-const PAYMENT_METHOD_SUGGESTIONS = [
+export const PAYMENT_METHOD_SUGGESTIONS = [
   "PayPal",
   "Venmo",
   "Zelle",
@@ -66,7 +66,7 @@ const PAYMENT_METHOD_SUGGESTIONS = [
   "M-Pesa"
 ];
 
-const OTHER_PAYMENT_METHOD = "__other";
+export const OTHER_PAYMENT_METHOD = "__other";
 
 export function InvoicePaymentDetails() {
   const { setSection } = useSectionsSlice();

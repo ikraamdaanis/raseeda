@@ -1,6 +1,10 @@
 import type { RefObject } from "react";
 import { useEffect } from "react";
-import { FIELD_ZOOM, MAX_ZOOM, MIN_ZOOM } from "~/context/canvas-view-context";
+import {
+  DOUBLE_TAP_ZOOM,
+  MAX_ZOOM,
+  MIN_ZOOM
+} from "~/context/canvas-view-context";
 
 type Point = { x: number; y: number };
 
@@ -302,7 +306,7 @@ export function useCanvasGestures({
       // the fitted page is already that big, to twice the fit; from any other
       // zoom it fits the page again.
       if (isFit || Math.abs(zoom - fitZoom) < 0.01) {
-        animateTo(Math.max(FIELD_ZOOM, fitZoom * 2), tap.point);
+        animateTo(Math.max(DOUBLE_TAP_ZOOM, fitZoom * 2), tap.point);
       } else {
         animateTo(fitZoom, tap.point, "fit");
       }

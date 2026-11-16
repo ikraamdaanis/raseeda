@@ -46,20 +46,12 @@ function SellerLabel() {
 // details from past invoices are offered below it (issue #207), as
 // `useFieldSuggestions` describes. A pick also brings that invoice's payment
 // details, their labels and whether they're shown, unless some are typed in
-// already, so none are ever overwritten.
-function SellerContent() {
+// already, so none are ever overwritten. The phone's form offers the same.
+export function useSellerSuggestions() {
   const { seller, setSeller } = useSellerSlice();
-  const theme = useTheme();
   const { libraryDocumentId } = useInvoiceDocument();
-  const {
-    suggestions,
-    isShown,
-    activeIndex,
-    listId,
-    pick,
-    onType,
-    fieldProps
-  } = useFieldSuggestions({
+
+  return useFieldSuggestions({
     getSuggestions: documents =>
       getContactSuggestions({
         documents,
@@ -83,6 +75,20 @@ function SellerContent() {
         );
       })
   });
+}
+
+function SellerContent() {
+  const { seller, setSeller } = useSellerSlice();
+  const theme = useTheme();
+  const {
+    suggestions,
+    isShown,
+    activeIndex,
+    listId,
+    pick,
+    onType,
+    fieldProps
+  } = useSellerSuggestions();
 
   return (
     <div className="relative w-full max-w-[500px]">

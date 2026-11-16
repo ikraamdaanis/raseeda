@@ -976,8 +976,6 @@ function DescriptionCell({
   style: CSSProperties;
   updateItem: UpdateItem;
 }) {
-  const currency = useCurrencySlice();
-  const { libraryDocumentId } = useInvoiceDocument();
   const {
     suggestions,
     isShown,
@@ -986,21 +984,7 @@ function DescriptionCell({
     pick,
     onType,
     fieldProps
-  } = useFieldSuggestions({
-    getSuggestions: documents =>
-      getLineItemSuggestions({
-        documents,
-        item,
-        currency,
-        excludeId: libraryDocumentId
-      }),
-    onPick: suggestion =>
-      recordHistoryAction("Line items", "items", () => {
-        updateItem(index, "description", suggestion.description);
-        updateItem(index, "unit", suggestion.unit);
-        updateItem(index, "unitPrice", suggestion.unitPrice);
-      })
-  });
+  } = useLineItemSuggestions({ item, index, updateItem });
 
   return (
     <>
@@ -1044,6 +1028,38 @@ function DescriptionCell({
       )}
     </>
   );
+}
+
+// Items billed on past invoices in this currency, offered under a line's
+// description. Picking one fills the description, unit and unit price as one
+// undo step and leaves the quantity. The phone's form offers the same.
+export function useLineItemSuggestions({
+  item,
+  index,
+  updateItem
+}: {
+  item: InvoiceItem;
+  index: number;
+  updateItem: UpdateItem;
+}) {
+  const currency = useCurrencySlice();
+  const { libraryDocumentId } = useInvoiceDocument();
+
+  return useFieldSuggestions({
+    getSuggestions: documents =>
+      getLineItemSuggestions({
+        documents,
+        item,
+        currency,
+        excludeId: libraryDocumentId
+      }),
+    onPick: suggestion =>
+      recordHistoryAction("Line items", "items", () => {
+        updateItem(index, "description", suggestion.description);
+        updateItem(index, "unit", suggestion.unit);
+        updateItem(index, "unitPrice", suggestion.unitPrice);
+      })
+  });
 }
 
 // A line's amount, typed straight in while quantity and price are hidden. It

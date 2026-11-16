@@ -365,10 +365,10 @@ test.describe("on a phone", () => {
     await expect(undo).toBeDisabled();
     await expect(redo).toBeDisabled();
 
-    await page
-      .getByRole("textbox", { name: "Invoice title" })
-      .fill("Phone edit");
-    await page.getByRole("button", { name: "Done" }).click();
+    const title = page.getByRole("textbox", { name: "Invoice title" });
+
+    await title.fill("Phone edit");
+    await title.blur();
 
     await expect(
       page.getByRole("button", { name: "Undo change to Invoice title" })
@@ -376,15 +376,11 @@ test.describe("on a phone", () => {
 
     await undo.click();
 
-    await expect(
-      page.getByRole("textbox", { name: "Invoice title" })
-    ).toHaveValue("Invoice");
+    await expect(title).toHaveValue("Invoice");
     await expect(redo).toBeEnabled();
 
     await redo.click();
 
-    await expect(
-      page.getByRole("textbox", { name: "Invoice title" })
-    ).toHaveValue("Phone edit");
+    await expect(title).toHaveValue("Phone edit");
   });
 });

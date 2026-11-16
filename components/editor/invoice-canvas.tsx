@@ -1,9 +1,8 @@
-import type { CSSProperties, FocusEvent, ReactNode } from "react";
-import { useLayoutEffect, useRef, useState } from "react";
+import type { CSSProperties, ReactNode } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { flushSync } from "react-dom";
 import { getInvoiceFontDefinition } from "~/consts/invoice-fonts";
-import { FIELD_ZOOM, useCanvasView } from "~/context/canvas-view-context";
-import { useEditorUi } from "~/context/editor-ui-context";
+import { useCanvasView } from "~/context/canvas-view-context";
 import { settleGesture, useCanvasGestures } from "~/hooks/use-canvas-gestures";
 import { cn } from "~/lib/utils";
 import { usePaperSize, useTheme } from "~/stores/invoice-selectors";
@@ -20,9 +19,18 @@ const CANVAS_STATIC_STYLES: CSSProperties = {
   MozOsxFontSmoothing: "grayscale"
 };
 
-export function InvoiceCanvas({ children }: { children: ReactNode }) {
-  const { view, setView, setZoom, zoomToField } = useCanvasView();
-  const { mode, isNarrow } = useEditorUi();
+// `onFieldTap` makes the page a way into the phone's form: tapping a field,
+// or the text of a part, names it (by its `data-field` path and its part's
+// `data-field-area`) for the form to open at. Taps between parts are left for
+// the double-tap zoom.
+export function InvoiceCanvas({
+  onFieldTap,
+  children
+}: {
+  onFieldTap?: (target: { field?: string; area?: string }) => void;
+  children: ReactNode;
+}) {
+  const { view, setView, setZoom } = useCanvasView();
   const theme = useTheme();
   const paperSize = usePaperSize();
   const baseFont = getInvoiceFontDefinition(theme.font);
@@ -38,10 +46,15 @@ export function InvoiceCanvas({ children }: { children: ReactNode }) {
 
     if (!page || !section) return;
 
-    const pageObserver = new ResizeObserver(() => {
+    function measurePage() {
+      if (!page) return;
+
       setPageSize({ width: page.offsetWidth, height: page.offsetHeight });
-    });
-    const sectionObserver = new ResizeObserver(() => {
+    }
+
+    function measureSection() {
+      if (!section) return;
+
       const styles = getComputedStyle(section);
       const paddingX =
         parseFloat(styles.paddingLeft) + parseFloat(styles.paddingRight);
@@ -52,7 +65,15 @@ export function InvoiceCanvas({ children }: { children: ReactNode }) {
         width: section.clientWidth - paddingX,
         height: section.clientHeight - paddingY
       });
-    });
+    }
+
+    // Measured before the first paint too, so a page mounted fitted (a
+    // phone's Page tab) never shows a frame at full size first.
+    measurePage();
+    measureSection();
+
+    const pageObserver = new ResizeObserver(measurePage);
+    const sectionObserver = new ResizeObserver(measureSection);
 
     pageObserver.observe(page);
     sectionObserver.observe(section);
@@ -65,9 +86,7 @@ export function InvoiceCanvas({ children }: { children: ReactNode }) {
 
   const zoom = resolveZoom(view, pageSize, containerSize);
   const fitZoom = resolveZoom("fit", pageSize, containerSize);
-  // The field a phone zoomed in on, brought into view once the zoom applies,
-  // and where a finished zoom gesture left the page's top-left corner.
-  const fieldToRevealRef = useRef<HTMLElement | null>(null);
+  // Where a finished zoom gesture left the page's top-left corner.
   const gestureOriginRef = useRef<{ x: number; y: number } | null>(null);
   const previousZoomRef = useRef(zoom);
   const previousViewRef = useRef(view);
@@ -116,7 +135,6 @@ export function InvoiceCanvas({ children }: { children: ReactNode }) {
 
     const section = sectionRef.current;
     const sizer = sizerRef.current;
-    const field = fieldToRevealRef.current;
     const origin = gestureOriginRef.current;
 
     const previousZoom = previousZoomRef.current;
@@ -131,16 +149,11 @@ export function InvoiceCanvas({ children }: { children: ReactNode }) {
       settleGesture(section, sizer, origin);
     }
 
-    if (field) {
-      fieldToRevealRef.current = null;
-      revealField(section, field);
-    }
-
     // A zoom from the buttons, the menu or a shortcut keeps the middle of
     // what was in view in the middle. A fitted page that rescales because the
     // canvas changed size (the window, a status alert) keeps its top in place
     // instead, so a page fitted from the top doesn't open halfway down.
-    if (!origin && !field && previousZoom !== zoom) {
+    if (!origin && previousZoom !== zoom) {
       if (view === previousView) {
         keepTopLeft(section, zoom / previousZoom);
       } else {
@@ -149,24 +162,31 @@ export function InvoiceCanvas({ children }: { children: ReactNode }) {
     }
   });
 
-  // On a phone the fitted page is too small to type into, so tapping a field
-  // zooms in to full size around it; Done in the phone tab bar fits it again.
-  function handleFocus(event: FocusEvent<HTMLElement>) {
-    const field = event.target;
-    const isTextField =
-      field instanceof HTMLInputElement || field instanceof HTMLTextAreaElement;
+  // A tap on the page is only a shortcut into the form, which the tab bar
+  // reaches too, so it's listened for here rather than making the page a
+  // control.
+  useEffect(() => {
+    const section = sectionRef.current;
+    const page = pageRef.current;
 
-    if (!isNarrow || mode !== "edit" || !isTextField) return;
-    if (zoom >= FIELD_ZOOM || !pageRef.current?.contains(field)) return;
+    if (!onFieldTap || !section || !page) return;
 
-    fieldToRevealRef.current = field;
-    zoomToField();
-  }
+    function handleClick(event: MouseEvent) {
+      if (!page || !onFieldTap) return;
+
+      const target = findTappedPart(page, event);
+
+      if (target) onFieldTap(target);
+    }
+
+    section.addEventListener("click", handleClick);
+
+    return () => section.removeEventListener("click", handleClick);
+  }, [onFieldTap]);
 
   return (
     <section
       ref={sectionRef}
-      onFocus={handleFocus}
       className="relative flex min-h-0 flex-1 touch-pan-x touch-pan-y flex-col items-center-safe justify-center-safe overflow-auto overscroll-none p-3 md:p-8 md:pb-20"
     >
       <div
@@ -233,25 +253,40 @@ function keepTopLeft(section: HTMLElement, ratio: number) {
   section.scrollTop *= ratio;
 }
 
-// Brings a field into view high on the canvas, clear of the keyboard that is
-// about to cover the lower half of the screen. A field that fits ends at the
-// right edge, so its label (to its left on the page) stays in view; a wider
-// one starts at the left edge.
-function revealField(section: HTMLElement, field: HTMLElement) {
-  const sectionRect = section.getBoundingClientRect();
-  const fieldRect = field.getBoundingClientRect();
-  const margin = 16;
-  const left =
-    fieldRect.width > sectionRect.width - margin * 2
-      ? fieldRect.left - sectionRect.left - margin
-      : fieldRect.right - sectionRect.right + margin;
+// The field under a tap, matched by where each field is drawn, since a
+// read-only page lets taps pass through its fields; the smallest wins, as a
+// field inside another's box is the one aimed at. With no field there, a tap
+// on a part's own text (an amount, a printed row) names its part.
+function findTappedPart(
+  page: HTMLElement,
+  { clientX, clientY, target }: MouseEvent
+): { field?: string; area?: string } | null {
+  const hits = Array.from(page.querySelectorAll<HTMLElement>("[data-field]"))
+    .map(field => ({ field, rect: field.getBoundingClientRect() }))
+    .filter(
+      ({ rect }) =>
+        clientX >= rect.left &&
+        clientX <= rect.right &&
+        clientY >= rect.top &&
+        clientY <= rect.bottom
+    )
+    .sort(
+      (a, b) => a.rect.width * a.rect.height - b.rect.width * b.rect.height
+    );
+  const field = hits.at(0)?.field;
 
-  section.scrollTo({
-    left: section.scrollLeft + left,
-    top:
-      section.scrollTop +
-      fieldRect.top -
-      sectionRect.top -
-      sectionRect.height * 0.15
-  });
+  if (field) {
+    return {
+      field: field.dataset.field,
+      area: field.closest<HTMLElement>("[data-field-area]")?.dataset.fieldArea
+    };
+  }
+
+  if (!(target instanceof HTMLElement)) return null;
+
+  const area = target.closest<HTMLElement>("[data-field-area]");
+
+  if (!area || area === target) return null;
+
+  return { area: area.dataset.fieldArea };
 }

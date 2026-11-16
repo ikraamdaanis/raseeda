@@ -13,9 +13,8 @@ type CanvasView = "fit" | number;
 
 const VIEW_STORAGE_KEY = "editor-zoom";
 
-// The zoom a phone jumps to when a field on the fitted page is tapped, so the
-// text being typed is full size.
-export const FIELD_ZOOM = 1;
+// The least a double-tap on the fitted page zooms in to: full size.
+export const DOUBLE_TAP_ZOOM = 1;
 
 // How far a pinch can take the page, and the stops the zoom buttons and
 // shortcuts step through.
@@ -45,16 +44,14 @@ const CanvasViewContext = createContext<{
   setView: (view: CanvasView) => void;
   zoom: number;
   setZoom: (zoom: number) => void;
-  isZoomedToField: boolean;
-  zoomToField: () => void;
 } | null>(null);
 
 export function CanvasViewProvider({ children }: { children: ReactNode }) {
   // The editor only renders on the client, so the viewport is known here.
   // Phones always open fitted, since the A4 page is wider than the screen and
-  // the user zooms in to edit. Wider screens reopen at the zoom they were left
-  // at, first opening at full size, or fitted where the page won't fit beside
-  // a panel.
+  // only read there (they edit in a form). Wider screens reopen at the zoom
+  // they were left at, first opening at full size, or fitted where the page
+  // won't fit beside a panel.
   const [view, setViewState] = useState<CanvasView>(() => {
     if (window.matchMedia(NARROW_VIEWPORT_QUERY).matches) return "fit";
 
@@ -64,13 +61,8 @@ export function CanvasViewProvider({ children }: { children: ReactNode }) {
     );
   });
 
-  // Set while a phone is zoomed in on a field it was fitted out from; Done, or
-  // any other zoom change, ends it.
-  const [isZoomedToField, setIsZoomedToField] = useState(false);
-
   function setView(next: CanvasView) {
     setViewState(next);
-    setIsZoomedToField(false);
 
     if (!window.matchMedia(NARROW_VIEWPORT_QUERY).matches) {
       writeStoredValue(VIEW_STORAGE_KEY, next);
@@ -84,12 +76,7 @@ export function CanvasViewProvider({ children }: { children: ReactNode }) {
     view,
     setView,
     zoom,
-    setZoom,
-    isZoomedToField,
-    zoomToField: () => {
-      setViewState(FIELD_ZOOM);
-      setIsZoomedToField(true);
-    }
+    setZoom
   };
 
   return (

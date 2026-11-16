@@ -1,8 +1,8 @@
 import type { Page } from "@playwright/test";
 import { expect, test } from "./fixtures";
 
-// Group: the editor on a phone, where the A4 page is fitted to the screen and
-// tapping a field zooms in to it.
+// Group: the editor on a phone, which edits in a form and shows the page,
+// fitted and read-only, on its Page tab (issue #213).
 test.use({
   viewport: { width: 390, height: 664 },
   hasTouch: true,
@@ -17,46 +17,114 @@ function pageScale(page: Page) {
     );
 }
 
-test("tapping a field zooms in to it and Done fits the page", async ({
+function tabBar(page: Page) {
+  return page.getByRole("navigation", { name: "Editor" });
+}
+
+async function showPage(page: Page) {
+  await tabBar(page).getByRole("tab", { name: "Page" }).tap();
+  await expect.poll(() => pageScale(page)).toBeLessThan(0.6);
+}
+
+test("a phone edits in a form, typed at 16px, with the bar out of the way", async ({
   page
 }) => {
   await page.goto("/create");
   const toDetails = page.getByLabel("To details");
-  await expect(toDetails).toBeVisible();
-  await expect.poll(() => pageScale(page)).toBeLessThan(0.6);
 
-  await toDetails.tap();
-
-  // A phone types the page's fields at 16px or more, so iOS doesn't zoom in
-  // on them itself, and full size shows them at that.
-  await expect.poll(() => pageScale(page)).toBe(1);
+  await expect(page.getByRole("form", { name: "Invoice" })).toBeVisible();
+  await expect(page.locator("[data-paper]")).toHaveCount(0);
+  // 16px or more, so iOS doesn't zoom in on a field it focuses.
   expect(
     await toDetails.evaluate(field =>
       parseFloat(getComputedStyle(field).fontSize)
     )
   ).toBeGreaterThanOrEqual(16);
+
+  await toDetails.tap();
+  await toDetails.fill("Globex Corp");
+
+  // The bar steps aside for the keyboard while a field is typed in.
+  await expect(tabBar(page)).toBeHidden();
+
+  await toDetails.blur();
+
+  await expect(tabBar(page)).toBeVisible();
+});
+
+test("the form's controls are 44px tap targets", async ({ page }) => {
+  await page.goto("/create");
+  await expect(page.getByRole("form", { name: "Invoice" })).toBeVisible();
+
+  const smallTargets = await page.locator("[data-phone-form]").evaluate(form =>
+    Array.from(
+      form.querySelectorAll<HTMLElement>(
+        "button, input:not([type=file]):not([aria-hidden=true]), select, textarea"
+      )
+    )
+      .filter(control => control.offsetParent !== null)
+      .filter(control => {
+        const rect = control.getBoundingClientRect();
+        const after = getComputedStyle(control, "::after");
+        const height = Math.max(rect.height, parseFloat(after.height) || 0);
+        const width = Math.max(rect.width, parseFloat(after.width) || 0);
+
+        return height < 44 || width < 44;
+      })
+      .map(control => control.getAttribute("aria-label") ?? control.textContent)
+  );
+
+  expect(smallTargets).toEqual([]);
+});
+
+test("the Page tab shows the page, and tapping a field opens it in the form", async ({
+  page
+}) => {
+  await page.goto("/create");
+  await page.getByLabel("To details").fill("Globex Corp");
+  await showPage(page);
+
+  await expect(page.getByRole("form", { name: "Invoice" })).toHaveCount(0);
+
+  await page.locator('[data-paper] [data-field="client.content"]').tap();
+
+  const toDetails = page.getByLabel("To details");
+
+  await expect(tabBar(page).getByRole("tab", { name: "Edit" })).toHaveAttribute(
+    "aria-selected",
+    "true"
+  );
   await expect(toDetails).toBeFocused();
   await expect(toDetails).toBeInViewport();
+});
 
-  await page.getByRole("button", { name: "Done" }).tap();
+test("Edit labels renames what the page prints", async ({ page }) => {
+  await page.goto("/create");
+  await page.getByRole("switch", { name: "Edit labels" }).tap();
+  await page.getByRole("textbox", { name: "To label" }).fill("Bill To");
+  await showPage(page);
 
-  await expect.poll(() => pageScale(page)).toBeLessThan(0.6);
-  await expect(toDetails).not.toBeFocused();
-  await expect(page.getByRole("button", { name: "Done" })).toHaveCount(0);
+  await expect(page.locator("[data-paper]")).toContainText("Bill To");
 });
 
 test("phones get a tab bar instead of the canvas pill and panel toggles", async ({
   page
 }) => {
   await page.goto("/create");
-  const tabBar = page.getByRole("navigation", { name: "Editor" });
-  await expect(tabBar).toBeVisible();
+  await expect(tabBar(page)).toBeVisible();
   await expect(page.getByRole("toolbar", { name: "Canvas" })).toBeHidden();
   await expect(
     page.getByRole("button", { name: "Show invoices panel" })
   ).toBeHidden();
+  await expect(tabBar(page).getByRole("tab")).toHaveText(["Edit", "Page"]);
+  await expect(tabBar(page).getByRole("tab", { name: "Edit" })).toHaveAttribute(
+    "aria-selected",
+    "true"
+  );
 
-  await tabBar.getByRole("button", { name: "Style" }).tap();
+  const style = tabBar(page).getByRole("button", { name: "Style" });
+
+  await style.tap();
 
   // On a phone the panel is a modal sheet: it takes focus, and Escape
   // closes it.
@@ -64,16 +132,14 @@ test("phones get a tab bar instead of the canvas pill and panel toggles", async 
 
   await expect(inspector).toBeInViewport();
   await expect(inspector).toBeFocused();
+  await expect(style).toHaveAttribute("aria-expanded", "true");
 
   await page.keyboard.press("Escape");
 
   await expect(inspector).toHaveCount(0);
-  await expect(tabBar.getByRole("button", { name: "Style" })).toHaveAttribute(
-    "aria-pressed",
-    "false"
-  );
+  await expect(style).toHaveAttribute("aria-expanded", "false");
 
-  await tabBar.getByRole("button", { name: "Invoices" }).tap();
+  await tabBar(page).getByRole("button", { name: "Invoices" }).tap();
 
   const library = page.getByRole("group", { name: "Library" });
 
@@ -85,18 +151,9 @@ test("phones get a tab bar instead of the canvas pill and panel toggles", async 
       .poll(async () => (await button.boundingBox())?.height)
       .toBeGreaterThanOrEqual(44);
   }
-
-  await page.keyboard.press("Escape");
-
-  // The PDF that Download opens is the preview, so there's no Preview tab.
-  await expect(tabBar.getByRole("button")).toHaveText([
-    "Invoices",
-    "Style",
-    "Zoom in"
-  ]);
 });
 
-test("a phone opens to editing even when Preview was left on", async ({
+test("a phone opens to the form even when Preview was left on", async ({
   page
 }) => {
   await page.addInitScript(() =>
@@ -104,41 +161,7 @@ test("a phone opens to editing even when Preview was left on", async ({
   );
   await page.goto("/create");
 
-  await expect(page.getByLabel("To details")).toBeVisible();
-  await expect(page.getByLabel("To details")).not.toHaveAttribute(
-    "readonly",
-    ""
-  );
-});
-
-test("the totals' toggles are 44px tap targets at full size", async ({
-  page
-}) => {
-  await page.goto("/create");
-  await page
-    .getByRole("navigation", { name: "Editor" })
-    .getByRole("button", { name: "Zoom in" })
-    .tap();
-  await expect.poll(() => pageScale(page)).toBe(1);
-
-  for (const name of ["Toggle discount type", "Toggle tax exempt"]) {
-    const toggle = page.getByRole("button", { name });
-
-    await expect
-      .poll(async () => (await toggle.boundingBox())?.height)
-      .toBeGreaterThanOrEqual(44);
-    await expect
-      .poll(async () => (await toggle.boundingBox())?.width)
-      .toBeGreaterThanOrEqual(44);
-  }
-
-  // The total's currency button sits in its row, so its tap area is an
-  // ::after reaching past it.
-  const currencyTapHeight = await page
-    .getByRole("button", { name: "Change currency" })
-    .evaluate(button => parseFloat(getComputedStyle(button, "::after").height));
-
-  expect(currencyTapHeight).toBeGreaterThanOrEqual(44);
+  await expect(page.getByLabel("To details")).toBeEditable();
 });
 
 // How two screenshots of the same size compare, worked out in the page's own
@@ -208,8 +231,7 @@ test("a pinch zooms the page sharp the whole way, not just once it ends", async 
   );
 
   await page.goto("/create");
-  await expect(page.getByLabel("To details")).toBeVisible();
-  await expect.poll(() => pageScale(page)).toBeLessThan(0.6);
+  await showPage(page);
 
   const cdp = await page.context().newCDPSession(page);
   const desk = page.locator("main section").first();

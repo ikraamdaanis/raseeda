@@ -1,4 +1,10 @@
 import type { ReactNode } from "react";
+import { useRef } from "react";
+import { flushSync } from "react-dom";
+import {
+  focusFormTarget,
+  PhoneForm
+} from "~/components/editor/form/phone-form";
 import { InvoiceCanvas } from "~/components/editor/invoice-canvas";
 import { InvoiceClientDetails } from "~/components/editor/invoice-client-details";
 import { InvoiceDetails } from "~/components/editor/invoice-details";
@@ -54,7 +60,7 @@ export function InvoiceEditor() {
               </SidePanel>
               <Desk>
                 <DocumentStatusBanner />
-                <CanvasArea />
+                <DeskContent />
                 <CanvasPill />
               </Desk>
               <PanelBackdrop />
@@ -85,9 +91,34 @@ function Desk({ children }: { children: ReactNode }) {
   );
 }
 
-function CanvasArea() {
+// A phone edits in a form and reads the page on its Page tab, so only one of
+// them is on screen (and in the document) at a time: each field's
+// `data-field` path names one control. Tapping a field on the page opens the
+// form at it.
+function DeskContent() {
+  const { isNarrow, phoneView, setPhoneView } = useEditorUi();
+  const formScrollTopRef = useRef(0);
+
+  function openInForm(target: { field?: string; area?: string }) {
+    flushSync(() => setPhoneView("form"));
+    focusFormTarget(target);
+  }
+
+  if (!isNarrow) return <CanvasArea />;
+
+  if (phoneView === "form")
+    return <PhoneForm scrollTopRef={formScrollTopRef} />;
+
+  return <CanvasArea onFieldTap={openInForm} />;
+}
+
+function CanvasArea({
+  onFieldTap
+}: {
+  onFieldTap?: (target: { field?: string; area?: string }) => void;
+}) {
   return (
-    <InvoiceCanvas>
+    <InvoiceCanvas onFieldTap={onFieldTap}>
       <Top />
       <Mid />
       <Bottom />

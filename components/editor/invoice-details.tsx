@@ -33,7 +33,7 @@ import { hasText } from "~/utils/section-visibility";
 
 // The number and due date are named for the document's type, so an emptied
 // "Valid until" on a quote suggests that, not "Due date".
-function buildDetailPlaceholders(
+export function buildDetailPlaceholders(
   documentType: DocumentType
 ): Record<InvoiceDetailRow["id"], { label: string; value: string }> {
   const { labels } = DOCUMENT_TYPE_DEFAULTS[documentType];
@@ -57,7 +57,7 @@ function buildDetailPlaceholders(
 }
 
 // The rows that are a section of their own, hidden with their own ×.
-const ROW_SECTIONS: Partial<
+export const DETAIL_ROW_SECTIONS: Partial<
   Record<InvoiceDetailRow["id"], { key: InvoiceSectionKey; name: string }>
 > = {
   poNumber: { key: "poNumber", name: "PO number" },
@@ -65,7 +65,10 @@ const ROW_SECTIONS: Partial<
   servicePeriod: { key: "servicePeriod", name: "service period" }
 };
 
-export function InvoiceDetails() {
+// The details rows as the page shows them: Preview leaves out an empty
+// "Refers to invoice" or "Paid by", as the PDF does. The phone's form lists
+// the same rows.
+export function useDetailRows() {
   const {
     number,
     refersTo,
@@ -81,11 +84,8 @@ export function InvoiceDetails() {
   const sections = useShownSections();
   const isPreview = useIsPreview();
   const documentType = useDocumentType();
-  const placeholders = buildDetailPlaceholders(documentType);
-  const addableParts = useAddableParts("details");
-  // Preview leaves out an empty "Refers to invoice" or "Paid by", as the PDF
-  // does.
-  const rows = buildDetailRows({
+
+  return buildDetailRows({
     documentType,
     labels,
     number,
@@ -104,6 +104,13 @@ export function InvoiceDetails() {
       !isPreview ||
       hasText(row.value)
   );
+}
+
+export function InvoiceDetails() {
+  const documentType = useDocumentType();
+  const placeholders = buildDetailPlaceholders(documentType);
+  const addableParts = useAddableParts("details");
+  const rows = useDetailRows();
 
   return (
     <div data-field-area="details" className="flex flex-col">
@@ -119,13 +126,10 @@ export function InvoiceDetails() {
   );
 }
 
-function DetailRow({
-  row,
-  placeholders
-}: {
-  row: InvoiceDetailRow;
-  placeholders: { label: string; value: string };
-}) {
+// What a details row changes: its value (a date carrying the due date along),
+// its label, and the payment terms its due date offers. The phone's form
+// edits a row through the same.
+export function useDetailRowActions(row: InvoiceDetailRow) {
   const {
     invoiceDate,
     supplyDate,
@@ -141,17 +145,7 @@ function DetailRow({
     setServicePeriod,
     setLabels
   } = useDetailsSlice();
-  const { setSection } = useSectionsSlice();
   const documentType = useDocumentType();
-  const theme = useTheme();
-  const section = ROW_SECTIONS[row.id];
-  const labelStyle = getTextStyles({
-    settings: getRoleSettings(theme, "detailLabel")
-  });
-  const valueStyle = getTextStyles({
-    settings: getRoleSettings(theme, "detailValue")
-  });
-
   const setValue = {
     number: setNumber,
     refersTo: setRefersTo,
@@ -175,7 +169,7 @@ function DetailRow({
       : [];
 
   // Moving the invoice date carries a Net 7/14/30/60 due date along with it.
-  function handleDateSelect(isoDate: string) {
+  function selectDate(isoDate: string) {
     if (row.id !== "invoiceDate") {
       setValue(isoDate);
 
@@ -192,9 +186,40 @@ function DetailRow({
     if (nextDueDate) setDueDate(nextDueDate);
   }
 
-  function handleLabelChange(value: string) {
-    setLabels(prev => ({ ...prev, [row.labelKey]: value }));
-  }
+  return {
+    setValue,
+    selectDate,
+    setLabel: (value: string) =>
+      setLabels(prev => ({ ...prev, [row.labelKey]: value })),
+    presets,
+    dateValue:
+      row.id === "invoiceDate" ||
+      row.id === "supplyDate" ||
+      row.id === "dueDate" ||
+      row.id === "servicePeriod"
+        ? dateValues[row.id]
+        : null
+  };
+}
+
+function DetailRow({
+  row,
+  placeholders
+}: {
+  row: InvoiceDetailRow;
+  placeholders: { label: string; value: string };
+}) {
+  const { setSection } = useSectionsSlice();
+  const theme = useTheme();
+  const { setValue, selectDate, setLabel, presets, dateValue } =
+    useDetailRowActions(row);
+  const section = DETAIL_ROW_SECTIONS[row.id];
+  const labelStyle = getTextStyles({
+    settings: getRoleSettings(theme, "detailLabel")
+  });
+  const valueStyle = getTextStyles({
+    settings: getRoleSettings(theme, "detailValue")
+  });
 
   return (
     <div className="group/optional relative flex items-center">
@@ -210,18 +235,15 @@ function DetailRow({
           aria-label={`${placeholders.label} field label`}
           data-field={`labels.${row.labelKey}`}
           value={row.label}
-          onChange={handleLabelChange}
+          onChange={setLabel}
           className="leading-paper-row field-sizing-content h-[unset]! w-auto min-w-fit py-0"
           style={labelStyle}
           placeholder={placeholders.label}
         />
       </div>
-      {row.id === "invoiceDate" ||
-      row.id === "supplyDate" ||
-      row.id === "dueDate" ||
-      row.id === "servicePeriod" ? (
+      {dateValue !== null ? (
         <InvoiceDateField
-          value={dateValues[row.id]}
+          value={dateValue}
           label={row.label || placeholders.label}
           placeholder={placeholders.value}
           style={valueStyle}
@@ -230,7 +252,7 @@ function DetailRow({
             row.id === "servicePeriod" ? formatServicePeriod : undefined
           }
           presets={presets}
-          onSelect={handleDateSelect}
+          onSelect={selectDate}
         />
       ) : (
         <InvoiceInput

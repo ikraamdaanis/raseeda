@@ -27,7 +27,9 @@ import {
 // field that doesn't follow the invoice's date format to the letter. Presets,
 // such as the due date's payment terms, sit above the calendar, each a date
 // it picks in one click. The button is named by its label and the date it
-// shows ("Due date, 15 Dec 2026"), so it can be found by either.
+// shows ("Due date, 15 Dec 2026"), so it can be found by either. The phone's
+// form gives it `triggerClassName`, drawing the button as a form field instead
+// of as text on the page.
 export function InvoiceDateField({
   value,
   label,
@@ -37,16 +39,18 @@ export function InvoiceDateField({
   canClear = false,
   formatValue = formatInvoiceDate,
   presets = [],
+  triggerClassName,
   onSelect
 }: {
   value: string;
   label: string;
   placeholder: string;
-  style: CSSProperties;
+  style?: CSSProperties;
   allowsRange?: boolean;
   canClear?: boolean;
   formatValue?: (value: string, dateFormat: Invoice["dateFormat"]) => string;
   presets?: { label: string; value: string; isSelected: boolean }[];
+  triggerClassName?: string;
   onSelect: (isoDate: string) => void;
 }) {
   const dateFormat = useInvoiceStore(state => state.dateFormat);
@@ -103,10 +107,14 @@ export function InvoiceDateField({
       <PopoverTrigger
         aria-label={`${label}, ${text || placeholder}`}
         data-date={value}
-        className={cn(
-          "leading-paper-row rounded-surface hover:bg-brand-50 aria-expanded:bg-brand-50 focus-visible:border-brand-500 -mx-px w-full border border-transparent text-left outline-none",
-          text ? "text-paper-foreground" : "text-paper-muted-foreground"
-        )}
+        className={
+          triggerClassName
+            ? cn(triggerClassName, !text && "text-muted-foreground")
+            : cn(
+                "leading-paper-row rounded-surface hover:bg-brand-50 aria-expanded:bg-brand-50 focus-visible:border-brand-500 -mx-px w-full border border-transparent text-left outline-none",
+                text ? "text-paper-foreground" : "text-paper-muted-foreground"
+              )
+        }
         style={style}
       >
         {text || placeholder}

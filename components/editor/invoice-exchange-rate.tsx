@@ -21,7 +21,7 @@ import { readInvoiceDate } from "~/utils/read-invoice-date";
 
 // The exchange rate's field: up to six decimal places, as central banks quote
 // rates, and empty while there's no rate. At rest it reads as it prints.
-function useExchangeRateField() {
+export function useExchangeRateField() {
   const { currencyConversion, numberFormat, setCurrencyConversion } =
     useCurrencyConversionSlice();
   const money = useMoneyFormat();

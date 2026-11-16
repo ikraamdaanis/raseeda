@@ -1,0 +1,110 @@
+import { IconX } from "@tabler/icons-react";
+import { useId } from "react";
+import {
+  FormAddParts,
+  FormArea,
+  FormField,
+  formFieldClassName,
+  FormInput
+} from "~/components/editor/form/form-controls";
+import { useAddableParts } from "~/components/editor/invoice-add-part";
+import { InvoiceDateField } from "~/components/editor/invoice-date-field";
+import {
+  buildDetailPlaceholders,
+  DETAIL_ROW_SECTIONS,
+  useDetailRowActions,
+  useDetailRows
+} from "~/components/editor/invoice-details";
+import { Button } from "~/components/ui/button";
+import { cn } from "~/lib/utils";
+import { useDocumentType, useSectionsSlice } from "~/stores/invoice-selectors";
+import type { InvoiceDetailRow } from "~/types";
+import { formatServicePeriod } from "~/utils/format-invoice-date";
+
+// The number, dates and references, as the page's details rows list them.
+export function FormDetails() {
+  const documentType = useDocumentType();
+  const placeholders = buildDetailPlaceholders(documentType);
+  const addableParts = useAddableParts("details");
+  const rows = useDetailRows();
+
+  return (
+    <FormArea area="details" title="Details">
+      {rows.map(row => (
+        <FormDetailRow
+          key={row.id}
+          row={row}
+          placeholders={placeholders[row.id]}
+        />
+      ))}
+      <FormAddParts parts={addableParts} />
+    </FormArea>
+  );
+}
+
+function FormDetailRow({
+  row,
+  placeholders
+}: {
+  row: InvoiceDetailRow;
+  placeholders: { label: string; value: string };
+}) {
+  const id = useId();
+  const { setSection } = useSectionsSlice();
+  const { setValue, selectDate, setLabel, presets, dateValue } =
+    useDetailRowActions(row);
+  const section = DETAIL_ROW_SECTIONS[row.id];
+  const title = row.label.trim() || placeholders.label;
+
+  return (
+    <div className="flex items-end gap-2">
+      <FormField
+        id={id}
+        title={title}
+        rename={{
+          value: row.label,
+          field: `labels.${row.labelKey}`,
+          placeholder: placeholders.label,
+          onChange: setLabel
+        }}
+        className="flex-1"
+      >
+        {dateValue !== null ? (
+          <InvoiceDateField
+            value={dateValue}
+            label={title}
+            placeholder={placeholders.value}
+            allowsRange={row.id === "supplyDate" || row.id === "servicePeriod"}
+            formatValue={
+              row.id === "servicePeriod" ? formatServicePeriod : undefined
+            }
+            presets={presets}
+            triggerClassName={cn(
+              formFieldClassName,
+              "border-input dark:bg-input/30 focus-visible:border-ring aria-expanded:border-ring rounded-surface w-full border px-2.5 text-left outline-none"
+            )}
+            onSelect={selectDate}
+          />
+        ) : (
+          <FormInput
+            id={id}
+            data-field={row.id}
+            value={row.value}
+            onChange={setValue}
+            placeholder={placeholders.value}
+          />
+        )}
+      </FormField>
+      {section && (
+        <Button
+          variant="ghost"
+          aria-label={`Hide ${section.name}`}
+          onClick={() => setSection(section.key, false)}
+          className="text-muted-foreground size-11 shrink-0"
+        >
+          <IconX aria-hidden="true" />
+        </Button>
+      )}
+    </div>
+  );
+}

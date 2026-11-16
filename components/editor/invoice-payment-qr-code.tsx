@@ -23,7 +23,7 @@ import { getRoleSettings } from "~/utils/get-role-settings";
 import { getTextStyles } from "~/utils/get-text-styles";
 import { getPaymentQrCode } from "~/utils/payment-qr-code";
 
-const MISSING_NOTES = {
+export const MISSING_NOTES = {
   currency: "A SEPA code prints on invoices in euros (EUR) only.",
   iban: "Add a valid IBAN to print it.",
   name: "Add the account name, which banking apps show as the payee.",
@@ -34,7 +34,7 @@ const MISSING_NOTES = {
   upiName: "Add the account name, which UPI apps show as the payee."
 } as const;
 
-const QR_CODE_CONTENT_LABELS = {
+export const QR_CODE_CONTENT_LABELS = {
   sepa: "SEPA transfer",
   upi: "UPI payment",
   paymentLink: "Link to pay online"
@@ -45,7 +45,7 @@ const PAYMENT_LINK_FIELD = "paymentDetails.paymentLink";
 
 // What a code of the payment link is missing, by the name its row prints
 // under: a link, or one that's a web address.
-function getPaymentLinkNote({
+export function getPaymentLinkNote({
   linkLabel,
   hasLink
 }: {
@@ -58,7 +58,7 @@ function getPaymentLinkNote({
 }
 
 // What the code encodes, or what it's missing.
-function usePaymentQrCode() {
+export function usePaymentQrCode() {
   return useInvoiceStore(
     useShallow(state => {
       const qrCode = getPaymentQrCode(state);

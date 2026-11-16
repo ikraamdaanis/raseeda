@@ -51,29 +51,10 @@ export function InvoiceTotalCurrency({
   const [customFor, setCustomFor] = useState<"currency" | "second" | null>(
     null
   );
-  const { currency, currencyCode, setCurrency } = useCurrencySlice();
-  const { currencyConversion, setSecondCurrency } =
-    useCurrencyConversionSlice();
   const valueClassName = cn(
     "text-right whitespace-nowrap",
     isEmphasised && "font-bold"
   );
-  const custom =
-    customFor === "second"
-      ? {
-          symbol: currencyConversion.currency,
-          code: currencyConversion.currencyCode,
-          exclude: { currency, currencyCode },
-          onSubmit: setSecondCurrency
-        }
-      : {
-          symbol: currency,
-          code: currencyCode,
-          exclude: undefined,
-          onSubmit: setCurrency
-        };
-  const customSymbol = normalizeCurrency(custom.symbol);
-  const isCustom = !isPresetCurrency(customSymbol);
 
   function handleCustom(target: "currency" | "second") {
     setOpen(false);
@@ -105,24 +86,85 @@ export function InvoiceTotalCurrency({
           <CurrencyRows onCustom={handleCustom} />
         </PopoverContent>
       </Popover>
-      <CustomCurrencyDialog
-        open={customFor !== null}
-        onOpenChange={isOpen => {
-          if (!isOpen) setCustomFor(null);
-        }}
-        currentSymbol={isCustom ? customSymbol : ""}
-        currentCode={isCustom ? custom.code : ""}
-        title={customFor === "second" ? "Custom second currency" : undefined}
-        isTaken={(symbol, code) =>
-          custom.exclude !== undefined &&
-          isSameCurrency(custom.exclude, {
-            currency: symbol,
-            currencyCode: code
-          })
-        }
-        onSubmit={custom.onSubmit}
+      <CustomCurrency
+        customFor={customFor}
+        onClose={() => setCustomFor(null)}
       />
     </>
+  );
+}
+
+/**
+ * The currency and second currency on their own, for the phone's form, where
+ * there's no popover to close before the custom currency dialog opens.
+ */
+export function CurrencyControls({
+  fieldClassName
+}: {
+  fieldClassName: string;
+}) {
+  const [customFor, setCustomFor] = useState<"currency" | "second" | null>(
+    null
+  );
+
+  return (
+    <>
+      <CurrencyRows onCustom={setCustomFor} fieldClassName={fieldClassName} />
+      <CustomCurrency
+        customFor={customFor}
+        onClose={() => setCustomFor(null)}
+      />
+    </>
+  );
+}
+
+// The dialog a custom currency is typed in, for the invoice's currency or the
+// second one, never the same as the other.
+function CustomCurrency({
+  customFor,
+  onClose
+}: {
+  customFor: "currency" | "second" | null;
+  onClose: () => void;
+}) {
+  const { currency, currencyCode, setCurrency } = useCurrencySlice();
+  const { currencyConversion, setSecondCurrency } =
+    useCurrencyConversionSlice();
+  const custom =
+    customFor === "second"
+      ? {
+          symbol: currencyConversion.currency,
+          code: currencyConversion.currencyCode,
+          exclude: { currency, currencyCode },
+          onSubmit: setSecondCurrency
+        }
+      : {
+          symbol: currency,
+          code: currencyCode,
+          exclude: undefined,
+          onSubmit: setCurrency
+        };
+  const customSymbol = normalizeCurrency(custom.symbol);
+  const isCustom = !isPresetCurrency(customSymbol);
+
+  return (
+    <CustomCurrencyDialog
+      open={customFor !== null}
+      onOpenChange={isOpen => {
+        if (!isOpen) onClose();
+      }}
+      currentSymbol={isCustom ? customSymbol : ""}
+      currentCode={isCustom ? custom.code : ""}
+      title={customFor === "second" ? "Custom second currency" : undefined}
+      isTaken={(symbol, code) =>
+        custom.exclude !== undefined &&
+        isSameCurrency(custom.exclude, {
+          currency: symbol,
+          currencyCode: code
+        })
+      }
+      onSubmit={custom.onSubmit}
+    />
   );
 }
 
@@ -135,9 +177,11 @@ function isPresetCurrency(symbol: string) {
 // with a way to remove it. Focus follows, to the new picker or back to the
 // link.
 function CurrencyRows({
-  onCustom
+  onCustom,
+  fieldClassName = inspectorFieldClassName
 }: {
   onCustom: (target: "currency" | "second") => void;
+  fieldClassName?: string;
 }) {
   const { currency, currencyCode, setCurrency } = useCurrencySlice();
   const { currencyConversion, setSecondCurrency } =
@@ -163,6 +207,7 @@ function CurrencyRows({
         currency={currency}
         onChange={setCurrency}
         onCustom={() => onCustom("currency")}
+        fieldClassName={fieldClassName}
       />
       {secondCurrency.isOn ? (
         <div className="flex flex-col gap-1">
@@ -173,6 +218,7 @@ function CurrencyRows({
             exclude={{ currency, currencyCode }}
             onChange={setSecondCurrency}
             onCustom={() => onCustom("second")}
+            fieldClassName={fieldClassName}
           />
           <button
             type="button"
@@ -204,7 +250,8 @@ function CurrencySelect({
   currency,
   exclude,
   onChange,
-  onCustom
+  onCustom,
+  fieldClassName
 }: {
   id: string;
   label: string;
@@ -212,6 +259,7 @@ function CurrencySelect({
   exclude?: { currency: string; currencyCode: string };
   onChange: (symbol: string, code: string) => void;
   onCustom: () => void;
+  fieldClassName: string;
 }) {
   const { font } = useTheme();
   const selected = normalizeCurrency(currency);
@@ -249,7 +297,7 @@ function CurrencySelect({
         id={id}
         value={isCustom ? CUSTOM_CURRENCY : selected}
         onChange={event => handleChange(event.target.value)}
-        className={cn(inspectorFieldClassName, "pr-7")}
+        className={cn(fieldClassName, "pr-7")}
       >
         {options.map(({ symbol, code, label: name }) => (
           <option key={symbol} value={symbol}>
