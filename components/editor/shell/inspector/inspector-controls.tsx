@@ -14,10 +14,10 @@ export const inspectorFieldClassName =
 
 // Open or collapsed is remembered per section across reloads. Collapsed, the
 // section is just its 44px header row, centred between the dividers. The
-// header sticks to the top of the panel until its section scrolls past, and
-// while it's stuck a fade below it softens the rows sliding underneath. The
-// fade is its own element, not ::after: Chrome can leave a pseudo-element's
-// reversed opacity transition painted after scrolling back to the top.
+// header sticks to the top of the panel until its section scrolls past, and a
+// fade below it softens the rows sliding underneath, deepening over the first
+// 16px they slide, so a nudge of the panel barely shows it. The section clips
+// what it holds, so the fade never covers its divider or the next section.
 export function InspectorSection({
   id,
   title,
@@ -34,34 +34,42 @@ export function InspectorSection({
   );
   const contentId = useId();
   const sectionRef = useRef<HTMLElement>(null);
-  const [isStuck, setIsStuck] = useState(false);
+  const fadeRef = useRef<HTMLSpanElement>(null);
 
-  // The header is pinned once its section's top has scrolled above the
-  // panel's; resting at the top it isn't, so the first rows stay unfaded.
+  // Set straight on the element as the panel scrolls, so it follows the
+  // scroll exactly with no render in between, and when any section opens or
+  // closes, which moves the ones below it without a scroll.
   useEffect(() => {
     const section = sectionRef.current;
+    const fade = fadeRef.current;
     const panel = section?.closest("[data-inspector-scroll]");
-    if (!section || !panel) return;
+    if (!section || !fade || !panel) return;
 
-    function updateStuck() {
-      if (!section || !panel) return;
+    function updateFade() {
+      if (!section || !fade || !panel) return;
 
-      const sectionTop = section.getBoundingClientRect().top;
-      const panelTop = panel.getBoundingClientRect().top;
-      setIsStuck(sectionTop < panelTop - 0.5);
+      const slid =
+        panel.getBoundingClientRect().top - section.getBoundingClientRect().top;
+
+      fade.style.opacity = String(Math.min(Math.max(slid / 16, 0), 1));
     }
 
-    updateStuck();
-    panel.addEventListener("scroll", updateStuck, { passive: true });
+    const resizeObserver = new ResizeObserver(updateFade);
 
-    return () => panel.removeEventListener("scroll", updateStuck);
+    for (const child of panel.children) resizeObserver.observe(child);
+    panel.addEventListener("scroll", updateFade, { passive: true });
+
+    return () => {
+      resizeObserver.disconnect();
+      panel.removeEventListener("scroll", updateFade);
+    };
   }, []);
 
   return (
     <section
       ref={sectionRef}
       className={cn(
-        "border-border flex flex-col border-b px-4 last:border-b-0",
+        "border-border flex flex-col overflow-clip border-b px-4 last:border-b-0",
         open && "pb-4"
       )}
     >
@@ -83,11 +91,9 @@ export function InspectorSection({
           />
         </button>
         <span
+          ref={fadeRef}
           aria-hidden="true"
-          className={cn(
-            "from-background pointer-events-none absolute inset-x-0 top-full h-4 bg-linear-to-b to-transparent transition-opacity motion-reduce:transition-none",
-            isStuck ? "opacity-100" : "opacity-0"
-          )}
+          className="from-background pointer-events-none absolute inset-x-0 top-full h-4 bg-linear-to-b to-transparent opacity-0"
         />
       </h2>
       {open && (
