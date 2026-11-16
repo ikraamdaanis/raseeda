@@ -114,6 +114,7 @@ export function RenameInvoiceDialog({
                         onFocus={event => event.currentTarget.select()}
                         data-1p-ignore
                         {...field}
+                        className="max-md:h-11"
                       />
                     </FormControl>
                     <FormMessage />

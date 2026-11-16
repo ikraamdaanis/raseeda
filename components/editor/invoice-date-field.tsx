@@ -19,6 +19,11 @@ import {
   readInvoiceDateRange
 } from "~/utils/read-invoice-date";
 
+// Day cells are 44px on a touch screen or a phone, and on a phone the text is
+// 16px, as the phone's form is.
+const CALENDAR_CLASS_NAME =
+  "pointer-coarse:[--cell-size:--spacing(11)] max-md:[--cell-size:--spacing(11)] max-md:**:text-base";
+
 // A date on the page: written in the invoice's date format, and picked from a
 // calendar rather than typed, so it's always a real date. A field that allows
 // a range takes the first click as the date, and a second click as the other
@@ -119,12 +124,15 @@ export function InvoiceDateField({
       >
         {text || placeholder}
       </PopoverTrigger>
-      <PopoverContent align="start" className="w-auto p-0">
+      <PopoverContent
+        align="start"
+        className="w-auto p-0 max-md:max-h-(--available-height) max-md:overflow-y-auto"
+      >
         {presets.length > 0 && (
           <div
             role="group"
             aria-label="Payment terms"
-            className="flex max-w-min min-w-full flex-wrap gap-1 px-3 pt-3"
+            className="flex max-w-min min-w-full flex-wrap gap-1 px-3 pt-3 max-md:gap-2"
           >
             {presets.map(preset => (
               <Button
@@ -132,7 +140,7 @@ export function InvoiceDateField({
                 variant="outline"
                 size="xs"
                 aria-pressed={preset.isSelected}
-                className="aria-pressed:bg-accent aria-pressed:text-accent-foreground whitespace-nowrap"
+                className="aria-pressed:bg-accent aria-pressed:text-accent-foreground whitespace-nowrap max-md:h-11 max-md:px-3 max-md:text-base"
                 onClick={() => {
                   onSelect(preset.value);
                   handleOpenChange(false);
@@ -151,9 +159,9 @@ export function InvoiceDateField({
               defaultMonth={selectedRange?.from}
               onSelect={handleRangeSelect}
               autoFocus
-              className="pointer-coarse:[--cell-size:--spacing(10)]"
+              className={CALENDAR_CLASS_NAME}
             />
-            <p className="text-muted-foreground px-3 pb-3 text-xs">
+            <p className="text-muted-foreground px-3 pb-3 text-xs max-md:text-base">
               {rangeStart ? "Pick the last day" : "Pick a day or a range"}
             </p>
           </>
@@ -165,7 +173,7 @@ export function InvoiceDateField({
             defaultMonth={selected}
             onSelect={handleSelect}
             autoFocus
-            className="pointer-coarse:[--cell-size:--spacing(10)]"
+            className={CALENDAR_CLASS_NAME}
           />
         )}
         {canClear && value && (
@@ -173,7 +181,7 @@ export function InvoiceDateField({
             <Button
               variant="outline"
               size="sm"
-              className="w-full"
+              className="w-full max-md:h-11 max-md:text-base"
               onClick={handleClear}
             >
               <IconX aria-hidden="true" />

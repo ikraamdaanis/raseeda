@@ -99,7 +99,7 @@ export function TableSection() {
             onCheckedChange={isOn => setColumn("unit", isOn)}
           />
         ) : (
-          <p className="text-muted-foreground pb-1 text-xs">
+          <p className="text-muted-foreground pb-1 text-xs text-pretty max-md:text-base/6">
             Each line is a description and an amount you type, without a
             quantity or unit price.
           </p>
@@ -113,7 +113,7 @@ export function TableSection() {
           />
         )}
       </div>
-      <div className="flex flex-col gap-1.5">
+      <div className="flex flex-col gap-1.5 max-md:gap-2">
         <InspectorGroupLabel>Labels</InspectorGroupLabel>
         {shownLabels.map(row => (
           <ColumnLabelRow
@@ -126,7 +126,7 @@ export function TableSection() {
           />
         ))}
       </div>
-      <div className="flex flex-col gap-1.5">
+      <div className="flex flex-col gap-1.5 max-md:gap-2">
         <InspectorGroupLabel>Colours</InspectorGroupLabel>
         <ColourRow
           label="Header"

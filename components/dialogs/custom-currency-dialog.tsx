@@ -77,7 +77,7 @@ export function CustomCurrencyDialog({
               autoFocus
               autoComplete="off"
               placeholder="Symbol, e.g. ₿"
-              className="max-sm:text-base"
+              className="max-md:h-11"
             />
             <Input
               name="currency-code"
@@ -91,7 +91,7 @@ export function CustomCurrencyDialog({
               maxLength={3}
               autoComplete="off"
               placeholder="ISO code, e.g. BTC (optional)"
-              className="uppercase max-sm:text-base"
+              className="uppercase max-md:h-11"
             />
             {taken && (
               <p className="text-destructive text-xs">

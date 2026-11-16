@@ -199,6 +199,7 @@ export function SaveTemplateModal({
                 onChange={({ target: { value } }) =>
                   handleTemplateSelect(value)
                 }
+                className="max-md:h-11 max-md:text-base max-md:leading-11"
               >
                 <option value="new">Create New Template</option>
                 {templates.map(template => (
@@ -217,7 +218,11 @@ export function SaveTemplateModal({
                     Template Name <span className="text-destructive">*</span>
                   </FormLabel>
                   <FormControl>
-                    <Input placeholder="Enter template name" {...field} />
+                    <Input
+                      placeholder="Enter template name"
+                      {...field}
+                      className="max-md:h-11"
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

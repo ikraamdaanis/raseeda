@@ -163,7 +163,11 @@ export function InvoicesPanel() {
         />
       )}
       <div className="border-border flex shrink-0 flex-col border-t p-3">
-        <Button variant="secondary" onClick={newInvoice} className="w-full">
+        <Button
+          variant="secondary"
+          onClick={newInvoice}
+          className="w-full max-md:h-11 max-md:text-base"
+        >
           <IconPlus aria-hidden="true" />
           New invoice
         </Button>
@@ -252,9 +256,12 @@ function SearchField({
   children?: ReactNode;
 }) {
   return (
-    <div className="flex items-center gap-1.5">
-      <label className="bg-muted text-muted-foreground focus-within:border-ring flex h-8 min-w-0 flex-1 items-center gap-1.5 rounded-md border border-transparent px-2">
-        <IconSearch aria-hidden="true" className="size-3.5 shrink-0" />
+    <div className="flex items-center gap-1.5 max-md:gap-2">
+      <label className="bg-muted text-muted-foreground focus-within:border-ring flex h-8 min-w-0 flex-1 items-center gap-1.5 rounded-md border border-transparent px-2 max-md:h-11 max-md:gap-2 max-md:px-3">
+        <IconSearch
+          aria-hidden="true"
+          className="size-3.5 shrink-0 max-md:size-5"
+        />
         <span className="sr-only">{label}</span>
         <input
           ref={ref}
@@ -262,16 +269,16 @@ function SearchField({
           value={value}
           onChange={event => onChange(event.target.value)}
           placeholder={label}
-          className="text-foreground placeholder:text-muted-foreground min-w-0 flex-1 bg-transparent text-[13px] outline-none [&::-webkit-search-cancel-button]:hidden"
+          className="text-foreground placeholder:text-muted-foreground min-w-0 flex-1 self-stretch bg-transparent text-[13px] outline-none max-md:text-base [&::-webkit-search-cancel-button]:hidden"
         />
         {value && (
           <button
             type="button"
             aria-label="Clear search"
             onClick={() => onChange("")}
-            className="hover:text-foreground -mr-0.5 rounded-sm"
+            className="hover:text-foreground relative -mr-0.5 rounded-sm after:absolute after:top-1/2 after:left-1/2 after:size-11 after:-translate-1/2 pointer-fine:after:hidden"
           >
-            <IconX aria-hidden="true" className="size-3.5" />
+            <IconX aria-hidden="true" className="size-3.5 max-md:size-5" />
           </button>
         )}
       </label>
@@ -339,14 +346,14 @@ function InvoiceList({
         />
       ) : (
         matches.length < invoices.length && (
-          <div className="text-muted-foreground flex shrink-0 items-center justify-between gap-2 px-4 pb-1.5 text-xs">
+          <div className="text-muted-foreground flex shrink-0 items-center justify-between gap-2 px-4 pb-1.5 text-xs max-md:min-h-11 max-md:pb-0 max-md:text-base">
             <span className="tabular-nums">
               {matches.length} of {invoices.length} invoices
             </span>
             <button
               type="button"
               onClick={onClearFilters}
-              className="hover:text-foreground focus-visible:ring-ring rounded-sm font-medium outline-none focus-visible:ring-1"
+              className="hover:text-foreground focus-visible:ring-ring rounded-sm font-medium outline-none focus-visible:ring-1 max-md:h-11"
             >
               Clear filters
             </button>
@@ -362,7 +369,7 @@ function InvoiceList({
         {groups.map(group => (
           <section key={group.key} className="flex flex-col gap-px">
             {group.label && (
-              <h3 className="text-muted-foreground flex items-center justify-between gap-2 px-2 pt-1 pb-0.5 text-[11px] font-medium">
+              <h3 className="text-muted-foreground flex items-center justify-between gap-2 px-2 pt-1 pb-0.5 text-[11px] font-medium max-md:pt-2 max-md:pb-1 max-md:text-sm">
                 <span className="truncate">{group.label}</span>
                 <span className="tabular-nums">{group.documents.length}</span>
               </h3>
@@ -521,7 +528,7 @@ function TemplateList({
         <button
           type="button"
           onClick={actions.saveAsTemplate}
-          className="text-foreground hover:bg-muted focus-visible:ring-ring mx-2 w-fit rounded-md px-2 py-1 text-xs font-medium outline-none focus-visible:ring-1"
+          className="text-foreground hover:bg-muted focus-visible:ring-ring mx-2 w-fit rounded-md px-2 py-1 text-xs font-medium outline-none focus-visible:ring-1 max-md:h-11 max-md:px-3 max-md:text-base"
         >
           Save as template
         </button>
@@ -540,7 +547,7 @@ function TemplateList({
       )}
       <ListScroller>
         <section className="flex flex-col gap-px">
-          <h3 className="text-muted-foreground px-2 pt-1 pb-0.5 text-[11px] font-medium">
+          <h3 className="text-muted-foreground px-2 pt-1 pb-0.5 text-[11px] font-medium max-md:pt-2 max-md:pb-1 max-md:text-sm">
             Start a new invoice from
           </h3>
           {matches.length === 0 && (
@@ -605,20 +612,20 @@ function SelectionBar({
   onDelete: () => void;
 }) {
   return (
-    <div className="text-muted-foreground flex shrink-0 items-center justify-between gap-2 px-4 pb-1.5 text-xs">
+    <div className="text-muted-foreground flex shrink-0 items-center justify-between gap-2 px-4 pb-1.5 text-xs max-md:min-h-11 max-md:pb-0 max-md:text-base">
       <span className="tabular-nums">{count} selected</span>
       <div className="flex items-center gap-3">
         <button
           type="button"
           onClick={onClear}
-          className="hover:text-foreground focus-visible:ring-ring rounded-sm font-medium outline-none focus-visible:ring-1"
+          className="hover:text-foreground focus-visible:ring-ring rounded-sm font-medium outline-none focus-visible:ring-1 max-md:h-11"
         >
           Clear
         </button>
         <button
           type="button"
           onClick={onDelete}
-          className="text-destructive focus-visible:ring-ring rounded-sm font-medium outline-none hover:underline focus-visible:ring-1"
+          className="text-destructive focus-visible:ring-ring rounded-sm font-medium outline-none hover:underline focus-visible:ring-1 max-md:h-11"
         >
           Delete…
         </button>
@@ -694,19 +701,19 @@ function LibraryItem({
           type="button"
           aria-current={current ? "true" : undefined}
           onClick={onClick}
-          className="focus-visible:ring-ring grid min-w-0 flex-1 grid-cols-[minmax(0,1fr)_auto] gap-x-2 rounded-md py-1.5 pr-9 pl-2 text-left outline-none select-none focus-visible:ring-1 pointer-coarse:py-2.5 pointer-coarse:pr-11"
+          className="focus-visible:ring-ring grid min-w-0 flex-1 grid-cols-[minmax(0,1fr)_auto] gap-x-2 rounded-md py-1.5 pr-9 pl-2 text-left outline-none select-none focus-visible:ring-1 max-md:gap-y-0.5 max-md:py-3 max-md:pr-13 max-md:pl-3 pointer-coarse:py-2.5 pointer-coarse:pr-13"
         >
-          <span className="text-foreground truncate text-[13px] font-medium">
+          <span className="text-foreground truncate text-[13px] font-medium max-md:text-base">
             {title}
             {selected && <span className="sr-only">, selected</span>}
           </span>
           {aside && (
-            <span className="text-muted-foreground text-xs leading-5 tabular-nums">
+            <span className="text-muted-foreground text-xs leading-5 tabular-nums max-md:text-base/6">
               {aside}
             </span>
           )}
           {meta && (
-            <span className="text-muted-foreground col-span-2 truncate text-xs">
+            <span className="text-muted-foreground col-span-2 truncate text-xs max-md:text-base">
               {meta}
             </span>
           )}
@@ -714,9 +721,9 @@ function LibraryItem({
         <DropdownMenu>
           <DropdownMenuTrigger
             aria-label={`Actions for ${title}`}
-            className="text-muted-foreground hover:bg-accent hover:text-foreground aria-expanded:bg-accent aria-expanded:text-foreground focus-visible:ring-ring absolute top-1/2 right-1 flex size-7 -translate-y-1/2 items-center justify-center rounded-md opacity-0 outline-none group-focus-within/item:opacity-100 group-hover/item:opacity-100 focus-visible:opacity-100 focus-visible:ring-1 aria-expanded:opacity-100 pointer-coarse:size-9 pointer-coarse:opacity-100"
+            className="text-muted-foreground hover:bg-accent hover:text-foreground aria-expanded:bg-accent aria-expanded:text-foreground focus-visible:ring-ring absolute top-1/2 right-1 flex size-7 -translate-y-1/2 items-center justify-center rounded-md opacity-0 outline-none group-focus-within/item:opacity-100 group-hover/item:opacity-100 focus-visible:opacity-100 focus-visible:ring-1 aria-expanded:opacity-100 max-md:size-11 max-md:opacity-100 pointer-coarse:size-11 pointer-coarse:opacity-100"
           >
-            <IconDots aria-hidden="true" className="size-4" />
+            <IconDots aria-hidden="true" className="size-4 max-md:size-5" />
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-44">
             {menu}
@@ -730,7 +737,7 @@ function LibraryItem({
 
 function ListMessage({ children }: { children: ReactNode }) {
   return (
-    <p className="text-muted-foreground px-2 py-3 text-xs text-pretty">
+    <p className="text-muted-foreground px-2 py-3 text-xs text-pretty max-md:text-base/6">
       {children}
     </p>
   );

@@ -74,12 +74,12 @@ export function StyleSection() {
 
   return (
     <InspectorSection id="style" title="Style">
-      <div className="flex flex-col gap-1.5">
+      <div className="flex flex-col gap-1.5 max-md:gap-2">
         <InspectorGroupLabel>Font</InspectorGroupLabel>
         <div
           role="group"
           aria-label="Font"
-          className="grid grid-cols-2 gap-1.5"
+          className="grid grid-cols-2 gap-1.5 max-md:gap-2"
         >
           {fonts.map(font => (
             <button
@@ -87,18 +87,18 @@ export function StyleSection() {
               type="button"
               aria-pressed={theme.font === font.id}
               onClick={() => selectFont(font.id)}
-              className="bg-muted hover:border-input aria-pressed:border-foreground aria-pressed:bg-popover focus-visible:ring-ring flex min-w-0 flex-col items-start gap-0.5 rounded-lg border border-transparent px-2.5 py-2 text-left outline-none focus-visible:ring-1"
+              className="bg-muted hover:border-input aria-pressed:border-foreground aria-pressed:bg-popover focus-visible:ring-ring flex min-w-0 flex-col items-start gap-0.5 rounded-lg border border-transparent px-2.5 py-2 text-left outline-none focus-visible:ring-1 max-md:gap-1 max-md:px-3 max-md:py-2.5"
             >
               <span
                 aria-hidden="true"
                 className={cn(
-                  "text-foreground text-xl leading-tight",
+                  "text-foreground text-xl leading-tight max-md:text-2xl",
                   font.previewClassName
                 )}
               >
                 Aa
               </span>
-              <span className="text-muted-foreground w-full truncate text-[11.5px]">
+              <span className="text-muted-foreground w-full truncate text-[11.5px] max-md:text-base">
                 {font.name}
               </span>
             </button>
@@ -108,7 +108,7 @@ export function StyleSection() {
           type="button"
           aria-expanded={showAllFonts}
           onClick={() => setShowAllFonts(!showAllFonts)}
-          className="text-muted-foreground hover:text-foreground focus-visible:ring-ring relative -mx-1 flex h-6 w-fit items-center gap-1 rounded-md px-1 text-xs outline-none focus-visible:ring-1"
+          className="text-muted-foreground hover:text-foreground focus-visible:ring-ring relative -mx-1 flex h-6 w-fit items-center gap-1 rounded-md px-1 text-xs outline-none focus-visible:ring-1 max-md:h-11 max-md:gap-2 max-md:text-base"
         >
           {showAllFonts
             ? "Show less"
@@ -116,7 +116,7 @@ export function StyleSection() {
           <IconChevronDown
             aria-hidden="true"
             className={cn(
-              "size-3.5 shrink-0 transition-transform motion-reduce:transition-none",
+              "size-3.5 shrink-0 transition-transform motion-reduce:transition-none max-md:size-5",
               showAllFonts && "rotate-180"
             )}
           />
@@ -126,7 +126,7 @@ export function StyleSection() {
           />
         </button>
       </div>
-      <div className="flex flex-col gap-1.5">
+      <div className="flex flex-col gap-1.5 max-md:gap-2">
         <InspectorGroupLabel>Weight</InspectorGroupLabel>
         <SegmentedControl
           label="Weight"
@@ -141,7 +141,7 @@ export function StyleSection() {
           }
         />
       </div>
-      <div className="flex flex-col gap-1.5">
+      <div className="flex flex-col gap-1.5 max-md:gap-2">
         <InspectorGroupLabel>Text size</InspectorGroupLabel>
         <SegmentedControl
           label="Text size"
@@ -150,7 +150,7 @@ export function StyleSection() {
           onChange={size => setTheme(previous => ({ ...previous, size }))}
         />
       </div>
-      <div className="flex flex-col gap-1.5">
+      <div className="flex flex-col gap-1.5 max-md:gap-2">
         <InspectorGroupLabel>Colours</InspectorGroupLabel>
         <ColourRow
           label="Accent"
@@ -166,7 +166,7 @@ export function StyleSection() {
             setTheme(previous => ({ ...previous, textColor }))
           }
         />
-        <p className="text-muted-foreground text-xs">
+        <p className="text-muted-foreground text-xs text-pretty max-md:text-base/6">
           {lightColours.length === 0
             ? "The accent colours the title, headings, table header and total."
             : `The ${lightColours.join(" and ")} ${lightColours.length === 1 ? "is" : "are"} light enough to be hard to read on paper.`}

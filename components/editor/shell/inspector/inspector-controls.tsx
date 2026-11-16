@@ -2,15 +2,19 @@ import { IconChevronDown, IconRestore } from "@tabler/icons-react";
 import type { ReactNode } from "react";
 import { useEffect, useId, useRef, useState } from "react";
 import { Switch } from "~/components/ui/switch";
+import { useEditorUi } from "~/context/editor-ui-context";
 import { parseBoolean, usePersistentState } from "~/hooks/use-persistent-state";
 import { cn } from "~/lib/utils";
 import { HEX_COLOUR, toSixDigitHex } from "~/utils/to-six-digit-hex";
 
 // The building blocks of the inspector: collapsible sections, label/value rows
 // and a segmented control, in the same tight scale as the rest of the chrome.
+// On a phone, where the inspector is the Style sheet, they take the phone
+// form's scale instead (`max-md:`): 16px text, so iOS doesn't zoom in on a
+// field, 44px fields, and labels over their fields.
 
 export const inspectorFieldClassName =
-  "bg-muted dark:bg-muted dark:hover:bg-muted hover:border-input focus-visible:border-ring text-foreground h-8 w-full min-w-0 rounded-md border border-transparent px-2 text-[13px] outline-none";
+  "bg-muted dark:bg-muted dark:hover:bg-muted hover:border-input focus-visible:border-ring text-foreground h-8 w-full min-w-0 rounded-md border border-transparent px-2 text-[13px] outline-none max-md:h-11 max-md:px-3 max-md:text-base max-md:leading-11";
 
 // Open or collapsed is remembered per section across reloads. Collapsed, the
 // section is just its 44px header row, centred between the dividers. The
@@ -70,7 +74,7 @@ export function InspectorSection({
       ref={sectionRef}
       className={cn(
         "border-border flex flex-col overflow-clip border-b px-4 last:border-b-0",
-        open && "pb-4"
+        open && "pb-4 max-md:pb-6"
       )}
     >
       <h2 className="bg-background sticky top-0 z-10 -mx-4 px-4">
@@ -79,13 +83,13 @@ export function InspectorSection({
           aria-expanded={open}
           aria-controls={contentId}
           onClick={() => setOpen(!open)}
-          className="text-foreground focus-visible:ring-ring -mx-1 flex h-11 w-[calc(100%+0.5rem)] items-center justify-between rounded-md px-1 text-[13px] font-semibold outline-none focus-visible:ring-1"
+          className="text-foreground focus-visible:ring-ring -mx-1 flex h-11 w-[calc(100%+0.5rem)] items-center justify-between rounded-md px-1 text-[13px] font-semibold outline-none focus-visible:ring-1 max-md:h-14 max-md:text-lg"
         >
           {title}
           <IconChevronDown
             aria-hidden="true"
             className={cn(
-              "text-muted-foreground size-3.5 transition-transform motion-reduce:transition-none",
+              "text-muted-foreground size-3.5 transition-transform motion-reduce:transition-none max-md:size-5",
               !open && "-rotate-90"
             )}
           />
@@ -97,7 +101,7 @@ export function InspectorSection({
         />
       </h2>
       {open && (
-        <div id={contentId} className="flex flex-col gap-3">
+        <div id={contentId} className="flex flex-col gap-3 max-md:gap-5">
           {children}
         </div>
       )}
@@ -115,8 +119,11 @@ export function InspectorRow({
   children: ReactNode;
 }) {
   return (
-    <div className="grid grid-cols-[6rem_minmax(0,1fr)] items-center gap-2">
-      <label htmlFor={htmlFor} className="text-muted-foreground text-[13px]">
+    <div className="grid grid-cols-[6rem_minmax(0,1fr)] items-center gap-2 max-md:grid-cols-1">
+      <label
+        htmlFor={htmlFor}
+        className="text-muted-foreground max-md:text-foreground text-[13px] max-md:text-base/6 max-md:font-medium"
+      >
         {label}
       </label>
       {children}
@@ -137,16 +144,17 @@ export function InspectorSwitch({
   field?: string;
 }) {
   const id = useId();
+  const { isNarrow } = useEditorUi();
 
   return (
     <label
       htmlFor={id}
-      className="hover:bg-muted -mx-1.5 flex h-8 cursor-pointer items-center justify-between gap-3 rounded-md px-1.5 text-[13px] pointer-coarse:h-11"
+      className="hover:bg-muted -mx-1.5 flex h-8 cursor-pointer items-center justify-between gap-3 rounded-md px-1.5 text-[13px] max-md:text-base/6 max-md:font-medium pointer-coarse:h-11"
     >
       <span className="text-foreground">{label}</span>
       <Switch
         id={id}
-        size="sm"
+        size={isNarrow ? "lg" : "sm"}
         aria-label={label}
         data-field={field}
         checked={checked}
@@ -158,7 +166,7 @@ export function InspectorSwitch({
 
 export function InspectorGroupLabel({ children }: { children: ReactNode }) {
   return (
-    <span className="text-muted-foreground text-xs font-medium">
+    <span className="text-muted-foreground text-xs font-medium max-md:text-base/6">
       {children}
     </span>
   );
@@ -188,7 +196,7 @@ export function SegmentedControl<TValue extends string>({
           aria-pressed={value === option.value}
           onClick={() => onChange(option.value)}
           className={cn(
-            "text-muted-foreground hover:text-foreground focus-visible:ring-ring flex h-7 min-w-0 flex-1 items-center justify-center truncate rounded-md px-1.5 text-xs outline-none focus-visible:ring-1 pointer-coarse:h-11",
+            "text-muted-foreground hover:text-foreground focus-visible:ring-ring flex h-7 min-w-0 flex-1 items-center justify-center truncate rounded-md px-1.5 text-xs outline-none focus-visible:ring-1 max-md:h-11 max-md:text-base pointer-coarse:h-11",
             value === option.value &&
               "bg-popover text-foreground ring-foreground/10 shadow-xs ring-1",
             option.className
@@ -254,7 +262,7 @@ export function ColourRow({
           data-field={field}
           value={toSixDigitHex(value)}
           onChange={event => onChange(event.target.value)}
-          className="size-6 shrink-0 cursor-pointer appearance-none rounded-sm border-0 bg-transparent p-0 [&::-moz-color-swatch]:rounded-sm [&::-moz-color-swatch]:border-black/10 [&::-webkit-color-swatch]:rounded-sm [&::-webkit-color-swatch]:border [&::-webkit-color-swatch]:border-black/10 dark:[&::-webkit-color-swatch]:border-white/15 [&::-webkit-color-swatch-wrapper]:p-0"
+          className="size-6 shrink-0 cursor-pointer appearance-none rounded-sm border-0 bg-transparent p-0 max-md:size-8 [&::-moz-color-swatch]:rounded-sm [&::-moz-color-swatch]:border-black/10 [&::-webkit-color-swatch]:rounded-sm [&::-webkit-color-swatch]:border [&::-webkit-color-swatch]:border-black/10 dark:[&::-webkit-color-swatch]:border-white/15 [&::-webkit-color-swatch-wrapper]:p-0"
         />
         <input
           id={id}
@@ -266,7 +274,7 @@ export function ColourRow({
           onBlur={() => setDraft(null)}
           spellCheck={false}
           autoComplete="off"
-          className="min-w-0 flex-1 bg-transparent tabular-nums outline-none"
+          className="min-w-0 flex-1 self-stretch bg-transparent tabular-nums outline-none"
         />
       </div>
     </InspectorRow>
@@ -276,13 +284,16 @@ export function ColourRow({
 // Puts a group's colours back to their defaults, lined up under the fields.
 export function ResetColoursButton({ onClick }: { onClick: () => void }) {
   return (
-    <div className="grid grid-cols-[6rem_minmax(0,1fr)] gap-2">
+    <div className="grid grid-cols-[6rem_minmax(0,1fr)] gap-2 max-md:grid-cols-1">
       <button
         type="button"
         onClick={onClick}
-        className="text-muted-foreground hover:text-foreground focus-visible:ring-ring relative col-start-2 -mx-1 flex h-6 w-fit items-center gap-1 rounded-md px-1 text-xs outline-none focus-visible:ring-1"
+        className="text-muted-foreground hover:text-foreground focus-visible:ring-ring relative col-start-2 -mx-1 flex h-6 w-fit items-center gap-1 rounded-md px-1 text-xs outline-none focus-visible:ring-1 max-md:col-start-1 max-md:h-11 max-md:gap-2 max-md:text-base"
       >
-        <IconRestore aria-hidden="true" className="size-3.5 shrink-0" />
+        <IconRestore
+          aria-hidden="true"
+          className="size-3.5 shrink-0 max-md:size-5"
+        />
         Reset colours
         <span
           aria-hidden="true"

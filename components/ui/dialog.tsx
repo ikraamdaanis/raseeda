@@ -152,8 +152,8 @@ export function DialogFooter({
       data-slot="dialog-footer"
       className={cn(
         layout === "stack"
-          ? "flex flex-col-reverse gap-2 p-4 pt-2 *:h-10 *:w-full sm:flex-row sm:justify-end sm:*:h-8 sm:*:w-auto"
-          : "flex flex-col-reverse gap-2 rounded-b-md border-t px-4 py-2.5 sm:flex-row sm:justify-end",
+          ? "flex flex-col-reverse gap-2 p-4 pt-2 *:h-11 *:w-full *:text-base sm:flex-row sm:justify-end sm:*:h-8 sm:*:w-auto sm:*:text-sm"
+          : "flex flex-col-reverse gap-2 rounded-b-md border-t px-4 py-2.5 max-sm:*:h-11 max-sm:*:text-base sm:flex-row sm:justify-end",
         className
       )}
       {...props}

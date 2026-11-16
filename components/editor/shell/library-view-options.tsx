@@ -34,7 +34,7 @@ import {
 const LIBRARY_FONT: InvoiceFont = "inter";
 
 const fieldClassName =
-  "bg-muted dark:bg-muted dark:hover:bg-muted hover:border-input focus-visible:border-ring text-foreground h-8 w-full min-w-0 rounded-md border border-transparent pr-7 pl-2 text-[13px] outline-none";
+  "bg-muted dark:bg-muted dark:hover:bg-muted hover:border-input focus-visible:border-ring text-foreground h-8 w-full min-w-0 rounded-md border border-transparent pr-7 pl-2 text-[13px] outline-none max-md:h-11 max-md:pl-3 max-md:text-base max-md:leading-11";
 
 // Sort, group and filter for a saved-invoice list, behind one button with a
 // badge counting the filters that are on. The Type and Currency filters only
@@ -72,9 +72,12 @@ export function LibraryViewOptions({
             : "View options"
         }
         title="Sort, group and filter"
-        className="bg-muted text-muted-foreground hover:text-foreground aria-expanded:text-foreground focus-visible:ring-ring relative flex size-8 shrink-0 items-center justify-center rounded-md outline-none focus-visible:ring-1"
+        className="bg-muted text-muted-foreground hover:text-foreground aria-expanded:text-foreground focus-visible:ring-ring relative flex size-8 shrink-0 items-center justify-center rounded-md outline-none focus-visible:ring-1 max-md:size-11"
       >
-        <IconAdjustmentsHorizontal aria-hidden="true" className="size-4" />
+        <IconAdjustmentsHorizontal
+          aria-hidden="true"
+          className="size-4 max-md:size-5"
+        />
         {activeFilters > 0 && (
           <span
             aria-hidden="true"
@@ -84,7 +87,10 @@ export function LibraryViewOptions({
           </span>
         )}
       </PopoverTrigger>
-      <PopoverContent align="start" className="w-64 gap-3 p-3">
+      <PopoverContent
+        align="start"
+        className="w-64 gap-3 p-3 max-md:w-[min(20rem,calc(100vw-2rem))] max-md:gap-5 max-md:p-4"
+      >
         <OptionGroup label="Sort by" htmlFor="library-sort">
           <div className="flex items-center gap-1.5">
             <NativeSelect
@@ -121,12 +127,18 @@ export function LibraryViewOptions({
               onClick={() =>
                 update({ direction: view.direction === "asc" ? "desc" : "asc" })
               }
-              className="bg-muted text-muted-foreground hover:text-foreground focus-visible:ring-ring flex size-8 shrink-0 items-center justify-center rounded-md outline-none focus-visible:ring-1"
+              className="bg-muted text-muted-foreground hover:text-foreground focus-visible:ring-ring flex size-8 shrink-0 items-center justify-center rounded-md outline-none focus-visible:ring-1 max-md:size-11"
             >
               {view.direction === "asc" ? (
-                <IconSortAscending aria-hidden="true" className="size-4" />
+                <IconSortAscending
+                  aria-hidden="true"
+                  className="size-4 max-md:size-5"
+                />
               ) : (
-                <IconSortDescending aria-hidden="true" className="size-4" />
+                <IconSortDescending
+                  aria-hidden="true"
+                  className="size-4 max-md:size-5"
+                />
               )}
             </button>
           </div>
@@ -227,7 +239,7 @@ export function LibraryViewOptions({
           size="sm"
           disabled={isDefault}
           onClick={() => onViewChange(DEFAULT_LIBRARY_VIEW)}
-          className="text-muted-foreground -mx-1 w-fit"
+          className="text-muted-foreground -mx-1 w-fit max-md:h-11 max-md:text-base"
         >
           Reset to default
         </Button>
@@ -246,10 +258,10 @@ function OptionGroup({
   children: ReactNode;
 }) {
   return (
-    <div className="flex flex-col gap-1.5">
+    <div className="flex flex-col gap-1.5 max-md:gap-2">
       <label
         htmlFor={htmlFor}
-        className="text-muted-foreground text-xs font-medium"
+        className="text-muted-foreground max-md:text-foreground text-xs font-medium max-md:text-base/6"
       >
         {label}
       </label>
