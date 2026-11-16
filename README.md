@@ -137,6 +137,7 @@ The app runs at [http://localhost:3000](http://localhost:3000).
 
 ```bash
 bun run dev          # Dev server (port 3000)
+bun run dev:phone    # Dev server on an https address for a phone (cloudflared)
 bun run build        # Production build
 bun run serve        # Preview production build
 bun run test         # Run tests (Vitest)

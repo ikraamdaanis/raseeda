@@ -24,6 +24,7 @@ What raseeda is for, and what it deliberately leaves out (it is not an invoice t
 
 ```bash
 bun run dev          # Start dev server (port 3000)
+bun run dev:phone    # Dev server on an https address for a phone (cloudflared)
 bun run build        # Production build
 bun run serve        # Preview production build
 bun run test         # Run the test suite (Vitest)

@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite dev",
+    "dev:phone": "bun scripts/dev-phone.ts",
     "build": "vite build && bun scripts/hash-prerendered-csp.ts && bun scripts/remove-pages-json.ts",
     "serve": "vite preview",
     "test": "vitest run",
