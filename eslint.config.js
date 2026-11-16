@@ -137,6 +137,7 @@ export default defineConfig([
     "**/*.js",
     "test-results/**",
     "playwright-report/**",
-    "blob-report/**"
+    "blob-report/**",
+    ".sandcastle/**"
   ])
 ]);
