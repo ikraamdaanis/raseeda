@@ -161,7 +161,7 @@ export function SuggestionList<TSuggestion>({
 }
 
 // A contact suggested for the "To" or "From" block: its name, then the rest of
-// its lines on one line.
+// its lines on one line, each in full on hover.
 export function ContactSuggestion({
   name,
   content
@@ -178,9 +178,13 @@ export function ContactSuggestion({
 
   return (
     <>
-      <span className="truncate font-medium">{name}</span>
+      <span title={name} className="truncate font-medium">
+        {name}
+      </span>
       {rest && (
-        <span className="text-muted-foreground truncate text-xs">{rest}</span>
+        <span title={rest} className="text-muted-foreground truncate text-xs">
+          {rest}
+        </span>
       )}
     </>
   );

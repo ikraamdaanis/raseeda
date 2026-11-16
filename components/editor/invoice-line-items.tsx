@@ -1028,7 +1028,10 @@ function DescriptionCell({
           getKey={suggestion => suggestion.description}
           renderSuggestion={suggestion => (
             <span className="flex items-baseline gap-3">
-              <span className="min-w-0 flex-1 truncate font-medium">
+              <span
+                title={suggestion.description}
+                className="min-w-0 flex-1 truncate font-medium"
+              >
                 {suggestion.description}
               </span>
               <span className="text-muted-foreground shrink-0 text-xs">
