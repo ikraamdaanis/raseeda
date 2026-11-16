@@ -3,8 +3,12 @@ import { useId, useRef, useState } from "react";
 import {
   FormAddButton,
   FormArea,
+  formCardClassName,
   FormField,
+  formHintClassName,
+  formIconButtonClassName,
   FormInput,
+  formLabelClassName,
   FormSelect,
   FormSwitch,
   FormTextArea
@@ -23,6 +27,7 @@ import {
 } from "~/components/editor/invoice-payment-qr-code";
 import { Button } from "~/components/ui/button";
 import { useShownSections } from "~/hooks/use-shown-sections";
+import { cn } from "~/lib/utils";
 import {
   DEFAULT_PAYMENT_LABELS,
   PAYMENT_QR_CODE_CONTENTS
@@ -178,8 +183,8 @@ function PaymentMethods() {
   }
 
   return (
-    <fieldset className="flex flex-col gap-3">
-      <legend className="text-muted-foreground mb-1.5 text-sm font-medium">
+    <fieldset className="flex flex-col gap-4">
+      <legend className={cn(formLabelClassName, "mb-2")}>
         Other ways to pay
       </legend>
       {methods.map((method, index) => (
@@ -246,7 +251,7 @@ function PaymentMethodCard({
   }
 
   return (
-    <div className="bg-muted/40 border-border flex flex-col gap-3 rounded-lg border p-3">
+    <div className={formCardClassName}>
       <FormField id={nameId} title="Name">
         {showsTypedName ? (
           <FormInput
@@ -290,32 +295,32 @@ function PaymentMethodCard({
           placeholder="e.g. @acme"
         />
       </FormField>
-      <div className="flex justify-end gap-1">
+      <div className="-mr-2 flex justify-end gap-3">
         <Button
           variant="ghost"
           aria-label={`Move ${name} up`}
           disabled={index === 0}
           onClick={() => onMove(-1)}
-          className="text-muted-foreground size-11"
+          className={formIconButtonClassName}
         >
-          <IconArrowUp aria-hidden="true" />
+          <IconArrowUp aria-hidden="true" className="size-5" />
         </Button>
         <Button
           variant="ghost"
           aria-label={`Move ${name} down`}
           disabled={index === count - 1}
           onClick={() => onMove(1)}
-          className="text-muted-foreground size-11"
+          className={formIconButtonClassName}
         >
-          <IconArrowDown aria-hidden="true" />
+          <IconArrowDown aria-hidden="true" className="size-5" />
         </Button>
         <Button
           variant="ghost"
           aria-label={`Remove ${name}`}
           onClick={onRemove}
-          className="text-muted-foreground hover:text-destructive size-11"
+          className={formIconButtonClassName}
         >
-          <IconTrash aria-hidden="true" />
+          <IconTrash aria-hidden="true" className="size-5" />
         </Button>
       </div>
     </div>
@@ -341,7 +346,7 @@ function PaymentQrCode() {
   const hasLink = paymentDetails.paymentLink.trim() !== "";
 
   return (
-    <div className="border-border flex flex-col gap-3 border-t pt-4">
+    <div className="border-border flex flex-col gap-4 border-t pt-5">
       <FormSwitch
         label="Payment QR code"
         description="Prints a code to scan beside the bank details."
@@ -390,7 +395,7 @@ function PaymentQrCode() {
         </FormField>
       )}
       {isOn && missing && (
-        <p className="text-muted-foreground text-sm">
+        <p className={formHintClassName}>
           {`The QR code is left out. ${
             missing === "paymentLink"
               ? getPaymentLinkNote({ linkLabel, hasLink })

@@ -46,7 +46,6 @@ export function FormTitle() {
         value={title}
         onChange={setTitle}
         placeholder={DOCUMENT_TYPE_DEFAULTS[documentType].title}
-        className="-mt-2"
       />
       <FormAddParts parts={addableParts} />
     </FormArea>
@@ -86,35 +85,41 @@ export function FormLogo() {
         noKeyboard
       >
         {({ getRootProps, getInputProps, open }) => (
-          <div {...getRootProps()} className="flex items-center gap-4">
+          <div {...getRootProps()}>
             <input {...getInputProps()} aria-label="Upload logo" />
-            {imageUrl ? (
-              <img
-                src={imageUrl}
-                alt="Invoice logo"
-                width={80}
-                height={80}
-                className="bg-muted size-20 shrink-0 rounded-lg object-cover"
-              />
-            ) : (
-              <div className="border-border text-muted-foreground flex size-20 shrink-0 items-center justify-center rounded-lg border border-dashed">
-                <IconUpload aria-hidden="true" className="size-6" />
-              </div>
-            )}
-            <div className="flex flex-wrap gap-2">
-              <Button variant="outline" className="h-11" onClick={open}>
-                {imageUrl ? "Change logo" : "Upload logo"}
-              </Button>
-              {imageUrl && (
-                <Button
-                  variant="ghost"
-                  aria-label="Remove invoice logo"
-                  className="text-destructive hover:text-destructive h-11"
-                  onClick={() => setImage("")}
-                >
-                  Remove
-                </Button>
+            <div className="flex items-center gap-4">
+              {imageUrl ? (
+                <img
+                  src={imageUrl}
+                  alt="Invoice logo"
+                  width={80}
+                  height={80}
+                  className="bg-muted size-20 shrink-0 rounded-lg object-cover"
+                />
+              ) : (
+                <div className="border-border text-muted-foreground flex size-20 shrink-0 items-center justify-center rounded-lg border border-dashed">
+                  <IconUpload aria-hidden="true" className="size-6" />
+                </div>
               )}
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  variant="outline"
+                  className="h-11 text-base"
+                  onClick={open}
+                >
+                  {imageUrl ? "Change logo" : "Upload logo"}
+                </Button>
+                {imageUrl && (
+                  <Button
+                    variant="ghost"
+                    aria-label="Remove invoice logo"
+                    className="text-muted-foreground h-11 text-base"
+                    onClick={() => setImage("")}
+                  >
+                    Remove
+                  </Button>
+                )}
+              </div>
             </div>
           </div>
         )}

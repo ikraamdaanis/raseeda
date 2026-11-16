@@ -11,6 +11,8 @@ import {
   FormSelect,
   FormSwitch,
   formFieldClassName,
+  formIconButtonClassName,
+  formLabelClassName,
   readKeypadDecimal,
   useIsEditingLabels
 } from "~/components/editor/form/form-controls";
@@ -80,7 +82,7 @@ export function FormTotals() {
 
   return (
     <FormArea area="pricing" title="Totals">
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-6">
         {rows.map(row => {
           if (!row.isVisible) return null;
 
@@ -93,9 +95,14 @@ export function FormTotals() {
           return <SummaryRow key={row.id} id={row.id} row={row} />;
         })}
       </div>
-      <div className="border-border flex flex-col gap-3 border-t pt-4">
+      <div className="border-border flex flex-col gap-4 border-t pt-5">
         <CurrencyControls
-          fieldClassName={cn(formFieldClassName, "leading-11")}
+          classNames={{
+            field: cn(formFieldClassName, "leading-11"),
+            label: formLabelClassName,
+            action:
+              "text-muted-foreground flex h-11 items-center gap-2 self-start text-base [&_svg]:size-5"
+          }}
         />
       </div>
       <ExchangeRate />
@@ -185,7 +192,7 @@ function RowGroup({
     !getTypeSettledSections(documentType).includes(section);
 
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex flex-col gap-3">
       <div className="flex min-h-11 items-center gap-3">
         {isEditingLabels ? (
           <Input
@@ -200,7 +207,7 @@ function RowGroup({
           <span
             className={cn(
               "min-w-0 flex-1 truncate",
-              isTotal ? "font-semibold" : "text-muted-foreground"
+              isTotal ? "text-lg font-semibold" : "font-medium"
             )}
           >
             {label.trim() || name}
@@ -212,9 +219,9 @@ function RowGroup({
             variant="ghost"
             aria-label={`Hide ${name.toLowerCase()}`}
             onClick={() => setSection(section, false)}
-            className="text-muted-foreground -mr-2 size-11 shrink-0"
+            className={cn(formIconButtonClassName, "-mr-2")}
           >
-            <IconX aria-hidden="true" />
+            <IconX aria-hidden="true" className="size-5" />
           </Button>
         )}
       </div>
@@ -233,7 +240,7 @@ function DiscountInputs() {
   const isPercentage = discountType === "percentage";
 
   return (
-    <div className="grid grid-cols-2 gap-2">
+    <div className="grid grid-cols-2 gap-x-3 gap-y-4">
       <FormField id={typeId} title="Discount as">
         <FormSelect
           id={typeId}
@@ -304,7 +311,7 @@ function AmountPaidInputs() {
 
   return (
     <>
-      <div className="grid grid-cols-2 gap-2">
+      <div className="grid grid-cols-2 gap-x-3 gap-y-4">
         <FormField id={amountId} title={`Paid (${money.marker})`}>
           <FormNumberInput
             id={amountId}
@@ -451,10 +458,10 @@ function ExchangeRate() {
   return (
     <section
       aria-labelledby={`${rateId}-heading`}
-      className="border-border flex flex-col gap-3 border-t pt-4"
+      className="border-border flex flex-col gap-4 border-t pt-5"
     >
-      <div className="flex min-h-11 items-center gap-3">
-        <h3 id={`${rateId}-heading`} className="flex-1 font-medium">
+      <div className="flex min-h-9 items-center gap-3">
+        <h3 id={`${rateId}-heading`} className="flex-1 font-semibold">
           Exchange rate
         </h3>
         <Button
@@ -463,9 +470,9 @@ function ExchangeRate() {
           onClick={() =>
             setCurrencyConversion(prev => ({ ...prev, showRate: false }))
           }
-          className="text-muted-foreground -mr-2 size-11 shrink-0"
+          className={cn(formIconButtonClassName, "-mr-2")}
         >
-          <IconX aria-hidden="true" />
+          <IconX aria-hidden="true" className="size-5" />
         </Button>
       </div>
       <FormField
@@ -491,7 +498,7 @@ function ExchangeRate() {
           className={cn(formFieldClassName, "tabular-nums")}
         />
       </FormField>
-      <div className="grid grid-cols-2 gap-2">
+      <div className="grid grid-cols-2 gap-x-3 gap-y-4">
         <FormField id={sourceId} title="Source">
           <FormInput
             id={sourceId}
@@ -517,7 +524,7 @@ function ExchangeRate() {
         </FormField>
       </div>
       {missing.length > 0 && (
-        <p className="text-sm text-pretty text-amber-700 dark:text-amber-500">
+        <p className="text-base/6 text-pretty text-amber-700 dark:text-amber-500">
           {`Add the rate’s ${missing.join(" and ")}: tax invoices that show a converted amount usually have to say whose rate it is and from when.`}
         </p>
       )}

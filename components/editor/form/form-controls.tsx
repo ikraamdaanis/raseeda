@@ -33,6 +33,26 @@ export function useIsEditingLabels() {
 
 export const formFieldClassName = "h-11 text-base md:text-base";
 
+// A field's title, and any heading inside a part (Other ways to pay).
+export const formLabelClassName = "text-base/6 font-medium";
+
+// Help and notes under a field.
+export const formHintClassName =
+  "text-muted-foreground text-base/6 text-pretty";
+
+// A line, a way to pay: one of several of the same thing inside a part.
+export const formCardClassName =
+  "border-border flex flex-col gap-4 rounded-xl border p-4";
+
+// A small icon button (remove, move) that's still a 48px tap target.
+export const formIconButtonClassName =
+  "text-muted-foreground relative size-9 shrink-0 after:absolute after:top-1/2 after:left-1/2 after:size-12 after:-translate-1/2";
+
+// One part of the form, or a row of its own (Edit labels): the form lays them
+// out edge to edge with a line between each.
+export const formSectionClassName =
+  "bg-background flex flex-col gap-5 px-[max(1rem,env(safe-area-inset-left))] py-6";
+
 /**
  * One part of the page, under its heading, in the order it prints. A heading
  * that prints (From, Notes) is renamed here while Edit labels is on. A part
@@ -64,9 +84,9 @@ export function FormArea({
     <section
       data-field-area={area}
       aria-labelledby={headingId}
-      className="bg-background border-border flex scroll-mt-4 flex-col gap-4 rounded-xl border p-4"
+      className={formSectionClassName}
     >
-      <div className="flex min-h-11 items-center gap-2">
+      <div className="flex min-h-9 items-center gap-2">
         {label && isEditingLabels ? (
           <Input
             id={headingId}
@@ -78,7 +98,10 @@ export function FormArea({
             className={cn(formFieldClassName, "flex-1 font-semibold")}
           />
         ) : (
-          <h2 id={headingId} className="min-w-0 flex-1 truncate font-semibold">
+          <h2
+            id={headingId}
+            className="min-w-0 flex-1 truncate text-lg font-semibold"
+          >
             {label?.value.trim() || title}
           </h2>
         )}
@@ -87,7 +110,7 @@ export function FormArea({
             variant="ghost"
             aria-label={removeLabel ?? `Remove ${title.toLowerCase()}`}
             onClick={onRemove}
-            className="text-muted-foreground size-11 shrink-0"
+            className={cn(formIconButtonClassName, "-mr-2")}
           >
             <IconX aria-hidden="true" />
           </Button>
@@ -126,7 +149,7 @@ export function FormField({
   const isEditingLabels = useIsEditingLabels();
 
   return (
-    <div className={cn("flex min-w-0 flex-col gap-1.5", className)}>
+    <div className={cn("flex min-w-0 flex-col gap-2", className)}>
       {rename && isEditingLabels ? (
         <Input
           aria-label={`${rename.placeholder} label`}
@@ -137,15 +160,12 @@ export function FormField({
           className={cn(formFieldClassName, "font-medium")}
         />
       ) : (
-        <label
-          htmlFor={id}
-          className="text-muted-foreground truncate text-sm font-medium"
-        >
+        <label htmlFor={id} className={cn(formLabelClassName, "truncate")}>
           {title}
         </label>
       )}
       {children}
-      {hint && <div className="text-muted-foreground text-sm">{hint}</div>}
+      {hint && <div className={formHintClassName}>{hint}</div>}
     </div>
   );
 }
@@ -303,25 +323,26 @@ export function FormSwitch({
   const descriptionId = useId();
 
   return (
-    <div className="flex items-center gap-3">
+    <div className="flex items-center gap-4">
       <label
         htmlFor={id}
         className="flex min-h-11 min-w-0 flex-1 cursor-pointer flex-col justify-center"
       >
-        <span className="text-sm font-medium">{label}</span>
+        <span className={formLabelClassName}>{label}</span>
         {description && (
-          <span id={descriptionId} className="text-muted-foreground text-sm">
+          <span id={descriptionId} className={formHintClassName}>
             {description}
           </span>
         )}
       </label>
       <Switch
         id={id}
+        size="lg"
         data-field={field}
         aria-describedby={description ? descriptionId : undefined}
         checked={checked}
         onCheckedChange={onCheckedChange}
-        className="relative after:absolute after:-inset-x-2 after:-inset-y-3.5"
+        className="after:-inset-2 after:-inset-y-3"
       />
     </div>
   );
@@ -360,9 +381,9 @@ export function FormAddButton({
     <Button
       variant="outline"
       onClick={onClick}
-      className="h-11 border-dashed text-base font-normal"
+      className="text-muted-foreground h-11 border-dashed pr-4 pl-3 text-base font-normal"
     >
-      <IconPlus aria-hidden="true" />
+      <IconPlus aria-hidden="true" className="size-5" />
       {children}
     </Button>
   );
@@ -384,15 +405,17 @@ export function FormAmount({
   return (
     <span
       className={cn(
-        "flex flex-col items-end text-right tabular-nums",
+        "flex flex-col items-end text-right text-base tabular-nums",
         className
       )}
     >
-      <span className={cn("whitespace-nowrap", isTotal && "font-semibold")}>
+      <span
+        className={cn("whitespace-nowrap", isTotal && "text-lg font-semibold")}
+      >
         {amount}
       </span>
       {converted && (
-        <span className="text-muted-foreground text-sm whitespace-nowrap">
+        <span className="text-muted-foreground text-base whitespace-nowrap">
           {converted}
         </span>
       )}

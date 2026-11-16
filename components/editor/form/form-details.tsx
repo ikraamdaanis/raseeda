@@ -5,6 +5,7 @@ import {
   FormArea,
   FormField,
   formFieldClassName,
+  formIconButtonClassName,
   FormInput
 } from "~/components/editor/form/form-controls";
 import { useAddableParts } from "~/components/editor/invoice-add-part";
@@ -100,9 +101,9 @@ function FormDetailRow({
           variant="ghost"
           aria-label={`Hide ${section.name}`}
           onClick={() => setSection(section.key, false)}
-          className="text-muted-foreground size-11 shrink-0"
+          className={cn(formIconButtonClassName, "-mr-2 h-11")}
         >
-          <IconX aria-hidden="true" />
+          <IconX aria-hidden="true" className="size-5" />
         </Button>
       )}
     </div>

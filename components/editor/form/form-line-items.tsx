@@ -6,8 +6,11 @@ import {
   FormAddButton,
   FormAmount,
   FormArea,
+  formCardClassName,
   FormField,
+  formIconButtonClassName,
   FormInput,
+  formLabelClassName,
   FormNumberInput,
   FormTextArea,
   useIsEditingLabels
@@ -17,6 +20,7 @@ import { Button } from "~/components/ui/button";
 import { formatCurrency } from "~/consts/currencies";
 import { useCurrencyConversion } from "~/hooks/use-currency-conversion";
 import { useShownSections } from "~/hooks/use-shown-sections";
+import { cn } from "~/lib/utils";
 import { useLineItemsSlice, useMoneyFormat } from "~/stores/invoice-selectors";
 import { useInvoiceStore } from "~/stores/invoice-store";
 import type { InvoiceItem, TableSettings } from "~/types";
@@ -103,7 +107,7 @@ export function FormLineItems() {
   return (
     <FormArea area="items" title="Items">
       {isEditingLabels && <ColumnLabels columns={columns} />}
-      <ol aria-label="Invoice line items" className="flex flex-col gap-3">
+      <ol aria-label="Invoice line items" className="flex flex-col gap-4">
         {items.map((item, index) => (
           <li key={item.id}>
             <LineItemCard
@@ -148,9 +152,7 @@ function ColumnLabels({
 
   return (
     <fieldset className="flex flex-col gap-2">
-      <legend className="text-muted-foreground mb-1.5 text-sm font-medium">
-        Column labels
-      </legend>
+      <legend className={cn(formLabelClassName, "mb-2")}>Column labels</legend>
       {shownColumns.map(column => (
         <FormInput
           key={column}
@@ -190,6 +192,10 @@ function LineItemCard({
   const unitId = useId();
   const priceId = useId();
   const { labels, shown, hasTaxColumn } = columns;
+  // Quantity, unit, price and tax sit two to a row; an odd last one takes the
+  // whole row rather than leaving a gap beside it.
+  const fieldCount = 2 + (shown.unit ? 1 : 0) + (hasTaxColumn ? 1 : 0);
+  const lastFieldClassName = fieldCount % 2 === 1 ? "col-span-2" : undefined;
   const {
     suggestions,
     isShown,
@@ -204,15 +210,9 @@ function LineItemCard({
     : viewRow.amount;
 
   return (
-    <article
-      aria-label={`Item ${index + 1}`}
-      className="bg-muted/40 border-border flex flex-col gap-3 rounded-lg border p-3"
-    >
-      <div className="relative flex flex-col gap-1.5">
-        <label
-          htmlFor={descriptionId}
-          className="text-muted-foreground text-sm font-medium"
-        >
+    <article aria-label={`Item ${index + 1}`} className={formCardClassName}>
+      <div className="relative flex flex-col gap-2">
+        <label htmlFor={descriptionId} className={formLabelClassName}>
           {labels.description}
         </label>
         <FormTextArea
@@ -243,7 +243,7 @@ function LineItemCard({
                 >
                   {suggestion.description}
                 </span>
-                <span className="text-muted-foreground shrink-0 text-xs">
+                <span className="text-muted-foreground shrink-0 text-sm">
                   {formatCurrency(suggestion.unitPrice, money)}
                   {suggestion.unit && ` / ${suggestion.unit}`}
                 </span>
@@ -253,7 +253,7 @@ function LineItemCard({
         )}
       </div>
       {shown.quantityAndPrice && (
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-2 gap-x-3 gap-y-4">
           <FormField id={quantityId} title={labels.quantity}>
             <FormNumberInput
               id={quantityId}
@@ -280,6 +280,7 @@ function LineItemCard({
           <FormField
             id={priceId}
             title={`${labels.unitPrice} (${money.marker})`}
+            className={hasTaxColumn ? undefined : lastFieldClassName}
           >
             <FormNumberInput
               id={priceId}
@@ -292,16 +293,21 @@ function LineItemCard({
             />
           </FormField>
           {hasTaxColumn && (
-            <LineTax item={item} index={index} label={labels.tax} />
+            <LineTax
+              item={item}
+              index={index}
+              label={labels.tax}
+              className={lastFieldClassName}
+            />
           )}
         </div>
       )}
       {!shown.quantityAndPrice && hasTaxColumn && (
         <LineTax item={item} index={index} label={labels.tax} />
       )}
-      <div className="flex items-center gap-3">
+      <div className="border-border flex items-center gap-3 border-t pt-4">
         {shown.quantityAndPrice ? (
-          <span className="text-muted-foreground flex-1 text-sm">
+          <span className="text-muted-foreground flex-1 text-base">
             {labels.amount}
           </span>
         ) : (
@@ -320,9 +326,9 @@ function LineItemCard({
             variant="ghost"
             aria-label={`Remove item ${index + 1}`}
             onClick={() => removeItem(item.id)}
-            className="text-muted-foreground hover:text-destructive size-11 shrink-0"
+            className={cn(formIconButtonClassName, "-mr-2")}
           >
-            <IconTrash aria-hidden="true" />
+            <IconTrash aria-hidden="true" className="size-5" />
           </Button>
         )}
       </div>
@@ -374,11 +380,13 @@ function LineAmount({
 function LineTax({
   item,
   index,
-  label
+  label,
+  className
 }: {
   item: InvoiceItem;
   index: number;
   label: string;
+  className?: string;
 }) {
   const id = useId();
   const { setItemTax } = useLineItemsSlice();
@@ -399,8 +407,8 @@ function LineTax({
   }
 
   return (
-    <FormField id={id} title={`${label} (%)`}>
-      <div className="flex items-center gap-1">
+    <FormField id={id} title={`${label} (%)`} className={className}>
+      <div className="flex items-center gap-2">
         {isExempt || inheritsExempt ? (
           <span className="text-muted-foreground flex h-11 flex-1 items-center text-base">
             Exempt
@@ -430,7 +438,7 @@ function LineTax({
             aria-pressed={isExempt}
             data-field={`items.${item.id}.tax.exempt`}
             onClick={toggleExempt}
-            className="aria-pressed:bg-accent h-11 shrink-0 px-2"
+            className="aria-pressed:bg-accent h-11 shrink-0 px-3 text-base"
           >
             Exempt
           </Button>

@@ -7,6 +7,7 @@ import {
   FormArea,
   FormField,
   FormInput,
+  formSectionClassName,
   FormTextArea
 } from "~/components/editor/form/form-controls";
 import { useAddableParts } from "~/components/editor/invoice-add-part";
@@ -85,6 +86,7 @@ export function FormFooter() {
   const { terms, setTerms } = useTermsSlice();
   const { latePayment, setLatePayment } = useLatePaymentSlice();
   const addableParts = useAddableParts("footer");
+  const addHeadingId = useId();
 
   return (
     <>
@@ -121,10 +123,10 @@ export function FormFooter() {
       {sections.signature && <FormSignature />}
       {addableParts.length > 0 && (
         <section
-          aria-label="Add to the invoice"
-          className="flex flex-col gap-3 px-1"
+          aria-labelledby={addHeadingId}
+          className={formSectionClassName}
         >
-          <h2 className="text-muted-foreground text-sm font-medium">
+          <h2 id={addHeadingId} className="text-lg font-semibold">
             Add to the invoice
           </h2>
           <FormAddParts parts={addableParts} />
@@ -173,7 +175,7 @@ function FormSignature() {
           <Button
             variant="ghost"
             aria-label="Remove signature"
-            className="text-destructive hover:text-destructive h-11"
+            className="text-muted-foreground h-11 text-base"
             onClick={() => setImage("")}
           >
             Remove
@@ -188,20 +190,26 @@ function FormSignature() {
           noKeyboard
         >
           {({ getRootProps, getInputProps, open }) => (
-            <div {...getRootProps()} className="flex flex-wrap gap-2">
+            <div {...getRootProps()}>
               <input {...getInputProps()} aria-label="Upload a signature" />
-              <Button variant="outline" className="h-11" onClick={open}>
-                <IconUpload aria-hidden="true" />
-                Upload
-              </Button>
-              <Button
-                variant="outline"
-                className="h-11"
-                onClick={() => setIsDrawing(true)}
-              >
-                <IconSignature aria-hidden="true" />
-                Draw
-              </Button>
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  variant="outline"
+                  className="h-11 pr-4 pl-3 text-base"
+                  onClick={open}
+                >
+                  <IconUpload aria-hidden="true" className="size-5" />
+                  Upload
+                </Button>
+                <Button
+                  variant="outline"
+                  className="h-11 pr-4 pl-3 text-base"
+                  onClick={() => setIsDrawing(true)}
+                >
+                  <IconSignature aria-hidden="true" className="size-5" />
+                  Draw
+                </Button>
+              </div>
             </div>
           )}
         </Dropzone>

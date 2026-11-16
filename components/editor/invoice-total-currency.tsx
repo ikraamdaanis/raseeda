@@ -32,6 +32,14 @@ const SECOND_CURRENCY_ID = "total-second-currency";
 const linkClassName =
   "text-muted-foreground hover:text-foreground focus-visible:ring-ring relative -mx-1 flex h-6 w-fit items-center gap-1 rounded-md px-1 text-xs outline-none focus-visible:ring-1 pointer-coarse:h-11";
 
+// How the currency rows look in the inspector's popover; the phone's form
+// passes its own.
+const POPOVER_CLASS_NAMES = {
+  field: inspectorFieldClassName,
+  label: "text-muted-foreground text-xs",
+  action: linkClassName
+};
+
 /**
  * The total as it prints. In Edit mode it opens the invoice's currency, and
  * the second currency every amount is also shown in; a custom one is typed in
@@ -99,9 +107,9 @@ export function InvoiceTotalCurrency({
  * there's no popover to close before the custom currency dialog opens.
  */
 export function CurrencyControls({
-  fieldClassName
+  classNames
 }: {
-  fieldClassName: string;
+  classNames: { field: string; label: string; action: string };
 }) {
   const [customFor, setCustomFor] = useState<"currency" | "second" | null>(
     null
@@ -109,7 +117,7 @@ export function CurrencyControls({
 
   return (
     <>
-      <CurrencyRows onCustom={setCustomFor} fieldClassName={fieldClassName} />
+      <CurrencyRows onCustom={setCustomFor} classNames={classNames} />
       <CustomCurrency
         customFor={customFor}
         onClose={() => setCustomFor(null)}
@@ -178,10 +186,10 @@ function isPresetCurrency(symbol: string) {
 // link.
 function CurrencyRows({
   onCustom,
-  fieldClassName = inspectorFieldClassName
+  classNames = POPOVER_CLASS_NAMES
 }: {
   onCustom: (target: "currency" | "second") => void;
-  fieldClassName?: string;
+  classNames?: { field: string; label: string; action: string };
 }) {
   const { currency, currencyCode, setCurrency } = useCurrencySlice();
   const { currencyConversion, setSecondCurrency } =
@@ -207,7 +215,7 @@ function CurrencyRows({
         currency={currency}
         onChange={setCurrency}
         onCustom={() => onCustom("currency")}
-        fieldClassName={fieldClassName}
+        classNames={classNames}
       />
       {secondCurrency.isOn ? (
         <div className="flex flex-col gap-1">
@@ -218,12 +226,12 @@ function CurrencyRows({
             exclude={{ currency, currencyCode }}
             onChange={setSecondCurrency}
             onCustom={() => onCustom("second")}
-            fieldClassName={fieldClassName}
+            classNames={classNames}
           />
           <button
             type="button"
             onClick={handleRemove}
-            className={linkClassName}
+            className={classNames.action}
           >
             <IconX aria-hidden="true" className="size-3.5 shrink-0" />
             Remove second currency
@@ -234,7 +242,7 @@ function CurrencyRows({
           id={addButtonId}
           type="button"
           onClick={handleAdd}
-          className={linkClassName}
+          className={classNames.action}
         >
           <IconPlus aria-hidden="true" className="size-3.5 shrink-0" />
           Add second currency
@@ -251,7 +259,7 @@ function CurrencySelect({
   exclude,
   onChange,
   onCustom,
-  fieldClassName
+  classNames
 }: {
   id: string;
   label: string;
@@ -259,7 +267,7 @@ function CurrencySelect({
   exclude?: { currency: string; currencyCode: string };
   onChange: (symbol: string, code: string) => void;
   onCustom: () => void;
-  fieldClassName: string;
+  classNames: { field: string; label: string };
 }) {
   const { font } = useTheme();
   const selected = normalizeCurrency(currency);
@@ -290,14 +298,14 @@ function CurrencySelect({
 
   return (
     <div className="flex flex-col gap-1.5">
-      <label htmlFor={id} className="text-muted-foreground text-xs">
+      <label htmlFor={id} className={classNames.label}>
         {label}
       </label>
       <NativeSelect
         id={id}
         value={isCustom ? CUSTOM_CURRENCY : selected}
         onChange={event => handleChange(event.target.value)}
-        className={cn(fieldClassName, "pr-7")}
+        className={cn(classNames.field, "pr-7")}
       >
         {options.map(({ symbol, code, label: name }) => (
           <option key={symbol} value={symbol}>
