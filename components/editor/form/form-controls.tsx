@@ -189,15 +189,22 @@ export function FormInput({
 
 // A multi-line field that grows with what's typed. `field-sizing: content`
 // does this where it's supported; the height is also set by hand for Safari.
+// It never shrinks below its `rows` or its placeholder's lines, whichever is
+// more (plus its padding and border), however little is typed: `field-sizing`
+// alone would size an empty field by its placeholder, then drop to a line at
+// the first letter.
 export function FormTextArea({
   className,
   onChange,
   value,
+  rows = 2,
+  placeholder,
   ...props
 }: Omit<ComponentProps<"textarea">, "onChange" | "ref"> & {
   onChange?: (value: string) => void;
 }) {
   const ref = useRef<HTMLTextAreaElement>(null);
+  const minRows = Math.max(rows, placeholder?.split("\n").length ?? 0);
 
   useLayoutEffect(() => {
     const textarea = ref.current;
@@ -217,9 +224,11 @@ export function FormTextArea({
       {...props}
       ref={ref}
       value={value}
-      rows={props.rows ?? 2}
+      rows={rows}
+      placeholder={placeholder}
       onChange={event => onChange?.(event.target.value)}
-      className={cn("min-h-11 resize-none text-base md:text-base", className)}
+      className={cn("resize-none py-2.5 text-base md:text-base", className)}
+      style={{ minHeight: `calc(${minRows}lh + 1.25rem + 2px)` }}
     />
   );
 }
