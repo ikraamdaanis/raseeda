@@ -111,10 +111,13 @@ test("the Page tab shows the page, and tapping a field opens it in the form", as
   await expect(toDetails).toBeInViewport();
 });
 
-test("Edit labels renames what the page prints", async ({ page }) => {
+test("a part's Labels row renames what the page prints", async ({ page }) => {
   await page.goto("/create");
-  await page.getByRole("switch", { name: "Edit labels" }).tap();
-  await page.getByRole("textbox", { name: "To label" }).fill("Bill To");
+
+  const toPart = page.getByRole("region", { name: "To", exact: true });
+
+  await toPart.getByText("Labels", { exact: true }).tap();
+  await toPart.getByRole("textbox", { name: "Heading label" }).fill("Bill To");
   await showPage(page);
 
   // The page's labels are fields, so it's their values that are read.
@@ -130,6 +133,38 @@ test("Edit labels renames what the page prints", async ({ page }) => {
         )
     )
     .toContain("Bill To");
+});
+
+test("a Labels row lists only the labels that print", async ({ page }) => {
+  await page.goto("/create");
+
+  const paymentPart = page.getByRole("region", { name: "Payment details" });
+  const ibanLabel = paymentPart.getByRole("textbox", { name: "IBAN label" });
+
+  await paymentPart.getByText("Labels", { exact: true }).tap();
+
+  await expect(ibanLabel).toHaveCount(0);
+
+  await paymentPart
+    .getByRole("textbox", { name: "IBAN", exact: true })
+    .fill("DE89 3704 0044 0532 0130 00");
+
+  await expect(ibanLabel).toBeVisible();
+});
+
+test("tapping a label on the page opens its Labels row at it", async ({
+  page
+}) => {
+  await page.goto("/create");
+  await showPage(page);
+  await page
+    .locator('[data-paper] [data-field="client.label"]')
+    .tap({ force: true });
+
+  const toLabel = page.locator('[data-phone-form] [data-field="client.label"]');
+
+  await expect(toLabel).toBeFocused();
+  await expect(toLabel).toBeInViewport();
 });
 
 test("phones get a tab bar instead of the canvas pill and panel toggles", async ({
@@ -355,17 +390,17 @@ test("the setup choices sit in the form", async ({ page }) => {
 test("a tap outside an open menu only closes it", async ({ page }) => {
   await page.goto("/create");
 
-  const labelsSwitch = page.getByRole("switch", { name: "Edit labels" });
-  const box = await labelsSwitch.boundingBox();
+  const pageTab = tabBar(page).getByRole("tab", { name: "Page" });
+  const box = await pageTab.boundingBox();
 
-  if (!box) throw new Error("The Edit labels switch isn't shown");
+  if (!box) throw new Error("The Page tab isn't shown");
 
   await page.getByRole("button", { name: "Document menu" }).tap();
   await expect(page.getByRole("menu")).toBeVisible();
   await page.touchscreen.tap(box.x + box.width / 2, box.y + box.height / 2);
 
   await expect(page.getByRole("menu")).toBeHidden();
-  await expect(labelsSwitch).not.toBeChecked();
+  await expect(pageTab).toHaveAttribute("aria-selected", "false");
 });
 
 test("a phone opens to the form even when Preview was left on", async ({

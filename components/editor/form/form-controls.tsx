@@ -1,12 +1,6 @@
-import { IconPlus, IconX } from "@tabler/icons-react";
+import { IconChevronDown, IconPlus, IconX } from "@tabler/icons-react";
 import type { ComponentProps, ReactNode } from "react";
-import {
-  createContext,
-  useContext,
-  useId,
-  useLayoutEffect,
-  useRef
-} from "react";
+import { useId, useLayoutEffect, useRef } from "react";
 import { useNumberField } from "~/components/editor/number-field";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
@@ -20,16 +14,6 @@ import { getDecimalSeparator } from "~/utils/format-number";
 // The phone's form (issue #213): ordinary labelled fields over the same store
 // the page edits. Every field is at least 16px (`text-base`), so iOS doesn't
 // zoom in on it, and every control is a 44px tap target.
-
-// Whether the form's Edit labels switch is on, turning every field's title
-// into the label it prints under, to rename.
-const EditLabelsContext = createContext(false);
-
-export const EditLabelsProvider = EditLabelsContext.Provider;
-
-export function useIsEditingLabels() {
-  return useContext(EditLabelsContext);
-}
 
 export const formFieldClassName = "h-11 text-base md:text-base";
 
@@ -48,20 +32,32 @@ export const formCardClassName =
 export const formIconButtonClassName =
   "text-muted-foreground relative size-9 shrink-0 after:absolute after:top-1/2 after:left-1/2 after:size-12 after:-translate-1/2";
 
-// One part of the form, or a row of its own (Edit labels): the form lays them
-// out edge to edge with a line between each.
+// One part of the form: the form lays them out edge to edge with a line
+// between each.
 export const formSectionClassName =
   "bg-background flex flex-col gap-5 px-[max(1rem,env(safe-area-inset-left))] py-6";
 
+// A label the page prints, renamed in a part's Labels row: what it's called
+// before it's renamed (the field's title and placeholder), what it's renamed
+// to, and the `data-field` path the page's own label has.
+type PrintedLabel = {
+  name: string;
+  value: string;
+  field: string;
+  onChange: (value: string) => void;
+};
+
 /**
- * One part of the page, under its heading, in the order it prints. A heading
- * that prints (From, Notes) is renamed here while Edit labels is on. A part
- * that can be hidden has a Remove button beside it.
+ * One part of the page, under its heading, in the order it prints. The heading
+ * reads as it prints (From, Notes), and a part that can be hidden has a Remove
+ * button beside it. The labels it prints, its heading first, are renamed in
+ * its Labels row at the foot.
  */
 export function FormArea({
   area,
   title,
   label,
+  labels = [],
   onRemove,
   removeLabel,
   children
@@ -73,12 +69,15 @@ export function FormArea({
     field: string;
     onChange: (value: string) => void;
   };
+  labels?: PrintedLabel[];
   onRemove?: () => void;
   removeLabel?: string;
   children?: ReactNode;
 }) {
   const headingId = useId();
-  const isEditingLabels = useIsEditingLabels();
+  const printedLabels = label
+    ? [{ name: "Heading", ...label }, ...labels]
+    : labels;
 
   return (
     <section
@@ -87,24 +86,12 @@ export function FormArea({
       className={formSectionClassName}
     >
       <div className="flex min-h-9 items-center gap-2">
-        {label && isEditingLabels ? (
-          <Input
-            id={headingId}
-            aria-label={`${title} label`}
-            data-field={label.field}
-            value={label.value}
-            placeholder={title}
-            onChange={event => label.onChange(event.target.value)}
-            className={cn(formFieldClassName, "flex-1 font-semibold")}
-          />
-        ) : (
-          <h2
-            id={headingId}
-            className="min-w-0 flex-1 truncate text-lg font-semibold"
-          >
-            {label?.value.trim() || title}
-          </h2>
-        )}
+        <h2
+          id={headingId}
+          className="min-w-0 flex-1 truncate text-lg font-semibold"
+        >
+          {label?.value.trim() || title}
+        </h2>
         {onRemove && (
           <Button
             variant="ghost"
@@ -117,53 +104,91 @@ export function FormArea({
         )}
       </div>
       {children}
+      <FormLabels labels={printedLabels} />
     </section>
   );
 }
 
 /**
- * A field under its title. The title is the label the field prints under; with
- * Edit labels on and `rename` given, it becomes an input that renames that
- * label. A cleared label shows (and prints) its default.
+ * A part's printed labels, renamed behind a row that reads what they print
+ * now. It's closed to start with, since few ever rename one; anything that
+ * jumps to one of its fields (a tap on the page, undo) opens it first
+ * (`revealField`, `utils/reveal-field.ts`), and it stays open until it's closed. A cleared label
+ * prints its default.
+ */
+function FormLabels({ labels }: { labels: PrintedLabel[] }) {
+  if (labels.length === 0) return null;
+
+  const printed = labels
+    .map(label => label.value.trim() || label.name)
+    .join(", ");
+
+  return (
+    <details className="group border-border -mb-2 border-t">
+      <summary className="flex min-h-14 cursor-pointer list-none items-center gap-3 pt-3 [&::-webkit-details-marker]:hidden">
+        <span className="flex min-w-0 flex-1 flex-col">
+          <span className={formLabelClassName}>Labels</span>
+          <span className={cn(formHintClassName, "line-clamp-2")}>
+            {printed}
+          </span>
+        </span>
+        <IconChevronDown
+          aria-hidden="true"
+          className="text-muted-foreground size-5 shrink-0 transition-transform group-open:rotate-180 motion-reduce:transition-none"
+        />
+      </summary>
+      <div className="flex flex-col gap-4 pt-4 pb-2">
+        <p className={formHintClassName}>
+          The words the page prints here. A cleared label prints its default.
+        </p>
+        {labels.map(label => (
+          <LabelField key={label.field} label={label} />
+        ))}
+      </div>
+    </details>
+  );
+}
+
+// Named "Due Date label" for a screen reader, apart from the Due Date field it
+// renames.
+function LabelField({ label }: { label: PrintedLabel }) {
+  const id = useId();
+
+  return (
+    <FormField id={id} title={label.name}>
+      <FormInput
+        id={id}
+        aria-label={`${label.name} label`}
+        data-field={label.field}
+        value={label.value}
+        onChange={label.onChange}
+        placeholder={label.name}
+      />
+    </FormField>
+  );
+}
+
+/**
+ * A field under its title: the label the field prints under, as it prints.
  */
 export function FormField({
   id,
   title,
-  rename,
   hint,
   className,
   children
 }: {
   id: string;
   title: string;
-  rename?: {
-    value: string;
-    field: string;
-    placeholder: string;
-    onChange: (value: string) => void;
-  };
   hint?: ReactNode;
   className?: string;
   children: ReactNode;
 }) {
-  const isEditingLabels = useIsEditingLabels();
-
   return (
     <div className={cn("flex min-w-0 flex-col gap-2", className)}>
-      {rename && isEditingLabels ? (
-        <Input
-          aria-label={`${rename.placeholder} label`}
-          data-field={rename.field}
-          value={rename.value}
-          placeholder={rename.placeholder}
-          onChange={event => rename.onChange(event.target.value)}
-          className={cn(formFieldClassName, "font-medium")}
-        />
-      ) : (
-        <label htmlFor={id} className={cn(formLabelClassName, "truncate")}>
-          {title}
-        </label>
-      )}
+      <label htmlFor={id} className={cn(formLabelClassName, "truncate")}>
+        {title}
+      </label>
       {children}
       {hint && <div className={formHintClassName}>{hint}</div>}
     </div>

@@ -12,8 +12,7 @@ import {
   FormInput,
   formLabelClassName,
   FormNumberInput,
-  FormTextArea,
-  useIsEditingLabels
+  FormTextArea
 } from "~/components/editor/form/form-controls";
 import { useLineItemSuggestions } from "~/components/editor/invoice-line-items";
 import { Button } from "~/components/ui/button";
@@ -86,50 +85,12 @@ function useLineColumns() {
   };
 }
 
-// The line items as cards, one per line, in the order they print. While Edit
-// labels is on, the column headers are renamed at the top, since every card
-// shares them.
+// The line items as cards, one per line, in the order they print. The column
+// headers every card shares are renamed in the Labels row.
 export function FormLineItems() {
-  const { items, addItem } = useLineItemsSlice();
-  const isEditingLabels = useIsEditingLabels();
+  const { items, addItem, tableSettings, setTableSettings } =
+    useLineItemsSlice();
   const columns = useLineColumns();
-
-  function handleAddItem() {
-    addItem({
-      id: crypto.randomUUID(),
-      description: "",
-      quantity: 1,
-      unit: "",
-      unitPrice: 0
-    });
-  }
-
-  return (
-    <FormArea area="items" title="Items">
-      {isEditingLabels && <ColumnLabels columns={columns} />}
-      <ol aria-label="Invoice line items" className="flex flex-col gap-4">
-        {items.map((item, index) => (
-          <li key={item.id}>
-            <LineItemCard
-              item={item}
-              index={index}
-              itemCount={items.length}
-              columns={columns}
-            />
-          </li>
-        ))}
-      </ol>
-      <FormAddButton onClick={handleAddItem}>Add item</FormAddButton>
-    </FormArea>
-  );
-}
-
-function ColumnLabels({
-  columns
-}: {
-  columns: ReturnType<typeof useLineColumns>;
-}) {
-  const { tableSettings, setTableSettings } = useLineItemsSlice();
   const shownColumns = (
     Object.keys(COLUMN_NAMES) as (keyof typeof COLUMN_NAMES)[]
   ).filter(column => {
@@ -150,24 +111,44 @@ function ColumnLabels({
     }));
   }
 
+  function handleAddItem() {
+    addItem({
+      id: crypto.randomUUID(),
+      description: "",
+      quantity: 1,
+      unit: "",
+      unitPrice: 0
+    });
+  }
+
   return (
-    <fieldset className="flex flex-col gap-2">
-      <legend className={cn(formLabelClassName, "mb-2")}>Column labels</legend>
-      {shownColumns.map(column => (
-        <FormInput
-          key={column}
-          aria-label={`${COLUMN_NAMES[column]} column label`}
-          data-field={`tableSettings.columnLabels.${column}`}
-          value={tableSettings.columnLabels[column]}
-          onChange={value => setColumnLabel(column, value)}
-          placeholder={
-            column === "tax" || column === "amount"
-              ? columns.labels[column]
-              : COLUMN_NAMES[column]
-          }
-        />
-      ))}
-    </fieldset>
+    <FormArea
+      area="items"
+      title="Items"
+      labels={shownColumns.map(column => ({
+        name:
+          column === "tax" || column === "amount"
+            ? columns.labels[column]
+            : COLUMN_NAMES[column],
+        value: tableSettings.columnLabels[column],
+        field: `tableSettings.columnLabels.${column}`,
+        onChange: value => setColumnLabel(column, value)
+      }))}
+    >
+      <ol aria-label="Invoice line items" className="flex flex-col gap-4">
+        {items.map((item, index) => (
+          <li key={item.id}>
+            <LineItemCard
+              item={item}
+              index={index}
+              itemCount={items.length}
+              columns={columns}
+            />
+          </li>
+        ))}
+      </ol>
+      <FormAddButton onClick={handleAddItem}>Add item</FormAddButton>
+    </FormArea>
   );
 }
 

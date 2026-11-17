@@ -1,6 +1,5 @@
 import type { RefObject } from "react";
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { EditLabelsProvider } from "~/components/editor/form/form-controls";
+import { useEffect, useLayoutEffect, useRef } from "react";
 import { FormDetails } from "~/components/editor/form/form-details";
 import { FormDocument } from "~/components/editor/form/form-document";
 import { FormFooter } from "~/components/editor/form/form-footer";
@@ -15,6 +14,7 @@ import {
 import { FormPaymentDetails } from "~/components/editor/form/form-payment";
 import { FormTotals } from "~/components/editor/form/form-totals";
 import { useInvoiceDocument } from "~/context/invoice-document-context";
+import { revealField } from "~/utils/reveal-field";
 
 // A field that brings up the on-screen keyboard.
 const TYPING_FIELD_SELECTOR =
@@ -32,7 +32,6 @@ export function PhoneForm({
   scrollTopRef: RefObject<number>;
 }) {
   const { status, currentDocumentId } = useInvoiceDocument();
-  const [isEditingLabels, setIsEditingLabels] = useState(false);
   const scrollerRef = useRef<HTMLDivElement>(null);
   const documentIdRef = useRef(currentDocumentId);
   const canEdit = status === "editing" || status === "unavailable";
@@ -66,28 +65,23 @@ export function PhoneForm({
       inert={!canEdit}
       className="bg-background min-h-0 flex-1 overflow-y-auto overscroll-contain"
     >
-      <EditLabelsProvider value={isEditingLabels}>
-        <form
-          aria-label="Invoice"
-          onSubmit={event => event.preventDefault()}
-          className="bg-border mx-auto flex max-w-xl flex-col gap-px border-b"
-        >
-          <FormDocument
-            isEditingLabels={isEditingLabels}
-            onEditingLabelsChange={setIsEditingLabels}
-          />
-          <FormTitle />
-          <FormLogo />
-          <FormSeller />
-          <FormClient />
-          <FormShipping />
-          <FormDetails />
-          <FormLineItems />
-          <FormTotals />
-          <FormPaymentDetails />
-          <FormFooter />
-        </form>
-      </EditLabelsProvider>
+      <form
+        aria-label="Invoice"
+        onSubmit={event => event.preventDefault()}
+        className="bg-border mx-auto flex max-w-xl flex-col gap-px border-b"
+      >
+        <FormDocument />
+        <FormTitle />
+        <FormLogo />
+        <FormSeller />
+        <FormClient />
+        <FormShipping />
+        <FormDetails />
+        <FormLineItems />
+        <FormTotals />
+        <FormPaymentDetails />
+        <FormFooter />
+      </form>
     </div>
   );
 }
@@ -189,6 +183,7 @@ export function focusFormTarget(target: { field?: string; area?: string }) {
     null;
 
   if (focusable) {
+    revealField(focusable);
     focusable.focus({ preventScroll: true });
     scrollFormTo(form, focusable, "center");
 

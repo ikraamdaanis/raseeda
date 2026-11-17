@@ -14,8 +14,7 @@ import {
   formFieldClassName,
   formIconButtonClassName,
   formLabelClassName,
-  readKeypadDecimal,
-  useIsEditingLabels
+  readKeypadDecimal
 } from "~/components/editor/form/form-controls";
 import { useAddableParts } from "~/components/editor/invoice-add-part";
 import { InvoiceDateField } from "~/components/editor/invoice-date-field";
@@ -50,7 +49,7 @@ const dateTriggerClassName = cn(
   "border-input dark:bg-input/30 focus-visible:border-ring aria-expanded:border-ring rounded-surface w-full border px-2.5 text-left outline-none"
 );
 
-// What each row is called, for its label's placeholder.
+// What each row is called before it's renamed.
 const ROW_NAMES = {
   subtotal: "Subtotal",
   discounts: "Discounts",
@@ -59,6 +58,20 @@ const ROW_NAMES = {
   amountPaid: "Amount paid",
   balanceDue: "Balance due"
 } as const;
+
+// What a row is called before it's renamed: the total is named by the
+// document's type (Total, Amount due, Total refund).
+function useRowName() {
+  const documentType = useDocumentType();
+
+  return (id: InvoiceSummaryRow["id"]) => {
+    if (id === "tax") return "Tax";
+    if (id === "total")
+      return DOCUMENT_TYPE_DEFAULTS[documentType].labels.total;
+
+    return ROW_NAMES[id];
+  };
+}
 
 // The totals as the page lists them, in print order: the typed figures inline,
 // each with what it comes to, and the sums read-only, the total and balance
@@ -73,8 +86,14 @@ export function FormTotals() {
     useCurrencyConversionSlice();
   const addableParts = useAddableParts("totals");
   const secondCurrency = useSecondCurrency();
+  const { labels, setLabels } = usePricingSlice();
+  const rowName = useRowName();
   const rows = buildEditorSummaryRows({ invoice, sections, conversion });
   const taxRows = rows.filter(row => row.id === "tax");
+  // The rows that print, the tax rows once: they share one label.
+  const printedRows = rows.filter(
+    row => row.isVisible && (row.id !== "tax" || row === taxRows.at(0))
+  );
   const currencyParts = secondCurrency.isOn
     ? []
     : [
@@ -100,7 +119,16 @@ export function FormTotals() {
       : [];
 
   return (
-    <FormArea area="pricing" title="Totals">
+    <FormArea
+      area="pricing"
+      title="Totals"
+      labels={printedRows.map(row => ({
+        name: rowName(row.id),
+        value: labels[row.id],
+        field: `labels.${row.id}`,
+        onChange: value => setLabels(prev => ({ ...prev, [row.id]: value }))
+      }))}
+    >
       <div className="flex flex-col gap-6">
         {rows.map(row => {
           if (!row.isVisible) return null;
@@ -142,12 +170,8 @@ function SummaryRow({
   id: keyof typeof ROW_NAMES;
   row: InvoiceSummaryRow;
 }) {
-  const { labels, setLabels } = usePricingSlice();
-  const documentType = useDocumentType();
-  const name =
-    id === "total"
-      ? DOCUMENT_TYPE_DEFAULTS[documentType].labels.total
-      : ROW_NAMES[id];
+  const { labels } = usePricingSlice();
+  const name = useRowName()(id);
   const section = ROW_SECTIONS[id];
   const Inputs = ROW_INPUTS[id];
 
@@ -155,8 +179,6 @@ function SummaryRow({
     <RowGroup
       name={name}
       label={labels[id]}
-      field={`labels.${id}`}
-      onRename={value => setLabels(prev => ({ ...prev, [id]: value }))}
       value={row.value}
       isTotal={row.isTotal}
       section={section}
@@ -185,13 +207,11 @@ const ROW_INPUTS: Partial<
   amountPaid: AmountPaidInputs
 };
 
-// One row: its label (renamed while Edit labels is on), what it comes to, a
-// Hide button where it's a part of its own, and its inputs under it.
+// One row: its label as it prints, what it comes to, a Hide button where it's
+// a part of its own, and its inputs under it.
 function RowGroup({
   name,
   label,
-  field,
-  onRename,
   value,
   isTotal = false,
   section,
@@ -199,14 +219,11 @@ function RowGroup({
 }: {
   name: string;
   label: string;
-  field: string;
-  onRename: (value: string) => void;
   value: string;
   isTotal?: boolean;
   section?: InvoiceSectionKey;
   children?: ReactNode;
 }) {
-  const isEditingLabels = useIsEditingLabels();
   const { setSection } = useSectionsSlice();
   const documentType = useDocumentType();
   const canHide =
@@ -216,25 +233,14 @@ function RowGroup({
   return (
     <div className="flex flex-col gap-3">
       <div className="flex min-h-11 items-center gap-3">
-        {isEditingLabels ? (
-          <Input
-            aria-label={`${name} label`}
-            data-field={field}
-            value={label}
-            placeholder={name}
-            onChange={event => onRename(event.target.value)}
-            className={cn(formFieldClassName, "min-w-0 flex-1")}
-          />
-        ) : (
-          <span
-            className={cn(
-              "min-w-0 flex-1 truncate",
-              isTotal ? "text-lg font-semibold" : "font-medium"
-            )}
-          >
-            {label.trim() || name}
-          </span>
-        )}
+        <span
+          className={cn(
+            "min-w-0 flex-1 truncate",
+            isTotal ? "text-lg font-semibold" : "font-medium"
+          )}
+        >
+          {label.trim() || name}
+        </span>
         <FormAmount value={value} isTotal={isTotal} />
         {canHide && (
           <Button
@@ -374,7 +380,7 @@ function AmountPaidInputs() {
 // the one rate they all share), those show under it, read-only, so the totals
 // always add up.
 function TaxRows({ rows }: { rows: InvoiceSummaryRow[] }) {
-  const { tax, setTax, labels, setLabels } = usePricingSlice();
+  const { tax, setTax, labels } = usePricingSlice();
   const money = useMoneyFormat();
   const rateId = useId();
   const noteId = useId();
@@ -386,8 +392,6 @@ function TaxRows({ rows }: { rows: InvoiceSummaryRow[] }) {
     <RowGroup
       name="Tax"
       label={labels.tax}
-      field="labels.tax"
-      onRename={value => setLabels(prev => ({ ...prev, tax: value }))}
       value={readsAsPrinted || tax.exempt ? "" : firstRow.value}
       section="tax"
     >

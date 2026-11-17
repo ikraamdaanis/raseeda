@@ -8,6 +8,7 @@ import {
 import type { InvoiceStore } from "~/stores/invoice-store";
 import { useInvoiceStore } from "~/stores/invoice-store";
 import type { Invoice, InvoiceSectionKey } from "~/types";
+import { revealField } from "~/utils/reveal-field";
 
 // Undo and redo for the whole invoice, as snapshots of its data (Lexical,
 // zundo and redux-undo work the same way). An invoice is a few KB, so keeping
@@ -420,6 +421,7 @@ function showChange(
     const field = focus && movesFocus ? findField(focus.field) : null;
 
     if (focus && field) {
+      revealField(field);
       field.focus({ preventScroll: true });
 
       if (

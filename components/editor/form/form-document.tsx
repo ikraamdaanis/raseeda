@@ -2,8 +2,7 @@ import { useId } from "react";
 import {
   FormArea,
   FormField,
-  FormSelect,
-  FormSwitch
+  FormSelect
 } from "~/components/editor/form/form-controls";
 import {
   currencyPositionOption,
@@ -34,26 +33,14 @@ import {
  * The form's opening card: what the document is and how it's set up, chosen
  * once rather than watched as it changes, so on a phone it lives in the form
  * rather than the Style tray. The type comes first, since it decides the
- * title, the number and which rows the form shows; the language sits by Edit
- * labels, since both change the labels' wording.
+ * title, the number and which rows the form shows; the language rewrites
+ * every label, each renamed on its own in its part's Labels row.
  */
-export function FormDocument({
-  isEditingLabels,
-  onEditingLabelsChange
-}: {
-  isEditingLabels: boolean;
-  onEditingLabelsChange: (isEditing: boolean) => void;
-}) {
+export function FormDocument() {
   return (
     <FormArea area="document" title="Document">
       <FormDocumentType />
       <FormLanguage />
-      <FormSwitch
-        label="Edit labels"
-        description="Rename the labels the invoice prints, like Bill To or Due Date."
-        checked={isEditingLabels}
-        onCheckedChange={onEditingLabelsChange}
-      />
       <FormPaperSize />
     </FormArea>
   );

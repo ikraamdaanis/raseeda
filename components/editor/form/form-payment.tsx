@@ -38,9 +38,9 @@ import {
 } from "~/stores/invoice-selectors";
 import type { InvoicePaymentMethod } from "~/types";
 
-// How to pay, as the page lists it: the bank rows under their renameable
-// labels, other ways to pay in order, the payment link, the QR code and the
-// instructions.
+// How to pay, as the page lists it: the bank rows under their labels, other
+// ways to pay in order, the payment link, the QR code and the instructions. A
+// bank row's label prints, and is renamed, once the row is filled in.
 export function FormPaymentDetails() {
   const { paymentDetails, setPaymentDetails } = usePaymentDetailsSlice();
   const { setSection } = useSectionsSlice();
@@ -59,6 +59,18 @@ export function FormPaymentDetails() {
         onChange: value =>
           setPaymentDetails(prev => ({ ...prev, label: value }))
       }}
+      labels={[...PAYMENT_FIELDS, PAYMENT_LINK_FIELD]
+        .filter(field => paymentDetails[field.key].trim() !== "")
+        .map(field => ({
+          name: DEFAULT_PAYMENT_LABELS[field.key],
+          value: paymentDetails.labels[field.key],
+          field: `paymentDetails.labels.${field.key}`,
+          onChange: value =>
+            setPaymentDetails(prev => ({
+              ...prev,
+              labels: { ...prev.labels, [field.key]: value }
+            }))
+        }))}
       removeLabel="Hide payment details"
       onRemove={() => setSection("paymentDetails", false)}
     >
@@ -106,20 +118,7 @@ function PaymentField({
   const label = paymentDetails.labels[fieldKey];
 
   return (
-    <FormField
-      id={id}
-      title={label.trim() || defaultLabel}
-      rename={{
-        value: label,
-        field: `paymentDetails.labels.${fieldKey}`,
-        placeholder: defaultLabel,
-        onChange: value =>
-          setPaymentDetails(prev => ({
-            ...prev,
-            labels: { ...prev.labels, [fieldKey]: value }
-          }))
-      }}
-    >
+    <FormField id={id} title={label.trim() || defaultLabel}>
       <FormInput
         id={id}
         type={type}
