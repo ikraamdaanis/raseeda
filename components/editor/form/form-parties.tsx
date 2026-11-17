@@ -1,4 +1,5 @@
-import { IconUpload } from "@tabler/icons-react";
+import { IconPhotoUp, IconReplace, IconTrash } from "@tabler/icons-react";
+import { useId } from "react";
 import type { FileRejection } from "react-dropzone";
 import Dropzone from "react-dropzone";
 import {
@@ -18,6 +19,7 @@ import { Button } from "~/components/ui/button";
 import { DOCUMENT_TYPE_DEFAULTS } from "~/consts/document-types";
 import { useImageLoader } from "~/hooks/use-image-loader";
 import { useShownSections } from "~/hooks/use-shown-sections";
+import { cn } from "~/lib/utils";
 import {
   useClientSlice,
   useDocumentType,
@@ -53,11 +55,14 @@ export function FormTitle() {
 }
 
 // The logo, picked from the phone's photos or files, as the page's dropzone
-// takes it. Removing the image keeps the part on, ready for another.
+// takes it. With none yet, the whole tile picks one. A logo shows on white, as
+// it prints. Removing the image keeps the part on, ready for another.
 export function FormLogo() {
   const { image: imageId, setImage } = useImageSlice();
   const { sections, setSection } = useSectionsSlice();
   const imageUrl = useImageLoader(imageId);
+  const titleId = useId();
+  const hintId = useId();
 
   async function handleDrop(
     acceptedFiles: File[],
@@ -84,43 +89,65 @@ export function FormLogo() {
         noClick
         noKeyboard
       >
-        {({ getRootProps, getInputProps, open }) => (
+        {({ getRootProps, getInputProps, open, isDragActive }) => (
           <div {...getRootProps()}>
             <input {...getInputProps()} aria-label="Upload logo" />
-            <div className="flex items-center gap-4">
-              {imageUrl ? (
-                <img
-                  src={imageUrl}
-                  alt="Invoice logo"
-                  width={80}
-                  height={80}
-                  className="bg-muted size-20 shrink-0 rounded-lg object-cover"
-                />
-              ) : (
-                <div className="border-border text-muted-foreground flex size-20 shrink-0 items-center justify-center rounded-lg border border-dashed">
-                  <IconUpload aria-hidden="true" className="size-6" />
+            {imageUrl ? (
+              <div className="flex items-center gap-4">
+                <div className="flex h-24 w-36 shrink-0 items-center justify-center rounded-lg bg-white p-3 outline-1 -outline-offset-1 outline-black/10 dark:outline-white/10">
+                  <img
+                    src={imageUrl}
+                    alt="Invoice logo"
+                    className="max-h-full max-w-full object-contain"
+                  />
                 </div>
-              )}
-              <div className="flex flex-wrap gap-2">
-                <Button
-                  variant="outline"
-                  className="h-11 text-base"
-                  onClick={open}
-                >
-                  {imageUrl ? "Change logo" : "Upload logo"}
-                </Button>
-                {imageUrl && (
+                <div className="flex min-w-0 flex-col items-start gap-1">
+                  <Button
+                    variant="outline"
+                    className="h-11 pr-4 pl-3 text-base"
+                    onClick={open}
+                  >
+                    <IconReplace aria-hidden="true" className="size-5" />
+                    Change
+                  </Button>
                   <Button
                     variant="ghost"
                     aria-label="Remove invoice logo"
-                    className="text-muted-foreground h-11 text-base"
+                    className="text-muted-foreground h-11 pr-4 pl-3 text-base"
                     onClick={() => setImage("")}
                   >
+                    <IconTrash aria-hidden="true" className="size-5" />
                     Remove
                   </Button>
-                )}
+                </div>
               </div>
-            </div>
+            ) : (
+              <button
+                type="button"
+                aria-labelledby={titleId}
+                aria-describedby={hintId}
+                onClick={open}
+                className={cn(
+                  "border-input text-muted-foreground focus-visible:border-ring focus-visible:ring-ring/50 active:bg-accent flex w-full flex-col items-center gap-3 rounded-xl border border-dashed px-4 py-6 text-center outline-none focus-visible:ring-3",
+                  isDragActive && "border-ring bg-accent"
+                )}
+              >
+                <span className="bg-muted flex size-11 items-center justify-center rounded-full">
+                  <IconPhotoUp aria-hidden="true" className="size-5" />
+                </span>
+                <span className="flex flex-col gap-0.5">
+                  <span
+                    id={titleId}
+                    className="text-foreground text-base/6 font-medium"
+                  >
+                    Upload logo
+                  </span>
+                  <span id={hintId} className="text-base/6">
+                    PNG, JPG or WebP, up to 5 MB
+                  </span>
+                </span>
+              </button>
+            )}
           </div>
         )}
       </Dropzone>
