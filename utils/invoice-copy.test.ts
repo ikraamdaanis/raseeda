@@ -10,6 +10,7 @@ import {
   describeCopyReview,
   findDateMention,
   nextInvoiceNumber,
+  numberNewDocument,
   prepareInvoiceCopy
 } from "~/utils/invoice-copy";
 
@@ -60,6 +61,61 @@ describe("nextInvoiceNumber", () => {
 
   it("leaves a number with no digits alone", () => {
     expect(nextInvoiceNumber("Draft", ["Draft"])).toBe("Draft");
+  });
+});
+
+describe("numberNewDocument", () => {
+  it("keeps the sample number in an empty library", () => {
+    const invoice = numberNewDocument({
+      invoice: createBlankInvoice(),
+      isFromTemplate: false,
+      library: []
+    });
+
+    expect(invoice.number).toBe("INV-0001");
+  });
+
+  it("numbers a blank after the newest document of its type", () => {
+    const invoice = numberNewDocument({
+      invoice: createBlankInvoice(),
+      isFromTemplate: false,
+      library: [
+        stored("INV-0001", "invoice", 3),
+        stored("INV-0002", "invoice", 1),
+        stored("QUO-0009", "quote")
+      ]
+    });
+
+    expect(invoice.number).toBe("INV-0003");
+  });
+
+  it("follows the series someone switched to", () => {
+    const quote = numberNewDocument({
+      invoice: createBlankDocument("quote"),
+      isFromTemplate: false,
+      library: [stored("INV-0004", "invoice"), stored("Q-2026-07", "quote")]
+    });
+
+    expect(quote.number).toBe("Q-2026-08");
+  });
+
+  it("keeps a template's own number until it's taken, then moves it on", () => {
+    const template = invoiceWith({ number: "ACME-010" });
+
+    expect(
+      numberNewDocument({
+        invoice: template,
+        isFromTemplate: true,
+        library: [stored("INV-0004", "invoice")]
+      }).number
+    ).toBe("ACME-010");
+    expect(
+      numberNewDocument({
+        invoice: template,
+        isFromTemplate: true,
+        library: [stored("ACME-010", "invoice"), stored("ACME-012", "invoice")]
+      }).number
+    ).toBe("ACME-013");
   });
 });
 

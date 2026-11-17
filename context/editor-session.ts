@@ -52,7 +52,11 @@ import type {
 import { ensureRowIds } from "~/utils/ensure-row-ids";
 import { downloadBackupFile } from "~/utils/export-data";
 import { isBlankInvoice, isLargeRemoval } from "~/utils/invoice-content";
-import { describeCopy, prepareInvoiceCopy } from "~/utils/invoice-copy";
+import {
+  describeCopy,
+  numberNewDocument,
+  prepareInvoiceCopy
+} from "~/utils/invoice-copy";
 import { deriveInvoiceName } from "~/utils/invoice-name";
 import { createSiteTemplateInvoice } from "~/utils/site-template";
 import { trackInvoice } from "~/utils/track";
@@ -534,13 +538,43 @@ function openInvoice(documentId: string): Promise<void> {
   });
 }
 
+// A new document's number, after the ones the library has
+// (`numberNewDocument`). Read once the open invoice has been left, so its
+// number counts and a blank deleted on the way out doesn't. Where the library
+// can't be read, the number stays as it is.
+async function withNewNumber(
+  content: Invoice,
+  isFromTemplate = false
+): Promise<Invoice> {
+  if (storageUnavailable) return content;
+
+  try {
+    const library = await getAllInvoices();
+
+    return numberNewDocument({
+      invoice: content,
+      isFromTemplate,
+      library: library.map(document => ({
+        number: document.invoiceData.number,
+        documentType: document.invoiceData.documentType,
+        createdAt: document.createdAt
+      }))
+    });
+  } catch (error) {
+    console.error("[EditorSession] Failed to number a new invoice", error);
+
+    return content;
+  }
+}
+
 // Starts something new in place of the open invoice, once it's been left.
 async function replaceCurrent(
   create: () => { content: Invoice; templateId?: string | null }
 ) {
   if (!(await leaveCurrent())) return;
 
-  const { content, templateId } = create();
+  const { content: created, templateId = null } = create();
+  const content = await withNewNumber(created, templateId !== null);
 
   switchTo(newSession(content, { templateId }), content);
 }
@@ -770,7 +804,7 @@ function deleteAndStartBlank(
 
     dispose(open);
 
-    const blank = createBlankInvoice();
+    const blank = await withNewNumber(createBlankInvoice());
 
     switchTo(newSession(blank), blank);
   });
@@ -889,10 +923,12 @@ function applyStartingFont(font: InvoiceFont): void {
   session.pristine = liveContent();
 }
 
-// A blank invoice, whatever font an earlier link gave it.
+// A blank invoice, whatever font an earlier link gave it and whatever number
+// it took after the library's.
 function isBlankInAnyFont(invoice: Invoice) {
   return isBlankInvoice({
     ...invoice,
+    number: invoiceDefault.number,
     theme: { ...invoice.theme, font: invoiceDefault.theme.font }
   });
 }
@@ -1110,7 +1146,8 @@ async function load() {
     }
   }
 
-  const content = document?.invoiceData ?? createBlankInvoice();
+  const content =
+    document?.invoiceData ?? (await withNewNumber(createBlankInvoice()));
   const session = document
     ? sessionFromDocument(document)
     : newSession(content);

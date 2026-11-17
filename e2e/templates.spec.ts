@@ -37,10 +37,11 @@ test("opening a template starts a new invoice from it [R]", async ({
   await clickFileMenuItem(page, "Open Template");
   await libraryRow(page, "Reusable").click();
 
-  // The template's content starts a new invoice with an automatic name; "Base
-  // doc" stays as it was, and the new one joins the library once it's edited.
+  // The template's content starts a new invoice with an automatic name and the
+  // next number, since "Base doc" has the template's; "Base doc" stays as it
+  // was, and the new one joins the library once it's edited.
   await expect(page.getByLabel("From details")).toHaveValue("Template seller");
-  await expect(invoiceNameField(page)).toHaveValue("INV-0001");
+  await expect(invoiceNameField(page)).toHaveValue("INV-0002");
   expect(await countSavedInvoices(page)).toBe(1);
 
   await page.getByLabel("Invoice title").fill("From the template");

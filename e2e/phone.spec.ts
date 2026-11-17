@@ -161,7 +161,7 @@ test("phones get a tab bar instead of the canvas pill and panel toggles", async 
   await expect(inspector).toHaveAttribute("aria-modal", "true");
 });
 
-test("New invoice closes the invoices sheet and opens the form at its top", async ({
+test("New invoice closes the invoices sheet and opens the next invoice at its top", async ({
   page
 }) => {
   await page.goto("/create");
@@ -177,6 +177,10 @@ test("New invoice closes the invoices sheet and opens the form at its top", asyn
   );
   await expect(page.getByLabel("To details")).toHaveValue("");
   await expect(page.getByLabel("Invoice title")).toBeInViewport();
+  // Numbered after the one just left in the library, not INV-0001 again.
+  await expect(page.getByLabel("Invoice No.", { exact: true })).toHaveValue(
+    "INV-0002"
+  );
 });
 
 test("a phone opens to the form even when Preview was left on", async ({

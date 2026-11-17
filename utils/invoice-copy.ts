@@ -97,7 +97,7 @@ function nextNumberOfType({
   documentType,
   library
 }: {
-  original: string;
+  original?: string;
   documentType: DocumentType;
   library: { number: string; documentType: DocumentType; createdAt: Date }[];
 }) {
@@ -107,7 +107,7 @@ function nextNumberOfType({
   );
   // The original's series, and every other type's sample series.
   const otherSeries = [
-    original,
+    ...(original ? [original] : []),
     ...DOCUMENT_TYPES.filter(otherType => otherType !== documentType).map(
       otherType => DOCUMENT_TYPE_DEFAULTS[otherType].number
     )
@@ -137,6 +137,40 @@ function nextNumberOfType({
   return taken.has(sample.toLowerCase())
     ? nextInvoiceNumber(sample, takenNumbers)
     : sample;
+}
+
+/**
+ * The number a new document starts with, so it never repeats one the library
+ * already has. A blank (or a site template page's invoice) takes the next one
+ * in the series of the newest document of its type, as a copy of another type
+ * does, or its type's sample number in an empty library. A saved template
+ * keeps its own series, moved on past the highest number taken in it.
+ */
+export function numberNewDocument({
+  invoice,
+  isFromTemplate,
+  library
+}: {
+  invoice: Invoice;
+  isFromTemplate: boolean;
+  library: { number: string; documentType: DocumentType; createdAt: Date }[];
+}): Invoice {
+  const takenNumbers = library.map(document => document.number);
+  const isTaken = takenNumbers.some(
+    number =>
+      number.trim().toLowerCase() === invoice.number.trim().toLowerCase()
+  );
+
+  if (isFromTemplate) {
+    return isTaken
+      ? { ...invoice, number: nextInvoiceNumber(invoice.number, takenNumbers) }
+      : invoice;
+  }
+
+  return {
+    ...invoice,
+    number: nextNumberOfType({ documentType: invoice.documentType, library })
+  };
 }
 
 // The copy's due date. Between types whose due date means the same thing (an
