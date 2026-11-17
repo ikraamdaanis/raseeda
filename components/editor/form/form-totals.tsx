@@ -7,9 +7,9 @@ import {
   FormAmount,
   FormArea,
   FormField,
+  FormFieldTitle,
   FormInput,
   FormNumberInput,
-  FormSelect,
   FormSwitch,
   formFieldClassName,
   formIconButtonClassName,
@@ -26,6 +26,8 @@ import {
 } from "~/components/editor/invoice-total-currency";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
+import { ToggleGroup, ToggleGroupItem } from "~/components/ui/toggle-group";
+import { formatCurrency } from "~/consts/currencies";
 import { DOCUMENT_TYPE_DEFAULTS } from "~/consts/document-types";
 import { useCurrencyConversion } from "~/hooks/use-currency-conversion";
 import { useSecondCurrency } from "~/hooks/use-second-currency";
@@ -161,8 +163,9 @@ export function FormTotals() {
   );
 }
 
-// A totals row's renameable label, the figure it prints, and the inputs it
-// adds.
+// A totals row: the typed rows (discounts, fees, amount paid) hold their own
+// box where the figure would be, so what's typed shows once; the sums are
+// read-only.
 function SummaryRow({
   id,
   row
@@ -172,18 +175,19 @@ function SummaryRow({
 }) {
   const { labels } = usePricingSlice();
   const name = useRowName()(id);
-  const section = ROW_SECTIONS[id];
-  const Inputs = ROW_INPUTS[id];
+  const parts = ROW_PARTS[id];
 
   return (
     <RowGroup
       name={name}
       label={labels[id]}
+      field={`labels.${id}`}
       value={row.value}
+      control={parts && <parts.Control row={row} name={name} />}
       isTotal={row.isTotal}
-      section={section}
+      section={ROW_SECTIONS[id]}
     >
-      {Inputs && <Inputs row={row} />}
+      {parts?.Below && <parts.Below row={row} />}
     </RowGroup>
   );
 }
@@ -196,30 +200,35 @@ const ROW_SECTIONS: Partial<Record<keyof typeof ROW_NAMES, InvoiceSectionKey>> =
     amountPaid: "amountPaid"
   };
 
-const ROW_INPUTS: Partial<
-  Record<
-    keyof typeof ROW_NAMES,
-    (props: { row: InvoiceSummaryRow }) => ReactNode
-  >
-> = {
-  discounts: DiscountInputs,
-  fees: FeesInput,
-  amountPaid: AmountPaidInputs
-};
+// Every row lays out on the same three columns (its label, its figure or box,
+// and room for a Hide button), so the figures line up down one right edge as
+// the printed totals do.
+const ROW_GRID_CLASS_NAME =
+  "grid grid-cols-[minmax(0,1fr)_auto_2.25rem] items-center gap-x-3";
 
-// One row: its label as it prints, what it comes to, a Hide button where it's
-// a part of its own, and its inputs under it.
+// A read-only figure's digits end where a box's do, inside its padding.
+const ROW_FIGURE_CLASS_NAME = "col-start-2 pr-2.5";
+
+/**
+ * One row: its label as it prints, its figure (or the box it's typed in), a
+ * Hide button where it's a part of its own, and anything it adds under it.
+ * The total sits under a rule, as it prints.
+ */
 function RowGroup({
   name,
   label,
+  field,
   value,
+  control,
   isTotal = false,
   section,
   children
 }: {
   name: string;
   label: string;
+  field: string;
   value: string;
+  control?: ReactNode;
   isTotal?: boolean;
   section?: InvoiceSectionKey;
   children?: ReactNode;
@@ -231,23 +240,34 @@ function RowGroup({
     !getTypeSettledSections(documentType).includes(section);
 
   return (
-    <div className="flex flex-col gap-3">
-      <div className="flex min-h-11 items-center gap-3">
-        <span
-          className={cn(
-            "min-w-0 flex-1 truncate",
-            isTotal ? "text-lg font-semibold" : "font-medium"
-          )}
-        >
-          {label.trim() || name}
-        </span>
-        <FormAmount value={value} isTotal={isTotal} />
+    <div
+      className={cn(
+        "flex flex-col gap-3",
+        isTotal && "border-border border-t pt-5"
+      )}
+    >
+      <div className={cn(ROW_GRID_CLASS_NAME, "min-h-11")}>
+        <div className="flex min-w-0">
+          <FormFieldTitle
+            field={field}
+            className={isTotal ? "text-lg font-semibold" : "font-medium"}
+          >
+            {label.trim() || name}
+          </FormFieldTitle>
+        </div>
+        {control ?? (
+          <FormAmount
+            value={value}
+            isTotal={isTotal}
+            className={ROW_FIGURE_CLASS_NAME}
+          />
+        )}
         {canHide && (
           <Button
             variant="ghost"
             aria-label={`Hide ${name.toLowerCase()}`}
             onClick={() => setSection(section, false)}
-            className={cn(formIconButtonClassName, "-mr-2")}
+            className={cn(formIconButtonClassName, "-mr-2 justify-self-end")}
           >
             <IconX aria-hidden="true" className="size-5" />
           </Button>
@@ -258,110 +278,144 @@ function RowGroup({
   );
 }
 
-// A discount is a fixed amount or a percentage of the subtotal.
-function DiscountInputs() {
-  const { discounts, discountType, setDiscounts, setDiscountType } =
-    usePricingSlice();
-  const money = useMoneyFormat();
-  const typeId = useId();
-  const amountId = useId();
-  const isPercentage = discountType === "percentage";
-
+/**
+ * A row's own box, where its figure would be. An amount reads with its
+ * currency at rest; a rate carries its % inside the box. Tapping a
+ * right-aligned figure would put the caret before it, so it's selected and
+ * typing replaces it.
+ */
+function RowNumberBox({
+  suffix,
+  ...props
+}: Parameters<typeof FormNumberInput>[0] & { suffix?: string }) {
   return (
-    <div className="grid grid-cols-2 gap-x-3 gap-y-4">
-      <FormField id={typeId} title="Discount as">
-        <FormSelect
-          id={typeId}
-          data-field="discountType"
-          value={discountType}
-          onChange={event =>
-            setDiscountType(
-              event.target.value === "percentage" ? "percentage" : "fixed"
-            )
-          }
+    <div
+      className="relative col-start-2 w-32"
+      onFocus={event => {
+        const input = event.target;
+
+        if (input instanceof HTMLInputElement) {
+          requestAnimationFrame(() => input.select());
+        }
+      }}
+    >
+      <FormNumberInput
+        {...props}
+        className={cn("text-right", suffix && "pr-8")}
+      />
+      {suffix && (
+        <span
+          aria-hidden="true"
+          className="text-muted-foreground pointer-events-none absolute inset-y-0 right-3 flex items-center text-base"
         >
-          <option value="fixed">{`Amount (${money.marker})`}</option>
-          <option value="percentage">Percentage (%)</option>
-        </FormSelect>
-      </FormField>
-      <FormField
-        id={amountId}
-        title={isPercentage ? "Percentage (%)" : `Amount (${money.marker})`}
-      >
-        <FormNumberInput
-          id={amountId}
-          data-field="discounts"
-          value={discounts}
-          onChange={setDiscounts}
-          money={money}
-          decimals={isPercentage ? 2 : money.decimals}
-          min={0}
-          max={isPercentage ? 100 : undefined}
-        />
-      </FormField>
+          {suffix}
+        </span>
+      )}
     </div>
   );
 }
 
-function FeesInput() {
-  const { fees, setFees } = usePricingSlice();
-  const money = useMoneyFormat();
-  const id = useId();
+/**
+ * A quiet line under a row's box, in its figure's column: what a rate comes
+ * to, or an amount in the second currency. `value` is a row's figure, the
+ * second currency's after " / ".
+ */
+function RowNote({
+  value,
+  prefix,
+  start
+}: {
+  value: string;
+  prefix?: string;
+  start?: ReactNode;
+}) {
+  const [amount, converted] = value.split(" / ");
+  const lines = [
+    ...(prefix ? [`${prefix} ${amount}`] : []),
+    ...(converted ? [converted] : [])
+  ];
+
+  if (lines.length === 0 && !start) return null;
 
   return (
-    <FormField id={id} title={`Fees (${money.marker})`}>
-      <FormNumberInput
-        id={id}
-        data-field="fees"
-        value={fees}
-        onChange={setFees}
-        money={money}
-        decimals={money.decimals}
-        min={0}
-      />
-    </FormField>
+    <div className={cn(ROW_GRID_CLASS_NAME, "-mt-1")}>
+      {start}
+      <span className="text-muted-foreground col-start-2 flex flex-col items-end pr-2.5 text-base tabular-nums">
+        {lines.map(line => (
+          <span key={line} className="whitespace-nowrap">
+            {line}
+          </span>
+        ))}
+      </span>
+    </div>
   );
 }
 
-// The payment, the date it was made, and the PAID stamp that prints by the
-// title once it covers the total (never on a document whose type leaves it
-// off).
-function AmountPaidInputs() {
-  const { amountPaid, setAmountPaid, paidDate, setPaidDate } =
-    usePricingSlice();
+function FeesControl({ name }: { row: InvoiceSummaryRow; name: string }) {
+  const { fees, setFees } = usePricingSlice();
+  const money = useMoneyFormat();
+
+  return (
+    <RowNumberBox
+      aria-label={name}
+      data-field="fees"
+      value={fees}
+      onChange={setFees}
+      money={money}
+      decimals={money.decimals}
+      min={0}
+      display={formatCurrency(fees, money)}
+      showMarker
+    />
+  );
+}
+
+function FeesBelow({ row }: { row: InvoiceSummaryRow }) {
+  return <RowNote value={row.value} />;
+}
+
+function PaidControl({ name }: { row: InvoiceSummaryRow; name: string }) {
+  const { amountPaid, setAmountPaid } = usePricingSlice();
+  const money = useMoneyFormat();
+
+  return (
+    <RowNumberBox
+      aria-label={name}
+      data-field="amountPaid"
+      value={amountPaid}
+      onChange={setAmountPaid}
+      money={money}
+      decimals={money.decimals}
+      min={0}
+      display={formatCurrency(amountPaid, money)}
+      showMarker
+    />
+  );
+}
+
+// The date it was paid and the PAID stamp, which prints by the title once the
+// payment covers the total (never on a document whose type leaves it off).
+function PaidBelow({ row }: { row: InvoiceSummaryRow }) {
+  const { paidDate, setPaidDate } = usePricingSlice();
   const { sections, setSection } = useSectionsSlice();
   const documentType = useDocumentType();
-  const money = useMoneyFormat();
-  const amountId = useId();
   const dateId = useId();
   const offersStamp =
     !getTypeSettledSections(documentType).includes("paidStamp");
 
   return (
     <>
-      <div className="grid grid-cols-2 gap-x-3 gap-y-4">
-        <FormField id={amountId} title={`Paid (${money.marker})`}>
-          <FormNumberInput
-            id={amountId}
-            data-field="amountPaid"
-            value={amountPaid}
-            onChange={setAmountPaid}
-            money={money}
-            decimals={money.decimals}
-            min={0}
-          />
-        </FormField>
-        <FormField id={dateId} title="Date paid">
-          <InvoiceDateField
-            value={paidDate}
-            label="Payment date"
-            placeholder="Pick a date"
-            canClear
-            triggerClassName={dateTriggerClassName}
-            onSelect={setPaidDate}
-          />
-        </FormField>
-      </div>
+      <RowNote value={row.value} />
+      <FormField id={dateId} title="Date paid">
+        <InvoiceDateField
+          value={paidDate}
+          label="Payment date"
+          placeholder="Pick a date"
+          canClear
+          triggerClassName={dateTriggerClassName}
+          onSelect={setPaidDate}
+        />
+      </FormField>
       {offersStamp && (
         <FormSwitch
           label="PAID stamp"
@@ -375,14 +429,100 @@ function AmountPaidInputs() {
   );
 }
 
-// The invoice's own tax rate, with Exempt and Per line, and what it comes to.
-// When the lines' own rates make the PDF print other rows (a row per rate, or
-// the one rate they all share), those show under it, read-only, so the totals
-// always add up.
+// A discount is a fixed amount or a percentage of the subtotal.
+function DiscountControl({ name }: { row: InvoiceSummaryRow; name: string }) {
+  const { discounts, discountType, setDiscounts } = usePricingSlice();
+  const money = useMoneyFormat();
+  const isPercentage = discountType === "percentage";
+
+  return (
+    <RowNumberBox
+      aria-label={isPercentage ? `${name} (%)` : name}
+      data-field="discounts"
+      value={discounts}
+      onChange={setDiscounts}
+      money={money}
+      decimals={isPercentage ? 2 : money.decimals}
+      min={0}
+      max={isPercentage ? 100 : undefined}
+      display={isPercentage ? undefined : formatCurrency(discounts, money)}
+      showMarker={!isPercentage}
+      suffix={isPercentage ? "%" : undefined}
+    />
+  );
+}
+
+// Whether the discount is an amount or a percentage, switched under its
+// label, with what a percentage comes to under its box.
+function DiscountBelow({ row }: { row: InvoiceSummaryRow }) {
+  const { discountType, setDiscountType } = usePricingSlice();
+  const money = useMoneyFormat();
+  const isPercentage = discountType === "percentage";
+
+  return (
+    <RowNote
+      value={row.value}
+      prefix={isPercentage ? "comes to" : undefined}
+      start={
+        <ToggleGroup
+          aria-label="Discount as"
+          data-field="discountType"
+          value={[discountType]}
+          onValueChange={next => {
+            const type = next.at(0);
+
+            if (type === "fixed" || type === "percentage") {
+              setDiscountType(type);
+            }
+          }}
+          variant="outline"
+          spacing={0}
+          className="self-start"
+        >
+          <ToggleGroupItem
+            value="fixed"
+            aria-label="Amount"
+            className="h-11 min-w-11 text-base"
+          >
+            {money.marker}
+          </ToggleGroupItem>
+          <ToggleGroupItem
+            value="percentage"
+            aria-label="Percentage"
+            className="h-11 min-w-11 text-base"
+          >
+            %
+          </ToggleGroupItem>
+        </ToggleGroup>
+      }
+    />
+  );
+}
+
+const ROW_PARTS: Partial<
+  Record<
+    keyof typeof ROW_NAMES,
+    {
+      Control: (props: { row: InvoiceSummaryRow; name: string }) => ReactNode;
+      Below?: (props: { row: InvoiceSummaryRow }) => ReactNode;
+    }
+  >
+> = {
+  discounts: { Control: DiscountControl, Below: DiscountBelow },
+  fees: { Control: FeesControl, Below: FeesBelow },
+  amountPaid: { Control: PaidControl, Below: PaidBelow }
+};
+
+/**
+ * The invoice's own tax rate, typed in the row's box, with what it comes to
+ * under it, then Exempt and Per line. When the lines' own rates make the PDF
+ * print other rows (a row per rate, or the one rate they all share), those
+ * show under it, read-only, so the totals always add up, and the box is the
+ * default rate.
+ */
 function TaxRows({ rows }: { rows: InvoiceSummaryRow[] }) {
   const { tax, setTax, labels } = usePricingSlice();
   const money = useMoneyFormat();
-  const rateId = useId();
   const noteId = useId();
   const firstRow = rows.at(0);
   const readsAsPrinted =
@@ -392,26 +532,16 @@ function TaxRows({ rows }: { rows: InvoiceSummaryRow[] }) {
     <RowGroup
       name="Tax"
       label={labels.tax}
-      value={readsAsPrinted || tax.exempt ? "" : firstRow.value}
-      section="tax"
-    >
-      {tax.exempt ? (
-        <FormField id={noteId} title="Exempt note">
-          <FormInput
-            id={noteId}
-            data-field="tax.note"
-            value={tax.note}
-            onChange={value => setTax(prev => ({ ...prev, note: value }))}
-            placeholder="e.g. Reverse charge"
-          />
-        </FormField>
-      ) : (
-        <FormField
-          id={rateId}
-          title={readsAsPrinted ? "Default rate (%)" : "Rate (%)"}
-        >
-          <FormNumberInput
-            id={rateId}
+      field="labels.tax"
+      value=""
+      control={
+        tax.exempt ? (
+          <span className="text-muted-foreground col-start-2 pr-2.5 text-base">
+            Exempt
+          </span>
+        ) : (
+          <RowNumberBox
+            aria-label={readsAsPrinted ? "Default tax rate" : "Tax rate"}
             data-field="tax.percentage"
             value={tax.percentage}
             onChange={percentage => setTax(prev => ({ ...prev, percentage }))}
@@ -419,6 +549,23 @@ function TaxRows({ rows }: { rows: InvoiceSummaryRow[] }) {
             decimals={2}
             min={0}
             max={100}
+            suffix="%"
+          />
+        )
+      }
+      section="tax"
+    >
+      {!tax.exempt && !readsAsPrinted && (
+        <RowNote value={firstRow.value} prefix="comes to" />
+      )}
+      {tax.exempt && (
+        <FormField id={noteId} title="Exempt note">
+          <FormInput
+            id={noteId}
+            data-field="tax.note"
+            value={tax.note}
+            onChange={value => setTax(prev => ({ ...prev, note: value }))}
+            placeholder="e.g. Reverse charge"
           />
         </FormField>
       )}
@@ -441,16 +588,16 @@ function TaxRows({ rows }: { rows: InvoiceSummaryRow[] }) {
       />
       {readsAsPrinted &&
         rows.map(row => (
-          <div key={row.label} className="flex min-h-11 items-center gap-3">
-            <span className="text-muted-foreground min-w-0 flex-1 truncate">
+          <div key={row.label} className={cn(ROW_GRID_CLASS_NAME, "min-h-11")}>
+            <span className="text-muted-foreground min-w-0 truncate">
               {row.percentage === undefined
                 ? row.label
                 : `${row.label} ${formatPlainNumber(row.percentage, money.numberFormat)}%`}
             </span>
             {row.note === undefined ? (
-              <FormAmount value={row.value} />
+              <FormAmount value={row.value} className={ROW_FIGURE_CLASS_NAME} />
             ) : (
-              <span className="text-muted-foreground">
+              <span className="text-muted-foreground col-start-2 pr-2.5 text-right">
                 {row.note.trim() || "Exempt"}
               </span>
             )}

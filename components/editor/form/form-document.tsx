@@ -34,7 +34,7 @@ import {
  * once rather than watched as it changes, so on a phone it lives in the form
  * rather than the Style tray. The type comes first, since it decides the
  * title, the number and which rows the form shows; the language rewrites
- * every label, each renamed on its own in its part's Labels row.
+ * every label, each renamed on its own from the pencil beside it.
  */
 export function FormDocument() {
   return (

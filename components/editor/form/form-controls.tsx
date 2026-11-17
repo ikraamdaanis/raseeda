@@ -1,6 +1,13 @@
-import { IconChevronDown, IconPlus, IconX } from "@tabler/icons-react";
+import { IconPencil, IconPlus, IconX } from "@tabler/icons-react";
 import type { ComponentProps, ReactNode } from "react";
-import { useId, useLayoutEffect, useRef } from "react";
+import {
+  createContext,
+  useContext,
+  useId,
+  useLayoutEffect,
+  useRef,
+  useState
+} from "react";
 import { useNumberField } from "~/components/editor/number-field";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
@@ -37,9 +44,9 @@ export const formIconButtonClassName =
 export const formSectionClassName =
   "bg-background flex flex-col gap-5 px-[max(1rem,env(safe-area-inset-left))] py-6";
 
-// A label the page prints, renamed in a part's Labels row: what it's called
-// before it's renamed (the field's title and placeholder), what it's renamed
-// to, and the `data-field` path the page's own label has.
+// A label the page prints: what it's called before it's renamed (the
+// placeholder of the field that renames it), what it's renamed to, and the
+// `data-field` path the page's own label has.
 type PrintedLabel = {
   name: string;
   value: string;
@@ -47,11 +54,15 @@ type PrintedLabel = {
   onChange: (value: string) => void;
 };
 
+// The labels a part prints, by path, for its titles to rename.
+const AreaLabelsContext = createContext<Map<string, PrintedLabel>>(new Map());
+
 /**
  * One part of the page, under its heading, in the order it prints. The heading
- * reads as it prints (From, Notes), and a part that can be hidden has a Remove
- * button beside it. The labels it prints, its heading first, are renamed in
- * its Labels row at the foot.
+ * and the titles in it read as they print (From, Due Date), and each of those
+ * the page prints is renamed where it stands, from the pencil beside it:
+ * `label` is the heading's, `labels` the titles' (only those that print right
+ * now). A part that can be hidden has a Remove button beside its heading.
  */
 export function FormArea({
   area,
@@ -75,120 +86,201 @@ export function FormArea({
   children?: ReactNode;
 }) {
   const headingId = useId();
-  const printedLabels = label
-    ? [{ name: "Heading", ...label }, ...labels]
-    : labels;
+  const heading = label?.value.trim() || title;
+  const printedLabels = new Map(
+    labels.map(printedLabel => [printedLabel.field, printedLabel])
+  );
 
   return (
-    <section
-      data-field-area={area}
-      aria-labelledby={headingId}
-      className={formSectionClassName}
-    >
-      <div className="flex min-h-9 items-center gap-2">
-        <h2
-          id={headingId}
-          className="min-w-0 flex-1 truncate text-lg font-semibold"
-        >
-          {label?.value.trim() || title}
-        </h2>
-        {onRemove && (
-          <Button
-            variant="ghost"
-            aria-label={removeLabel ?? `Remove ${title.toLowerCase()}`}
-            onClick={onRemove}
-            className={cn(formIconButtonClassName, "-mr-2")}
-          >
-            <IconX aria-hidden="true" />
-          </Button>
-        )}
-      </div>
-      {children}
-      <FormLabels labels={printedLabels} />
-    </section>
+    <AreaLabelsContext.Provider value={printedLabels}>
+      <section
+        data-field-area={area}
+        aria-labelledby={headingId}
+        className={formSectionClassName}
+      >
+        <div className="flex min-h-9 items-center gap-2">
+          {label ? (
+            <RenameableHeading
+              id={headingId}
+              label={{ name: title, ...label }}
+            />
+          ) : (
+            <h2
+              id={headingId}
+              className="min-w-0 flex-1 truncate text-lg font-semibold"
+            >
+              {heading}
+            </h2>
+          )}
+          {onRemove && (
+            <Button
+              variant="ghost"
+              aria-label={removeLabel ?? `Remove ${title.toLowerCase()}`}
+              onClick={onRemove}
+              className={cn(formIconButtonClassName, "-mr-2")}
+            >
+              <IconX aria-hidden="true" />
+            </Button>
+          )}
+        </div>
+        {children}
+      </section>
+    </AreaLabelsContext.Provider>
+  );
+}
+
+// A heading the page prints, with a pencil that turns it into the field that
+// renames it.
+function RenameableHeading({ id, label }: { id: string; label: PrintedLabel }) {
+  const [isRenaming, setIsRenaming] = useState(false);
+  const heading = label.value.trim() || label.name;
+
+  if (isRenaming) {
+    return (
+      <LabelInput
+        id={id}
+        label={label}
+        onDone={() => setIsRenaming(false)}
+        className="flex-1 text-lg font-semibold md:text-lg"
+      />
+    );
+  }
+
+  return (
+    <div className="flex min-w-0 flex-1 items-center gap-1">
+      <h2 id={id} className="min-w-0 truncate text-lg font-semibold">
+        {heading}
+      </h2>
+      <Button
+        variant="ghost"
+        aria-label={`Rename ${heading} heading`}
+        data-rename-field={label.field}
+        onClick={() => setIsRenaming(true)}
+        className={cn(formIconButtonClassName, "-my-2 size-8")}
+      >
+        <IconPencil aria-hidden="true" className="size-4" />
+      </Button>
+    </div>
+  );
+}
+
+// Renames a printed label in place, with a dashed border apart from the
+// fields that hold the invoice's content. It takes focus as it appears, and
+// leaving it (Done, Return, or a tap elsewhere) puts the title back. Named
+// "Due Date label" for a screen reader, apart from the Due Date field.
+function LabelInput({
+  id,
+  label,
+  onDone,
+  className
+}: {
+  id?: string;
+  label: PrintedLabel;
+  onDone: () => void;
+  className?: string;
+}) {
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useLayoutEffect(() => {
+    inputRef.current?.focus();
+  }, []);
+
+  return (
+    <Input
+      ref={inputRef}
+      id={id}
+      aria-label={`${label.name} label`}
+      data-field={label.field}
+      value={label.value}
+      placeholder={label.name}
+      enterKeyHint="done"
+      onChange={event => label.onChange(event.target.value)}
+      onBlur={onDone}
+      onKeyDown={event => {
+        if (event.key === "Enter") event.currentTarget.blur();
+      }}
+      className={cn(
+        formFieldClassName,
+        "min-w-0 border-dashed font-medium",
+        className
+      )}
+    />
   );
 }
 
 /**
- * A part's printed labels, renamed behind a row that reads what they print
- * now. It's closed to start with, since few ever rename one; anything that
- * jumps to one of its fields (a tap on the page, undo) opens it first
- * (`revealField`, `utils/reveal-field.ts`), and it stays open until it's closed. A cleared label
- * prints its default.
+ * A field's title, the label it prints under. Given that label's `field`
+ * path, and while the label prints, a pencil beside it renames it in place.
+ * `children` is the title as shown (a price's adds its currency).
  */
-function FormLabels({ labels }: { labels: PrintedLabel[] }) {
-  if (labels.length === 0) return null;
+export function FormFieldTitle({
+  htmlFor,
+  field,
+  className,
+  children
+}: {
+  htmlFor?: string;
+  field?: string;
+  className?: string;
+  children: ReactNode;
+}) {
+  const labels = useContext(AreaLabelsContext);
+  const [isRenaming, setIsRenaming] = useState(false);
+  const label = field ? labels.get(field) : undefined;
+  const Title = htmlFor ? "label" : "span";
 
-  const printed = labels
-    .map(label => label.value.trim() || label.name)
-    .join(", ");
-
-  return (
-    <details className="group border-border -mb-2 border-t">
-      <summary className="flex min-h-14 cursor-pointer list-none items-center gap-3 pt-3 [&::-webkit-details-marker]:hidden">
-        <span className="flex min-w-0 flex-1 flex-col">
-          <span className={formLabelClassName}>Labels</span>
-          <span className={cn(formHintClassName, "line-clamp-2")}>
-            {printed}
-          </span>
-        </span>
-        <IconChevronDown
-          aria-hidden="true"
-          className="text-muted-foreground size-5 shrink-0 transition-transform group-open:rotate-180 motion-reduce:transition-none"
-        />
-      </summary>
-      <div className="flex flex-col gap-4 pt-4 pb-2">
-        <p className={formHintClassName}>
-          The words the page prints here. A cleared label prints its default.
-        </p>
-        {labels.map(label => (
-          <LabelField key={label.field} label={label} />
-        ))}
-      </div>
-    </details>
-  );
-}
-
-// Named "Due Date label" for a screen reader, apart from the Due Date field it
-// renames.
-function LabelField({ label }: { label: PrintedLabel }) {
-  const id = useId();
+  if (label && isRenaming) {
+    return <LabelInput label={label} onDone={() => setIsRenaming(false)} />;
+  }
 
   return (
-    <FormField id={id} title={label.name}>
-      <FormInput
-        id={id}
-        aria-label={`${label.name} label`}
-        data-field={label.field}
-        value={label.value}
-        onChange={label.onChange}
-        placeholder={label.name}
-      />
-    </FormField>
+    <span className="flex min-w-0 items-center gap-1">
+      <Title htmlFor={htmlFor} className={cn("truncate", className)}>
+        {children}
+      </Title>
+      {label && (
+        <Button
+          variant="ghost"
+          aria-label={`Rename ${label.value.trim() || label.name} label`}
+          data-rename-field={label.field}
+          onClick={() => setIsRenaming(true)}
+          className={cn(formIconButtonClassName, "-my-2 size-8")}
+        >
+          <IconPencil aria-hidden="true" className="size-4" />
+        </Button>
+      )}
+    </span>
   );
 }
 
 /**
  * A field under its title: the label the field prints under, as it prints.
+ * `labelField` is that label's path, for renaming it where it stands.
  */
 export function FormField({
   id,
   title,
+  labelField,
   hint,
   className,
   children
 }: {
   id: string;
   title: string;
+  labelField?: string;
   hint?: ReactNode;
   className?: string;
   children: ReactNode;
 }) {
   return (
     <div className={cn("flex min-w-0 flex-col gap-2", className)}>
-      <label htmlFor={id} className={cn(formLabelClassName, "truncate")}>
+      <FormFieldTitle
+        htmlFor={id}
+        field={labelField}
+        className={formLabelClassName}
+      >
         {title}
-      </label>
+      </FormFieldTitle>
       {children}
       {hint && <div className={formHintClassName}>{hint}</div>}
     </div>

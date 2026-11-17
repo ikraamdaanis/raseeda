@@ -8,6 +8,7 @@ import {
   FormArea,
   formCardClassName,
   FormField,
+  FormFieldTitle,
   formIconButtonClassName,
   FormInput,
   formLabelClassName,
@@ -86,7 +87,7 @@ function useLineColumns() {
 }
 
 // The line items as cards, one per line, in the order they print. The column
-// headers every card shares are renamed in the Labels row.
+// headers every card shares are renamed from any card's titles.
 export function FormLineItems() {
   const { items, addItem, tableSettings, setTableSettings } =
     useLineItemsSlice();
@@ -193,9 +194,13 @@ function LineItemCard({
   return (
     <article aria-label={`Item ${index + 1}`} className={formCardClassName}>
       <div className="relative flex flex-col gap-2">
-        <label htmlFor={descriptionId} className={formLabelClassName}>
+        <FormFieldTitle
+          htmlFor={descriptionId}
+          field="tableSettings.columnLabels.description"
+          className={formLabelClassName}
+        >
           {labels.description}
-        </label>
+        </FormFieldTitle>
         <FormTextArea
           id={descriptionId}
           aria-label={`${labels.description}, item ${index + 1}`}
@@ -235,7 +240,11 @@ function LineItemCard({
       </div>
       {shown.quantityAndPrice && (
         <div className="grid grid-cols-2 gap-x-3 gap-y-4">
-          <FormField id={quantityId} title={labels.quantity}>
+          <FormField
+            id={quantityId}
+            title={labels.quantity}
+            labelField="tableSettings.columnLabels.quantity"
+          >
             <FormNumberInput
               id={quantityId}
               aria-label={`${labels.quantity}, item ${index + 1}`}
@@ -247,7 +256,11 @@ function LineItemCard({
             />
           </FormField>
           {shown.unit && (
-            <FormField id={unitId} title={labels.unit}>
+            <FormField
+              id={unitId}
+              title={labels.unit}
+              labelField="tableSettings.columnLabels.unit"
+            >
               <FormInput
                 id={unitId}
                 aria-label={`${labels.unit}, item ${index + 1}`}
@@ -261,6 +274,7 @@ function LineItemCard({
           <FormField
             id={priceId}
             title={`${labels.unitPrice} (${money.marker})`}
+            labelField="tableSettings.columnLabels.unitPrice"
             className={hasTaxColumn ? undefined : lastFieldClassName}
           >
             <FormNumberInput
@@ -288,9 +302,14 @@ function LineItemCard({
       )}
       <div className="border-border flex items-center gap-3 border-t pt-4">
         {shown.quantityAndPrice ? (
-          <span className="text-muted-foreground flex-1 text-base">
-            {labels.amount}
-          </span>
+          <div className="flex min-w-0 flex-1">
+            <FormFieldTitle
+              field="tableSettings.columnLabels.amount"
+              className="text-muted-foreground text-base"
+            >
+              {labels.amount}
+            </FormFieldTitle>
+          </div>
         ) : (
           <LineAmount
             item={item}
@@ -335,7 +354,12 @@ function LineAmount({
   const money = useMoneyFormat();
 
   return (
-    <FormField id={id} title={`${label} (${money.marker})`} className="flex-1">
+    <FormField
+      id={id}
+      title={`${label} (${money.marker})`}
+      labelField="tableSettings.columnLabels.amount"
+      className="flex-1"
+    >
       <FormNumberInput
         id={id}
         aria-label={`${label}, item ${index + 1}`}
@@ -388,7 +412,12 @@ function LineTax({
   }
 
   return (
-    <FormField id={id} title={`${label} (%)`} className={className}>
+    <FormField
+      id={id}
+      title={`${label} (%)`}
+      labelField="tableSettings.columnLabels.tax"
+      className={className}
+    >
       <div className="flex items-center gap-2">
         {isExempt || inheritsExempt ? (
           <span className="text-muted-foreground flex h-11 flex-1 items-center text-base">

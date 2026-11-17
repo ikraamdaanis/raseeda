@@ -93,7 +93,12 @@ function FormDetailRow({
 
   return (
     <div className="flex items-end gap-2">
-      <FormField id={id} title={title} className="flex-1">
+      <FormField
+        id={id}
+        title={title}
+        labelField={`labels.${row.labelKey}`}
+        className="flex-1"
+      >
         {dateValue !== null ? (
           <InvoiceDateField
             value={dateValue}

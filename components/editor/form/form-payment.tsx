@@ -118,7 +118,11 @@ function PaymentField({
   const label = paymentDetails.labels[fieldKey];
 
   return (
-    <FormField id={id} title={label.trim() || defaultLabel}>
+    <FormField
+      id={id}
+      title={label.trim() || defaultLabel}
+      labelField={`paymentDetails.labels.${fieldKey}`}
+    >
       <FormInput
         id={id}
         type={type}

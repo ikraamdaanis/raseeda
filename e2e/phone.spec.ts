@@ -111,13 +111,24 @@ test("the Page tab shows the page, and tapping a field opens it in the form", as
   await expect(toDetails).toBeInViewport();
 });
 
-test("a part's Labels row renames what the page prints", async ({ page }) => {
+test("a heading's pencil renames what the page prints, in place", async ({
+  page
+}) => {
   await page.goto("/create");
+  await page.getByRole("button", { name: "Rename To heading" }).tap();
 
-  const toPart = page.getByRole("region", { name: "To", exact: true });
+  const toLabel = page.getByRole("textbox", { name: "To label" });
 
-  await toPart.getByText("Labels", { exact: true }).tap();
-  await toPart.getByRole("textbox", { name: "Heading label" }).fill("Bill To");
+  await expect(toLabel).toBeFocused();
+
+  await toLabel.fill("Bill To");
+  await toLabel.press("Enter");
+
+  await expect(toLabel).toBeHidden();
+  await expect(
+    page.getByRole("heading", { name: "Bill To", exact: true })
+  ).toBeVisible();
+
   await showPage(page);
 
   // The page's labels are fields, so it's their values that are read.
@@ -135,24 +146,24 @@ test("a part's Labels row renames what the page prints", async ({ page }) => {
     .toContain("Bill To");
 });
 
-test("a Labels row lists only the labels that print", async ({ page }) => {
+test("only a label that prints has a pencil", async ({ page }) => {
   await page.goto("/create");
 
   const paymentPart = page.getByRole("region", { name: "Payment details" });
-  const ibanLabel = paymentPart.getByRole("textbox", { name: "IBAN label" });
+  const renameIban = paymentPart.getByRole("button", {
+    name: "Rename IBAN label"
+  });
 
-  await paymentPart.getByText("Labels", { exact: true }).tap();
-
-  await expect(ibanLabel).toHaveCount(0);
+  await expect(renameIban).toHaveCount(0);
 
   await paymentPart
     .getByRole("textbox", { name: "IBAN", exact: true })
     .fill("DE89 3704 0044 0532 0130 00");
 
-  await expect(ibanLabel).toBeVisible();
+  await expect(renameIban).toBeVisible();
 });
 
-test("tapping a label on the page opens its Labels row at it", async ({
+test("tapping a label on the page opens it for renaming in the form", async ({
   page
 }) => {
   await page.goto("/create");
@@ -165,6 +176,19 @@ test("tapping a label on the page opens its Labels row at it", async ({
 
   await expect(toLabel).toBeFocused();
   await expect(toLabel).toBeInViewport();
+});
+
+test("a totals row is typed in its own box, shown once", async ({ page }) => {
+  await page.goto("/create");
+
+  const totals = page.getByRole("region", { name: "Totals" });
+  const taxRate = totals.getByRole("textbox", { name: "Tax rate" });
+
+  await taxRate.fill("20");
+
+  await expect(taxRate).toHaveValue("20");
+  await expect(totals.getByText(/^comes to /)).toBeVisible();
+  await expect(totals.getByText("Rate (%)")).toHaveCount(0);
 });
 
 test("phones get a tab bar instead of the canvas pill and panel toggles", async ({
