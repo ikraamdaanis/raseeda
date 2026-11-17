@@ -84,17 +84,19 @@ function render({
     history: createMemoryHistory()
   });
 
+  // The provider's props type requires children, so they go in its props
+  // rather than as createElement's last argument.
+  const providerProps = {
+    router,
+    children: createElement(
+      EditorUiProvider,
+      null,
+      createElement(Harness, props)
+    )
+  };
+
   act(() => {
-    root.render(
-      createElement(RouterContextProvider, {
-        router,
-        children: createElement(
-          EditorUiProvider,
-          null,
-          createElement(Harness, props)
-        )
-      })
-    );
+    root.render(createElement(RouterContextProvider, providerProps));
   });
 }
 
