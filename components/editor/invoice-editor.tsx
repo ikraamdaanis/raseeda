@@ -41,7 +41,10 @@ import { FileActionsProvider } from "~/context/file-actions-context";
 import { useInvoiceDocument } from "~/context/invoice-document-context";
 
 // The editor. Every edit saves itself, so leaving needs no confirmation:
-// whatever is waiting is written as the editor unmounts.
+// whatever is waiting is written as the editor unmounts. Its root is isolated
+// so its own layers (the phone's editor screen, the Style tray) stack inside
+// it, under menus and dialogs: an open menu's backdrop then takes the tap that
+// closes it, rather than the form under it.
 export function InvoiceEditor() {
   return (
     <CanvasViewProvider>
@@ -50,7 +53,7 @@ export function InvoiceEditor() {
           <EditorShortcuts />
           <HistoryShortcuts />
           <CommandPalette />
-          <div className="relative flex h-dvh w-full flex-col overflow-hidden [--style-tray-height:min(21rem,52dvh)]">
+          <div className="relative isolate flex h-dvh w-full flex-col overflow-hidden [--style-tray-height:min(21rem,52dvh)]">
             <PhoneLibraryScreen />
             <EditorScreen>
               <EditorTopBar

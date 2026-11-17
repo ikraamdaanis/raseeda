@@ -352,6 +352,22 @@ test("the setup choices sit in the form", async ({ page }) => {
   }
 });
 
+test("a tap outside an open menu only closes it", async ({ page }) => {
+  await page.goto("/create");
+
+  const labelsSwitch = page.getByRole("switch", { name: "Edit labels" });
+  const box = await labelsSwitch.boundingBox();
+
+  if (!box) throw new Error("The Edit labels switch isn't shown");
+
+  await page.getByRole("button", { name: "Document menu" }).tap();
+  await expect(page.getByRole("menu")).toBeVisible();
+  await page.touchscreen.tap(box.x + box.width / 2, box.y + box.height / 2);
+
+  await expect(page.getByRole("menu")).toBeHidden();
+  await expect(labelsSwitch).not.toBeChecked();
+});
+
 test("a phone opens to the form even when Preview was left on", async ({
   page
 }) => {
