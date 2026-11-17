@@ -189,19 +189,53 @@ test("a totals row is typed in its own box, shown once", async ({ page }) => {
   await expect(totals.getByText("Rate (%)")).toHaveCount(0);
 });
 
-test("a field says what it is once on the first line, not on every line", async ({
+test("a detail says what it is, but a line's fields keep only their labels", async ({
   page
 }) => {
   await page.goto("/create");
 
-  const items = page.getByRole("region", { name: "Items" });
-
-  await items.getByRole("button", { name: "Add item" }).tap();
-
-  await expect(items.getByText("What you did or sold.")).toHaveCount(1);
   await expect(
-    items.getByRole("textbox", { name: /, item 2$/ }).first()
+    page
+      .getByRole("region", { name: "Details" })
+      .getByText(
+        "Use each number only once, so you and your client can refer to it."
+      )
   ).toBeVisible();
+  await expect(
+    page
+      .getByRole("region", { name: "Items" })
+      .getByText("Label", { exact: true })
+  ).toHaveCount(0);
+});
+
+test("adding a part slides the form to it", async ({ page }) => {
+  await page.goto("/create");
+
+  const details = page.getByRole("region", { name: "Details" });
+
+  await details.getByRole("button", { name: "Remove PO number" }).tap();
+
+  const addPoNumber = details.getByRole("button", {
+    name: "PO number",
+    exact: true
+  });
+
+  // The button sits at the foot of the screen, so the row it adds, further up
+  // the part, lands above the top of the screen.
+  await addPoNumber.evaluate(button => {
+    const form = button.closest("[data-phone-form]");
+
+    if (!form) return;
+
+    form.scrollTop +=
+      button.getBoundingClientRect().bottom -
+      form.getBoundingClientRect().bottom;
+  });
+  await addPoNumber.tap();
+
+  await expect(
+    details.getByRole("textbox", { name: "PO number", exact: true })
+  ).toBeInViewport();
 });
 
 test("an optional totals row is removed from the button under it", async ({

@@ -196,7 +196,6 @@ function LineItemCard({
         id={descriptionId}
         title={labels.description}
         labelField="tableSettings.columnLabels.description"
-        explain={index === 0}
       >
         <div className="relative">
           <FormTextArea
@@ -275,7 +274,6 @@ function LineItemCard({
             title={labels.unitPrice}
             unit={money.marker}
             labelField="tableSettings.columnLabels.unitPrice"
-            explain={index === 0}
             className={hasTaxColumn ? undefined : lastFieldClassName}
           >
             <FormNumberInput
@@ -360,7 +358,6 @@ function LineAmount({
       title={label}
       unit={money.marker}
       labelField="tableSettings.columnLabels.amount"
-      explain={index === 0}
       className="flex-1"
     >
       <FormNumberInput
@@ -420,7 +417,6 @@ function LineTax({
       title={label}
       unit="%"
       labelField="tableSettings.columnLabels.tax"
-      explain={index === 0}
       className={className}
     >
       <div className="flex items-center gap-2">

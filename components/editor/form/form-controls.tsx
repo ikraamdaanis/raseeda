@@ -7,6 +7,7 @@ import {
   useLayoutEffect,
   useRef
 } from "react";
+import { addAndReveal } from "~/components/editor/form/form-scroll";
 import { useNumberField } from "~/components/editor/number-field";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
@@ -278,15 +279,13 @@ export function FormRemoveButton({
  * `unit` what the title adds after it (a price's currency). A field with a
  * note (`FIELD_NOTES`) says what it is, under a heading of its own, with
  * its label and what's typed each under a caption, and takes a grid's whole
- * row; `explain` leaves that to one of several fields with the same label (a
- * line's, on the first line only).
+ * row.
  */
 export function FormField({
   id,
   title,
   labelField,
   unit,
-  explain = true,
   hint,
   className,
   children
@@ -295,14 +294,13 @@ export function FormField({
   title: string;
   labelField?: string;
   unit?: string;
-  explain?: boolean;
   hint?: ReactNode;
   className?: string;
   children: ReactNode;
 }) {
   const labels = useContext(AreaLabelsContext);
   const label = labelField ? labels.get(labelField) : undefined;
-  const about = label && explain ? FIELD_NOTES[label.field] : undefined;
+  const about = label ? FIELD_NOTES[label.field] : undefined;
 
   // `children` keeps one place in the tree whether or not it's explained, so
   // a bank field whose label starts printing as it's typed in isn't remounted
@@ -545,7 +543,7 @@ export function FormSwitch({
 
 /**
  * The parts of an area that are switched off, each a button that turns it on
- * where it prints, from `useAddableParts`.
+ * where it prints, from `useAddableParts`, and slides the form to it.
  */
 export function FormAddParts({
   parts
@@ -557,7 +555,7 @@ export function FormAddParts({
   return (
     <div className="flex flex-wrap gap-2">
       {parts.map(part => (
-        <FormAddButton key={part.id} onClick={part.onAdd}>
+        <FormAddButton key={part.id} onClick={() => addAndReveal(part.onAdd)}>
           {part.label}
         </FormAddButton>
       ))}

@@ -12,6 +12,7 @@ import {
   FormTitle
 } from "~/components/editor/form/form-parties";
 import { FormPaymentDetails } from "~/components/editor/form/form-payment";
+import { scrollFormTo } from "~/components/editor/form/form-scroll";
 import { FormTotals } from "~/components/editor/form/form-totals";
 import { useInvoiceDocument } from "~/context/invoice-document-context";
 
@@ -189,19 +190,4 @@ export function focusFormTarget(target: { field?: string; area?: string }) {
   }
 
   if (area) scrollFormTo(form, area, "start");
-}
-
-// Scrolls the form alone. `scrollIntoView` would also scroll the editor's
-// shell, which clips the sheets waiting below the screen, and lift them into
-// view.
-function scrollFormTo(
-  form: HTMLElement,
-  element: HTMLElement,
-  block: "start" | "center"
-) {
-  const rect = element.getBoundingClientRect();
-  const offset =
-    block === "center" ? Math.max((form.clientHeight - rect.height) / 2, 0) : 0;
-
-  form.scrollTop += rect.top - form.getBoundingClientRect().top - offset;
 }

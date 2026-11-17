@@ -46,7 +46,7 @@ export const PART_NOTES: Partial<
 };
 
 // By the path of the label the field prints under. A field left out (a line's
-// quantity and unit) keeps only its label.
+// fields, the column headers every line shares) keeps only its label.
 export const FIELD_NOTES: Partial<
   Record<string, { note?: string; content: string }>
 > = {
@@ -81,22 +81,6 @@ export const FIELD_NOTES: Partial<
   "labels.servicePeriod": {
     note: "The dates the work covers.",
     content: "Dates"
-  },
-  "tableSettings.columnLabels.description": {
-    note: "What you did or sold.",
-    content: "Text"
-  },
-  "tableSettings.columnLabels.unitPrice": {
-    note: "The price for one, like one hour.",
-    content: "Price"
-  },
-  "tableSettings.columnLabels.tax": {
-    note: "The tax rate for this line.",
-    content: "Rate"
-  },
-  "tableSettings.columnLabels.amount": {
-    note: "The total for this line.",
-    content: "Amount"
   },
   "paymentDetails.labels.bankName": { content: "Name" },
   "paymentDetails.labels.accountName": {
