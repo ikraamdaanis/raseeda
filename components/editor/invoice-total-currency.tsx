@@ -27,7 +27,7 @@ import {
 import { isSameCurrency } from "~/utils/currency-conversion";
 
 const CUSTOM_CURRENCY = "__custom";
-const SECOND_CURRENCY_ID = "total-second-currency";
+export const SECOND_CURRENCY_ID = "total-second-currency";
 
 const linkClassName =
   "text-muted-foreground hover:text-foreground focus-visible:ring-ring relative -mx-1 flex h-6 w-fit items-center gap-1 rounded-md px-1 text-xs outline-none focus-visible:ring-1 pointer-coarse:h-11";
@@ -103,13 +103,16 @@ export function InvoiceTotalCurrency({
 }
 
 /**
- * The currency and second currency on their own, for the phone's form, where
- * there's no popover to close before the custom currency dialog opens.
+ * The invoice's currency, or the second currency, on its own, for the phone's
+ * form, which shows the first with the details and the second with the
+ * totals; there's no popover to close before the custom currency dialog opens.
  */
 export function CurrencyControls({
+  part,
   classNames
 }: {
-  classNames: { field: string; label: string; action: string };
+  part: "currency" | "second";
+  classNames: { field: string; label: string; action?: string };
 }) {
   const [customFor, setCustomFor] = useState<"currency" | "second" | null>(
     null
@@ -117,7 +120,17 @@ export function CurrencyControls({
 
   return (
     <>
-      <CurrencyRows onCustom={setCustomFor} classNames={classNames} />
+      {part === "currency" ? (
+        <InvoiceCurrencySelect
+          onCustom={() => setCustomFor("currency")}
+          classNames={classNames}
+        />
+      ) : (
+        <SecondCurrencyRows
+          onCustom={() => setCustomFor("second")}
+          classNames={classNames}
+        />
+      )}
       <CustomCurrency
         customFor={customFor}
         onClose={() => setCustomFor(null)}
@@ -180,10 +193,8 @@ function isPresetCurrency(symbol: string) {
   return currencyOptions.some(option => option.symbol === symbol);
 }
 
-// The currency, and a second one (never the same) the amounts are also shown
-// in: a quiet link under the currency until one is added, then its own picker
-// with a way to remove it. Focus follows, to the new picker or back to the
-// link.
+// The currency, then the second one the amounts are also shown in, as the
+// total's popover lists them.
 function CurrencyRows({
   onCustom,
   classNames = POPOVER_CLASS_NAMES
@@ -191,7 +202,52 @@ function CurrencyRows({
   onCustom: (target: "currency" | "second") => void;
   classNames?: { field: string; label: string; action: string };
 }) {
-  const { currency, currencyCode, setCurrency } = useCurrencySlice();
+  return (
+    <>
+      <InvoiceCurrencySelect
+        onCustom={() => onCustom("currency")}
+        classNames={classNames}
+      />
+      <SecondCurrencyRows
+        onCustom={() => onCustom("second")}
+        classNames={classNames}
+      />
+    </>
+  );
+}
+
+function InvoiceCurrencySelect({
+  onCustom,
+  classNames
+}: {
+  onCustom: () => void;
+  classNames: { field: string; label: string };
+}) {
+  const { currency, setCurrency } = useCurrencySlice();
+
+  return (
+    <CurrencySelect
+      id="total-currency"
+      label="Currency"
+      currency={currency}
+      onChange={setCurrency}
+      onCustom={onCustom}
+      classNames={classNames}
+    />
+  );
+}
+
+// The second currency every amount is also shown in (never the invoice's): a
+// quiet link until one is added, then its own picker with a way to remove it.
+// Focus follows, to the new picker or back to the link.
+function SecondCurrencyRows({
+  onCustom,
+  classNames
+}: {
+  onCustom: () => void;
+  classNames: { field: string; label: string; action?: string };
+}) {
+  const { currency, currencyCode } = useCurrencySlice();
   const { currencyConversion, setSecondCurrency } =
     useCurrencyConversionSlice();
   const secondCurrency = useSecondCurrency();
@@ -207,48 +263,36 @@ function CurrencyRows({
     document.getElementById(addButtonId)?.focus();
   }
 
-  return (
-    <>
+  return secondCurrency.isOn ? (
+    <div className="flex flex-col gap-1">
       <CurrencySelect
-        id="total-currency"
-        label="Currency"
-        currency={currency}
-        onChange={setCurrency}
-        onCustom={() => onCustom("currency")}
+        id={SECOND_CURRENCY_ID}
+        label="Also show in"
+        currency={currencyConversion.currency}
+        exclude={{ currency, currencyCode }}
+        onChange={setSecondCurrency}
+        onCustom={onCustom}
         classNames={classNames}
       />
-      {secondCurrency.isOn ? (
-        <div className="flex flex-col gap-1">
-          <CurrencySelect
-            id={SECOND_CURRENCY_ID}
-            label="Also show in"
-            currency={currencyConversion.currency}
-            exclude={{ currency, currencyCode }}
-            onChange={setSecondCurrency}
-            onCustom={() => onCustom("second")}
-            classNames={classNames}
-          />
-          <button
-            type="button"
-            onClick={handleRemove}
-            className={classNames.action}
-          >
-            <IconX aria-hidden="true" className="size-3.5 shrink-0" />
-            Remove second currency
-          </button>
-        </div>
-      ) : (
-        <button
-          id={addButtonId}
-          type="button"
-          onClick={handleAdd}
-          className={classNames.action}
-        >
-          <IconPlus aria-hidden="true" className="size-3.5 shrink-0" />
-          Add second currency
-        </button>
-      )}
-    </>
+      <button
+        type="button"
+        onClick={handleRemove}
+        className={classNames.action}
+      >
+        <IconX aria-hidden="true" className="size-3.5 shrink-0" />
+        Remove second currency
+      </button>
+    </div>
+  ) : (
+    <button
+      id={addButtonId}
+      type="button"
+      onClick={handleAdd}
+      className={classNames.action}
+    >
+      <IconPlus aria-hidden="true" className="size-3.5 shrink-0" />
+      Add second currency
+    </button>
   );
 }
 

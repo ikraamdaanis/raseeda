@@ -1,6 +1,7 @@
 import { IconX } from "@tabler/icons-react";
 import type { ReactNode } from "react";
 import { useId } from "react";
+import { flushSync } from "react-dom";
 import {
   FormAddParts,
   FormAmount,
@@ -20,11 +21,15 @@ import { useAddableParts } from "~/components/editor/invoice-add-part";
 import { InvoiceDateField } from "~/components/editor/invoice-date-field";
 import { useExchangeRateField } from "~/components/editor/invoice-exchange-rate";
 import { isInvoiceTaxRow } from "~/components/editor/invoice-pricing";
-import { CurrencyControls } from "~/components/editor/invoice-total-currency";
+import {
+  CurrencyControls,
+  SECOND_CURRENCY_ID
+} from "~/components/editor/invoice-total-currency";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { DOCUMENT_TYPE_DEFAULTS } from "~/consts/document-types";
 import { useCurrencyConversion } from "~/hooks/use-currency-conversion";
+import { useSecondCurrency } from "~/hooks/use-second-currency";
 import { useShownSections } from "~/hooks/use-shown-sections";
 import { cn } from "~/lib/utils";
 import {
@@ -57,8 +62,9 @@ const ROW_NAMES = {
 
 // The totals as the page lists them, in print order: the typed figures inline,
 // each with what it comes to, and the sums read-only, the total and balance
-// due last. Then the invoice's currencies and the exchange rate, and the rows
-// that are switched off.
+// due last. Then the second currency and the exchange rate, once added, and
+// the rows that are switched off, the second currency among them. The invoice's own currency is with the details, before
+// any price is typed.
 export function FormTotals() {
   const invoice = useSummaryInputs();
   const sections = useShownSections();
@@ -66,8 +72,21 @@ export function FormTotals() {
   const { currencyConversion, setCurrencyConversion } =
     useCurrencyConversionSlice();
   const addableParts = useAddableParts("totals");
+  const secondCurrency = useSecondCurrency();
   const rows = buildEditorSummaryRows({ invoice, sections, conversion });
   const taxRows = rows.filter(row => row.id === "tax");
+  const currencyParts = secondCurrency.isOn
+    ? []
+    : [
+        {
+          id: "secondCurrency",
+          label: "Second currency",
+          onAdd: () => {
+            flushSync(secondCurrency.add);
+            document.getElementById(SECOND_CURRENCY_ID)?.focus();
+          }
+        }
+      ];
   const rateParts =
     conversion && !currencyConversion.showRate
       ? [
@@ -95,18 +114,21 @@ export function FormTotals() {
           return <SummaryRow key={row.id} id={row.id} row={row} />;
         })}
       </div>
-      <div className="border-border flex flex-col gap-4 border-t pt-5">
-        <CurrencyControls
-          classNames={{
-            field: cn(formFieldClassName, "leading-11"),
-            label: formLabelClassName,
-            action:
-              "text-muted-foreground flex h-11 items-center gap-2 self-start text-base [&_svg]:size-5"
-          }}
-        />
-      </div>
+      {secondCurrency.isOn && (
+        <div className="border-border flex flex-col gap-4 border-t pt-5">
+          <CurrencyControls
+            part="second"
+            classNames={{
+              field: cn(formFieldClassName, "leading-11"),
+              label: formLabelClassName,
+              action:
+                "text-muted-foreground flex h-11 items-center gap-2 self-start text-base [&_svg]:size-5"
+            }}
+          />
+        </div>
+      )}
       <ExchangeRate />
-      <FormAddParts parts={[...addableParts, ...rateParts]} />
+      <FormAddParts parts={[...addableParts, ...currencyParts, ...rateParts]} />
     </FormArea>
   );
 }

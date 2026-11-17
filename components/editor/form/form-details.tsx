@@ -6,7 +6,8 @@ import {
   FormField,
   formFieldClassName,
   formIconButtonClassName,
-  FormInput
+  FormInput,
+  formLabelClassName
 } from "~/components/editor/form/form-controls";
 import { useAddableParts } from "~/components/editor/invoice-add-part";
 import { InvoiceDateField } from "~/components/editor/invoice-date-field";
@@ -16,6 +17,7 @@ import {
   useDetailRowActions,
   useDetailRows
 } from "~/components/editor/invoice-details";
+import { CurrencyControls } from "~/components/editor/invoice-total-currency";
 import { Button } from "~/components/ui/button";
 import { cn } from "~/lib/utils";
 import { useDocumentType, useSectionsSlice } from "~/stores/invoice-selectors";
@@ -38,6 +40,13 @@ export function FormDetails() {
           placeholders={placeholders[row.id]}
         />
       ))}
+      <CurrencyControls
+        part="currency"
+        classNames={{
+          field: cn(formFieldClassName, "leading-11"),
+          label: formLabelClassName
+        }}
+      />
       <FormAddParts parts={addableParts} />
     </FormArea>
   );
