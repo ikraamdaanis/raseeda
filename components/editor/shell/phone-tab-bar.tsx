@@ -27,10 +27,10 @@ const PHONE_VIEWS = [
 // Canva: Edit (the form) and Page (the page as it prints) switch the view, as
 // tabs; Style opens its tray over the Page view, switching to it first. The
 // invoice list is the screen the editor is pushed over, reached by the top
-// bar's back button. The bar hides while a field is being typed in, so it
-// never sits on the keyboard, except while the Style tray is open: the tray
-// sits on the bar, and hiding it would drop the tray and grow the page under
-// it as a colour's picker opens.
+// bar's back button. On a touch screen the bar hides while a field is being
+// typed in, so it never sits on the keyboard, except while the Style tray is
+// open: the tray sits on the bar, and hiding it would drop the tray and grow
+// the page under it as a colour's picker opens.
 export function PhoneTabBar() {
   const { phoneView, setPhoneView, rightPanelOpen, setPanelOpen, closePanels } =
     useEditorUi();
@@ -106,7 +106,8 @@ export function PhoneTabBar() {
   );
 }
 
-// Whether a field that brings up the keyboard has focus.
+// Whether a field that brings up the keyboard has focus, on a touch screen:
+// a narrow window on a computer opens no keyboard, so its bar stays.
 function useIsTyping() {
   const [isTyping, setIsTyping] = useState(false);
 
@@ -115,7 +116,9 @@ function useIsTyping() {
       const active = document.activeElement;
 
       setIsTyping(
-        active instanceof HTMLElement && active.matches(TYPING_FIELD_SELECTOR)
+        window.matchMedia("(pointer: coarse)").matches &&
+          active instanceof HTMLElement &&
+          active.matches(TYPING_FIELD_SELECTOR)
       );
     }
 

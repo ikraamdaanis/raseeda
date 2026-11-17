@@ -208,6 +208,24 @@ test("a detail says what it is, but a line's fields keep only their labels", asy
   ).toHaveCount(0);
 });
 
+test.describe("in a narrow window with no touch screen", () => {
+  test.use({ hasTouch: false, isMobile: false });
+
+  test("the bar stays while a field is typed in, with no keyboard to make way for", async ({
+    page
+  }) => {
+    await page.goto("/create");
+
+    const toDetails = page.getByRole("textbox", { name: "To details" });
+
+    await toDetails.click();
+    await toDetails.fill("Globex Corp");
+
+    await expect(toDetails).toBeFocused();
+    await expect(tabBar(page)).toBeVisible();
+  });
+});
+
 test("adding a part slides the form to it", async ({ page }) => {
   await page.goto("/create");
 
