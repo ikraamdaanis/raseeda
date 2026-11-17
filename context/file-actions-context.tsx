@@ -1,4 +1,5 @@
 import { useNavigate, useSearch } from "@tanstack/react-router";
+import { upperFirst } from "lodash-es";
 import type { ReactNode } from "react";
 import {
   createContext,
@@ -349,7 +350,9 @@ export function FileActionsProvider({ children }: { children: ReactNode }) {
           deleteTarget.documents.map(document => document.id)
         );
         toast.success(
-          count === 1 ? "Invoice deleted" : `Deleted ${count} invoices`
+          count === 1
+            ? `${upperFirst(deleteTargetSubject(deleteTarget))} deleted`
+            : `Deleted ${count} documents`
         );
       } else {
         await deleteTemplates(

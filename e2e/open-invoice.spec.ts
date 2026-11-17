@@ -99,7 +99,9 @@ test("a proforma made from the panel's menu wears a pill, an invoice none", asyn
 
   // The pill shows "Proforma"; the row's name keeps the full type.
   await expect(beta.getByText("Proforma", { exact: true })).toBeVisible();
-  await expect(beta).toHaveAccessibleName(/Proforma invoice\s*No\. PRO-0001/);
+  await expect(beta).toHaveAccessibleName(
+    /^Beta\s*\$0\.00\s*Proforma invoice\s*No\. PRO-0001/
+  );
   await expect(libraryRow(page, "Alpha")).not.toContainText("Proforma");
 });
 
@@ -119,9 +121,8 @@ test("deleting one quote names it a quote", async ({ page }) => {
 
   const confirm = page.getByRole("dialog", { name: "Delete this quote?" });
 
-  await expect(
-    confirm.getByRole("button", { name: "Delete quote" })
-  ).toBeVisible();
+  await confirm.getByRole("button", { name: "Delete quote" }).click();
+  await expect(page.getByText("Quote deleted")).toBeVisible();
 });
 
 test("a tab remembered as Invoices opens on Documents", async ({ page }) => {

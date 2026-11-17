@@ -426,9 +426,11 @@ function PaletteCommands() {
                 key={document.id}
                 icon={<IconFolderOpen />}
                 onSelect={run(() => actions.openInvoice(document.id))}
-                keywords={[
-                  DOCUMENT_TYPE_NAMES[document.invoiceData.documentType]
-                ]}
+                keywords={
+                  document.invoiceData.documentType === "invoice"
+                    ? undefined
+                    : [DOCUMENT_TYPE_NAMES[document.invoiceData.documentType]]
+                }
                 badge={
                   document.invoiceData.documentType !== "invoice" && (
                     <DocumentTypePill
