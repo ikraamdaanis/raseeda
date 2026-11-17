@@ -205,6 +205,18 @@ test("Style opens a tray over the page, which keeps its zoom under it", async ({
     ).toBeLessThanOrEqual(1);
   }
 
+  // A colour's picker or code field keeps the tab bar, which the tray sits
+  // on, so neither the tray nor the page under it moves.
+  await tray.getByRole("tab", { name: "Colour" }).tap();
+
+  const trayTopBefore = (await tray.boundingBox())?.y;
+
+  for (const field of ["Text colour", "Text colour code"]) {
+    await tray.getByLabel(field, { exact: true }).focus();
+    await expect(tabBar(page)).toBeVisible();
+    expect((await tray.boundingBox())?.y).toBe(trayTopBefore);
+  }
+
   // Tapping the page only closes the tray: it stays on the page.
   await page
     .locator('[data-paper] [data-field="client.content"]')

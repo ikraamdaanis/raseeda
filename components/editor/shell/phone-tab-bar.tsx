@@ -13,9 +13,10 @@ import { useEditorUi } from "~/context/editor-ui-context";
 import { cn } from "~/lib/utils";
 
 // A field that brings up the on-screen keyboard, which the bar steps aside
-// for rather than floating over it.
+// for rather than floating over it. A colour or range input opens no
+// keyboard.
 const TYPING_FIELD_SELECTOR =
-  "input:not([type=checkbox]):not([type=radio]):not([type=file]), textarea";
+  "input:not([type=checkbox]):not([type=radio]):not([type=file]):not([type=color]):not([type=range]), textarea";
 
 const PHONE_VIEWS = [
   { view: "form", label: "Edit", icon: IconPencil },
@@ -27,7 +28,9 @@ const PHONE_VIEWS = [
 // tabs; Style opens its tray over the Page view, switching to it first. The
 // invoice list is the screen the editor is pushed over, reached by the top
 // bar's back button. The bar hides while a field is being typed in, so it
-// never sits on the keyboard.
+// never sits on the keyboard, except while the Style tray is open: the tray
+// sits on the bar, and hiding it would drop the tray and grow the page under
+// it as a colour's picker opens.
 export function PhoneTabBar() {
   const { phoneView, setPhoneView, rightPanelOpen, setPanelOpen, closePanels } =
     useEditorUi();
@@ -63,7 +66,7 @@ export function PhoneTabBar() {
   return (
     <nav
       aria-label="Editor"
-      hidden={isTyping}
+      hidden={isTyping && !rightPanelOpen}
       className="bg-background border-border relative z-30 grid shrink-0 grid-cols-3 border-t px-[max(0.5rem,env(safe-area-inset-left))] pb-[env(safe-area-inset-bottom)] md:hidden"
     >
       <div
