@@ -301,7 +301,7 @@ test("phones get a tab bar instead of the canvas pill and panel toggles", async 
   await expect(tabBar(page)).toBeVisible();
   await expect(page.getByRole("toolbar", { name: "Canvas" })).toBeHidden();
   await expect(
-    page.getByRole("button", { name: "Show invoices panel" })
+    page.getByRole("button", { name: "Show documents panel" })
   ).toBeHidden();
   await expect(tabBar(page).getByRole("tab")).toHaveText(["Edit", "Page"]);
   await expect(tabBar(page).getByRole("button")).toHaveText(["Style"]);
@@ -414,7 +414,7 @@ test("Style opens a tray over the page, which keeps its zoom under it", async ({
   await expect(style).toBeFocused();
 });
 
-test("the invoice list is the screen the editor is pushed over", async ({
+test("the document list is the screen the editor is pushed over", async ({
   page
 }) => {
   await page.goto("/create");
@@ -425,7 +425,7 @@ test("the invoice list is the screen the editor is pushed over", async ({
 
   await expect(library).not.toHaveAttribute("inert");
 
-  for (const name of ["Invoices", "Templates"]) {
+  for (const name of ["Documents", "Templates"]) {
     const button = library
       .getByRole("group", { name: "Library" })
       .getByRole("button", { name });

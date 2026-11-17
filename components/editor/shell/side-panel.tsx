@@ -6,7 +6,7 @@ import { cn } from "~/lib/utils";
 
 // A panel beside the canvas that slides closed to nothing. Its content keeps a
 // fixed width while the panel animates, so nothing reflows mid-slide. A phone
-// has neither: its invoice list is a screen of its own and its style a tray
+// has neither: its document list is a screen of its own and its style a tray
 // over the page (`PhoneLibraryScreen`, `StyleTray`).
 export function SidePanel({
   side,
@@ -47,7 +47,7 @@ export function SidePanel({
 export function PanelToggle({ side }: { side: "left" | "right" }) {
   const { leftPanelOpen, rightPanelOpen, togglePanel } = useEditorUi();
   const open = side === "left" ? leftPanelOpen : rightPanelOpen;
-  const name = side === "left" ? "invoices panel" : "inspector";
+  const name = side === "left" ? "documents panel" : "inspector";
   const Icon = side === "left" ? IconLayoutSidebar : IconLayoutSidebarRight;
 
   return (

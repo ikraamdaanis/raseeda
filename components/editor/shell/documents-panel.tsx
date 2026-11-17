@@ -13,6 +13,7 @@ import {
 import { startCase } from "lodash-es";
 import type { MouseEvent, ReactNode, Ref } from "react";
 import { useEffect, useRef, useState } from "react";
+import { DocumentTypePill } from "~/components/editor/shell/document-type-pill";
 import { SegmentedControl } from "~/components/editor/shell/inspector/inspector-controls";
 import { LibraryViewOptions } from "~/components/editor/shell/library-view-options";
 import { Button } from "~/components/ui/button";
@@ -88,16 +89,18 @@ function useWatchedList<TRow>(
   return { rows, error };
 }
 
-// The saved invoices and templates in this browser, one click away, like the
+// The saved documents and templates in this browser, one click away, like the
 // pages list in Framer: searchable, sortable, filterable and grouped, with a
-// menu on each row for the rest. Opening one saves the open invoice first,
+// menu on each row for the rest. Each row that isn't an invoice carries its
+// type's pill (issue #215). Opening one saves the open document first,
 // as the project menu does. ⌘O, Open Invoice and Open Template open it on a
 // tab with focus in the search, except on a phone, where that would raise the
 // keyboard over the sheet before anyone asked to search. The tab, sort,
 // grouping and filters are remembered across reloads; the search is not.
-// On a phone it's the invoice list screen: `headerEnd` sits beside the tabs
-// (the list's menu), and New invoice has the other document types beside it.
-export function InvoicesPanel({ headerEnd }: { headerEnd?: ReactNode }) {
+// On a phone it's the document list screen, with `headerEnd` beside the tabs
+// (the list's menu). New invoice, the one most reach for, has the other
+// document types in the menu beside it.
+export function DocumentsPanel({ headerEnd }: { headerEnd?: ReactNode }) {
   const {
     libraryTab: tab,
     setLibraryTab,
@@ -110,7 +113,7 @@ export function InvoicesPanel({ headerEnd }: { headerEnd?: ReactNode }) {
     parseLibraryView
   );
   const [query, setQuery] = useState("");
-  const invoices = useWatchedList(watchInvoices);
+  const documents = useWatchedList(watchInvoices);
   const templates = useWatchedList(watchTemplates);
   const { newInvoice, newDocument, pending } = useFileActions();
   const searchRef = useRef<HTMLInputElement>(null);
@@ -127,7 +130,7 @@ export function InvoicesPanel({ headerEnd }: { headerEnd?: ReactNode }) {
             label="Library"
             value={tab}
             options={[
-              { value: "invoices", label: "Invoices" },
+              { value: "documents", label: "Documents" },
               { value: "templates", label: "Templates" }
             ]}
             onChange={setLibraryTab}
@@ -136,23 +139,23 @@ export function InvoicesPanel({ headerEnd }: { headerEnd?: ReactNode }) {
         </div>
         <SearchField
           ref={searchRef}
-          label={tab === "invoices" ? "Search invoices" : "Search templates"}
+          label={tab === "documents" ? "Search documents" : "Search templates"}
           value={query}
           onChange={setQuery}
         >
-          {tab === "invoices" && (
+          {tab === "documents" && (
             <LibraryViewOptions
               view={view}
               onViewChange={setView}
-              invoices={invoices.rows ?? []}
+              invoices={documents.rows ?? []}
             />
           )}
         </SearchField>
       </div>
-      {tab === "invoices" ? (
-        <InvoiceList
-          invoices={invoices.rows}
-          error={invoices.error}
+      {tab === "documents" ? (
+        <DocumentList
+          documents={documents.rows}
+          error={documents.error}
           query={query}
           view={view}
           onClearFilters={() => {
@@ -182,32 +185,34 @@ export function InvoicesPanel({ headerEnd }: { headerEnd?: ReactNode }) {
           <IconPlus aria-hidden="true" />
           New invoice
         </Button>
-        {isNarrow && (
-          <DropdownMenu>
-            <DropdownMenuTrigger
-              render={
-                <Button
-                  variant="secondary"
-                  aria-label="New document"
-                  className="size-11"
-                />
-              }
-            >
-              <IconChevronDown aria-hidden="true" className="size-5" />
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" side="top" className="w-48">
-              {OTHER_DOCUMENT_TYPES.map(newType => (
-                <DropdownMenuItem
-                  key={newType}
-                  onClick={() => newDocument(newType)}
-                  disabled={pending}
-                >
-                  New {DOCUMENT_TYPE_NAMES[newType].toLowerCase()}
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        )}
+        <DropdownMenu>
+          <DropdownMenuTrigger
+            render={
+              <Button
+                variant="secondary"
+                aria-label="New document"
+                className="size-8 max-md:size-11"
+              />
+            }
+          >
+            <IconChevronDown aria-hidden="true" className="max-md:size-5" />
+          </DropdownMenuTrigger>
+          <DropdownMenuContent
+            align="end"
+            side="top"
+            className="w-44 max-md:w-48"
+          >
+            {OTHER_DOCUMENT_TYPES.map(newType => (
+              <DropdownMenuItem
+                key={newType}
+                onClick={() => newDocument(newType)}
+                disabled={pending}
+              >
+                New {DOCUMENT_TYPE_NAMES[newType].toLowerCase()}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </>
   );
@@ -324,14 +329,14 @@ function SearchField({
   );
 }
 
-function InvoiceList({
-  invoices,
+function DocumentList({
+  documents,
   error,
   query,
   view,
   onClearFilters
 }: {
-  invoices: InvoiceDocument[] | null;
+  documents: InvoiceDocument[] | null;
   error: string | null;
   query: string;
   view: InvoiceLibraryView;
@@ -339,7 +344,7 @@ function InvoiceList({
 }) {
   const { libraryDocumentId } = useInvoiceDocument();
   const actions = useFileActions();
-  const matches = filterInvoices(invoices ?? [], {
+  const matches = filterInvoices(documents ?? [], {
     query,
     view,
     now: new Date()
@@ -360,14 +365,14 @@ function InvoiceList({
         <ListMessage>{error}</ListMessage>
       </ListScroller>
     );
-  if (!invoices) return <ListScroller />;
+  if (!documents) return <ListScroller />;
 
-  if (invoices.length === 0) {
+  if (documents.length === 0) {
     return (
       <ListScroller>
         <ListMessage>
-          No invoices yet. Every invoice saves itself as you edit, and shows
-          here once you start on it.
+          No documents yet. Everything you make saves itself as you edit, and
+          shows here once you start on it.
         </ListMessage>
       </ListScroller>
     );
@@ -382,10 +387,10 @@ function InvoiceList({
           onDelete={() => actions.deleteInvoices(selectedDocuments)}
         />
       ) : (
-        matches.length < invoices.length && (
+        matches.length < documents.length && (
           <div className="text-muted-foreground flex shrink-0 items-center justify-between gap-2 px-4 pb-1.5 text-xs max-md:min-h-11 max-md:pb-0 max-md:text-base">
             <span className="tabular-nums">
-              {matches.length} of {invoices.length} invoices
+              {matches.length} of {documents.length} documents
             </span>
             <button
               type="button"
@@ -421,7 +426,15 @@ function InvoiceList({
                   getInvoiceTotal(document),
                   getMoneyFormat(document.invoiceData)
                 )}
-                meta={invoiceMeta(document, view)}
+                badge={
+                  document.invoiceData.documentType !== "invoice" && (
+                    <DocumentTypePill
+                      documentType={document.invoiceData.documentType}
+                      className="max-md:h-5 max-md:px-1.5 max-md:text-[13px]"
+                    />
+                  )
+                }
+                meta={documentMeta(document, view)}
                 onClick={event =>
                   selection.handleRowClick(event, document.id, () =>
                     actions.openInvoice(document.id)
@@ -430,7 +443,7 @@ function InvoiceList({
                 menu={
                   selection.isBulk(document.id) ? (
                     <DeleteItem
-                      label={`Delete ${selectedDocuments.length} invoices…`}
+                      label={`Delete ${selectedDocuments.length} documents…`}
                       onClick={() => actions.deleteInvoices(selectedDocuments)}
                     />
                   ) : (
@@ -491,11 +504,11 @@ function InvoiceList({
   );
 }
 
-// The second line of a row: its type when it isn't an invoice, its number,
-// then the date the sort is about (when it's due for a due-date sort, when it
-// was edited for the default sort).
-function invoiceMeta(document: InvoiceDocument, view: InvoiceLibraryView) {
-  const { documentType, number, dueDate } = document.invoiceData;
+// The second line of a row, after its type's pill: its number, then the date
+// the sort is about (when it's due for a due-date sort, when it was edited for
+// the default sort).
+function documentMeta(document: InvoiceDocument, view: InvoiceLibraryView) {
+  const { number, dueDate } = document.invoiceData;
   const due = formatLibraryDate(readInvoiceDate(dueDate));
   const edited = formatLibraryDate(document.updatedAt);
   const date =
@@ -505,13 +518,7 @@ function invoiceMeta(document: InvoiceDocument, view: InvoiceLibraryView) {
         ? edited && `Edited ${edited}`
         : formatLibraryDate(getInvoiceDate(document));
 
-  return [
-    documentType !== "invoice" && DOCUMENT_TYPE_NAMES[documentType],
-    number && `No. ${number}`,
-    date
-  ]
-    .filter(Boolean)
-    .join(" · ");
+  return [number && `No. ${number}`, date].filter(Boolean).join(" · ");
 }
 
 function templateMeta(template: InvoiceTemplate) {
@@ -694,7 +701,8 @@ function ListScroller({ children }: { children?: ReactNode }) {
   );
 }
 
-// A row, under a title that is never blank: clicking the row opens the item
+// A row, under a title that is never blank, with `badge` leading its second
+// line: clicking the row opens the item
 // (or, with ⌘/Ctrl or Shift held, selects it), and its right-click menu and
 // the ⋯ button on it (shown on hover, on focus and while its menu is open;
 // always on touch, where it is the way to act on a row) hold the rest. Both
@@ -705,6 +713,7 @@ function LibraryItem({
   selected,
   title,
   aside,
+  badge,
   meta,
   onClick,
   menu
@@ -713,6 +722,7 @@ function LibraryItem({
   selected: boolean;
   title: string;
   aside?: string;
+  badge?: ReactNode;
   meta: string;
   onClick: (event: MouseEvent) => void;
   menu: ReactNode;
@@ -749,9 +759,10 @@ function LibraryItem({
               {aside}
             </span>
           )}
-          {meta && (
-            <span className="text-muted-foreground col-span-2 truncate text-xs max-md:text-base">
-              {meta}
+          {(meta || badge) && (
+            <span className="text-muted-foreground col-span-2 flex min-w-0 items-center gap-1.5 text-xs max-md:text-base">
+              {badge}
+              <span className="truncate">{meta}</span>
             </span>
           )}
         </button>

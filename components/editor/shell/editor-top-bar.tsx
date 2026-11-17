@@ -18,7 +18,7 @@ import {
 // Framer's three-part bar: the project menu on the left, the invoice's name in
 // the middle, and the panel toggles, Preview and Download on the right.
 // `start` and `end` take the panel toggles. Phones have the way back to the
-// invoice list, the name beside it, and the document's own menu (undo and
+// document list, the name beside it, and the document's own menu (undo and
 // redo are at its top) and Download; the panel toggles move to the tab bar,
 // and there's no Preview there. Every edit saves itself, so there's no save state to show here while
 // saving works; problems show in the banner under the bar.

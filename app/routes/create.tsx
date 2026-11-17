@@ -24,7 +24,8 @@ import { track } from "~/utils/track";
 // an untouched invoice in the face picked there (one already under way keeps
 // its own), `font` with `new` starts a new invoice in it, `template` starts
 // what a site template page offers (a font beside it is dropped) and
-// `open=invoices` opens the saved-invoice list. Anything unrecognised is
+// `open=documents` (or `open=invoices`, from before the library was called
+// Documents) opens the saved-document list. Anything unrecognised is
 // dropped rather than trusted.
 export const Route = createFileRoute("/create")({
   component: RouteComponent,
@@ -49,7 +50,7 @@ export const Route = createFileRoute("/create")({
   ): {
     font?: InvoiceFont;
     new?: true;
-    open?: "invoices";
+    open?: "documents";
     template?: SiteTemplateId;
   } => {
     const template = SITE_TEMPLATES.find(
@@ -61,7 +62,10 @@ export const Route = createFileRoute("/create")({
         ? undefined
         : INVOICE_FONTS.find(definition => definition.id === search.font)?.id,
       new: !template && search.new === true ? true : undefined,
-      open: search.open === "invoices" ? "invoices" : undefined,
+      open:
+        search.open === "documents" || search.open === "invoices"
+          ? "documents"
+          : undefined,
       template
     };
   }

@@ -26,7 +26,7 @@ const PHONE_VIEWS = [
 // On a phone the editor's views live in one bar along the bottom, as in
 // Canva: Edit (the form) and Page (the page as it prints) switch the view, as
 // tabs; Style opens its tray over the Page view, switching to it first. The
-// invoice list is the screen the editor is pushed over, reached by the top
+// document list is the screen the editor is pushed over, reached by the top
 // bar's back button. On a touch screen the bar hides while a field is being
 // typed in, so it never sits on the keyboard, except while the Style tray is
 // open: the tray sits on the bar, and hiding it would drop the tray and grow

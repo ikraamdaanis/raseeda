@@ -145,7 +145,7 @@ export function ScaledFrame({
 
 /**
  * The editor on a desktop window with both side panels open: the top bar, the
- * invoices panel, the desk with the canvas pill and, as `children`, the
+ * documents panel, the desk with the canvas pill and, as `children`, the
  * invoice page at 100%, then the inspector. `data-editor-chrome` gives it the
  * editor's own light palette.
  */
@@ -169,7 +169,7 @@ export function EditorWindow({
       <EditorTopBar documentName={documentName} />
       <div className="flex min-h-0 flex-1">
         <PanelReplica side="left">
-          <InvoicesPanelReplica />
+          <DocumentsPanelReplica />
         </PanelReplica>
         <div className="bg-desk relative flex min-h-0 min-w-0 flex-1 flex-col">
           <div className="relative flex h-full flex-col items-center-safe justify-center-safe overflow-hidden p-8 pb-20">
@@ -268,19 +268,19 @@ const SAMPLE_LIBRARY: {
 
 const CURRENT_INVOICE_NUMBER = "INV-0043";
 
-// Mirrors components/editor/shell/invoices-panel.tsx.
-function InvoicesPanelReplica() {
+// Mirrors components/editor/shell/documents-panel.tsx.
+function DocumentsPanelReplica() {
   return (
     <>
       <div className="flex shrink-0 flex-col gap-2 px-3 pt-2.5 pb-2">
         <SegmentedReplica
-          options={["Invoices", "Templates"]}
-          selected="Invoices"
+          options={["Documents", "Templates"]}
+          selected="Documents"
         />
         <div className="flex items-center gap-1.5">
           <span className="bg-muted text-muted-foreground flex h-8 min-w-0 flex-1 items-center gap-1.5 rounded-md border border-transparent px-2 text-[13px]">
             <IconSearch aria-hidden="true" className="size-3.5 shrink-0" />
-            Search invoices
+            Search documents
           </span>
           <span className="bg-muted text-muted-foreground flex size-8 items-center justify-center rounded-md">
             <IconAdjustmentsHorizontal aria-hidden="true" className="size-4" />
@@ -316,15 +316,20 @@ function InvoicesPanelReplica() {
           </div>
         ))}
       </div>
-      <div className="border-border flex shrink-0 flex-col border-t p-3">
+      <div className="border-border flex shrink-0 gap-2 border-t p-3">
         <span
           className={buttonVariants({
             variant: "secondary",
-            className: "w-full"
+            className: "min-w-0 flex-1"
           })}
         >
           <IconPlus aria-hidden="true" />
           New invoice
+        </span>
+        <span
+          className={buttonVariants({ variant: "secondary", size: "icon" })}
+        >
+          <IconChevronDown aria-hidden="true" />
         </span>
       </div>
     </>

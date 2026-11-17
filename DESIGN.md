@@ -472,8 +472,8 @@ Editor (app values):
 - **Body** (`body`, Regular 14px): chrome text.
 - **Control** (`control`, 13px, Regular, Medium for row names, Semibold for
   inspector section headers): menu and context-menu items, the command
-  palette, inspector rows and fields, the invoices panel, invoice and template
-  list rows, the open dialogs' lists, the download popover, and the status
+  palette, inspector rows and fields, the documents panel, document and
+  template list rows, the open dialogs' lists, the download popover, and the status
   banner from `sm`. It is the app value of the `body` role in
   `lib/type-scale.ts` (13/20), written `text-[13px]`.
 - **Caption** (`caption`, Regular 12px): `xs` buttons and meta.
@@ -546,7 +546,7 @@ Medium and meta drops to 12px. The homepage's pictures of the editor mirror
   links and the phone menu button are 44px, and the pills and header link
   carry an invisible 48px hit area on coarse pointers. Fine pointers keep the
   compact sizes.
-- **Editor frame.** A 48px top bar sits above three columns: the invoices panel
+- **Editor frame.** A 48px top bar sits above three columns: the documents panel
   (256px), the desk, and the inspector (288px). Both panels slide shut to
   nothing. The desk centres the page with 12px padding on phones and 32px from
   `md` up, plus 80px bottom padding so the canvas pill never covers the page
@@ -661,7 +661,9 @@ Editor geometry is intentionally tight, which is what gives the tool its
 exacting feel. The two everyday radii are named tokens, not arbitrary values:
 
 - **Surface** (`rounded-surface`, 3px): the dominant radius for cards, panels,
-  inputs, invoice fields, chips, icon tiles, menus, menu items, previews, and
+  inputs, invoice fields, chips (the document type chip on a library or
+  palette row: 11px Medium, `foreground` at 70% on a `foreground` 7% fill,
+  10% in dark, the same for every type), icon tiles, menus, menu items, previews, and
   the 404 and error icon tile.
 - **Control** (`rounded-control`, 4px): buttons and the zoom control.
 - **Dialog** (`rounded-md`, 6px), also the inspector's filled fields.
@@ -767,7 +769,7 @@ symbol position, paper) and Table (columns, labels and colours). Rows are
 
 - **Editor top bar:** 48px, `background` with a bottom `border` hairline, in
   three parts. Left: the logo opens the project menu (the file commands, quick
-  actions, back to the homepage), then the invoices panel toggle. Centre: the
+  actions, back to the homepage), then the documents panel toggle. Centre: the
   document name (a heading button that renames it; a new invoice is named
   from its number and client until then). Every edit saves itself, so there's
   no save state shown while saving works. Right: the inspector toggle,
@@ -783,8 +785,8 @@ symbol position, paper) and Table (columns, labels and colours). Rows are
   icon lines up with the first line.
 - **Editor entry points:** `/create` accepts two optional search params.
   `font` (any invoice font id) styles a fresh, untouched blank invoice and is
-  then cleared; `open=invoices` opens the invoices panel with focus in its
-  search.
+  then cleared; `open=documents` (or the older `open=invoices`) opens the
+  documents panel with focus in its search.
 - **Homepage skip link:** the first focusable element, "Skip to content", a
   white pill with a `zinc-950/10` ring and `shadow-lg`, fixed 12px from the
   top-left, held its own height plus 40px above the viewport (clear of its

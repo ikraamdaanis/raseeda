@@ -16,8 +16,8 @@ import { startCase } from "lodash-es";
 import type { ReactNode } from "react";
 import { useEffect } from "react";
 import { EditorThemeRadioGroup } from "~/components/editor/editor-theme-menu";
+import { DocumentsPanel } from "~/components/editor/shell/documents-panel";
 import { HistoryMenuRow } from "~/components/editor/shell/history-buttons";
-import { InvoicesPanel } from "~/components/editor/shell/invoices-panel";
 import { Button } from "~/components/ui/button";
 import {
   DropdownMenu,
@@ -47,8 +47,8 @@ const menuTriggerClassName =
   "text-muted-foreground hover:bg-muted hover:text-foreground aria-expanded:bg-accent aria-expanded:text-foreground focus-visible:ring-ring flex size-11 shrink-0 items-center justify-center rounded-md outline-none focus-visible:ring-1";
 
 /**
- * On a phone, the invoice list as the editor's parent screen (issue #213): the
- * invoices panel at full screen, under the editor while a document is open.
+ * On a phone, the document list as the editor's parent screen (issue #213):
+ * the documents panel at full screen, under the editor while a document is open.
  * Showing it writes whatever edit is waiting, so the row just left is up to
  * date.
  */
@@ -65,7 +65,7 @@ export function PhoneLibraryScreen() {
 
   return (
     <section
-      aria-label="Invoices"
+      aria-label="Documents"
       inert={!isShown}
       className={cn(
         "bg-background absolute inset-0 flex flex-col pr-[env(safe-area-inset-right)] pl-[env(safe-area-inset-left)]",
@@ -73,7 +73,7 @@ export function PhoneLibraryScreen() {
         !isShown && "-translate-x-1/3"
       )}
     >
-      <InvoicesPanel headerEnd={<PhoneLibraryMenu />} />
+      <DocumentsPanel headerEnd={<PhoneLibraryMenu />} />
       <div
         aria-hidden="true"
         className={cn(
@@ -88,7 +88,7 @@ export function PhoneLibraryScreen() {
 }
 
 /**
- * The editor, which on a phone is pushed over the invoice list and slides off
+ * The editor, which on a phone is pushed over the document list and slides off
  * to the right to show it. Elsewhere it's just the editor's column.
  */
 export function EditorScreen({ children }: { children: ReactNode }) {
@@ -113,14 +113,14 @@ export function EditorScreen({ children }: { children: ReactNode }) {
   );
 }
 
-// The editor's way back to the invoice list, its parent screen.
+// The editor's way back to the document list, its parent screen.
 export function PhoneBackButton() {
   const { showPhoneList } = useEditorUi();
 
   return (
     <Button
       variant="ghost"
-      aria-label="Invoices"
+      aria-label="Documents"
       onClick={showPhoneList}
       className="text-muted-foreground -ml-2 size-11 shrink-0"
     >
@@ -129,7 +129,7 @@ export function PhoneBackButton() {
   );
 }
 
-// What acts on the whole library, at the top of the invoice list.
+// What acts on the whole library, at the top of the document list.
 function PhoneLibraryMenu() {
   const actions = useFileActions();
   const navigate = useNavigate();

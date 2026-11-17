@@ -217,7 +217,7 @@ test("switching invoices mid-debounce keeps the edit in its own invoice", async 
   await page.getByLabel("Invoice title").fill("Second title");
   await nameInvoice(page, "Second invoice");
 
-  const library = page.getByRole("complementary", { name: "Invoices" });
+  const library = page.getByRole("complementary", { name: "Documents" });
 
   await library.getByRole("button", { name: /^First invoice/ }).click();
   await expect(page.getByLabel("Invoice title")).toHaveValue("First title");

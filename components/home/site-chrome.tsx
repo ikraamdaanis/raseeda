@@ -101,7 +101,7 @@ const FOOTER_COLUMNS: {
     links: [
       { label: "Create invoice", href: "/create" },
       { label: "Invoice templates", href: "/invoice-template" },
-      { label: "Your invoices", href: "/create?open=invoices" },
+      { label: "Your invoices", href: "/create?open=documents" },
       { label: "How it works", href: "/#how-it-works" },
       { label: "Features", href: "/#features" }
     ]

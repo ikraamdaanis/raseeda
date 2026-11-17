@@ -22,6 +22,7 @@ import {
 } from "@tabler/icons-react";
 import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
+import { DocumentTypePill } from "~/components/editor/shell/document-type-pill";
 import {
   redoLabel,
   undoLabel
@@ -307,7 +308,7 @@ function PaletteCommands() {
           icon={<IconLayoutSidebar />}
           onSelect={run(() => togglePanel("left"))}
         >
-          {leftPanelOpen ? "Hide invoices panel" : "Show invoices panel"}
+          {leftPanelOpen ? "Hide documents panel" : "Show documents panel"}
         </PaletteItem>
         <PaletteItem
           icon={<IconLayoutSidebarRight />}
@@ -417,7 +418,7 @@ function PaletteCommands() {
         </CommandGroup>
       )}
       {invoices.length > 0 && (
-        <CommandGroup heading="Saved invoices">
+        <CommandGroup heading="Saved documents">
           {invoices
             .filter(document => document.id !== libraryDocumentId)
             .map(document => (
@@ -425,6 +426,16 @@ function PaletteCommands() {
                 key={document.id}
                 icon={<IconFolderOpen />}
                 onSelect={run(() => actions.openInvoice(document.id))}
+                keywords={[
+                  DOCUMENT_TYPE_NAMES[document.invoiceData.documentType]
+                ]}
+                badge={
+                  document.invoiceData.documentType !== "invoice" && (
+                    <DocumentTypePill
+                      documentType={document.invoiceData.documentType}
+                    />
+                  )
+                }
               >
                 {`Open ${document.name}`}
               </PaletteItem>
@@ -435,11 +446,14 @@ function PaletteCommands() {
   );
 }
 
+// A palette row, matched on its text (`children`) and `keywords`, with
+// `badge` after the text.
 function PaletteItem({
   icon,
   shortcut,
   checked = false,
   keywords,
+  badge,
   onSelect,
   children
 }: {
@@ -447,6 +461,7 @@ function PaletteItem({
   shortcut?: string;
   checked?: boolean;
   keywords?: string[];
+  badge?: ReactNode;
   onSelect: () => void;
   children: string;
 }) {
@@ -464,6 +479,7 @@ function PaletteItem({
         </span>
       )}
       <span className="truncate">{children}</span>
+      {badge}
       {shortcut && <CommandShortcut>{shortcutLabel(shortcut)}</CommandShortcut>}
     </CommandItem>
   );

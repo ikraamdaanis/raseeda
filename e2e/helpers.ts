@@ -154,13 +154,13 @@ export async function newInvoiceOnPhone(page: Page) {
 
 // The editor's back button, which shows the invoice list.
 export async function showPhoneLibrary(page: Page) {
-  await page.locator("header").getByRole("button", { name: "Invoices" }).tap();
+  await page.locator("header").getByRole("button", { name: "Documents" }).tap();
   await expect(phoneLibrary(page)).not.toHaveAttribute("inert");
 }
 
 // The phone's invoice list, the screen the editor is pushed over.
 export function phoneLibrary(page: Page) {
-  return page.getByRole("region", { name: "Invoices", includeHidden: true });
+  return page.getByRole("region", { name: "Documents", includeHidden: true });
 }
 
 // The open invoice's name in the top bar, edited where it sits.
@@ -273,17 +273,17 @@ export async function setNumber(locator: Locator, value: string) {
   await locator.blur();
 }
 
-// The invoices panel, the editor's library of saved invoices and templates.
-export function invoicesPanel(page: Page) {
-  return page.getByRole("complementary", { name: "Invoices" });
+// The documents panel, the editor's library of saved documents and templates.
+export function documentsPanel(page: Page) {
+  return page.getByRole("complementary", { name: "Documents" });
 }
 
-// A row of the invoices panel, by the name it starts with (its ⋯ button,
+// A row of the documents panel, by the name it starts with (its ⋯ button,
 // "Actions for …", doesn't match).
 export function libraryRow(page: Page, name: string) {
   const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
-  return invoicesPanel(page).getByRole("button", {
+  return documentsPanel(page).getByRole("button", {
     name: new RegExp(`^${escaped}`)
   });
 }

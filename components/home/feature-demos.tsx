@@ -314,7 +314,7 @@ function LibraryRow({
   );
 }
 
-// Keep a copy: the invoices panel. The next invoice for a repeat client joins
+// Keep a copy: the documents panel. The next invoice for a repeat client joins
 // the top of the library under that client and becomes the open one.
 export function SavedDemo({
   width,
@@ -338,7 +338,7 @@ export function SavedDemo({
         <div className="flex shrink-0 flex-col gap-2 px-3 pt-2.5 pb-2">
           <span className="bg-muted flex w-full items-center rounded-lg p-0.5">
             <span className="bg-popover ring-foreground/10 flex h-7 flex-1 items-center justify-center rounded-md text-xs shadow-xs ring-1">
-              Invoices
+              Documents
             </span>
             <span className="text-muted-foreground flex h-7 flex-1 items-center justify-center text-xs">
               Templates
@@ -346,7 +346,7 @@ export function SavedDemo({
           </span>
           <span className="bg-muted text-muted-foreground flex h-8 items-center gap-1.5 rounded-md px-2 text-[13px]">
             <IconSearch className="size-3.5 shrink-0" />
-            Search invoices
+            Search documents
           </span>
         </div>
         <div className="flex min-h-0 flex-1 flex-col gap-px px-1.5">

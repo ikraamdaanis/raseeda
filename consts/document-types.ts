@@ -10,6 +10,13 @@ export const DOCUMENT_TYPE_NAMES = {
   "credit-note": "Credit note"
 } as const satisfies Record<DocumentType, string>;
 
+// What a document type's pill reads in the library, where room is short.
+// Screen readers still hear its full name.
+export const DOCUMENT_TYPE_SHORT_NAMES = {
+  ...DOCUMENT_TYPE_NAMES,
+  "proforma-invoice": "Proforma"
+} as const satisfies Record<DocumentType, string>;
+
 // The title, sample number and labels that differ between document types
 // (issue #132). Every other label is the same whatever the type. Each is only
 // a default: changed, it stays as typed when the type changes. The number is

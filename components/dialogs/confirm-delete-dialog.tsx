@@ -11,8 +11,9 @@ import {
   DialogTitle
 } from "~/components/ui/dialog";
 
-// Asks before deleting saved invoices or templates (one, or a selection),
-// since nothing in IndexedDB can be brought back.
+// Asks before deleting saved documents or templates (one, or a selection),
+// since nothing in IndexedDB can be brought back. `subject` is what one of
+// them is called ("quote", "template"); several add an "s".
 export function ConfirmDeleteDialog({
   open,
   onOpenChange,
@@ -22,7 +23,7 @@ export function ConfirmDeleteDialog({
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  subject: "invoice" | "template";
+  subject: string;
   names: string[];
   onConfirm: () => Promise<void>;
 }) {

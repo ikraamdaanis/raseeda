@@ -23,11 +23,11 @@ import { InvoiceTitle } from "~/components/editor/invoice-title";
 import { CanvasPill } from "~/components/editor/shell/canvas-pill";
 import { CommandPalette } from "~/components/editor/shell/command-palette";
 import { DocumentStatusBanner } from "~/components/editor/shell/document-status-banner";
+import { DocumentsPanel } from "~/components/editor/shell/documents-panel";
 import { EditorShortcuts } from "~/components/editor/shell/editor-shortcuts";
 import { EditorTopBar } from "~/components/editor/shell/editor-top-bar";
 import { HistoryShortcuts } from "~/components/editor/shell/history-shortcuts";
 import { InspectorPanel } from "~/components/editor/shell/inspector/inspector-panel";
-import { InvoicesPanel } from "~/components/editor/shell/invoices-panel";
 import {
   EditorScreen,
   PhoneLibraryScreen
@@ -61,8 +61,8 @@ export function InvoiceEditor() {
                 end={<PanelToggle side="right" />}
               />
               <div className="relative flex min-h-0 flex-1">
-                <SidePanel side="left" label="Invoices">
-                  <InvoicesPanel />
+                <SidePanel side="left" label="Documents">
+                  <DocumentsPanel />
                 </SidePanel>
                 <Desk>
                   <DocumentStatusBanner />

@@ -3,23 +3,23 @@ import { expect, test } from "./fixtures";
 import {
   DB_NAME,
   clickFileMenuItem,
+  documentsPanel,
   gotoEditorReady,
   gotoEditorSettled,
   invoiceNameField,
-  invoicesPanel,
   libraryRow,
   nameInvoice,
   openFileMenu,
   pressShortcut
 } from "./helpers";
 
-// Group H: the invoices panel, the editor's one library view.
+// Group H: the documents panel, the editor's one library view.
 
-// Opens the invoices panel from the project menu, as Open Invoice does.
+// Opens the documents panel from the project menu, as Open Invoice does.
 async function openLibrary(page: Page) {
   await clickFileMenuItem(page, "Open Invoice");
 
-  const panel = invoicesPanel(page);
+  const panel = documentsPanel(page);
 
   await expect(panel.getByRole("searchbox")).toBeFocused();
 
@@ -33,7 +33,7 @@ test("shows an empty state when there are no saved invoices", async ({
 
   const panel = await openLibrary(page);
 
-  await expect(panel.getByText("No invoices yet.")).toBeVisible();
+  await expect(panel.getByText("No documents yet.")).toBeVisible();
 });
 
 test("lists a saved invoice and opens it into the editor", async ({ page }) => {
@@ -74,6 +74,63 @@ test("a library of invoices and quotes narrows to quotes only", async ({
   await expect(alpha).toBeHidden();
 });
 
+test("a proforma made from the panel's menu wears a pill, an invoice none", async ({
+  page
+}) => {
+  await gotoEditorReady(page, "Alpha title");
+  await nameInvoice(page, "Alpha");
+
+  const panel = await openLibrary(page);
+
+  await panel.getByRole("button", { name: "New document" }).click();
+  await expect(page.getByRole("menuitem")).toHaveText([
+    "New quote",
+    "New proforma invoice",
+    "New receipt",
+    "New credit note"
+  ]);
+  await page.getByRole("menuitem", { name: "New proforma invoice" }).click();
+  await expect(page.getByLabel("Invoice title")).toHaveValue(
+    "Proforma invoice"
+  );
+  await nameInvoice(page, "Beta");
+
+  const beta = libraryRow(page, "Beta");
+
+  // The pill shows "Proforma"; the row's name keeps the full type.
+  await expect(beta.getByText("Proforma", { exact: true })).toBeVisible();
+  await expect(beta).toHaveAccessibleName(/Proforma invoice\s*No\. PRO-0001/);
+  await expect(libraryRow(page, "Alpha")).not.toContainText("Proforma");
+});
+
+test("the command palette finds a saved document by its type", async ({
+  page
+}) => {
+  await gotoEditorReady(page, "Alpha title");
+  await nameInvoice(page, "Alpha");
+  await openFileMenu(page);
+  await page.getByRole("menuitem", { name: "New Document" }).hover();
+  await page.getByRole("menuitem", { name: "Receipt", exact: true }).click();
+  await expect(page.getByLabel("Invoice title")).toHaveValue("Receipt");
+  await nameInvoice(page, "Beta");
+  await openLibrary(page);
+  await libraryRow(page, "Alpha").click();
+  await expect(invoiceNameField(page)).toHaveValue("Alpha");
+  await pressShortcut(page, "Mod+k");
+
+  const palette = page.getByRole("dialog", { name: "Quick actions" });
+
+  await expect(
+    palette.getByRole("group", { name: "Saved documents" })
+  ).toBeVisible();
+  await palette.getByRole("combobox").fill("receipt");
+
+  const beta = palette.getByRole("option", { name: /^Open Beta/ });
+
+  await expect(beta).toBeVisible();
+  await expect(beta.getByText("Receipt", { exact: true })).toBeVisible();
+});
+
 test("an all-invoice library shows no document types", async ({ page }) => {
   await gotoEditorReady(page, "Alpha title");
   await nameInvoice(page, "Alpha");
@@ -104,7 +161,7 @@ test("deleting the current invoice starts a new one [R]", async ({ page }) => {
   await confirm.getByRole("button", { name: "Delete invoice" }).click();
   await expect(confirm).toBeHidden();
 
-  await expect(panel.getByText("No invoices yet.")).toBeVisible();
+  await expect(panel.getByText("No documents yet.")).toBeVisible();
   await expect(invoiceNameField(page)).toHaveValue("INV-0001");
   await expect(page.getByLabel("Invoice title")).toHaveValue("Invoice");
 });
@@ -175,7 +232,7 @@ test("renaming from the panel updates the toolbar title", async ({ page }) => {
   await expect(invoiceNameField(page)).toHaveValue("New name");
 });
 
-// Saves three invoices and opens the invoices panel on them.
+// Saves three invoices and opens the documents panel on them.
 async function openLibraryWithThreeInvoices(page: Page) {
   await gotoEditorReady(page, "Library");
 
@@ -220,7 +277,7 @@ test("Shift-click selects a range and Escape clears it", async ({ page }) => {
   await expect(panel.getByText("3 selected")).toBeVisible();
 
   await libraryRow(page, "Bravo").click({ button: "right" });
-  await expect(page.getByRole("menuitem")).toHaveText(["Delete 3 invoices…"]);
+  await expect(page.getByRole("menuitem")).toHaveText(["Delete 3 documents…"]);
   await page.keyboard.press("Escape");
   await expect(page.getByRole("menu")).toHaveCount(0);
   await expect(panel.getByText("3 selected")).toBeVisible();
@@ -244,23 +301,23 @@ test("a row's right-click and ⋯ menus offer the same actions", async ({
   await expect(page.getByRole("menuitem")).toHaveText(actions);
 });
 
-test("Cmd/Ctrl+O opens the panel on its invoices with focus in its search", async ({
+test("Cmd/Ctrl+O opens the panel on its documents with focus in its search", async ({
   page
 }) => {
   await gotoEditorReady(page, "Shortcut open");
 
-  const panel = invoicesPanel(page);
+  const panel = documentsPanel(page);
 
   await panel.getByRole("button", { name: "Templates" }).click();
-  await page.getByRole("button", { name: "Hide invoices panel" }).click();
+  await page.getByRole("button", { name: "Hide documents panel" }).click();
   await page.getByLabel("Invoice title").click();
   await pressShortcut(page, "Mod+o");
 
   await expect(
-    panel.getByRole("searchbox", { name: "Search invoices" })
+    panel.getByRole("searchbox", { name: "Search documents" })
   ).toBeFocused();
   await expect(
-    page.getByRole("button", { name: "Hide invoices panel" })
+    page.getByRole("button", { name: "Hide documents panel" })
   ).toBeVisible();
 });
 
@@ -272,7 +329,7 @@ test("the command palette's Open invoice focuses the panel's search", async ({
   await page.getByRole("option", { name: /Open invoice…/ }).click();
 
   await expect(
-    invoicesPanel(page).getByRole("searchbox", { name: "Search invoices" })
+    documentsPanel(page).getByRole("searchbox", { name: "Search documents" })
   ).toBeFocused();
 });
 
@@ -285,7 +342,7 @@ test("Open Template opens the panel on its Templates tab", async ({
 
   await clickFileMenuItem(page, "Open Template");
 
-  const panel = invoicesPanel(page);
+  const panel = documentsPanel(page);
 
   await expect(
     panel.getByRole("searchbox", { name: "Search templates" })

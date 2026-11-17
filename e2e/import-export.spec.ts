@@ -2,9 +2,9 @@ import { APP_NAME } from "../consts/app";
 import { expect, test } from "./fixtures";
 import {
   clickFileMenuItem,
+  documentsPanel,
   exportData,
   gotoEditorReady,
-  invoicesPanel,
   libraryRow,
   nameInvoice,
   selectImportFile,
@@ -68,7 +68,7 @@ test("importing the same file again conflict-renames duplicates", async ({
   await dialog.getByRole("button", { name: "Done" }).click();
 
   await clickFileMenuItem(page, "Open Invoice");
-  await expect(invoicesPanel(page).getByText(/\(imported\)/)).toBeVisible();
+  await expect(documentsPanel(page).getByText(/\(imported\)/)).toBeVisible();
 });
 
 test("importing a newer-version file shows the please-update message [R]", async ({
@@ -106,7 +106,7 @@ test("importing a record with an unparseable date does not crash [R]", async ({
   await expect(dialog.getByText(/Successfully imported/)).toBeVisible();
   await dialog.getByRole("button", { name: "Done" }).click();
 
-  // The invoices panel still lists the imported record (a conflict-renamed
+  // The documents panel still lists the imported record (a conflict-renamed
   // copy sits alongside the original) without throwing.
   await clickFileMenuItem(page, "Open Invoice");
   await expect(libraryRow(page, "Datey doc").first()).toBeVisible();

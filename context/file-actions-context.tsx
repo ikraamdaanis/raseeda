@@ -41,7 +41,7 @@ import { hasPrimaryModifier } from "~/utils/shortcut-label";
 import { track } from "~/utils/track";
 
 // Everything the editor can do with files: new, open, duplicate, templates,
-// version history, import, export and deleting it all. The project menu, the invoices panel
+// version history, import, export and deleting it all. The project menu, the documents panel
 // and the command palette all call these, so the dialogs behave the same
 // whichever one started the action. Every invoice saves itself, so nothing
 // here asks about unsaved changes: switching invoice writes the open one
@@ -97,6 +97,19 @@ function deleteTargetNames(target: DeleteTarget) {
     : target.templates.map(template => template.name);
 }
 
+// What a delete calls what it removes: one document by its type ("this
+// quote"), several as documents, and templates as templates.
+function deleteTargetSubject(target: DeleteTarget) {
+  if (target.kind === "template") return "template";
+  if (target.documents.length !== 1) return "document";
+
+  const [onlyDocument] = target.documents;
+
+  return DOCUMENT_TYPE_NAMES[
+    onlyDocument.invoiceData.documentType
+  ].toLowerCase();
+}
+
 function errorMessage(error: unknown, fallback: string) {
   return error instanceof Error ? error.message : fallback;
 }
@@ -143,7 +156,7 @@ export function FileActionsProvider({ children }: { children: ReactNode }) {
   const deleteTarget = deleteDialog.target;
 
   // On a phone, starting or opening an invoice lands in the form, ready to
-  // edit: from the invoice list it pushes the editor over the list once the
+  // edit: from the document list it pushes the editor over the list once the
   // document is open, so it never slides in showing the one before.
   function showEditor() {
     if (!isNarrow) return;
@@ -195,10 +208,10 @@ export function FileActionsProvider({ children }: { children: ReactNode }) {
     }, "Failed to open invoice");
   }
 
-  // A link to `/create?open=invoices` lands here. The param is cleared so a
-  // reload doesn't reopen the list.
+  // A link to `/create?open=documents` (or the older `?open=invoices`) lands
+  // here. The param is cleared so a reload doesn't reopen the list.
   const onOpenRequested = useEffectEvent(() => {
-    showLibrary("invoices");
+    showLibrary("documents");
     void navigate({
       to: "/create",
       search: previous => ({ ...previous, open: undefined }),
@@ -207,7 +220,7 @@ export function FileActionsProvider({ children }: { children: ReactNode }) {
   });
 
   useEffect(() => {
-    if (openRequest === "invoices") onOpenRequested();
+    if (openRequest === "documents") onOpenRequested();
   }, [openRequest]);
 
   // ⌘S has nothing to save, since everything already saves itself; it writes
@@ -283,7 +296,7 @@ export function FileActionsProvider({ children }: { children: ReactNode }) {
     if (hasOpenModal() || event.repeat) return;
 
     if (key === "o" && !event.shiftKey) {
-      showLibrary("invoices");
+      showLibrary("documents");
     } else if (key === "s" && !event.shiftKey) {
       void handleSaveNow();
     } else if (key === "s" && event.shiftKey && !pending) {
@@ -388,7 +401,7 @@ export function FileActionsProvider({ children }: { children: ReactNode }) {
         showEditor();
       }, `Failed to start a new ${DOCUMENT_TYPE_NAMES[documentType].toLowerCase()}`);
     },
-    showOpenInvoice: () => showLibrary("invoices"),
+    showOpenInvoice: () => showLibrary("documents"),
     openInvoice: handleOpenInvoice,
     saveNow: () => void handleSaveNow(),
     duplicateCurrent: handleDuplicateCurrent,
@@ -442,7 +455,7 @@ export function FileActionsProvider({ children }: { children: ReactNode }) {
         onOpenChange={open => {
           if (!open) setDeleteDialog(prev => ({ ...prev, open: false }));
         }}
-        subject={deleteTarget?.kind ?? "invoice"}
+        subject={deleteTarget ? deleteTargetSubject(deleteTarget) : "document"}
         names={deleteTarget ? deleteTargetNames(deleteTarget) : []}
         onConfirm={handleLibraryDelete}
       />

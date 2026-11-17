@@ -73,20 +73,30 @@ test("the header CTA is a single link, not a nested button [R]", async ({
   await expect(page).toHaveURL("/create");
 });
 
-test("the open=invoices hand-off opens the saved-invoice list", async ({
-  page
-}) => {
-  await gotoEditorSettled(page);
-  await nameInvoice(page, "Returning client");
+for (const open of ["documents", "invoices"]) {
+  test(`the open=${open} hand-off opens the saved-document list`, async ({
+    page
+  }) => {
+    await gotoEditorSettled(page);
+    await nameInvoice(page, "Returning client");
 
-  await page.goto("/create?open=invoices");
+    await page.goto(`/create?open=${open}`);
+
+    await expect(
+      page
+        .getByRole("complementary", { name: "Documents" })
+        .getByRole("searchbox", { name: "Search documents" })
+    ).toBeFocused();
+    await expect(page).toHaveURL("/create");
+  });
+}
+
+test("the site footer links to the saved-document list", async ({ page }) => {
+  await page.goto("/");
 
   await expect(
-    page
-      .getByRole("complementary", { name: "Invoices" })
-      .getByRole("searchbox", { name: "Search invoices" })
-  ).toBeFocused();
-  await expect(page).toHaveURL("/create");
+    page.getByRole("contentinfo").getByRole("link", { name: "Your invoices" })
+  ).toHaveAttribute("href", "/create?open=documents");
 });
 
 test("a font hand-off never restyles work in progress", async ({ page }) => {

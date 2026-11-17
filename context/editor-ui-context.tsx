@@ -17,7 +17,7 @@ import type { LibraryTab } from "~/types";
 
 declare module "@tanstack/history" {
   interface HistoryState {
-    // On the entry a phone adds as it opens a document from the invoice list,
+    // On the entry a phone adds as it opens a document from the document list,
     // so going back from that document returns to the list (issue #213).
     phoneEditor?: boolean;
   }
@@ -62,8 +62,10 @@ function parsePanels(stored: unknown): PanelState | undefined {
   return { left: stored.left === true, right: stored.right === true };
 }
 
+// A tab still remembered as "invoices", from before the library was called
+// Documents (issue #215), reads as unset, so the documents tab shows.
 function parseLibraryTab(stored: unknown): LibraryTab | undefined {
-  return stored === "invoices" || stored === "templates" ? stored : undefined;
+  return stored === "documents" || stored === "templates" ? stored : undefined;
 }
 
 function parseMode(stored: unknown): EditorMode | undefined {
@@ -96,13 +98,13 @@ function storePanels(panels: PanelState) {
 }
 
 // The editor shell's own state: whether the page is being edited or previewed,
-// which side panels are open and which tab the invoices panel shows.
+// which side panels are open and which tab the documents panel shows.
 // Previewing hides both panels and leaving it puts back whichever were open.
 // All three are remembered across reloads. A phone edits in a form instead of
 // on the page (issue #213): its Edit and Page tabs (`phoneView`) say which one
 // shows, and the Page tab is the page in Preview. It always opens on Edit, and
 // a wider window's own Preview comes back when there is room again.
-// On a phone the left panel is the invoice list, a full screen the editor is
+// On a phone the left panel is the document list, a full screen the editor is
 // pushed over, and the right one is the Style tray over the Page tab. Opening
 // a document from the list adds a history entry, so the browser's back
 // returns to the list; the editor's back button steps back through it when
@@ -125,7 +127,7 @@ const EditorUiContext = createContext<{
   setPaletteOpen: (open: boolean) => void;
   libraryTab: LibraryTab;
   setLibraryTab: (tab: LibraryTab) => void;
-  // Opens the invoices panel on a tab with focus in its search (⌘O, Open
+  // Opens the documents panel on a tab with focus in its search (⌘O, Open
   // Invoice, Open Template); the panel focuses its search each time this
   // count goes up.
   showLibrary: (tab: LibraryTab) => void;
@@ -146,7 +148,7 @@ export function EditorUiProvider({ children }: { children: ReactNode }) {
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [libraryTab, setLibraryTab] = useState<LibraryTab>(
     () =>
-      readStoredValue(LIBRARY_TAB_STORAGE_KEY, parseLibraryTab) ?? "invoices"
+      readStoredValue(LIBRARY_TAB_STORAGE_KEY, parseLibraryTab) ?? "documents"
   );
   const [librarySearchRequest, setLibrarySearchRequest] = useState(0);
   const [phoneView, setPhoneView] = useState<PhoneView>("form");

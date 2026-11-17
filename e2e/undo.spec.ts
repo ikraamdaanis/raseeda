@@ -291,7 +291,7 @@ test("dialogs and the library search keep their own undo", async ({ page }) => {
   await gotoEditorSettled(page);
   await page.getByLabel("Invoice title").fill("Untouched by dialogs");
 
-  const search = page.getByPlaceholder("Search invoices");
+  const search = page.getByPlaceholder("Search documents");
 
   // Typed for real: WebKit keeps one undo stack for the whole page, so the
   // field's own typing has to be on top of it. These fields use the browser's
@@ -400,7 +400,7 @@ test.describe("on a phone", () => {
 
     const back = await page
       .locator("header")
-      .getByRole("button", { name: "Invoices" })
+      .getByRole("button", { name: "Documents" })
       .boundingBox();
     const name = await page
       .getByRole("textbox", { name: "Invoice name" })

@@ -125,10 +125,10 @@ export type InvoiceLibraryGroup = "client" | "month" | "none";
 export type InvoiceLibraryDateRange =
   "all" | "thisMonth" | "last30" | "thisQuarter" | "thisYear" | "lastYear";
 
-// The invoices panel's two lists.
-export type LibraryTab = "invoices" | "templates";
+// The documents panel's two lists.
+export type LibraryTab = "documents" | "templates";
 
-// The rows picked out in one of the invoices panel's lists, and the row a
+// The rows picked out in one of the documents panel's lists, and the row a
 // Shift-click's range starts from.
 export type LibrarySelection = { ids: string[]; anchor: string | null };
 

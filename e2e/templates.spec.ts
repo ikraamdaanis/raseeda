@@ -2,9 +2,9 @@ import { expect, test } from "./fixtures";
 import {
   clickFileMenuItem,
   countSavedInvoices,
+  documentsPanel,
   gotoEditorReady,
   invoiceNameField,
-  invoicesPanel,
   libraryRow,
   nameInvoice,
   savedContains
@@ -60,7 +60,7 @@ test("templates can be renamed and deleted from the panel", async ({
 
   await clickFileMenuItem(page, "Open Template");
 
-  const panel = invoicesPanel(page);
+  const panel = documentsPanel(page);
   const rename = page.getByRole("dialog", { name: "Rename Template" });
 
   await panel
