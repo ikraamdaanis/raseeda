@@ -197,7 +197,10 @@ export function calculateInvoiceTotals(
   // invoice adds what its row shows, ¥11.
   const fees = sections?.fees === false ? 0 : round(Number(invoice.fees) || 0);
 
-  const total = Math.max(0, round(taxableAmount + taxAmount + fees));
+  // The total is what its rows add up to. A discount can't take it below
+  // zero, but lines that net negative (a credit note typed as -100, or a
+  // credit line bigger than the rest) do, and it reads negative (issue #218).
+  const total = round(taxableAmount + taxAmount + fees);
 
   // The balance due nets off any recorded payment/deposit. An overpayment
   // reads as a zero balance rather than a negative one. A receipt is for what

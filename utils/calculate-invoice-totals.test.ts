@@ -605,7 +605,7 @@ describe("calculateInvoiceTotals with a tax rate per line", () => {
     expect(totals.total).toBe(987);
   });
 
-  it("keeps the negative tax of an invoice that is all credit", () => {
+  it("totals an invoice that is all credit to what its rows add up to", () => {
     const totals = calculateInvoiceTotals(
       makeInvoice({
         items: [makeItem({ unitPrice: -100 })],
@@ -615,7 +615,33 @@ describe("calculateInvoiceTotals with a tax rate per line", () => {
 
     expect(totals.discountAmount).toBe(0);
     expect(totals.taxAmount).toBe(-20);
-    expect(totals.total).toBe(0);
+    expect(totals.total).toBe(-120);
+    expect(totals.balanceDue).toBe(0);
+  });
+
+  it("totals a credit line bigger than the rest below zero", () => {
+    const totals = calculateInvoiceTotals(
+      makeInvoice({
+        items: [makeItem({ unitPrice: 100 }), makeItem({ unitPrice: -150 })],
+        tax: { percentage: 20, exempt: false, note: "", perLine: false }
+      })
+    );
+
+    expect(totals.subtotal).toBe(-50);
+    expect(totals.taxAmount).toBe(-10);
+    expect(totals.total).toBe(-60);
+  });
+
+  it("prints a credit note typed in negatives as a negative total credit", () => {
+    const totals = calculateInvoiceTotals(
+      makeInvoice({
+        documentType: "credit-note",
+        items: [makeItem({ unitPrice: -100 })],
+        tax: { percentage: 20, exempt: false, note: "", perLine: false }
+      })
+    );
+
+    expect(totals.total).toBe(-120);
   });
 
   it("credits back exactly the tax a sale at the same rate charged", () => {

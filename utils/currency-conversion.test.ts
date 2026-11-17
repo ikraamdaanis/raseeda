@@ -291,6 +291,24 @@ describe("calculateConvertedTotals", () => {
       }).balanceDue
     ).toBe(0);
   });
+
+  it("totals lines that net negative below zero, as the first currency does", () => {
+    const credit = calculateInvoiceTotals({
+      ...totalsInput,
+      items: [{ ...totalsInput.items[0], quantity: 1, unitPrice: -100 }],
+      discounts: 0,
+      fees: 0,
+      amountPaid: 0
+    });
+
+    expect(credit.total).toBeLessThan(0);
+    expect(
+      calculateConvertedTotals({
+        totals: credit,
+        conversion: { rate: 2, toDecimals: 2 }
+      }).total
+    ).toBe(-240);
+  });
 });
 
 describe("the second currency's column", () => {

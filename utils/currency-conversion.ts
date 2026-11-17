@@ -120,14 +120,8 @@ export function calculateConvertedTotals({
   const taxAmount = round(
     sumBy(totals.taxGroups, group => convert(group.taxAmount))
   );
-  const total = Math.max(
-    0,
-    round(
-      subtotal -
-        convert(totals.discountAmount) +
-        taxAmount +
-        convert(totals.fees)
-    )
+  const total = round(
+    subtotal - convert(totals.discountAmount) + taxAmount + convert(totals.fees)
   );
   const amountPaid =
     totals.amountPaid > 0 && totals.amountPaid === totals.total
