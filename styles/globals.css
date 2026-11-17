@@ -349,6 +349,16 @@ html[data-editor-theme="dark"] {
   color-scheme: dark;
 }
 
+/* The phone form's fields: white, with an edge that reads at a glance on a
+   small screen in daylight, where the editor's hairline fades out. */
+html[data-editor-theme] [data-phone-form] {
+  --input: #cbcbcb;
+}
+
+html[data-editor-theme="dark"] [data-phone-form] {
+  --input: #474747;
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);

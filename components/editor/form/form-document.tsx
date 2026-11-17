@@ -1,17 +1,28 @@
-import { useId } from "react";
+import { IconChevronDown } from "@tabler/icons-react";
+import { useId, useState } from "react";
 import {
+  FormAddParts,
   FormArea,
+  formEnterClassName,
   FormField,
+  formHintClassName,
+  FormInput,
+  formLabelClassName,
   FormSelect
 } from "~/components/editor/form/form-controls";
+import { useAddableParts } from "~/components/editor/invoice-add-part";
 import {
   currencyPositionOption,
   dateFormatOption,
   numberFormatOption,
   PAPER_SIZE_LABELS
 } from "~/components/editor/shell/inspector/format-section";
-import { DOCUMENT_TYPE_NAMES } from "~/consts/document-types";
+import {
+  DOCUMENT_TYPE_DEFAULTS,
+  DOCUMENT_TYPE_NAMES
+} from "~/consts/document-types";
 import { LABEL_LANGUAGE_NAMES, LABEL_LANGUAGES } from "~/consts/label-presets";
+import { cn } from "~/lib/utils";
 import {
   CURRENCY_POSITIONS,
   DOCUMENT_TYPES,
@@ -26,22 +37,79 @@ import {
   useDocumentTypeSlice,
   useLabelLanguageSlice,
   useMoneyFormat,
-  usePaperSizeSlice
+  usePaperSizeSlice,
+  useTitleSlice
 } from "~/stores/invoice-selectors";
 
 /**
- * The form's opening card: what the document is and how it's set up, chosen
- * once rather than watched as it changes, so on a phone it lives in the form
- * rather than the Style tray. The type comes first, since it decides the
- * title, the number and which rows the form shows; the language rewrites
- * every label, each renamed on its own in the field it prints as.
+ * The form's opening part: the document's title, then what it is and how
+ * it's set up, chosen once rather than watched as it changes, so on a phone
+ * it lives in the form rather than the Style tray. Type, language and paper
+ * fold into one line that says what they're set to, so the form opens close
+ * to who it's from and to. The type comes first, since it decides the title,
+ * the number and which rows the form shows; the language rewrites every
+ * label, each renamed on its own in the field it prints as.
  */
 export function FormDocument() {
+  const titleId = useId();
+  const setupId = useId();
+  const [isSetupOpen, setIsSetupOpen] = useState(false);
+  const { title, setTitle } = useTitleSlice();
+  const { documentType } = useDocumentTypeSlice();
+  const { language } = useLabelLanguageSlice();
+  const { paperSize } = usePaperSizeSlice();
+  const addableParts = useAddableParts("logo");
+  const languageName = language
+    ? LABEL_LANGUAGE_NAMES[language].split(" · ")[0]
+    : "Custom labels";
+  const summary = [
+    DOCUMENT_TYPE_NAMES[documentType],
+    languageName,
+    paperSize
+  ].join(" · ");
+
   return (
     <FormArea area="document" title="Document">
-      <FormDocumentType />
-      <FormLanguage />
-      <FormPaperSize />
+      <div data-field-area="title">
+        <FormField id={titleId} title="Title">
+          <FormInput
+            id={titleId}
+            aria-label="Invoice title"
+            data-field="title"
+            value={title}
+            onChange={setTitle}
+            placeholder={DOCUMENT_TYPE_DEFAULTS[documentType].title}
+          />
+        </FormField>
+      </div>
+      <div className="flex flex-col gap-5">
+        <button
+          type="button"
+          aria-expanded={isSetupOpen}
+          aria-controls={setupId}
+          onClick={() => setIsSetupOpen(isOpen => !isOpen)}
+          className="group/setup active:bg-muted focus-visible:ring-ring -mx-2 flex min-h-11 items-center gap-3 rounded-md px-2 py-1 text-left transition-colors outline-none focus-visible:ring-1"
+        >
+          <span className="flex min-w-0 flex-1 flex-col">
+            <span className={formLabelClassName}>Type, language and paper</span>
+            <span className={formHintClassName}>{summary}</span>
+          </span>
+          <IconChevronDown
+            aria-hidden="true"
+            className="text-muted-foreground size-5 shrink-0 transition-transform duration-200 ease-out group-aria-expanded/setup:rotate-180"
+          />
+        </button>
+        <div
+          id={setupId}
+          hidden={!isSetupOpen}
+          className={cn("flex flex-col gap-5", formEnterClassName)}
+        >
+          <FormDocumentType />
+          <FormLanguage />
+          <FormPaperSize />
+        </div>
+      </div>
+      <FormAddParts parts={addableParts} />
     </FormArea>
   );
 }

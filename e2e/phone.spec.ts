@@ -154,11 +154,36 @@ test("only a label that prints is a field", async ({ page }) => {
 
   await expect(ibanLabel).toHaveCount(0);
 
+  await paymentPart.getByRole("button", { name: "More bank fields" }).tap();
   await paymentPart
     .getByRole("textbox", { name: "IBAN", exact: true })
     .fill("DE89 3704 0044 0532 0130 00");
 
   await expect(ibanLabel).toBeVisible();
+});
+
+test("the bank rows are the ones the currency needs, the rest a tap away", async ({
+  page
+}) => {
+  await page.goto("/create");
+
+  const paymentPart = page.getByRole("region", { name: "Payment details" });
+  const routingNumber = paymentPart.getByRole("textbox", {
+    name: "Routing number",
+    exact: true
+  });
+  const iban = paymentPart.getByRole("textbox", { name: "IBAN", exact: true });
+
+  // A new blank in a US browser is in dollars.
+  await expect(routingNumber).toBeVisible();
+  await expect(iban).toHaveCount(0);
+
+  await paymentPart.getByRole("button", { name: "More bank fields" }).tap();
+
+  await expect(iban).toBeVisible();
+  await expect(
+    paymentPart.getByRole("button", { name: "More bank fields" })
+  ).toHaveCount(0);
 });
 
 test("tapping a label on the page focuses its field in the form", async ({
@@ -474,6 +499,7 @@ test("the setup choices sit in the form", async ({ page }) => {
 
   const form = page.getByRole("form", { name: "Invoice" });
 
+  await form.getByRole("button", { name: /^Type, language and paper/ }).tap();
   await form.getByLabel("Type", { exact: true }).selectOption("quote");
 
   await expect(page.getByLabel("Invoice title")).toHaveValue("Quote");

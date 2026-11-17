@@ -2,6 +2,7 @@ import { useId } from "react";
 import {
   FormAddParts,
   FormArea,
+  formEnterClassName,
   FormField,
   formFieldClassName,
   FormInput,
@@ -30,7 +31,9 @@ import {
 import type { InvoiceDetailRow } from "~/types";
 import { formatServicePeriod } from "~/utils/format-invoice-date";
 
-// The number, dates and references, as the page's details rows list them.
+// The number, dates and references, as the page's details rows list them,
+// spaced well apart since each has a heading, a note and its label, then how
+// dates and amounts are written.
 export function FormDetails() {
   const documentType = useDocumentType();
   const placeholders = buildDetailPlaceholders(documentType);
@@ -47,6 +50,7 @@ export function FormDetails() {
     <FormArea
       area="details"
       title="Details"
+      className="gap-8"
       labels={printedRows.map(row => ({
         name: placeholders[row.id].label,
         value: row.label,
@@ -62,15 +66,17 @@ export function FormDetails() {
           placeholders={placeholders[row.id]}
         />
       ))}
-      <FormDateFormat />
-      <CurrencyControls
-        part="currency"
-        classNames={{
-          field: cn(formFieldClassName, "leading-11"),
-          label: formLabelClassName
-        }}
-      />
-      <FormAmountFormat />
+      <div className="flex flex-col gap-5">
+        <FormDateFormat />
+        <CurrencyControls
+          part="currency"
+          classNames={{
+            field: cn(formFieldClassName, "leading-11"),
+            label: formLabelClassName
+          }}
+        />
+        <FormAmountFormat />
+      </div>
       <FormAddParts parts={addableParts} />
     </FormArea>
   );
@@ -90,7 +96,7 @@ function FormDetailRow({
   const title = row.label.trim() || placeholders.label;
 
   return (
-    <div className="flex flex-col gap-1">
+    <div className={cn("flex flex-col gap-1", formEnterClassName)}>
       <FormField id={id} title={title} labelField={`labels.${row.labelKey}`}>
         {dateValue !== null ? (
           <InvoiceDateField

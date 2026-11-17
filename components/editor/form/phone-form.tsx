@@ -8,8 +8,7 @@ import {
   FormClient,
   FormLogo,
   FormSeller,
-  FormShipping,
-  FormTitle
+  FormShipping
 } from "~/components/editor/form/form-parties";
 import { FormPaymentDetails } from "~/components/editor/form/form-payment";
 import { scrollFormTo } from "~/components/editor/form/form-scroll";
@@ -58,6 +57,18 @@ export function PhoneForm({
 
   useRevealAboveKeyboard(scrollerRef);
 
+  // Parts, lines and rows added from here on fade in (`formEnterClassName`);
+  // what's on screen as the form opens doesn't. A frame after the first paint,
+  // so nothing that's there from the start counts as added.
+  useEffect(() => {
+    const scroller = scrollerRef.current;
+    const frame = requestAnimationFrame(() => {
+      if (scroller) scroller.dataset.mounted = "";
+    });
+
+    return () => cancelAnimationFrame(frame);
+  }, []);
+
   return (
     <div
       ref={scrollerRef}
@@ -71,7 +82,6 @@ export function PhoneForm({
         className="bg-border mx-auto flex max-w-xl flex-col gap-px border-b"
       >
         <FormDocument />
-        <FormTitle />
         <FormLogo />
         <FormSeller />
         <FormClient />

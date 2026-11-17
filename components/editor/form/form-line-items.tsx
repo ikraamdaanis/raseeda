@@ -7,6 +7,7 @@ import {
   FormAmount,
   FormArea,
   formCardClassName,
+  formEnterClassName,
   FormField,
   FormFieldTitle,
   formIconButtonClassName,
@@ -137,7 +138,7 @@ export function FormLineItems() {
     >
       <ol aria-label="Invoice line items" className="flex flex-col gap-4">
         {items.map((item, index) => (
-          <li key={item.id}>
+          <li key={item.id} className={formEnterClassName}>
             <LineItemCard
               item={item}
               index={index}

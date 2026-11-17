@@ -170,7 +170,7 @@ function FormSignature() {
           <img
             src={imageUrl}
             alt="Signature"
-            className="border-border h-20 w-[12.5rem] rounded-lg border bg-white object-contain"
+            className="border-border h-20 w-[12.5rem] rounded-md border bg-white object-contain"
           />
           <Button
             variant="ghost"

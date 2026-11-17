@@ -151,7 +151,7 @@ function BarButton({
       {...props}
       className={cn(
         "text-muted-foreground focus-visible:ring-ring flex h-14 flex-col items-center justify-center gap-1 rounded-lg text-[11px] font-medium outline-none focus-visible:ring-1 focus-visible:ring-inset",
-        isActive && "text-foreground",
+        isActive && "text-brand-600 dark:text-brand-400",
         className
       )}
     >

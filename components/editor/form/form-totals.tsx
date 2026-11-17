@@ -12,6 +12,7 @@ import {
   FormNumberInput,
   FormRemoveButton,
   FormSwitch,
+  formEnterClassName,
   formFieldClassName,
   formIconButtonClassName,
   formLabelClassName,
@@ -165,7 +166,7 @@ export function FormTotals() {
               field: cn(formFieldClassName, "leading-11"),
               label: formLabelClassName,
               action:
-                "text-muted-foreground hover:text-foreground flex h-11 items-center gap-2 self-start text-base [&_svg]:size-5"
+                "text-muted-foreground hover:text-foreground flex h-11 items-center gap-2 self-start text-base transition-[color,scale] duration-150 ease-out active:scale-[0.97] [&_svg]:size-5"
             }}
           />
         </div>
@@ -258,6 +259,7 @@ function RowGroup({
     <div
       className={cn(
         "flex flex-col gap-3",
+        formEnterClassName,
         isTotal && "border-border border-t pt-5"
       )}
     >
@@ -497,14 +499,14 @@ function DiscountBelow({ row }: { row: InvoiceSummaryRow }) {
           <ToggleGroupItem
             value="fixed"
             aria-label="Amount"
-            className="h-11 min-w-11 text-base"
+            className="group-data-horizontal/toggle-group:data-[spacing=0]:first:rounded-l-surface group-data-horizontal/toggle-group:data-[spacing=0]:last:rounded-r-surface h-11 min-w-11 text-base"
           >
             {money.marker}
           </ToggleGroupItem>
           <ToggleGroupItem
             value="percentage"
             aria-label="Percentage"
-            className="h-11 min-w-11 text-base"
+            className="group-data-horizontal/toggle-group:data-[spacing=0]:first:rounded-l-surface group-data-horizontal/toggle-group:data-[spacing=0]:last:rounded-r-surface h-11 min-w-11 text-base"
           >
             %
           </ToggleGroupItem>

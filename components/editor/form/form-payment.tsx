@@ -4,6 +4,7 @@ import {
   FormAddButton,
   FormArea,
   formCardClassName,
+  formEnterClassName,
   FormField,
   formHintClassName,
   formIconButtonClassName,
@@ -36,16 +37,76 @@ import {
   usePaymentDetailsSlice,
   useSectionsSlice
 } from "~/stores/invoice-selectors";
+import { useInvoiceStore } from "~/stores/invoice-store";
 import type { InvoicePaymentMethod } from "~/types";
+
+type BankFieldKey = (typeof PAYMENT_FIELDS)[number]["key"];
+
+// Currencies paid to an IBAN, in Europe's single payments area and beside it.
+const IBAN_CURRENCIES = [
+  "EUR",
+  "CHF",
+  "SEK",
+  "DKK",
+  "NOK",
+  "PLN",
+  "CZK",
+  "HUF",
+  "RON",
+  "BGN",
+  "ISK"
+];
+
+// The bank rows a client paying in this currency usually needs: a routing
+// number in the US, a sort code in the UK, an IBAN and BIC across Europe,
+// else an account number and a SWIFT code for a payment from abroad.
+function getUsualBankFields(currencyCode: string): BankFieldKey[] {
+  if (currencyCode === "USD") {
+    return ["bankName", "accountName", "accountNumber", "routingNumber"];
+  }
+
+  if (currencyCode === "GBP") {
+    return ["bankName", "accountName", "accountNumber", "sortCode"];
+  }
+
+  if (IBAN_CURRENCIES.includes(currencyCode)) {
+    return ["bankName", "accountName", "iban", "bic"];
+  }
+
+  return ["bankName", "accountName", "accountNumber", "bic"];
+}
 
 // How to pay, as the page lists it: the bank rows under their labels, other
 // ways to pay in order, the payment link, the QR code and the instructions. A
-// bank row's label prints, and is renamed, once the row is filled in.
+// bank row's label prints, and is renamed, once the row is filled in. Only
+// the bank rows the invoice's currency usually needs show, and any filled
+// in; More bank fields shows the rest. A row once filled stays while the
+// form is open, so clearing it to retype doesn't take it away.
 export function FormPaymentDetails() {
   const { paymentDetails, setPaymentDetails } = usePaymentDetailsSlice();
   const { setSection } = useSectionsSlice();
   const sections = useShownSections();
+  const currencyCode = useInvoiceStore(state => state.currencyCode);
   const termsId = useId();
+  const [showsAllBankFields, setShowsAllBankFields] = useState(false);
+  const [keptBankFields, setKeptBankFields] = useState<
+    ReadonlySet<BankFieldKey>
+  >(() => new Set());
+  const usualBankFields = getUsualBankFields(currencyCode);
+  const filledBankFields = PAYMENT_FIELDS.filter(
+    field => paymentDetails[field.key].trim() !== ""
+  ).map(field => field.key);
+  const shownBankFields = PAYMENT_FIELDS.filter(
+    field =>
+      showsAllBankFields ||
+      usualBankFields.includes(field.key) ||
+      filledBankFields.includes(field.key) ||
+      keptBankFields.has(field.key)
+  );
+
+  if (filledBankFields.some(key => !keptBankFields.has(key))) {
+    setKeptBankFields(new Set([...keptBankFields, ...filledBankFields]));
+  }
 
   if (!sections.paymentDetails) return null;
 
@@ -53,6 +114,7 @@ export function FormPaymentDetails() {
     <FormArea
       area="paymentDetails"
       title="Payment details"
+      className="gap-6"
       label={{
         value: paymentDetails.label,
         field: "paymentDetails.label",
@@ -74,13 +136,18 @@ export function FormPaymentDetails() {
       removeLabel="Hide payment details"
       onRemove={() => setSection("paymentDetails", false)}
     >
-      {PAYMENT_FIELDS.map(field => (
-        <PaymentField
-          key={field.key}
-          fieldKey={field.key}
-          placeholder={field.placeholder}
-        />
+      {shownBankFields.map(field => (
+        <div key={field.key} className={formEnterClassName}>
+          <PaymentField fieldKey={field.key} placeholder={field.placeholder} />
+        </div>
       ))}
+      {shownBankFields.length < PAYMENT_FIELDS.length && (
+        <div className="-mt-3 flex">
+          <FormAddButton onClick={() => setShowsAllBankFields(true)}>
+            More bank fields
+          </FormAddButton>
+        </div>
+      )}
       <PaymentMethods />
       <PaymentField
         fieldKey={PAYMENT_LINK_FIELD.key}
@@ -254,7 +321,7 @@ function PaymentMethodCard({
   }
 
   return (
-    <div className={formCardClassName}>
+    <div className={cn(formCardClassName, formEnterClassName)}>
       <FormField id={nameId} title="Name">
         {showsTypedName ? (
           <FormInput

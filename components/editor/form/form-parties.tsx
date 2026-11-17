@@ -9,25 +9,21 @@ import {
 import {
   FormAddParts,
   FormArea,
-  FormInput,
   FormTextArea
 } from "~/components/editor/form/form-controls";
 import { useAddableParts } from "~/components/editor/invoice-add-part";
 import { useClientSuggestions } from "~/components/editor/invoice-client-details";
 import { useSellerSuggestions } from "~/components/editor/invoice-seller-details";
 import { Button } from "~/components/ui/button";
-import { DOCUMENT_TYPE_DEFAULTS } from "~/consts/document-types";
 import { useImageLoader } from "~/hooks/use-image-loader";
 import { useShownSections } from "~/hooks/use-shown-sections";
 import { cn } from "~/lib/utils";
 import {
   useClientSlice,
-  useDocumentType,
   useImageSlice,
   useSectionsSlice,
   useSellerSlice,
-  useShippingSlice,
-  useTitleSlice
+  useShippingSlice
 } from "~/stores/invoice-selectors";
 import {
   MAX_IMAGE_SIZE_BYTES,
@@ -35,28 +31,10 @@ import {
   UPLOADED_IMAGE_TYPES
 } from "~/utils/store-uploaded-image";
 
-export function FormTitle() {
-  const { title, setTitle } = useTitleSlice();
-  const documentType = useDocumentType();
-  const addableParts = useAddableParts("logo");
-
-  return (
-    <FormArea area="title" title="Title">
-      <FormInput
-        aria-label="Invoice title"
-        data-field="title"
-        value={title}
-        onChange={setTitle}
-        placeholder={DOCUMENT_TYPE_DEFAULTS[documentType].title}
-      />
-      <FormAddParts parts={addableParts} />
-    </FormArea>
-  );
-}
-
 // The logo, picked from the phone's photos or files, as the page's dropzone
 // takes it. With none yet, the whole tile picks one. A logo shows on white, as
-// it prints. Removing the image keeps the part on, ready for another.
+// it prints. Removing the image keeps the part on, ready for another. Its
+// tile is one row, the height of a field or so.
 export function FormLogo() {
   const { image: imageId, setImage } = useImageSlice();
   const { sections, setSection } = useSectionsSlice();
@@ -94,7 +72,7 @@ export function FormLogo() {
             <input {...getInputProps()} aria-label="Upload logo" />
             {imageUrl ? (
               <div className="flex items-center gap-4">
-                <div className="flex h-24 w-36 shrink-0 items-center justify-center rounded-lg bg-white p-3 outline-1 -outline-offset-1 outline-black/10 dark:outline-white/10">
+                <div className="flex h-24 w-36 shrink-0 items-center justify-center rounded-md bg-white p-3 outline-1 -outline-offset-1 outline-black/10 dark:outline-white/10">
                   <img
                     src={imageUrl}
                     alt="Invoice logo"
@@ -128,21 +106,21 @@ export function FormLogo() {
                 aria-describedby={hintId}
                 onClick={open}
                 className={cn(
-                  "border-input text-muted-foreground focus-visible:border-ring focus-visible:ring-ring/50 active:bg-accent flex w-full flex-col items-center gap-3 rounded-xl border border-dashed px-4 py-6 text-center outline-none focus-visible:ring-3",
+                  "border-input text-muted-foreground focus-visible:border-ring focus-visible:ring-ring/50 active:bg-accent flex w-full items-center gap-3 rounded-md border border-dashed p-2.5 text-left transition-colors outline-none focus-visible:ring-3",
                   isDragActive && "border-ring bg-accent"
                 )}
               >
-                <span className="bg-muted flex size-11 items-center justify-center rounded-full">
+                <span className="bg-muted flex size-11 shrink-0 items-center justify-center rounded-sm">
                   <IconPhotoUp aria-hidden="true" className="size-5" />
                 </span>
-                <span className="flex flex-col gap-0.5">
+                <span className="flex min-w-0 flex-col">
                   <span
                     id={titleId}
                     className="text-foreground text-base/6 font-medium"
                   >
                     Upload logo
                   </span>
-                  <span id={hintId} className="text-base/6">
+                  <span id={hintId} className="text-[0.9375rem]/5.5">
                     PNG, JPG or WebP, up to 5 MB
                   </span>
                 </span>
