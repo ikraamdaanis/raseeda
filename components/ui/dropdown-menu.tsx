@@ -3,10 +3,25 @@
 import { Menu as MenuPrimitive } from "@base-ui/react/menu";
 import { IconCheck, IconChevronRight } from "@tabler/icons-react";
 import type { ComponentProps } from "react";
+import { useMediaQuery } from "~/hooks/use-media-query";
 import { cn } from "~/lib/utils";
 
-export function DropdownMenu({ ...props }: MenuPrimitive.Root.Props) {
-  return <MenuPrimitive.Root data-slot="dropdown-menu" {...props} />;
+// Items highlight under the pointer only where it can hover. iOS Safari takes
+// a tap that changes the page as it moves over it (the highlight) for a hover
+// alone, so a highlighting item would need a second tap to be chosen.
+export function DropdownMenu({
+  highlightItemOnHover,
+  ...props
+}: MenuPrimitive.Root.Props) {
+  const canHover = useMediaQuery("(hover: hover)");
+
+  return (
+    <MenuPrimitive.Root
+      data-slot="dropdown-menu"
+      highlightItemOnHover={highlightItemOnHover ?? canHover}
+      {...props}
+    />
+  );
 }
 
 export function DropdownMenuPortal({ ...props }: MenuPrimitive.Portal.Props) {
