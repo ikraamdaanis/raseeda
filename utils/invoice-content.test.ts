@@ -143,6 +143,13 @@ describe("isBlankInvoice", () => {
       expect(
         isBlankInvoice({
           ...createBlankInvoice(),
+          currency: "$",
+          currencyCode: "USD"
+        })
+      ).toBe(false);
+      expect(
+        isBlankInvoice({
+          ...createBlankInvoice(),
           numberFormat: "comma-dot",
           currencyPosition: "before"
         })

@@ -3,22 +3,32 @@ import { getLocaleDefaults } from "~/utils/locale-defaults";
 
 describe("getLocaleDefaults", () => {
   it.each([
-    ["en-US", "comma-dot", "before", "Letter", "en"],
-    ["en-GB", "comma-dot", "before", "A4", "en"],
-    ["de-DE", "dot-comma", "after", "A4", "de"],
-    ["de-AT", "dot-comma", "before", "A4", "de"],
-    ["fr-FR", "space-comma", "after", "A4", "fr"],
-    ["de-CH", "apostrophe-dot", "before", "A4", "de"],
-    ["en-IN", "indian", "before", "A4", "en"],
-    ["ja", "comma-dot", "before", "A4", "en"],
-    ["fr-CA", "space-comma", "after", "Letter", "fr"],
-    ["en-CA", "comma-dot", "before", "Letter", "en"],
-    ["nl-BE", "dot-comma", "before", "A4", "nl"],
-    ["zh-Hant-TW", "comma-dot", "before", "A4", "en"]
+    ["en-US", "$", "USD", "comma-dot", "before", "Letter", "en"],
+    ["en-GB", "£", "GBP", "comma-dot", "before", "A4", "en"],
+    ["de-DE", "€", "EUR", "dot-comma", "after", "A4", "de"],
+    ["de-AT", "€", "EUR", "dot-comma", "before", "A4", "de"],
+    ["fr-FR", "€", "EUR", "space-comma", "after", "A4", "fr"],
+    ["de-CH", "CHF", "CHF", "apostrophe-dot", "before", "A4", "de"],
+    ["en-IN", "₹", "INR", "indian", "before", "A4", "en"],
+    ["ja", "¥", "JPY", "comma-dot", "before", "A4", "en"],
+    ["fr-CA", "$", "CAD", "space-comma", "after", "Letter", "fr"],
+    ["en-CA", "$", "CAD", "comma-dot", "before", "Letter", "en"],
+    ["nl-BE", "€", "EUR", "dot-comma", "before", "A4", "nl"],
+    ["zh-Hant-TW", "$", "TWD", "comma-dot", "before", "A4", "en"]
   ])(
-    "reads %s as %s, %s, %s, %s",
-    (tag, numberFormat, currencyPosition, paperSize, language) => {
+    "reads %s as %s %s, %s, %s, %s, %s",
+    (
+      tag,
+      currency,
+      currencyCode,
+      numberFormat,
+      currencyPosition,
+      paperSize,
+      language
+    ) => {
       expect(getLocaleDefaults(tag)).toEqual({
+        currency,
+        currencyCode,
         numberFormat,
         currencyPosition,
         paperSize,
@@ -54,8 +64,36 @@ describe("getLocaleDefaults", () => {
     expect(getLocaleDefaults("es-AR").paperSize).toBe("A4");
   });
 
+  it("bills in the region's currency, with Intl's symbol for one that isn't a preset", () => {
+    expect(getLocaleDefaults("pl-PL")).toMatchObject({
+      currency: "zł",
+      currencyCode: "PLN"
+    });
+    expect(getLocaleDefaults("pt")).toMatchObject({
+      currency: "R$",
+      currencyCode: "BRL"
+    });
+    expect(getLocaleDefaults("en-AU")).toMatchObject({
+      currency: "$",
+      currencyCode: "AUD"
+    });
+    expect(getLocaleDefaults("bg-BG")).toMatchObject({
+      currency: "€",
+      currencyCode: "EUR"
+    });
+  });
+
+  it("bills in US dollars where the region isn't listed", () => {
+    expect(getLocaleDefaults("es-EC")).toMatchObject({
+      currency: "$",
+      currencyCode: "USD"
+    });
+  });
+
   it("falls back to the stored defaults for an unknown or missing tag", () => {
     const stored = {
+      currency: "$",
+      currencyCode: "USD",
       numberFormat: "comma-dot",
       currencyPosition: "before",
       paperSize: "A4",

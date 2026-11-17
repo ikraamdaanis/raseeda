@@ -168,10 +168,11 @@ export const invoiceDefault: Invoice = {
  * dates are stamped from the clock at call time (due the type's `dueDays`
  * out: 30 days, or the same day for a receipt's date paid), so a document
  * created today is dated today rather than whenever the module was loaded.
- * Its number format, currency position, paper size and labels' language come
- * from the browser's language (issues #117 and #126) unless given, as the
- * automation API gives the stored-invoice defaults so the same data always
- * makes the same invoice. Defaults given without a language are in English.
+ * Its currency, number format, currency position, paper size and labels'
+ * language come from the browser's language (issues #117, #126 and #217)
+ * unless given, as the automation API gives the stored-invoice defaults so
+ * the same data always makes the same invoice. Defaults given without a
+ * currency are in US dollars, and without a language in English.
  */
 export function createBlankDocument(
   documentType: DocumentType,

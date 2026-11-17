@@ -1,6 +1,9 @@
+import { currencyOptions } from "~/consts/currencies";
+import { REGION_CURRENCIES } from "~/consts/region-currencies";
 import { STORED_INVOICE_FORMATS } from "~/schema/invoice";
 import type {
   CurrencyPosition,
+  Invoice,
   InvoiceNumberFormat,
   InvoicePaperSize,
   LabelLanguage
@@ -74,6 +77,28 @@ function getCurrencyPosition(
   return currencyIndex < integerIndex ? "before" : "after";
 }
 
+// The currency a region bills in, with its symbol: a preset's own ("£",
+// "CHF"), else the narrow one Intl writes it with ("₹", "zł", "R$"). A region
+// not listed, or none, bills in US dollars.
+function getRegionCurrency(
+  region: string | undefined
+): Pick<Invoice, "currency" | "currencyCode"> {
+  const currencyCode = (region && REGION_CURRENCIES.get(region)) || "USD";
+  const preset = currencyOptions.find(option => option.code === currencyCode);
+
+  if (preset) return { currency: preset.symbol, currencyCode };
+
+  const symbol = new Intl.NumberFormat("en", {
+    style: "currency",
+    currency: currencyCode,
+    currencyDisplay: "narrowSymbol"
+  })
+    .formatToParts(0)
+    .find(part => part.type === "currency")?.value;
+
+  return { currency: symbol ?? currencyCode, currencyCode };
+}
+
 // The locale the browser's language names, or none when it isn't a valid
 // tag or Intl has no data for it ("xx").
 function getLocale(tag: string) {
@@ -90,14 +115,16 @@ function getLocale(tag: string) {
   }
 }
 
-// A new blank invoice's number format, currency position and paper size,
-// from the browser's language as Intl writes an amount in it: someone in
-// Berlin starts on 1.234,56 € and A4, someone in Chicago on $1,234.56 and
+// A new blank invoice's currency, number format, currency position and paper
+// size, from the browser's language as Intl writes an amount in it: someone
+// in Berlin starts on 1.234,56 € and A4, someone in Chicago on $1,234.56 and
 // Letter. A bare language takes its most common region ("de" is Germany).
 // Whatever Intl can't answer gets the stored-invoice defaults. Its labels
 // start in the browser's language when there's a preset for it (issue #126),
 // and in English otherwise.
 export function getLocaleDefaults(tag: string | undefined): {
+  currency: string;
+  currencyCode: string;
   numberFormat: InvoiceNumberFormat;
   currencyPosition: CurrencyPosition;
   paperSize: InvoicePaperSize;
@@ -105,7 +132,13 @@ export function getLocaleDefaults(tag: string | undefined): {
 } {
   const locale = tag ? getLocale(tag) : null;
 
-  if (!locale) return { ...STORED_INVOICE_FORMATS, language: "en" };
+  if (!locale) {
+    return {
+      ...getRegionCurrency(undefined),
+      ...STORED_INVOICE_FORMATS,
+      language: "en"
+    };
+  }
 
   const region = locale.maximize().region;
   // Where the currency sits doesn't depend on which currency it is, so any
@@ -116,6 +149,7 @@ export function getLocaleDefaults(tag: string | undefined): {
   }).formatToParts(SAMPLE_AMOUNT);
 
   return {
+    ...getRegionCurrency(region),
     numberFormat: getNumberFormat(parts) ?? STORED_INVOICE_FORMATS.numberFormat,
     currencyPosition:
       getCurrencyPosition(parts) ?? STORED_INVOICE_FORMATS.currencyPosition,

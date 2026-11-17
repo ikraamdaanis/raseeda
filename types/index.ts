@@ -24,13 +24,16 @@ export type InvoicePaperSize = Invoice["paperSize"];
 // A language a preset sets every printed label in (issue #126).
 export type LabelLanguage = (typeof LABEL_LANGUAGES)[number];
 
-// What a new blank document takes from the browser's language: how amounts
-// are written, the paper and the labels' language. Left out, the language is
-// English.
+// What a new blank document takes from the browser's language: its currency,
+// how amounts are written, the paper and the labels' language. Left out, the
+// currency is US dollars and the language English.
 export type BlankDefaults = Pick<
   Invoice,
   "numberFormat" | "currencyPosition" | "paperSize"
-> & { language?: LabelLanguage };
+> &
+  Partial<Pick<Invoice, "currency" | "currencyCode">> & {
+    language?: LabelLanguage;
+  };
 
 // The invoice's signature (issue #128): an image id and the name or caption
 // printed under it.

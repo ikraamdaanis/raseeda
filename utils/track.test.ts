@@ -178,7 +178,7 @@ describe("track", () => {
 
     expect(sentBodies(sendBeacon)).toEqual([
       "page_view / r=direct s=- l=en d=standalone",
-      "invoice_saved r=direct s=- l=en d=standalone c=USD n=0"
+      "invoice_saved r=direct s=- l=en d=standalone c=GBP n=0"
     ]);
   });
 
@@ -337,7 +337,7 @@ describe("track", () => {
     await vi.waitFor(() => expect(sendBeacon).toHaveBeenCalledOnce());
 
     expect(sentBodies(sendBeacon)[0]).toBe(
-      `pdf_downloaded r=direct s=- l=en d=browser c=USD n=0 x=${1 << SECTION_BITS.indexOf("tax")}`
+      `pdf_downloaded r=direct s=- l=en d=browser c=GBP n=0 x=${1 << SECTION_BITS.indexOf("tax")}`
     );
   });
 
