@@ -151,6 +151,14 @@ test("phones get a tab bar instead of the canvas pill and panel toggles", async 
       .poll(async () => (await button.boundingBox())?.height)
       .toBeGreaterThanOrEqual(44);
   }
+
+  // Style takes over the same sheet, sliding in beside Invoices, rather than
+  // opening a second one.
+  await style.tap();
+
+  await expect(page.getByRole("dialog")).toHaveCount(1);
+  await expect(inspector).toBeFocused();
+  await expect(inspector).toHaveAttribute("aria-modal", "true");
 });
 
 test("a phone opens to the form even when Preview was left on", async ({

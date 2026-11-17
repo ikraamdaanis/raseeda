@@ -32,6 +32,7 @@ import { PhoneTabBar } from "~/components/editor/shell/phone-tab-bar";
 import {
   PanelBackdrop,
   PanelToggle,
+  PhoneSheet,
   SidePanel
 } from "~/components/editor/shell/side-panel";
 import { CanvasViewProvider } from "~/context/canvas-view-context";
@@ -67,6 +68,10 @@ export function InvoiceEditor() {
               <SidePanel side="right" label="Inspector">
                 <Inspector />
               </SidePanel>
+              <PhoneSheet
+                invoices={<InvoicesPanel />}
+                inspector={<Inspector />}
+              />
             </div>
             <PhoneTabBar />
           </div>
