@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import { flushSync } from "react-dom";
 import {
   focusFormTarget,
@@ -28,13 +28,13 @@ import { EditorTopBar } from "~/components/editor/shell/editor-top-bar";
 import { HistoryShortcuts } from "~/components/editor/shell/history-shortcuts";
 import { InspectorPanel } from "~/components/editor/shell/inspector/inspector-panel";
 import { InvoicesPanel } from "~/components/editor/shell/invoices-panel";
-import { PhoneTabBar } from "~/components/editor/shell/phone-tab-bar";
 import {
-  PanelBackdrop,
-  PanelToggle,
-  PhoneSheet,
-  SidePanel
-} from "~/components/editor/shell/side-panel";
+  EditorScreen,
+  PhoneLibraryScreen
+} from "~/components/editor/shell/phone-screens";
+import { PhoneTabBar } from "~/components/editor/shell/phone-tab-bar";
+import { PanelToggle, SidePanel } from "~/components/editor/shell/side-panel";
+import { StyleTray } from "~/components/editor/shell/style-tray";
 import { CanvasViewProvider } from "~/context/canvas-view-context";
 import { EditorUiProvider, useEditorUi } from "~/context/editor-ui-context";
 import { FileActionsProvider } from "~/context/file-actions-context";
@@ -50,30 +50,29 @@ export function InvoiceEditor() {
           <EditorShortcuts />
           <HistoryShortcuts />
           <CommandPalette />
-          <div className="flex h-dvh w-full flex-col">
-            <EditorTopBar
-              start={<PanelToggle side="left" />}
-              end={<PanelToggle side="right" />}
-            />
-            <div className="relative flex min-h-0 flex-1">
-              <SidePanel side="left" label="Invoices">
-                <InvoicesPanel />
-              </SidePanel>
-              <Desk>
-                <DocumentStatusBanner />
-                <DeskContent />
-                <CanvasPill />
-              </Desk>
-              <PanelBackdrop />
-              <SidePanel side="right" label="Inspector">
-                <Inspector />
-              </SidePanel>
-              <PhoneSheet
-                invoices={<InvoicesPanel />}
-                inspector={<Inspector />}
+          <div className="relative flex h-dvh w-full flex-col overflow-hidden [--style-tray-height:min(21rem,52dvh)]">
+            <PhoneLibraryScreen />
+            <EditorScreen>
+              <EditorTopBar
+                start={<PanelToggle side="left" />}
+                end={<PanelToggle side="right" />}
               />
-            </div>
-            <PhoneTabBar />
+              <div className="relative flex min-h-0 flex-1">
+                <SidePanel side="left" label="Invoices">
+                  <InvoicesPanel />
+                </SidePanel>
+                <Desk>
+                  <DocumentStatusBanner />
+                  <DeskContent />
+                  <CanvasPill />
+                </Desk>
+                <SidePanel side="right" label="Inspector">
+                  <Inspector />
+                </SidePanel>
+                <StyleTray />
+              </div>
+              <PhoneTabBar />
+            </EditorScreen>
           </div>
         </FileActionsProvider>
       </EditorUiProvider>
@@ -81,14 +80,27 @@ export function InvoiceEditor() {
   );
 }
 
-// The canvas between the panels. Behind a phone's panel sheet it is out of
-// reach, so focus and screen readers stay in the sheet.
+// The canvas between the panels. On a phone, tapping the page while the Style
+// tray is open closes the tray.
+// Only a pointer's tap: the keyboard closes the tray with Escape or its ×.
 function Desk({ children }: { children: ReactNode }) {
-  const { isNarrow, leftPanelOpen, rightPanelOpen } = useEditorUi();
+  const { isNarrow, rightPanelOpen, closePanels } = useEditorUi();
+  const deskRef = useRef<HTMLElement>(null);
+  const closesTray = isNarrow && rightPanelOpen;
+
+  useEffect(() => {
+    const desk = deskRef.current;
+
+    if (!closesTray || !desk) return;
+
+    desk.addEventListener("click", closePanels);
+
+    return () => desk.removeEventListener("click", closePanels);
+  }, [closesTray, closePanels]);
 
   return (
     <main
-      inert={isNarrow && (leftPanelOpen || rightPanelOpen)}
+      ref={deskRef}
       className="bg-desk relative flex min-w-0 flex-1 flex-col"
     >
       {children}
@@ -99,10 +111,19 @@ function Desk({ children }: { children: ReactNode }) {
 // A phone edits in a form and reads the page on its Page tab, so only one of
 // them is on screen (and in the document) at a time: each field's
 // `data-field` path names one control. Tapping a field on the page opens the
-// form at it.
+// form at it, unless the Style tray is open: then the tap only closes the
+// tray, and the page fits whole in the space above it.
 function DeskContent() {
-  const { isNarrow, phoneView, setPhoneView } = useEditorUi();
+  const { isNarrow, phoneView, setPhoneView, rightPanelOpen, closePanels } =
+    useEditorUi();
+  const { currentDocumentId } = useInvoiceDocument();
   const formScrollTopRef = useRef(0);
+
+  // Another document opens the form at its top, even one opened while the
+  // form was off screen (from the list, over the Page tab).
+  useEffect(() => {
+    formScrollTopRef.current = 0;
+  }, [currentDocumentId]);
 
   function openInForm(target: { field?: string; area?: string }) {
     flushSync(() => setPhoneView("form"));
@@ -114,16 +135,25 @@ function DeskContent() {
   if (phoneView === "form")
     return <PhoneForm scrollTopRef={formScrollTopRef} />;
 
-  return <CanvasArea onFieldTap={openInForm} />;
+  return (
+    <CanvasArea
+      onFieldTap={rightPanelOpen ? closePanels : openInForm}
+      insetBottom={
+        rightPanelOpen ? "calc(var(--style-tray-height) + 0.75rem)" : undefined
+      }
+    />
+  );
 }
 
 function CanvasArea({
-  onFieldTap
+  onFieldTap,
+  insetBottom
 }: {
   onFieldTap?: (target: { field?: string; area?: string }) => void;
+  insetBottom?: string;
 }) {
   return (
-    <InvoiceCanvas onFieldTap={onFieldTap}>
+    <InvoiceCanvas onFieldTap={onFieldTap} insetBottom={insetBottom}>
       <Top />
       <Mid />
       <Bottom />

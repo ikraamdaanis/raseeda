@@ -28,9 +28,14 @@ import {
   renameTemplate
 } from "~/db";
 import { useDocumentStore } from "~/stores/document-store";
-import { useInvoiceDataAndActions } from "~/stores/invoice-selectors";
+import {
+  selectInvoiceData,
+  useInvoiceDataAndActions
+} from "~/stores/invoice-selectors";
+import { useInvoiceStore } from "~/stores/invoice-store";
 import type { DocumentType, InvoiceDocument, InvoiceTemplate } from "~/types";
 import { exportAllData } from "~/utils/export-data";
+import { isBlankInvoice } from "~/utils/invoice-content";
 import { hasOpenModal } from "~/utils/open-overlay";
 import { hasPrimaryModifier } from "~/utils/shortcut-label";
 import { track } from "~/utils/track";
@@ -116,7 +121,8 @@ export function FileActionsProvider({ children }: { children: ReactNode }) {
   } = useInvoiceDocument();
   const { open: openRequest } = useSearch({ from: "/create" });
   const navigate = useNavigate();
-  const { showLibrary, isNarrow, closePanels, setPhoneView } = useEditorUi();
+  const { showLibrary, isNarrow, setPhoneView, showPhoneEditor } =
+    useEditorUi();
   const [saveTemplateDialogOpen, setSaveTemplateDialogOpen] = useState(false);
   const [importDialogOpen, setImportDialogOpen] = useState(false);
   const [versionsOpen, setVersionsOpen] = useState(false);
@@ -136,14 +142,24 @@ export function FileActionsProvider({ children }: { children: ReactNode }) {
   const renameTarget = renameDialog.target;
   const deleteTarget = deleteDialog.target;
 
-  // On a phone, starting or opening an invoice, from the invoices sheet or the
-  // project menu, lands in the form, ready to edit, rather than leaving the
-  // sheet over it or the Page tab showing.
+  // On a phone, starting or opening an invoice lands in the form, ready to
+  // edit: from the invoice list it pushes the editor over the list once the
+  // document is open, so it never slides in showing the one before.
   function showEditor() {
     if (!isNarrow) return;
 
-    closePanels();
+    showPhoneEditor();
     setPhoneView("form");
+  }
+
+  // New invoice on a blank invoice nobody has touched goes back to it rather
+  // than starting another, so no number is used up.
+  function isUntouchedBlankInvoice() {
+    const content = selectInvoiceData(useInvoiceStore.getState());
+
+    return (
+      !isRecord && content.documentType === "invoice" && isBlankInvoice(content)
+    );
   }
 
   function run(action: () => Promise<unknown>, failure: string) {
@@ -157,13 +173,16 @@ export function FileActionsProvider({ children }: { children: ReactNode }) {
   }
 
   function handleOpenInvoice(documentId: string) {
-    showEditor();
+    if (documentId === currentDocumentId) {
+      showEditor();
 
-    if (documentId === currentDocumentId) return;
+      return;
+    }
 
     run(async () => {
       try {
         await openInvoice(documentId);
+        showEditor();
       } catch (error) {
         if (error instanceof DocumentNotFoundError) {
           toast.error("That invoice was deleted");
@@ -352,15 +371,22 @@ export function FileActionsProvider({ children }: { children: ReactNode }) {
   const value = {
     pending,
     newInvoice: () => {
-      showEditor();
-      run(newInvoice, "Failed to start a new invoice");
+      if (isUntouchedBlankInvoice()) {
+        showEditor();
+
+        return;
+      }
+
+      run(async () => {
+        await newInvoice();
+        showEditor();
+      }, "Failed to start a new invoice");
     },
     newDocument: (documentType: DocumentType) => {
-      showEditor();
-      run(
-        () => newDocument(documentType),
-        `Failed to start a new ${DOCUMENT_TYPE_NAMES[documentType].toLowerCase()}`
-      );
+      run(async () => {
+        await newDocument(documentType);
+        showEditor();
+      }, `Failed to start a new ${DOCUMENT_TYPE_NAMES[documentType].toLowerCase()}`);
     },
     showOpenInvoice: () => showLibrary("invoices"),
     openInvoice: handleOpenInvoice,
@@ -369,8 +395,10 @@ export function FileActionsProvider({ children }: { children: ReactNode }) {
     showVersionHistory: () => setVersionsOpen(true),
     showOpenTemplate: () => showLibrary("templates"),
     applyTemplate: (template: InvoiceTemplate) => {
-      showEditor();
-      run(() => applyTemplate(template), "Failed to apply template");
+      run(async () => {
+        await applyTemplate(template);
+        showEditor();
+      }, "Failed to apply template");
     },
     saveAsTemplate: () => setSaveTemplateDialogOpen(true),
     exportData: handleExport,

@@ -1,5 +1,6 @@
 import type { Page } from "@playwright/test";
 import { expect, test } from "./fixtures";
+import { newInvoiceOnPhone, phoneLibrary, showPhoneLibrary } from "./helpers";
 
 // Group: the editor on a phone, which edits in a form and shows the page,
 // fitted and read-only, on its Page tab (issue #213).
@@ -21,7 +22,14 @@ function tabBar(page: Page) {
   return page.getByRole("navigation", { name: "Editor" });
 }
 
+// The bar steps aside while a field is typed in, so whatever was being typed
+// is left first, as tapping Done would.
 async function showPage(page: Page) {
+  await page.evaluate(() => {
+    if (document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
+    }
+  });
   await tabBar(page).getByRole("tab", { name: "Page" }).tap();
   await expect.poll(() => pageScale(page)).toBeLessThan(0.6);
 }
@@ -30,7 +38,7 @@ test("a phone edits in a form, typed at 16px, with the bar out of the way", asyn
   page
 }) => {
   await page.goto("/create");
-  const toDetails = page.getByLabel("To details");
+  const toDetails = page.getByRole("textbox", { name: "To details" });
 
   await expect(page.getByRole("form", { name: "Invoice" })).toBeVisible();
   await expect(page.locator("[data-paper]")).toHaveCount(0);
@@ -81,16 +89,21 @@ test("the Page tab shows the page, and tapping a field opens it in the form", as
   page
 }) => {
   await page.goto("/create");
-  await page.getByLabel("To details").fill("Globex Corp");
+  await page.getByRole("textbox", { name: "To details" }).fill("Globex Corp");
   await showPage(page);
 
   await expect(page.getByRole("form", { name: "Invoice" })).toHaveCount(0);
 
-  await page.locator('[data-paper] [data-field="client.content"]').tap();
+  // In Preview a field's wrapper takes the tap, which Playwright reads as the
+  // field being covered; the tap still lands where a finger would.
+  await page
+    .locator('[data-paper] [data-field="client.content"]')
+    .tap({ force: true });
 
-  const toDetails = page.getByLabel("To details");
+  const toDetails = page.getByRole("textbox", { name: "To details" });
 
-  await expect(tabBar(page).getByRole("tab", { name: "Edit" })).toHaveAttribute(
+  // The bar has stepped aside for the keyboard, so it's read while hidden.
+  await expect(page.locator("#phone-tab-form")).toHaveAttribute(
     "aria-selected",
     "true"
   );
@@ -104,7 +117,19 @@ test("Edit labels renames what the page prints", async ({ page }) => {
   await page.getByRole("textbox", { name: "To label" }).fill("Bill To");
   await showPage(page);
 
-  await expect(page.locator("[data-paper]")).toContainText("Bill To");
+  // The page's labels are fields, so it's their values that are read.
+  await expect
+    .poll(() =>
+      page
+        .locator("[data-paper]")
+        .evaluate(paper =>
+          Array.from(
+            paper.querySelectorAll<HTMLInputElement>("input, textarea"),
+            field => field.value
+          )
+        )
+    )
+    .toContain("Bill To");
 });
 
 test("phones get a tab bar instead of the canvas pill and panel toggles", async ({
@@ -117,34 +142,88 @@ test("phones get a tab bar instead of the canvas pill and panel toggles", async 
     page.getByRole("button", { name: "Show invoices panel" })
   ).toBeHidden();
   await expect(tabBar(page).getByRole("tab")).toHaveText(["Edit", "Page"]);
+  await expect(tabBar(page).getByRole("button")).toHaveText(["Style"]);
   await expect(tabBar(page).getByRole("tab", { name: "Edit" })).toHaveAttribute(
     "aria-selected",
     "true"
   );
+});
+
+test("Style opens a tray over the page, which fits whole above it", async ({
+  page
+}) => {
+  await page.goto("/create");
 
   const style = tabBar(page).getByRole("button", { name: "Style" });
+  const tray = page.getByRole("region", { name: "Style" });
 
   await style.tap();
 
-  // On a phone the panel is a modal sheet: it takes focus, and Escape
-  // closes it.
-  const inspector = page.getByRole("dialog", { name: "Inspector" });
-
-  await expect(inspector).toBeInViewport();
-  await expect(inspector).toBeFocused();
+  // Styling shows on the page, so Style switches to it under the tray.
+  await expect(tabBar(page).getByRole("tab", { name: "Page" })).toHaveAttribute(
+    "aria-selected",
+    "true"
+  );
+  await expect(tray).toBeInViewport();
   await expect(style).toHaveAttribute("aria-expanded", "true");
+  await expect(tray.getByRole("tab", { name: "Text" })).toBeFocused();
 
+  const trayTop = (await tray.boundingBox())?.y ?? 0;
+
+  await expect
+    .poll(async () => {
+      const paper = await page.locator("[data-paper]").boundingBox();
+
+      return paper ? paper.y + paper.height : Infinity;
+    })
+    .toBeLessThanOrEqual(trayTop);
+
+  // Each tab fits without scrolling.
+  for (const name of ["Text", "Colour", "Table"]) {
+    await tray.getByRole("tab", { name }).tap();
+
+    const panel = tray.getByRole("tabpanel");
+
+    expect(
+      await panel.evaluate(
+        element => element.scrollHeight - element.clientHeight
+      )
+    ).toBeLessThanOrEqual(1);
+  }
+
+  // Tapping the page only closes the tray: it stays on the page.
+  await page
+    .locator('[data-paper] [data-field="client.content"]')
+    .tap({ force: true });
+
+  await expect(style).toHaveAttribute("aria-expanded", "false");
+  await expect(tabBar(page).getByRole("tab", { name: "Page" })).toHaveAttribute(
+    "aria-selected",
+    "true"
+  );
+
+  await style.tap();
   await page.keyboard.press("Escape");
 
-  await expect(inspector).toHaveCount(0);
   await expect(style).toHaveAttribute("aria-expanded", "false");
+  await expect(style).toBeFocused();
+});
 
-  await tabBar(page).getByRole("button", { name: "Invoices" }).tap();
+test("the invoice list is the screen the editor is pushed over", async ({
+  page
+}) => {
+  await page.goto("/create");
+  await page.getByRole("textbox", { name: "To details" }).fill("Globex Corp");
+  await showPhoneLibrary(page);
 
-  const library = page.getByRole("group", { name: "Library" });
+  const library = phoneLibrary(page);
+
+  await expect(library).not.toHaveAttribute("inert");
 
   for (const name of ["Invoices", "Templates"]) {
-    const button = library.getByRole("button", { name });
+    const button = library
+      .getByRole("group", { name: "Library" })
+      .getByRole("button", { name });
 
     await expect(button).toBeInViewport();
     await expect
@@ -152,35 +231,82 @@ test("phones get a tab bar instead of the canvas pill and panel toggles", async 
       .toBeGreaterThanOrEqual(44);
   }
 
-  // Style takes over the same sheet, sliding in beside Invoices, rather than
-  // opening a second one.
-  await style.tap();
+  // The invoice just left is written as the list shows, so its row is there.
+  const row = library.getByRole("button", { name: /Globex Corp/ }).first();
 
-  await expect(page.getByRole("dialog")).toHaveCount(1);
-  await expect(inspector).toBeFocused();
-  await expect(inspector).toHaveAttribute("aria-modal", "true");
+  await expect(row).toHaveAttribute("aria-current", "true");
+
+  await row.tap();
+
+  await expect(library).toHaveAttribute("inert", "");
+  await expect(page.getByRole("textbox", { name: "To details" })).toHaveValue(
+    "Globex Corp"
+  );
+
+  // Opening it from the list added a step, so the browser's back returns to
+  // the list rather than leaving the editor.
+  await page.goBack();
+
+  await expect(library).not.toHaveAttribute("inert");
+  await expect(page).toHaveURL(/\/create$/);
+
+  await page.goForward();
+
+  await expect(library).toHaveAttribute("inert", "");
 });
 
-test("New invoice closes the invoices sheet and opens the next invoice at its top", async ({
+test("New invoice from the list opens the next invoice at its top", async ({
   page
 }) => {
   await page.goto("/create");
-  await page.getByLabel("To details").fill("Globex Corp");
+  await page.getByRole("textbox", { name: "To details" }).fill("Globex Corp");
   await showPage(page);
-  await tabBar(page).getByRole("button", { name: "Invoices" }).tap();
-  await page.getByRole("button", { name: "New invoice" }).tap();
+  await newInvoiceOnPhone(page);
 
-  await expect(page.getByRole("dialog")).toHaveCount(0);
   await expect(tabBar(page).getByRole("tab", { name: "Edit" })).toHaveAttribute(
     "aria-selected",
     "true"
   );
-  await expect(page.getByLabel("To details")).toHaveValue("");
+  await expect(page.getByRole("textbox", { name: "To details" })).toHaveValue(
+    ""
+  );
   await expect(page.getByLabel("Invoice title")).toBeInViewport();
   // Numbered after the one just left in the library, not INV-0001 again.
   await expect(page.getByLabel("Invoice No.", { exact: true })).toHaveValue(
     "INV-0002"
   );
+
+  // New invoice again from this untouched blank goes back to it rather than
+  // starting another, so the form is still where it was scrolled to (another
+  // invoice would open at its top).
+  const form = page.locator("[data-phone-form]");
+
+  await form.evaluate(scroller => scroller.scrollTo({ top: 300 }));
+  await newInvoiceOnPhone(page);
+
+  expect(await form.evaluate(scroller => scroller.scrollTop)).toBeGreaterThan(
+    0
+  );
+});
+
+test("the setup choices sit in the form", async ({ page }) => {
+  await page.goto("/create");
+
+  const form = page.getByRole("form", { name: "Invoice" });
+
+  await form.getByLabel("Type", { exact: true }).selectOption("quote");
+
+  await expect(page.getByLabel("Invoice title")).toHaveValue("Quote");
+
+  for (const name of [
+    "Language",
+    "Paper",
+    "Date format",
+    "Number format",
+    "Symbol"
+  ]) {
+    await expect(form.getByLabel(name, { exact: true })).toBeVisible();
+  }
 });
 
 test("a phone opens to the form even when Preview was left on", async ({
@@ -191,7 +317,9 @@ test("a phone opens to the form even when Preview was left on", async ({
   );
   await page.goto("/create");
 
-  await expect(page.getByLabel("To details")).toBeEditable();
+  await expect(
+    page.getByRole("textbox", { name: "To details" })
+  ).toBeEditable();
 });
 
 // How two screenshots of the same size compare, worked out in the page's own

@@ -142,6 +142,27 @@ export async function clickFileMenuItem(page: Page, name: string | RegExp) {
     .click();
 }
 
+// On a phone, where New invoice is on the invoice list: back to the list,
+// then New invoice, which pushes the new invoice's editor over it.
+export async function newInvoiceOnPhone(page: Page) {
+  await showPhoneLibrary(page);
+  await phoneLibrary(page)
+    .getByRole("button", { name: "New invoice", exact: true })
+    .tap();
+  await expect(phoneLibrary(page)).toHaveAttribute("inert", "");
+}
+
+// The editor's back button, which shows the invoice list.
+export async function showPhoneLibrary(page: Page) {
+  await page.locator("header").getByRole("button", { name: "Invoices" }).tap();
+  await expect(phoneLibrary(page)).not.toHaveAttribute("inert");
+}
+
+// The phone's invoice list, the screen the editor is pushed over.
+export function phoneLibrary(page: Page) {
+  return page.getByRole("region", { name: "Invoices", includeHidden: true });
+}
+
 // The open invoice's name in the top bar, edited where it sits.
 export function invoiceNameField(page: Page) {
   return page.getByRole("heading", { level: 1 }).getByRole("textbox");

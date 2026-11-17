@@ -4,6 +4,10 @@ import { lazy, Suspense, useRef, useState } from "react";
 import { toast } from "sonner";
 import { DownloadPopover } from "~/components/editor/shell/download-popover";
 import { HistoryButtons } from "~/components/editor/shell/history-buttons";
+import {
+  PhoneBackButton,
+  PhoneDocumentMenu
+} from "~/components/editor/shell/phone-screens";
 import { ProjectMenu } from "~/components/editor/shell/project-menu";
 import { Button } from "~/components/ui/button";
 import { useEditorUi } from "~/context/editor-ui-context";
@@ -14,9 +18,10 @@ import {
 
 // Framer's three-part bar: the project menu on the left, the invoice's name in
 // the middle, and the panel toggles, Preview and Download on the right.
-// `start` and `end` take the panel toggles. Phones keep the menu, the name,
-// undo and redo, and Download; the panel toggles move to the tab bar, and
-// there's no Preview there. Every edit saves itself, so there's no save state to show here while
+// `start` and `end` take the panel toggles. Phones have the way back to the
+// invoice list, the name, undo and redo, the document's own menu and
+// Download; the panel toggles move to the tab bar, and there's no Preview
+// there. Every edit saves itself, so there's no save state to show here while
 // saving works; problems show in the banner under the bar.
 // Development builds get a menu that shows any alert, toast or dialog on
 // demand; production builds drop it, import and all.
@@ -42,7 +47,7 @@ export function EditorTopBar({
   return (
     <header className="bg-background border-border relative z-30 grid h-12 shrink-0 grid-cols-[1fr_auto_1fr] items-center gap-3 border-b pr-[max(0.75rem,env(safe-area-inset-right))] pl-[max(0.75rem,env(safe-area-inset-left))] max-md:flex max-md:gap-2 pointer-coarse:h-14">
       <div className="flex min-w-0 items-center gap-1 max-md:shrink-0">
-        <ProjectMenu />
+        {isNarrow ? <PhoneBackButton /> : <ProjectMenu />}
         <div className="contents max-md:hidden">{start}</div>
       </div>
       <InvoiceName />
@@ -63,6 +68,7 @@ export function EditorTopBar({
         >
           <IconPlayerPlay aria-hidden="true" />
         </Button>
+        {isNarrow && <PhoneDocumentMenu />}
         {DevMenu && (
           <Suspense fallback={null}>
             <DevMenu />

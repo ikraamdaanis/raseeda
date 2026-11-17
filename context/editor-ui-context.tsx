@@ -1,11 +1,27 @@
+import { useRouter } from "@tanstack/react-router";
 import type { ReactNode } from "react";
-import { createContext, useContext, useState } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useEffectEvent,
+  useRef,
+  useState
+} from "react";
 import { useMediaQuery } from "~/hooks/use-media-query";
 import {
   readStoredValue,
   writeStoredValue
 } from "~/hooks/use-persistent-state";
 import type { LibraryTab } from "~/types";
+
+declare module "@tanstack/history" {
+  interface HistoryState {
+    // On the entry a phone adds as it opens a document from the invoice list,
+    // so going back from that document returns to the list (issue #213).
+    phoneEditor?: boolean;
+  }
+}
 
 type EditorMode = "edit" | "preview";
 
@@ -90,6 +106,12 @@ function storePanels(panels: PanelState) {
 // on the page (issue #213): its Edit and Page tabs (`phoneView`) say which one
 // shows, and the Page tab is the page in Preview. It always opens on Edit, and
 // a wider window's own Preview comes back when there is room again.
+// On a phone the left panel is the invoice list, a full screen the editor is
+// pushed over, and the right one is the Style tray over the Page tab. Opening
+// a document from the list adds a history entry, so the browser's back
+// returns to the list; the editor's back button steps back through it when
+// it's there. Only those two slide: a back from the browser swaps the screens,
+// since Safari's swipe already plays its own animation.
 const EditorUiContext = createContext<{
   mode: EditorMode;
   setMode: (mode: EditorMode) => void;
@@ -112,6 +134,11 @@ const EditorUiContext = createContext<{
   // count goes up.
   showLibrary: (tab: LibraryTab) => void;
   librarySearchRequest: number;
+  // Whether the phone's list and editor slide as they swap.
+  phoneSlides: boolean;
+  showPhoneList: () => void;
+  // Shows the editor over the list, once the document chosen there is open.
+  showPhoneEditor: () => void;
 } | null>(null);
 
 export function EditorUiProvider({ children }: { children: ReactNode }) {
@@ -127,8 +154,13 @@ export function EditorUiProvider({ children }: { children: ReactNode }) {
   );
   const [librarySearchRequest, setLibrarySearchRequest] = useState(0);
   const [phoneView, setPhoneView] = useState<PhoneView>("form");
+  const [phoneSlides, setPhoneSlides] = useState(false);
   const isNarrow = useMediaQuery(NARROW_VIEWPORT_QUERY);
   const isCompact = useMediaQuery(COMPACT_VIEWPORT_QUERY);
+  const router = useRouter();
+  // Set while the back button's own step back is on its way, so the list it
+  // brings back slides in.
+  const backSlidesRef = useRef(false);
   // Both panels can be remembered open from a wider window; a compact one
   // shows only the inspector, and both come back when there is room again.
   const leftPanelOpen = panels.left && !(isCompact && panels.right);
@@ -179,6 +211,51 @@ export function EditorUiProvider({ children }: { children: ReactNode }) {
     applyPanels(next);
   }
 
+  const onHistoryStep = useEffectEvent(() => {
+    const slides = backSlidesRef.current;
+
+    backSlidesRef.current = false;
+
+    // A step off `/create` is leaving the editor, not going to the list.
+    if (!isNarrow || router.history.location.pathname !== "/create") return;
+
+    const showsEditor = router.history.location.state.phoneEditor === true;
+
+    setPhoneSlides(slides);
+    applyPanels(showsEditor ? ALL_CLOSED : { left: true, right: false });
+  });
+
+  useEffect(
+    () =>
+      router.history.subscribe(({ action }) => {
+        if (action.type !== "PUSH" && action.type !== "REPLACE") {
+          onHistoryStep();
+        }
+      }),
+    [router]
+  );
+
+  function showPhoneList() {
+    if (router.history.location.state.phoneEditor === true) {
+      backSlidesRef.current = true;
+      router.history.back();
+
+      return;
+    }
+
+    setPhoneSlides(true);
+    applyPanels({ left: true, right: false });
+  }
+
+  function showPhoneEditor() {
+    if (leftPanelOpen) {
+      setPhoneSlides(true);
+      router.history.push(router.history.location.href, { phoneEditor: true });
+    }
+
+    applyPanels(ALL_CLOSED);
+  }
+
   function changeLibraryTab(tab: LibraryTab) {
     setLibraryTab(tab);
     writeStoredValue(LIBRARY_TAB_STORAGE_KEY, tab);
@@ -213,7 +290,10 @@ export function EditorUiProvider({ children }: { children: ReactNode }) {
       if (!leftPanelOpen) setPanelOpen("left", true);
       setLibrarySearchRequest(count => count + 1);
     },
-    librarySearchRequest
+    librarySearchRequest,
+    phoneSlides,
+    showPhoneList,
+    showPhoneEditor
   };
 
   return (

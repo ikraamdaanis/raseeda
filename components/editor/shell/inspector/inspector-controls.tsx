@@ -1,6 +1,13 @@
 import { IconChevronDown, IconRestore } from "@tabler/icons-react";
 import type { ReactNode } from "react";
-import { useEffect, useId, useRef, useState } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useId,
+  useRef,
+  useState
+} from "react";
 import { Switch } from "~/components/ui/switch";
 import { useEditorUi } from "~/context/editor-ui-context";
 import { parseBoolean, usePersistentState } from "~/hooks/use-persistent-state";
@@ -12,6 +19,12 @@ import { HEX_COLOUR, toSixDigitHex } from "~/utils/to-six-digit-hex";
 // On a phone, where the inspector is the Style sheet, they take the phone
 // form's scale instead (`max-md:`): 16px text, so iOS doesn't zoom in on a
 // field, 44px fields, and labels over their fields.
+
+// The phone's Style tray is too short for labels over their fields, so rows
+// inside it keep the label beside the field, as on a wider window.
+const InlineRowsContext = createContext(false);
+
+export const InspectorInlineRows = InlineRowsContext.Provider;
 
 export const inspectorFieldClassName =
   "bg-muted dark:bg-muted dark:hover:bg-muted hover:border-input focus-visible:border-ring text-foreground h-8 w-full min-w-0 rounded-md border border-transparent px-2 text-[13px] outline-none max-md:h-11 max-md:px-3 max-md:text-base max-md:leading-11";
@@ -118,8 +131,15 @@ export function InspectorRow({
   htmlFor?: string;
   children: ReactNode;
 }) {
+  const isInline = useContext(InlineRowsContext);
+
   return (
-    <div className="grid grid-cols-[6rem_minmax(0,1fr)] items-center gap-2 max-md:grid-cols-1">
+    <div
+      className={cn(
+        "grid grid-cols-[6rem_minmax(0,1fr)] items-center gap-2",
+        !isInline && "max-md:grid-cols-1"
+      )}
+    >
       <label
         htmlFor={htmlFor}
         className="text-muted-foreground max-md:text-foreground text-[13px] max-md:text-base/6 max-md:font-medium"
@@ -283,12 +303,22 @@ export function ColourRow({
 
 // Puts a group's colours back to their defaults, lined up under the fields.
 export function ResetColoursButton({ onClick }: { onClick: () => void }) {
+  const isInline = useContext(InlineRowsContext);
+
   return (
-    <div className="grid grid-cols-[6rem_minmax(0,1fr)] gap-2 max-md:grid-cols-1">
+    <div
+      className={cn(
+        "grid grid-cols-[6rem_minmax(0,1fr)] gap-2",
+        !isInline && "max-md:grid-cols-1"
+      )}
+    >
       <button
         type="button"
         onClick={onClick}
-        className="text-muted-foreground hover:text-foreground focus-visible:ring-ring relative col-start-2 -mx-1 flex h-6 w-fit items-center gap-1 rounded-md px-1 text-xs outline-none focus-visible:ring-1 max-md:col-start-1 max-md:h-11 max-md:gap-2 max-md:text-base"
+        className={cn(
+          "text-muted-foreground hover:text-foreground focus-visible:ring-ring relative col-start-2 -mx-1 flex h-6 w-fit items-center gap-1 rounded-md px-1 text-xs outline-none focus-visible:ring-1 max-md:h-11 max-md:gap-2 max-md:text-base",
+          !isInline && "max-md:col-start-1"
+        )}
       >
         <IconRestore
           aria-hidden="true"

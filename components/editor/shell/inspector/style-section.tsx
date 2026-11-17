@@ -21,7 +21,7 @@ import { getContrastWithWhite } from "~/utils/contrast";
 // Collapsed, the font grid is two rows.
 const COLLAPSED_FONT_COUNT = 4;
 
-const SIZE_OPTIONS: { value: InvoiceSize; label: string }[] = [
+export const SIZE_OPTIONS: { value: InvoiceSize; label: string }[] = [
   { value: "small", label: "Small" },
   { value: "medium", label: "Medium" },
   { value: "large", label: "Large" }
@@ -32,28 +32,13 @@ const SIZE_OPTIONS: { value: InvoiceSize; label: string }[] = [
 // for WCAG's lower bar, the headings, the table's header and the total aren't.
 const MIN_CONTRAST = 4.5;
 
-export function StyleSection() {
+// The theme and what the style controls offer for it, shared by the
+// inspector's Style section and the phone's Style tray.
+export function useStyleChoices() {
   const { theme, setTheme } = useThemeSlice();
   const weightOptions = FONT_WEIGHT_OPTIONS.filter(option =>
     getAvailableFontWeights(theme.font).includes(option.value)
   );
-  const [showAllFonts, setShowAllFonts] = usePersistentState(
-    "editor-inspector-all-fonts",
-    false,
-    parseBoolean
-  );
-  // Collapsed, the chosen font stays in view: it takes the last place when
-  // it isn't one of the first few.
-  const firstFonts = INVOICE_FONTS.slice(0, COLLAPSED_FONT_COUNT);
-  const chosenFont = INVOICE_FONTS.find(font => font.id === theme.font);
-  const collapsedFonts =
-    !chosenFont || firstFonts.includes(chosenFont)
-      ? firstFonts
-      : [...firstFonts.slice(0, -1), chosenFont];
-  const fonts = showAllFonts ? INVOICE_FONTS : collapsedFonts;
-  const hasDefaultColours =
-    theme.accent === DEFAULT_INVOICE_THEME.accent &&
-    theme.textColor === DEFAULT_INVOICE_THEME.textColor;
   const lightColours = [
     getContrastWithWhite(theme.accent) < MIN_CONTRAST && "accent",
     getContrastWithWhite(theme.textColor) < MIN_CONTRAST && "text colour"
@@ -71,6 +56,39 @@ export function StyleSection() {
         : "Normal"
     }));
   }
+
+  return {
+    theme,
+    setTheme,
+    weightOptions,
+    selectFont,
+    lightColoursWarning:
+      lightColours.length === 0
+        ? null
+        : `The ${lightColours.join(" and ")} ${lightColours.length === 1 ? "is" : "are"} light enough to be hard to read on paper.`
+  };
+}
+
+export function StyleSection() {
+  const { theme, setTheme, weightOptions, selectFont, lightColoursWarning } =
+    useStyleChoices();
+  const [showAllFonts, setShowAllFonts] = usePersistentState(
+    "editor-inspector-all-fonts",
+    false,
+    parseBoolean
+  );
+  // Collapsed, the chosen font stays in view: it takes the last place when
+  // it isn't one of the first few.
+  const firstFonts = INVOICE_FONTS.slice(0, COLLAPSED_FONT_COUNT);
+  const chosenFont = INVOICE_FONTS.find(font => font.id === theme.font);
+  const collapsedFonts =
+    !chosenFont || firstFonts.includes(chosenFont)
+      ? firstFonts
+      : [...firstFonts.slice(0, -1), chosenFont];
+  const fonts = showAllFonts ? INVOICE_FONTS : collapsedFonts;
+  const hasDefaultColours =
+    theme.accent === DEFAULT_INVOICE_THEME.accent &&
+    theme.textColor === DEFAULT_INVOICE_THEME.textColor;
 
   return (
     <InspectorSection id="style" title="Style">
@@ -167,9 +185,8 @@ export function StyleSection() {
           }
         />
         <p className="text-muted-foreground text-xs text-pretty max-md:text-base/6">
-          {lightColours.length === 0
-            ? "The accent colours the title, headings, table header and total."
-            : `The ${lightColours.join(" and ")} ${lightColours.length === 1 ? "is" : "are"} light enough to be hard to read on paper.`}
+          {lightColoursWarning ??
+            "The accent colours the title, headings, table header and total."}
         </p>
         {!hasDefaultColours && (
           <ResetColoursButton

@@ -9,6 +9,10 @@ import {
   FormInput,
   formLabelClassName
 } from "~/components/editor/form/form-controls";
+import {
+  FormAmountFormat,
+  FormDateFormat
+} from "~/components/editor/form/form-document";
 import { useAddableParts } from "~/components/editor/invoice-add-part";
 import { InvoiceDateField } from "~/components/editor/invoice-date-field";
 import {
@@ -40,6 +44,7 @@ export function FormDetails() {
           placeholders={placeholders[row.id]}
         />
       ))}
+      <FormDateFormat />
       <CurrencyControls
         part="currency"
         classNames={{
@@ -47,6 +52,7 @@ export function FormDetails() {
           label: formLabelClassName
         }}
       />
+      <FormAmountFormat />
       <FormAddParts parts={addableParts} />
     </FormArea>
   );

@@ -29,14 +29,8 @@ const LABEL_ROWS: { key: ColumnLabelKey; label: string }[] = [
 // ones the table's header edits on the page; the Tax and Amount labels are
 // blank while they follow, with what they follow as their placeholders.
 export function TableSection() {
-  const {
-    tableSettings,
-    taxLabel,
-    hasTax,
-    isPerLine,
-    setTableSettings,
-    setTax
-  } = useTableSettingsSlice();
+  const { tableSettings, taxLabel, hasTax, isPerLine, setTableSettings } =
+    useTableSettingsSlice();
   const { columns, columnLabels } = tableSettings;
   const hasDefaultColours =
     tableSettings.backgroundColor === DEFAULT_TABLE_SETTINGS.backgroundColor &&
@@ -67,13 +61,6 @@ export function TableSection() {
     return row.label;
   }
 
-  function setColumn(column: keyof TableSettings["columns"], isOn: boolean) {
-    setTableSettings(prev => ({
-      ...prev,
-      columns: { ...prev.columns, [column]: isOn }
-    }));
-  }
-
   function setColumnLabel(column: ColumnLabelKey, label: string) {
     setTableSettings(prev => ({
       ...prev,
@@ -85,33 +72,7 @@ export function TableSection() {
     <InspectorSection id="table" title="Table">
       <div className="flex flex-col gap-0.5">
         <InspectorGroupLabel>Columns</InspectorGroupLabel>
-        <InspectorSwitch
-          label="Quantity and price"
-          field="tableSettings.columns.quantityAndPrice"
-          checked={columns.quantityAndPrice}
-          onCheckedChange={isOn => setColumn("quantityAndPrice", isOn)}
-        />
-        {columns.quantityAndPrice ? (
-          <InspectorSwitch
-            label="Unit"
-            field="tableSettings.columns.unit"
-            checked={columns.unit}
-            onCheckedChange={isOn => setColumn("unit", isOn)}
-          />
-        ) : (
-          <p className="text-muted-foreground pb-1 text-xs text-pretty max-md:text-base/6">
-            Each line is a description and an amount you type, without a
-            quantity or unit price.
-          </p>
-        )}
-        {hasTax && (
-          <InspectorSwitch
-            label="Tax per line"
-            field="tax.perLine"
-            checked={isPerLine}
-            onCheckedChange={perLine => setTax(prev => ({ ...prev, perLine }))}
-          />
-        )}
+        <TableColumnSwitches />
       </div>
       <div className="flex flex-col gap-1.5 max-md:gap-2">
         <InspectorGroupLabel>Labels</InspectorGroupLabel>
@@ -157,6 +118,53 @@ export function TableSection() {
         )}
       </div>
     </InspectorSection>
+  );
+}
+
+// Which of the table's optional columns print, shared by the inspector and
+// the phone's Style tray.
+export function TableColumnSwitches() {
+  const { tableSettings, hasTax, isPerLine, setTableSettings, setTax } =
+    useTableSettingsSlice();
+  const { columns } = tableSettings;
+
+  function setColumn(column: keyof TableSettings["columns"], isOn: boolean) {
+    setTableSettings(prev => ({
+      ...prev,
+      columns: { ...prev.columns, [column]: isOn }
+    }));
+  }
+
+  return (
+    <>
+      <InspectorSwitch
+        label="Quantity and price"
+        field="tableSettings.columns.quantityAndPrice"
+        checked={columns.quantityAndPrice}
+        onCheckedChange={isOn => setColumn("quantityAndPrice", isOn)}
+      />
+      {columns.quantityAndPrice ? (
+        <InspectorSwitch
+          label="Unit"
+          field="tableSettings.columns.unit"
+          checked={columns.unit}
+          onCheckedChange={isOn => setColumn("unit", isOn)}
+        />
+      ) : (
+        <p className="text-muted-foreground pb-1 text-xs text-pretty max-md:text-base/6">
+          Each line is a description and an amount you type, without a quantity
+          or unit price.
+        </p>
+      )}
+      {hasTax && (
+        <InspectorSwitch
+          label="Tax per line"
+          field="tax.perLine"
+          checked={isPerLine}
+          onCheckedChange={perLine => setTax(prev => ({ ...prev, perLine }))}
+        />
+      )}
+    </>
   );
 }
 

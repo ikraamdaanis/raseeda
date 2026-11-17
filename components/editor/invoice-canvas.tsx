@@ -22,12 +22,16 @@ const CANVAS_STATIC_STYLES: CSSProperties = {
 // `onFieldTap` makes the page a way into the phone's form: tapping a field,
 // or the text of a part, names it (by its `data-field` path and its part's
 // `data-field-area`) for the form to open at. Taps between parts are left for
-// the double-tap zoom.
+// the double-tap zoom. `insetBottom` keeps that much of the canvas clear for
+// what covers it (the phone's Style tray), and the page then fits whole above
+// it however short that leaves the canvas.
 export function InvoiceCanvas({
   onFieldTap,
+  insetBottom,
   children
 }: {
   onFieldTap?: (target: { field?: string; area?: string }) => void;
+  insetBottom?: string;
   children: ReactNode;
 }) {
   const { view, setView, setZoom } = useCanvasView();
@@ -84,8 +88,9 @@ export function InvoiceCanvas({
     };
   }, []);
 
-  const zoom = resolveZoom(view, pageSize, containerSize);
-  const fitZoom = resolveZoom("fit", pageSize, containerSize);
+  const fitsWhole = insetBottom !== undefined;
+  const zoom = resolveZoom(view, pageSize, containerSize, fitsWhole);
+  const fitZoom = resolveZoom("fit", pageSize, containerSize, fitsWhole);
   // Where a finished zoom gesture left the page's top-left corner.
   const gestureOriginRef = useRef<{ x: number; y: number } | null>(null);
   const previousZoomRef = useRef(zoom);
@@ -109,7 +114,9 @@ export function InvoiceCanvas({
     const sizer = sizerRef.current;
 
     if (
-      Math.abs(resolveZoom(nextView, pageSize, containerSize) - zoom) < 0.0005
+      Math.abs(
+        resolveZoom(nextView, pageSize, containerSize, fitsWhole) - zoom
+      ) < 0.0005
     ) {
       if (section && sizer) settleGesture(section, sizer, origin);
 
@@ -187,6 +194,7 @@ export function InvoiceCanvas({
   return (
     <section
       ref={sectionRef}
+      style={{ paddingBottom: insetBottom }}
       className="relative flex min-h-0 flex-1 touch-pan-x touch-pan-y flex-col items-center-safe justify-center-safe overflow-auto overscroll-none p-3 md:p-8 md:pb-20"
     >
       <div
@@ -223,7 +231,8 @@ export function InvoiceCanvas({
 function resolveZoom(
   view: "fit" | number,
   pageSize: { width: number; height: number },
-  containerSize: { width: number; height: number }
+  containerSize: { width: number; height: number },
+  fitsWhole: boolean
 ) {
   if (typeof view === "number") return view;
 
@@ -233,7 +242,9 @@ function resolveZoom(
 
   // On a short canvas (a phone on its side) the whole page would be too small
   // to read, so the page fits the width and scrolls instead.
-  if (containerSize.height < SHORT_CANVAS_HEIGHT) return Math.min(widthFit, 1);
+  if (!fitsWhole && containerSize.height < SHORT_CANVAS_HEIGHT) {
+    return Math.min(widthFit, 1);
+  }
 
   return Math.min(widthFit, containerSize.height / pageSize.height);
 }

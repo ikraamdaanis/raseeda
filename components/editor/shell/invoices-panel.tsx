@@ -1,4 +1,5 @@
 import {
+  IconChevronDown,
   IconCopy,
   IconCopyPlus,
   IconDots,
@@ -31,7 +32,10 @@ import {
   DropdownMenuTrigger
 } from "~/components/ui/dropdown-menu";
 import { formatCurrency, getMoneyFormat } from "~/consts/currencies";
-import { DOCUMENT_TYPE_NAMES } from "~/consts/document-types";
+import {
+  DOCUMENT_TYPE_NAMES,
+  OTHER_DOCUMENT_TYPES
+} from "~/consts/document-types";
 import { useEditorUi } from "~/context/editor-ui-context";
 import { useFileActions } from "~/context/file-actions-context";
 import { useInvoiceDocument } from "~/context/invoice-document-context";
@@ -91,7 +95,9 @@ function useWatchedList<TRow>(
 // tab with focus in the search, except on a phone, where that would raise the
 // keyboard over the sheet before anyone asked to search. The tab, sort,
 // grouping and filters are remembered across reloads; the search is not.
-export function InvoicesPanel() {
+// On a phone it's the invoice list screen: `headerEnd` sits beside the tabs
+// (the list's menu), and New invoice has the other document types beside it.
+export function InvoicesPanel({ headerEnd }: { headerEnd?: ReactNode }) {
   const {
     libraryTab: tab,
     setLibraryTab,
@@ -106,7 +112,7 @@ export function InvoicesPanel() {
   const [query, setQuery] = useState("");
   const invoices = useWatchedList(watchInvoices);
   const templates = useWatchedList(watchTemplates);
-  const { newInvoice } = useFileActions();
+  const { newInvoice, newDocument, pending } = useFileActions();
   const searchRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -116,15 +122,18 @@ export function InvoicesPanel() {
   return (
     <>
       <div className="flex shrink-0 flex-col gap-2 px-3 pt-2.5 pb-2">
-        <SegmentedControl
-          label="Library"
-          value={tab}
-          options={[
-            { value: "invoices", label: "Invoices" },
-            { value: "templates", label: "Templates" }
-          ]}
-          onChange={setLibraryTab}
-        />
+        <div className="flex items-center gap-2">
+          <SegmentedControl
+            label="Library"
+            value={tab}
+            options={[
+              { value: "invoices", label: "Invoices" },
+              { value: "templates", label: "Templates" }
+            ]}
+            onChange={setLibraryTab}
+          />
+          {headerEnd}
+        </div>
         <SearchField
           ref={searchRef}
           label={tab === "invoices" ? "Search invoices" : "Search templates"}
@@ -164,15 +173,41 @@ export function InvoicesPanel() {
           query={query}
         />
       )}
-      <div className="border-border flex shrink-0 flex-col border-t p-3">
+      <div className="border-border flex shrink-0 gap-2 border-t p-3 max-md:pb-[max(0.75rem,env(safe-area-inset-bottom))]">
         <Button
           variant="secondary"
           onClick={newInvoice}
-          className="w-full max-md:h-11 max-md:text-base"
+          className="min-w-0 flex-1 max-md:h-11 max-md:text-base"
         >
           <IconPlus aria-hidden="true" />
           New invoice
         </Button>
+        {isNarrow && (
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              render={
+                <Button
+                  variant="secondary"
+                  aria-label="New document"
+                  className="size-11"
+                />
+              }
+            >
+              <IconChevronDown aria-hidden="true" className="size-5" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" side="top" className="w-48">
+              {OTHER_DOCUMENT_TYPES.map(newType => (
+                <DropdownMenuItem
+                  key={newType}
+                  onClick={() => newDocument(newType)}
+                  disabled={pending}
+                >
+                  New {DOCUMENT_TYPE_NAMES[newType].toLowerCase()}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
       </div>
     </>
   );

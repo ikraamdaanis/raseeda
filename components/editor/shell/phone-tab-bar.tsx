@@ -1,11 +1,14 @@
 import {
   IconAdjustmentsHorizontal,
   IconFileText,
-  IconFiles,
   IconPencil
 } from "@tabler/icons-react";
 import type { ComponentProps, ComponentType, KeyboardEvent } from "react";
 import { useEffect, useState } from "react";
+import {
+  STYLE_BUTTON_ID,
+  STYLE_TRAY_ID
+} from "~/components/editor/shell/style-tray";
 import { useEditorUi } from "~/context/editor-ui-context";
 import { cn } from "~/lib/utils";
 
@@ -19,21 +22,27 @@ const PHONE_VIEWS = [
   { view: "page", label: "Page", icon: IconFileText }
 ] as const;
 
-// On a phone the editor's views and panels live in one bar along the bottom,
-// as in Canva: Edit (the form) and Page (the page as it prints) switch the
-// view, as tabs; Invoices and Style open their sheets over either view. The
-// top bar keeps only the menu, the name, undo and redo, and Download. The bar
-// hides while a field is being typed in, so it never sits on the keyboard.
+// On a phone the editor's views live in one bar along the bottom, as in
+// Canva: Edit (the form) and Page (the page as it prints) switch the view, as
+// tabs; Style opens its tray over the Page view, switching to it first. The
+// invoice list is the screen the editor is pushed over, reached by the top
+// bar's back button. The bar hides while a field is being typed in, so it
+// never sits on the keyboard.
 export function PhoneTabBar() {
-  const {
-    phoneView,
-    setPhoneView,
-    leftPanelOpen,
-    rightPanelOpen,
-    togglePanel,
-    closePanels
-  } = useEditorUi();
+  const { phoneView, setPhoneView, rightPanelOpen, setPanelOpen, closePanels } =
+    useEditorUi();
   const isTyping = useIsTyping();
+
+  function toggleStyle() {
+    if (rightPanelOpen) {
+      closePanels();
+
+      return;
+    }
+
+    setPhoneView("page");
+    setPanelOpen("right", true);
+  }
 
   function selectView(view: (typeof PHONE_VIEWS)[number]["view"]) {
     closePanels();
@@ -55,7 +64,7 @@ export function PhoneTabBar() {
     <nav
       aria-label="Editor"
       hidden={isTyping}
-      className="bg-background border-border relative z-30 grid shrink-0 grid-cols-4 border-t px-[max(0.5rem,env(safe-area-inset-left))] pb-[env(safe-area-inset-bottom)] md:hidden"
+      className="bg-background border-border relative z-30 grid shrink-0 grid-cols-3 border-t px-[max(0.5rem,env(safe-area-inset-left))] pb-[env(safe-area-inset-bottom)] md:hidden"
     >
       <div
         role="tablist"
@@ -74,7 +83,7 @@ export function PhoneTabBar() {
               tabIndex={isSelected ? 0 : -1}
               icon={icon}
               label={label}
-              isActive={isSelected && !leftPanelOpen && !rightPanelOpen}
+              isActive={isSelected && !rightPanelOpen}
               onKeyDown={handleKeyDown}
               onClick={() => selectView(view)}
             />
@@ -82,20 +91,13 @@ export function PhoneTabBar() {
         })}
       </div>
       <BarButton
-        aria-haspopup="dialog"
-        aria-expanded={leftPanelOpen}
-        icon={IconFiles}
-        label="Invoices"
-        isActive={leftPanelOpen}
-        onClick={() => togglePanel("left")}
-      />
-      <BarButton
-        aria-haspopup="dialog"
+        id={STYLE_BUTTON_ID}
         aria-expanded={rightPanelOpen}
+        aria-controls={STYLE_TRAY_ID}
         icon={IconAdjustmentsHorizontal}
         label="Style"
         isActive={rightPanelOpen}
-        onClick={() => togglePanel("right")}
+        onClick={toggleStyle}
       />
     </nav>
   );

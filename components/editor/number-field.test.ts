@@ -1,4 +1,10 @@
 // @vitest-environment happy-dom
+import {
+  createMemoryHistory,
+  createRootRoute,
+  createRouter,
+  RouterContextProvider
+} from "@tanstack/react-router";
 import { act, createElement, useSyncExternalStore } from "react";
 import type { Root } from "react-dom/client";
 import { createRoot } from "react-dom/client";
@@ -71,9 +77,20 @@ function render({
 }: Parameters<typeof Harness>[0] & { initial: number }) {
   current = initial;
 
+  // The editor's UI state follows the router's history (a phone's list and
+  // editor), so it needs a router, if not a route.
+  const router = createRouter({
+    routeTree: createRootRoute(),
+    history: createMemoryHistory()
+  });
+
   act(() => {
     root.render(
-      createElement(EditorUiProvider, null, createElement(Harness, props))
+      createElement(
+        RouterContextProvider,
+        { router },
+        createElement(EditorUiProvider, null, createElement(Harness, props))
+      )
     );
   });
 }

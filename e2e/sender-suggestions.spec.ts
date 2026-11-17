@@ -3,6 +3,7 @@ import { expect, test } from "./fixtures";
 import {
   clickFileMenuItem,
   gotoEditorReady,
+  newInvoiceOnPhone,
   pressShortcut,
   savedContains
 } from "./helpers";
@@ -154,7 +155,7 @@ test.describe("on a phone", () => {
     await title.fill("Past invoice");
     await from.fill("Jane Doe\n1 High Street");
     await expect.poll(() => savedContains(page, "1 High Street")).toBe(true);
-    await clickFileMenuItem(page, "New Invoice");
+    await newInvoiceOnPhone(page);
     await expect(title).toHaveValue("Invoice");
 
     await from.tap();

@@ -29,7 +29,7 @@ import { formatNumber } from "~/utils/format-number";
 
 // How the invoice reads: its type, the language of its labels, how its dates
 // and amounts are written and the paper it's cut to. Every value is changed
-// on the page. The id stays "details", the section's name before it held only
+// on the page. A phone sets these in its form instead (`form-document.tsx`). The id stays "details", the section's name before it held only
 // formats, so it opens as it was left.
 export function FormatSection() {
   return (
@@ -46,6 +46,29 @@ export function FormatSection() {
 
 // Each format is shown as today's date written that way, so the choice is
 // obvious without reading a pattern.
+export function dateFormatOption(
+  option: (typeof INVOICE_DATE_FORMATS)[number],
+  today: Date
+) {
+  return format(today, option);
+}
+
+// Each format is shown as a sample amount written that way.
+export function numberFormatOption(
+  option: (typeof INVOICE_NUMBER_FORMATS)[number]
+) {
+  return formatNumber(1234567.89, { numberFormat: option, decimals: 2 });
+}
+
+// Which side of the figure the currency sits, shown as an amount in the
+// invoice's own currency and format.
+export function currencyPositionOption(
+  position: (typeof CURRENCY_POSITIONS)[number],
+  money: ReturnType<typeof useMoneyFormat>
+) {
+  return `${position === "before" ? "Before" : "After"}: ${formatCurrency(1234.5, { ...money, position })}`;
+}
+
 function DateFormatRow() {
   const { dateFormat, setDateFormat } = useDetailsSlice();
   const today = new Date();
@@ -66,7 +89,7 @@ function DateFormatRow() {
       >
         {INVOICE_DATE_FORMATS.map(option => (
           <option key={option} value={option}>
-            {format(today, option)}
+            {dateFormatOption(option, today)}
           </option>
         ))}
       </NativeSelect>
@@ -74,7 +97,6 @@ function DateFormatRow() {
   );
 }
 
-// Each format is shown as a sample amount written that way.
 function NumberFormatRow() {
   const { numberFormat, setNumberFormat } = useAmountFormatSlice();
 
@@ -94,7 +116,7 @@ function NumberFormatRow() {
       >
         {INVOICE_NUMBER_FORMATS.map(option => (
           <option key={option} value={option}>
-            {formatNumber(1234567.89, { numberFormat: option, decimals: 2 })}
+            {numberFormatOption(option)}
           </option>
         ))}
       </NativeSelect>
@@ -102,8 +124,6 @@ function NumberFormatRow() {
   );
 }
 
-// Which side of the figure the currency sits, each shown as an amount in the
-// invoice's own currency and format.
 function CurrencyPositionRow() {
   const { currencyPosition, setCurrencyPosition } = useAmountFormatSlice();
   const money = useMoneyFormat();
@@ -124,7 +144,7 @@ function CurrencyPositionRow() {
       >
         {CURRENCY_POSITIONS.map(position => (
           <option key={position} value={position}>
-            {`${position === "before" ? "Before" : "After"}: ${formatCurrency(1234.5, { ...money, position })}`}
+            {currencyPositionOption(position, money)}
           </option>
         ))}
       </NativeSelect>
@@ -200,7 +220,7 @@ function LanguageRow() {
   );
 }
 
-const PAPER_SIZE_LABELS = {
+export const PAPER_SIZE_LABELS = {
   A4: "A4 · 210 × 297 mm",
   Letter: "Letter · 8.5 × 11 in"
 };

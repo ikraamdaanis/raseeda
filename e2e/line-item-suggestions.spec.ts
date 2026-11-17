@@ -2,6 +2,7 @@ import type { Page } from "@playwright/test";
 import { expect, test } from "./fixtures";
 import {
   clickFileMenuItem,
+  newInvoiceOnPhone,
   pressShortcut,
   savedContains,
   setNumber
@@ -120,7 +121,7 @@ test.describe("on a phone", () => {
     await description.fill("Website design");
     await unit.fill("hrs");
     await expect.poll(() => savedContains(page, '"unit":"hrs"')).toBe(true);
-    await clickFileMenuItem(page, "New Invoice");
+    await newInvoiceOnPhone(page);
     await expect(title).toHaveValue("Invoice");
 
     await description.tap();

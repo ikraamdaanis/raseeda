@@ -1,11 +1,8 @@
 import type { RefObject } from "react";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import {
-  EditLabelsProvider,
-  formSectionClassName,
-  FormSwitch
-} from "~/components/editor/form/form-controls";
+import { EditLabelsProvider } from "~/components/editor/form/form-controls";
 import { FormDetails } from "~/components/editor/form/form-details";
+import { FormDocument } from "~/components/editor/form/form-document";
 import { FormFooter } from "~/components/editor/form/form-footer";
 import { FormLineItems } from "~/components/editor/form/form-line-items";
 import {
@@ -18,7 +15,6 @@ import {
 import { FormPaymentDetails } from "~/components/editor/form/form-payment";
 import { FormTotals } from "~/components/editor/form/form-totals";
 import { useInvoiceDocument } from "~/context/invoice-document-context";
-import { cn } from "~/lib/utils";
 
 // A field that brings up the on-screen keyboard.
 const TYPING_FIELD_SELECTOR =
@@ -76,14 +72,10 @@ export function PhoneForm({
           onSubmit={event => event.preventDefault()}
           className="bg-border mx-auto flex max-w-xl flex-col gap-px border-b"
         >
-          <div className={cn(formSectionClassName, "py-3")}>
-            <FormSwitch
-              label="Edit labels"
-              description="Rename the labels the invoice prints, like Bill To or Due Date."
-              checked={isEditingLabels}
-              onCheckedChange={setIsEditingLabels}
-            />
-          </div>
+          <FormDocument
+            isEditingLabels={isEditingLabels}
+            onEditingLabelsChange={setIsEditingLabels}
+          />
           <FormTitle />
           <FormLogo />
           <FormSeller />
