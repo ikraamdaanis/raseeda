@@ -184,6 +184,19 @@ test("a totals row is typed in its own box, shown once", async ({ page }) => {
   await expect(totals.getByText("Rate (%)")).toHaveCount(0);
 });
 
+test("an optional totals row is removed from the button under it", async ({
+  page
+}) => {
+  await page.goto("/create");
+
+  const totals = page.getByRole("region", { name: "Totals" });
+
+  await totals.getByRole("button", { name: "Remove fees" }).tap();
+
+  await expect(totals.getByRole("textbox", { name: "Fees" })).toHaveCount(0);
+  await expect(totals.getByRole("button", { name: "Fees" })).toBeVisible();
+});
+
 test("phones get a tab bar instead of the canvas pill and panel toggles", async ({
   page
 }) => {

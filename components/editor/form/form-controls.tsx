@@ -231,6 +231,32 @@ export function FormFieldTitle({
   );
 }
 
+// Takes an optional part off the page, under the fields it removes, so they
+// keep the form's full width. Worded and drawn like Remove second currency.
+export function FormRemoveButton({
+  onClick,
+  className,
+  children
+}: {
+  onClick: () => void;
+  className?: string;
+  children: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        "text-muted-foreground hover:text-foreground flex h-11 items-center gap-2 self-start text-base",
+        className
+      )}
+    >
+      <IconX aria-hidden="true" className="size-5 shrink-0" />
+      {children}
+    </button>
+  );
+}
+
 /**
  * A field under its title: the label the field prints under, as it prints.
  * `labelField` is that label's path, for renaming it where it stands, and

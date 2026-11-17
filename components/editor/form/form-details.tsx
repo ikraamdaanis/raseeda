@@ -1,13 +1,12 @@
-import { IconX } from "@tabler/icons-react";
 import { useId } from "react";
 import {
   FormAddParts,
   FormArea,
   FormField,
   formFieldClassName,
-  formIconButtonClassName,
   FormInput,
-  formLabelClassName
+  formLabelClassName,
+  FormRemoveButton
 } from "~/components/editor/form/form-controls";
 import {
   FormAmountFormat,
@@ -22,7 +21,6 @@ import {
   useDetailRows
 } from "~/components/editor/invoice-details";
 import { CurrencyControls } from "~/components/editor/invoice-total-currency";
-import { Button } from "~/components/ui/button";
 import { cn } from "~/lib/utils";
 import {
   useDetailsSlice,
@@ -92,13 +90,8 @@ function FormDetailRow({
   const title = row.label.trim() || placeholders.label;
 
   return (
-    <div className="flex items-end gap-2">
-      <FormField
-        id={id}
-        title={title}
-        labelField={`labels.${row.labelKey}`}
-        className="flex-1"
-      >
+    <div className="flex flex-col gap-1">
+      <FormField id={id} title={title} labelField={`labels.${row.labelKey}`}>
         {dateValue !== null ? (
           <InvoiceDateField
             value={dateValue}
@@ -126,14 +119,9 @@ function FormDetailRow({
         )}
       </FormField>
       {section && (
-        <Button
-          variant="ghost"
-          aria-label={`Hide ${section.name}`}
-          onClick={() => setSection(section.key, false)}
-          className={cn(formIconButtonClassName, "-mr-2 h-11")}
-        >
-          <IconX aria-hidden="true" className="size-5" />
-        </Button>
+        <FormRemoveButton onClick={() => setSection(section.key, false)}>
+          {`Remove ${section.name}`}
+        </FormRemoveButton>
       )}
     </div>
   );
