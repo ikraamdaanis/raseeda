@@ -9,10 +9,12 @@ import {
   DOCUMENT_TYPE_DEFAULTS,
   DOCUMENT_TYPE_ROWS
 } from "~/consts/document-types";
+import { useFontLoads } from "~/hooks/use-font-loads";
 import { useIsPreview, useShownSections } from "~/hooks/use-shown-sections";
 import {
   useDetailsSlice,
   useDocumentType,
+  usePaperSize,
   useSectionsSlice,
   useTheme
 } from "~/stores/invoice-selectors";
@@ -22,13 +24,16 @@ import type {
   InvoiceSectionKey
 } from "~/types";
 import { buildDetailRows } from "~/utils/build-invoice-view-model";
+import { getDetailLabelWidth } from "~/utils/detail-label-width";
 import { formatServicePeriod } from "~/utils/format-invoice-date";
 import { getRoleSettings } from "~/utils/get-role-settings";
 import { getTextStyles } from "~/utils/get-text-styles";
+import { measureTextWidth } from "~/utils/measure-text-width";
 import {
   dueDateForNewInvoiceDate,
   getPaymentTermsOptions
 } from "~/utils/payment-terms";
+import { PX_PER_PT } from "~/utils/pdf-styles";
 import { hasText } from "~/utils/section-visibility";
 
 // The number and due date are named for the document's type, so an emptied
@@ -107,15 +112,42 @@ export function useDetailRows() {
 }
 
 export function InvoiceDetails() {
+  // Measured text changes when a font loads, which nothing here reads, so the
+  // compiler mustn't keep a width measured in the fallback.
+  "use no memo";
+
+  useFontLoads();
+
   const documentType = useDocumentType();
   const placeholders = buildDetailPlaceholders(documentType);
   const addableParts = useAddableParts("details");
   const rows = useDetailRows();
+  const theme = useTheme();
+  const paperSize = usePaperSize();
+  const isPreview = useIsPreview();
+  const labelStyle = getTextStyles({
+    settings: getRoleSettings(theme, "detailLabel")
+  });
+  // As the PDF sizes them, a blank label measuring as its placeholder while
+  // editing.
+  const labelWidth =
+    getDetailLabelWidth({
+      labels: rows.map(row =>
+        isPreview ? row.label : row.label || placeholders[row.id].label
+      ),
+      paperSize,
+      measure: label => measureTextWidth(label, labelStyle) / PX_PER_PT
+    }) * PX_PER_PT;
 
   return (
     <div data-field-area="details" className="flex flex-col">
       {rows.map(row => (
-        <DetailRow key={row.id} row={row} placeholders={placeholders[row.id]} />
+        <DetailRow
+          key={row.id}
+          row={row}
+          placeholders={placeholders[row.id]}
+          labelWidth={labelWidth}
+        />
       ))}
       <AddPartSlot
         areaName="details"
@@ -204,10 +236,12 @@ export function useDetailRowActions(row: InvoiceDetailRow) {
 
 function DetailRow({
   row,
-  placeholders
+  placeholders,
+  labelWidth
 }: {
   row: InvoiceDetailRow;
   placeholders: { label: string; value: string };
+  labelWidth: number;
 }) {
   const { setSection } = useSectionsSlice();
   const theme = useTheme();
@@ -230,13 +264,16 @@ function DetailRow({
           className="absolute top-1/2 right-full mr-1 -translate-y-1/2"
         />
       )}
-      <div className="flex min-w-32 items-center" style={labelStyle}>
+      <div
+        className="flex shrink-0 items-center"
+        style={{ ...labelStyle, width: labelWidth }}
+      >
         <InvoiceInput
           aria-label={`${placeholders.label} field label`}
           data-field={`labels.${row.labelKey}`}
           value={row.label}
           onChange={setLabel}
-          className="leading-paper-row field-sizing-content h-[unset]! w-auto min-w-fit py-0"
+          className="leading-paper-row h-[unset]! w-full py-0"
           style={labelStyle}
           placeholder={placeholders.label}
         />

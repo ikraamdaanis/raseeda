@@ -39,6 +39,8 @@ import { CanvasViewProvider } from "~/context/canvas-view-context";
 import { EditorUiProvider, useEditorUi } from "~/context/editor-ui-context";
 import { FileActionsProvider } from "~/context/file-actions-context";
 import { useInvoiceDocument } from "~/context/invoice-document-context";
+import { DETAILS_COLUMN_GAP } from "~/utils/detail-label-width";
+import { PX_PER_PT } from "~/utils/pdf-styles";
 
 // The editor. Every edit saves itself, so leaving needs no confirmation:
 // whatever is waiting is written as the editor unmounts. Its root is isolated
@@ -192,7 +194,10 @@ function Top() {
 
 function Mid() {
   return (
-    <div className="mt-2 flex justify-between gap-8">
+    <div
+      className="mt-2 flex justify-between"
+      style={{ gap: DETAILS_COLUMN_GAP * PX_PER_PT }}
+    >
       <div className="flex flex-1 flex-col gap-4">
         <InvoiceClientDetails />
         <InvoiceShipping />

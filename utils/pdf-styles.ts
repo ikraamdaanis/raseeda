@@ -19,6 +19,9 @@ export const PDF_PAGE_SIZES: Record<
 };
 export const PDF_PAGE_PADDING = 40;
 
+// CSS pixels in a point: the canvas draws the page at the PDF's size.
+export const PX_PER_PT = 96 / 72;
+
 // Line height shared by section labels, address lines and detail rows, the
 // PDF twin of the editor's leading-paper-row, so the details column lands on
 // the same lines as the address beside it.

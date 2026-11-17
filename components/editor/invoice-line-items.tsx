@@ -1,6 +1,5 @@
 import { IconMinus, IconPlus } from "@tabler/icons-react";
 import type { CSSProperties } from "react";
-import { useEffect, useState } from "react";
 import { useShallow } from "zustand/react/shallow";
 import {
   SuggestionList,
@@ -13,6 +12,7 @@ import { Button } from "~/components/ui/button";
 import { formatCurrency } from "~/consts/currencies";
 import { useInvoiceDocument } from "~/context/invoice-document-context";
 import { useCurrencyConversion } from "~/hooks/use-currency-conversion";
+import { useFontLoads } from "~/hooks/use-font-loads";
 import { useIsPreview, useShownSections } from "~/hooks/use-shown-sections";
 import { cn } from "~/lib/utils";
 import { recordHistoryAction } from "~/stores/invoice-history";
@@ -47,11 +47,12 @@ import { getTextStyles } from "~/utils/get-text-styles";
 import { getPrintedWord } from "~/utils/label-preset";
 import { layoutColumns } from "~/utils/layout-columns";
 import { getLineItemSuggestions } from "~/utils/line-item-suggestions";
+import { measureTextWidth } from "~/utils/measure-text-width";
 import {
-  forgetMeasuredWidths,
-  measureTextWidth
-} from "~/utils/measure-text-width";
-import { PDF_PAGE_PADDING, PDF_PAGE_SIZES } from "~/utils/pdf-styles";
+  PDF_PAGE_PADDING,
+  PDF_PAGE_SIZES,
+  PX_PER_PT
+} from "~/utils/pdf-styles";
 import {
   getAmountColumnLabel,
   getShownColumns,
@@ -312,35 +313,12 @@ const DESCRIPTION_FLOOR_WIDTH = "4em";
 // The rows' gap between columns, gap-2.
 const COLUMN_GAP_WIDTH = 8;
 
-// CSS pixels in a point: the canvas draws the page at the PDF's size.
-const PX_PER_PT = 96 / 72;
-
 // The width the columns share: the page inside its border and margins, less
 // the table's border.
 function getTableInnerWidth(paperSize: InvoicePaperSize) {
   return (
     (PDF_PAGE_SIZES[paperSize].width - PDF_PAGE_PADDING * 2) * PX_PER_PT - 4
   );
-}
-
-// Bumps when a web font finishes loading, so text measured in a fallback font
-// is measured again.
-function useFontLoads() {
-  const [fontLoads, setFontLoads] = useState(0);
-
-  useEffect(() => {
-    function handleLoadingDone() {
-      forgetMeasuredWidths();
-      setFontLoads(count => count + 1);
-    }
-
-    document.fonts.addEventListener("loadingdone", handleLoadingDone);
-
-    return () =>
-      document.fonts.removeEventListener("loadingdone", handleLoadingDone);
-  }, []);
-
-  return fontLoads;
 }
 
 // The table's grid, laid out as the PDF lays out its columns, so Preview

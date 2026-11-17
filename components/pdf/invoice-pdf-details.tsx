@@ -1,6 +1,11 @@
 import { StyleSheet, Text, View } from "@react-pdf/renderer";
 import { PdfMultilineText } from "~/components/pdf/invoice-pdf-text";
 import type { Invoice, InvoiceDetailRow } from "~/types";
+import {
+  DETAILS_COLUMN_GAP,
+  getDetailLabelWidth
+} from "~/utils/detail-label-width";
+import { measurePdfText } from "~/utils/measure-pdf-text";
 import { PDF_ROW_LINE_HEIGHT, pdfRoleStyle } from "~/utils/pdf-styles";
 import { getPrintedSections } from "~/utils/section-visibility";
 
@@ -11,7 +16,7 @@ const styles = StyleSheet.create({
   detailsRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    gap: 40
+    gap: DETAILS_COLUMN_GAP
   },
   clientInfo: {
     flex: 1
@@ -32,7 +37,6 @@ const styles = StyleSheet.create({
     alignItems: "center"
   },
   detailsLabel: {
-    width: "40%",
     fontSize: 10,
     color: "#6b7280",
     lineHeight: PDF_ROW_LINE_HEIGHT
@@ -57,6 +61,15 @@ export function InvoicePdfDetails({
   const visibleDetailRows = detailRows.filter(
     row => !row.isOptional || row.value.trim().length > 0
   );
+  const labelStyle = {
+    ...styles.detailsLabel,
+    ...pdfRoleStyle(theme, "detailLabel")
+  };
+  const labelWidth = getDetailLabelWidth({
+    labels: visibleDetailRows.map(row => row.label),
+    paperSize: invoice.paperSize,
+    measure: label => measurePdfText(label, labelStyle)
+  });
 
   return (
     <View style={styles.detailsSection}>
@@ -102,12 +115,7 @@ export function InvoicePdfDetails({
         <View style={styles.invoiceDetails}>
           {visibleDetailRows.map(row => (
             <View key={row.id} style={styles.detailsField}>
-              <Text
-                style={{
-                  ...styles.detailsLabel,
-                  ...pdfRoleStyle(theme, "detailLabel")
-                }}
-              >
+              <Text style={{ ...labelStyle, width: labelWidth }}>
                 {row.label}
               </Text>
               <Text
