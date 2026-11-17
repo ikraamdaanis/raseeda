@@ -41,7 +41,10 @@ import { FileActionsProvider } from "~/context/file-actions-context";
 import { useInvoiceDocument } from "~/context/invoice-document-context";
 
 // The editor. Every edit saves itself, so leaving needs no confirmation:
-// whatever is waiting is written as the editor unmounts.
+// whatever is waiting is written as the editor unmounts. It's sized to the
+// viewport with the browser's toolbars showing (`svh`): the page never
+// scrolls, so they only hide when iOS lays its own picker (a colour, a date)
+// over them, and the editor then stays put rather than growing under it.
 export function InvoiceEditor() {
   return (
     <CanvasViewProvider>
@@ -50,7 +53,7 @@ export function InvoiceEditor() {
           <EditorShortcuts />
           <HistoryShortcuts />
           <CommandPalette />
-          <div className="relative flex h-dvh w-full flex-col overflow-hidden [--style-tray-height:min(21rem,52dvh)]">
+          <div className="relative flex h-svh w-full flex-col overflow-hidden [--style-tray-height:min(21rem,52svh)]">
             <PhoneLibraryScreen />
             <EditorScreen>
               <EditorTopBar
