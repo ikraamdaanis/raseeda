@@ -111,18 +111,23 @@ test("the Page tab shows the page, and tapping a field opens it in the form", as
   await expect(toDetails).toBeInViewport();
 });
 
-test("a printed heading is the field that renames it", async ({ page }) => {
+test("a part says what it is, whatever its printed heading is renamed to", async ({
+  page
+}) => {
   await page.goto("/create");
 
-  const toLabel = page.getByRole("textbox", { name: "To label" });
+  const clientPart = page.getByRole("region", { name: "Your client" });
+  const toLabel = clientPart.getByRole("textbox", { name: "To label" });
+
+  await expect(
+    clientPart.getByText("Who it’s for: their name or business and address.")
+  ).toBeVisible();
 
   await toLabel.fill("Bill To");
   await toLabel.press("Enter");
 
   await expect(toLabel).not.toBeFocused();
-  await expect(
-    page.getByRole("region", { name: "Bill To", exact: true })
-  ).toBeVisible();
+  await expect(clientPart).toBeVisible();
 
   await showPage(page);
 
@@ -182,6 +187,21 @@ test("a totals row is typed in its own box, shown once", async ({ page }) => {
   await expect(taxRate).toHaveValue("20");
   await expect(totals.getByText(/^comes to /)).toBeVisible();
   await expect(totals.getByText("Rate (%)")).toHaveCount(0);
+});
+
+test("a field says what it is once on the first line, not on every line", async ({
+  page
+}) => {
+  await page.goto("/create");
+
+  const items = page.getByRole("region", { name: "Items" });
+
+  await items.getByRole("button", { name: "Add item" }).tap();
+
+  await expect(items.getByText("What you did or sold.")).toHaveCount(1);
+  await expect(
+    items.getByRole("textbox", { name: /, item 2$/ }).first()
+  ).toBeVisible();
 });
 
 test("an optional totals row is removed from the button under it", async ({

@@ -13,6 +13,7 @@ import { Input } from "~/components/ui/input";
 import { NativeSelect } from "~/components/ui/select";
 import { Switch } from "~/components/ui/switch";
 import { Textarea } from "~/components/ui/textarea";
+import { FIELD_NOTES, PART_NOTES } from "~/consts/form-notes";
 import { cn } from "~/lib/utils";
 import type { InvoiceNumberFormat } from "~/types";
 import { getDecimalSeparator } from "~/utils/format-number";
@@ -57,11 +58,13 @@ type PrintedLabel = {
 const AreaLabelsContext = createContext<Map<string, PrintedLabel>>(new Map());
 
 /**
- * One part of the page, under its heading, in the order it prints. The heading
- * and the titles in it read as they print (From, Due Date), and each of those
- * the page prints is a field that renames it where it stands:
- * `label` is the heading's, `labels` the titles' (only those that print right
- * now). A part that can be hidden has a Remove button beside its heading.
+ * One part of the page, under its heading, in the order it prints. A part
+ * whose heading the page prints (`label`) says what it is under a heading of
+ * its own (`PART_NOTES`), then has the label it prints as a field, under a
+ * Label caption, and its content under a caption of its own, so the part's
+ * place on the invoice stays plain however the label is renamed. The titles
+ * in it (`labels`, only those that print right now) are renamed the same way.
+ * A part that can be hidden has a Remove button beside its heading.
  */
 export function FormArea({
   area,
@@ -85,7 +88,7 @@ export function FormArea({
   children?: ReactNode;
 }) {
   const headingId = useId();
-  const heading = label?.value.trim() || title;
+  const part = label ? PART_NOTES[area] : undefined;
   const printedLabels = new Map(
     labels.map(printedLabel => [printedLabel.field, printedLabel])
   );
@@ -97,20 +100,13 @@ export function FormArea({
         aria-labelledby={headingId}
         className={formSectionClassName}
       >
-        <div className="flex min-h-9 items-center gap-2">
-          {label ? (
-            <RenameableHeading
-              id={headingId}
-              label={{ name: title, ...label }}
-            />
-          ) : (
-            <h2
-              id={headingId}
-              className="min-w-0 flex-1 truncate text-lg font-semibold"
-            >
-              {heading}
+        <div className="flex items-start gap-2">
+          <div className="flex min-h-9 min-w-0 flex-1 flex-col justify-center gap-1">
+            <h2 id={headingId} className="text-lg font-semibold">
+              {part?.heading ?? (label?.value.trim() || title)}
             </h2>
-          )}
+            {part && <p className={formHintClassName}>{part.note}</p>}
+          </div>
           {onRemove && (
             <Button
               variant="ghost"
@@ -122,22 +118,18 @@ export function FormArea({
             </Button>
           )}
         </div>
-        {children}
+        {label && (
+          <Captioned caption="Label">
+            <LabelInput label={{ name: title, ...label }} />
+          </Captioned>
+        )}
+        {part?.content ? (
+          <Captioned caption={part.content}>{children}</Captioned>
+        ) : (
+          children
+        )}
       </section>
     </AreaLabelsContext.Provider>
-  );
-}
-
-// A heading the page prints, as the field that renames it. The part's region
-// keeps its name from the heading, hidden but read by a screen reader.
-function RenameableHeading({ id, label }: { id: string; label: PrintedLabel }) {
-  return (
-    <div className="flex min-w-0 flex-1">
-      <h2 id={id} className="sr-only">
-        {label.value.trim() || label.name}
-      </h2>
-      <LabelInput label={label} className="text-lg font-semibold md:text-lg" />
-    </div>
   );
 }
 
@@ -231,6 +223,29 @@ export function FormFieldTitle({
   );
 }
 
+// A caption naming one of a field's two parts: the label it prints under
+// (Label) and what's typed (Number, Date). Hidden from a screen reader, which
+// reads each field's own name.
+function Captioned({
+  caption,
+  children
+}: {
+  caption: string;
+  children: ReactNode;
+}) {
+  return (
+    <div className="flex flex-col gap-1.5">
+      <span
+        aria-hidden="true"
+        className="text-muted-foreground text-sm/5 font-medium"
+      >
+        {caption}
+      </span>
+      {children}
+    </div>
+  );
+}
+
 // Takes an optional part off the page, under the fields it removes, so they
 // keep the form's full width. Worded and drawn like Remove second currency.
 export function FormRemoveButton({
@@ -260,13 +275,18 @@ export function FormRemoveButton({
 /**
  * A field under its title: the label the field prints under, as it prints.
  * `labelField` is that label's path, for renaming it where it stands, and
- * `unit` what the title adds after it (a price's currency).
+ * `unit` what the title adds after it (a price's currency). A field with a
+ * note (`FIELD_NOTES`) says what it is, under a heading of its own, with
+ * its label and what's typed each under a caption, and takes a grid's whole
+ * row; `explain` leaves that to one of several fields with the same label (a
+ * line's, on the first line only).
  */
 export function FormField({
   id,
   title,
   labelField,
   unit,
+  explain = true,
   hint,
   className,
   children
@@ -275,21 +295,62 @@ export function FormField({
   title: string;
   labelField?: string;
   unit?: string;
+  explain?: boolean;
   hint?: ReactNode;
   className?: string;
   children: ReactNode;
 }) {
+  const labels = useContext(AreaLabelsContext);
+  const label = labelField ? labels.get(labelField) : undefined;
+  const about = label && explain ? FIELD_NOTES[label.field] : undefined;
+
+  // `children` keeps one place in the tree whether or not it's explained, so
+  // a bank field whose label starts printing as it's typed in isn't remounted
+  // (and doesn't lose focus) as the heading and captions appear.
   return (
-    <div className={cn("flex min-w-0 flex-col gap-2", className)}>
-      <FormFieldTitle
-        htmlFor={id}
-        field={labelField}
-        unit={unit}
-        className={formLabelClassName}
-      >
-        {title}
-      </FormFieldTitle>
-      {children}
+    <div
+      className={cn(
+        "flex min-w-0 flex-col",
+        about ? "col-span-full gap-3" : "gap-2",
+        className
+      )}
+    >
+      {label && about ? (
+        <>
+          <div className="flex flex-col gap-0.5">
+            <span className="text-base/6 font-semibold">{label.name}</span>
+            {about.note && <p className={formHintClassName}>{about.note}</p>}
+          </div>
+          <Captioned caption="Label">
+            <LabelInput label={label} unit={unit} />
+          </Captioned>
+        </>
+      ) : (
+        <FormFieldTitle
+          htmlFor={id}
+          field={labelField}
+          unit={unit}
+          className={formLabelClassName}
+        >
+          {title}
+        </FormFieldTitle>
+      )}
+      <div className="flex flex-col gap-1.5">
+        {about && (
+          <span
+            aria-hidden="true"
+            className="text-muted-foreground text-sm/5 font-medium"
+          >
+            {about.content}
+          </span>
+        )}
+        {about && (
+          <label htmlFor={id} className="sr-only">
+            {unit ? `${title} (${unit})` : title}
+          </label>
+        )}
+        {children}
+      </div>
       {hint && <div className={formHintClassName}>{hint}</div>}
     </div>
   );

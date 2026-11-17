@@ -11,7 +11,6 @@ import {
   FormFieldTitle,
   formIconButtonClassName,
   FormInput,
-  formLabelClassName,
   FormNumberInput,
   FormTextArea
 } from "~/components/editor/form/form-controls";
@@ -193,51 +192,51 @@ function LineItemCard({
 
   return (
     <article aria-label={`Item ${index + 1}`} className={formCardClassName}>
-      <div className="relative flex flex-col gap-2">
-        <FormFieldTitle
-          htmlFor={descriptionId}
-          field="tableSettings.columnLabels.description"
-          className={formLabelClassName}
-        >
-          {labels.description}
-        </FormFieldTitle>
-        <FormTextArea
-          id={descriptionId}
-          aria-label={`${labels.description}, item ${index + 1}`}
-          {...fieldProps}
-          data-field={`items.${item.id}.description`}
-          value={item.description}
-          placeholder="Enter a description"
-          onChange={value => {
-            updateItem(index, "description", value);
-            onType();
-          }}
-        />
-        {isShown && (
-          <SuggestionList
-            listId={listId}
-            label="Items from past invoices"
-            suggestions={suggestions}
-            activeIndex={activeIndex}
-            pick={pick}
-            getKey={suggestion => suggestion.description}
-            renderSuggestion={suggestion => (
-              <span className="flex items-baseline gap-3">
-                <span
-                  title={suggestion.description}
-                  className="min-w-0 flex-1 truncate font-medium"
-                >
-                  {suggestion.description}
-                </span>
-                <span className="text-muted-foreground shrink-0 text-sm">
-                  {formatCurrency(suggestion.unitPrice, money)}
-                  {suggestion.unit && ` / ${suggestion.unit}`}
-                </span>
-              </span>
-            )}
+      <FormField
+        id={descriptionId}
+        title={labels.description}
+        labelField="tableSettings.columnLabels.description"
+        explain={index === 0}
+      >
+        <div className="relative">
+          <FormTextArea
+            id={descriptionId}
+            aria-label={`${labels.description}, item ${index + 1}`}
+            {...fieldProps}
+            data-field={`items.${item.id}.description`}
+            value={item.description}
+            placeholder="Enter a description"
+            onChange={value => {
+              updateItem(index, "description", value);
+              onType();
+            }}
           />
-        )}
-      </div>
+          {isShown && (
+            <SuggestionList
+              listId={listId}
+              label="Items from past invoices"
+              suggestions={suggestions}
+              activeIndex={activeIndex}
+              pick={pick}
+              getKey={suggestion => suggestion.description}
+              renderSuggestion={suggestion => (
+                <span className="flex items-baseline gap-3">
+                  <span
+                    title={suggestion.description}
+                    className="min-w-0 flex-1 truncate font-medium"
+                  >
+                    {suggestion.description}
+                  </span>
+                  <span className="text-muted-foreground shrink-0 text-sm">
+                    {formatCurrency(suggestion.unitPrice, money)}
+                    {suggestion.unit && ` / ${suggestion.unit}`}
+                  </span>
+                </span>
+              )}
+            />
+          )}
+        </div>
+      </FormField>
       {shown.quantityAndPrice && (
         <div className="grid grid-cols-2 gap-x-3 gap-y-4">
           <FormField
@@ -276,6 +275,7 @@ function LineItemCard({
             title={labels.unitPrice}
             unit={money.marker}
             labelField="tableSettings.columnLabels.unitPrice"
+            explain={index === 0}
             className={hasTaxColumn ? undefined : lastFieldClassName}
           >
             <FormNumberInput
@@ -360,6 +360,7 @@ function LineAmount({
       title={label}
       unit={money.marker}
       labelField="tableSettings.columnLabels.amount"
+      explain={index === 0}
       className="flex-1"
     >
       <FormNumberInput
@@ -419,6 +420,7 @@ function LineTax({
       title={label}
       unit="%"
       labelField="tableSettings.columnLabels.tax"
+      explain={index === 0}
       className={className}
     >
       <div className="flex items-center gap-2">
