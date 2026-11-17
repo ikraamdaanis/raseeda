@@ -3,7 +3,6 @@ import type { ReactNode } from "react";
 import { lazy, Suspense, useRef, useState } from "react";
 import { toast } from "sonner";
 import { DownloadPopover } from "~/components/editor/shell/download-popover";
-import { HistoryButtons } from "~/components/editor/shell/history-buttons";
 import {
   PhoneBackButton,
   PhoneDocumentMenu
@@ -19,9 +18,9 @@ import {
 // Framer's three-part bar: the project menu on the left, the invoice's name in
 // the middle, and the panel toggles, Preview and Download on the right.
 // `start` and `end` take the panel toggles. Phones have the way back to the
-// invoice list, the name, undo and redo, the document's own menu and
-// Download; the panel toggles move to the tab bar, and there's no Preview
-// there. Every edit saves itself, so there's no save state to show here while
+// invoice list, the name beside it, and the document's own menu (undo and
+// redo are at its top) and Download; the panel toggles move to the tab bar,
+// and there's no Preview there. Every edit saves itself, so there's no save state to show here while
 // saving works; problems show in the banner under the bar.
 // Development builds get a menu that shows any alert, toast or dialog on
 // demand; production builds drop it, import and all.
@@ -53,9 +52,6 @@ export function EditorTopBar({
       <InvoiceName />
       <div className="flex min-w-0 items-center justify-end gap-1 max-md:shrink-0">
         <div className="contents max-md:hidden">{end}</div>
-        {isNarrow && mode === "edit" && canEdit && (
-          <HistoryButtons className="flex items-center" />
-        )}
         <Button
           variant="ghost"
           size="icon-sm"
@@ -116,7 +112,7 @@ function InvoiceName() {
   }
 
   return (
-    <h1 className="flex min-w-0 max-md:flex-1 max-md:justify-center">
+    <h1 className="flex min-w-0 max-md:-ml-1 max-md:flex-1">
       <input
         aria-label="Invoice name"
         title="Rename"
@@ -137,7 +133,7 @@ function InvoiceName() {
           }
         }}
         onBlur={handleBlur}
-        className="text-foreground hover:bg-muted focus:bg-muted focus-visible:ring-ring field-sizing-content h-7 max-w-[min(18rem,36vw)] min-w-12 truncate rounded-md px-2 text-center text-sm font-medium outline-none focus-visible:ring-1 max-md:max-w-full pointer-coarse:h-10"
+        className="text-foreground hover:bg-muted focus:bg-muted focus-visible:ring-ring field-sizing-content h-7 max-w-[min(18rem,36vw)] min-w-12 truncate rounded-md px-2 text-center text-sm font-medium outline-none focus-visible:ring-1 max-md:max-w-full max-md:text-left pointer-coarse:h-10"
       />
     </h1>
   );

@@ -406,13 +406,18 @@ function findField(path: string): HTMLElement | null {
 }
 
 // Puts focus and the caret back in the field a step changed and scrolls it
-// into view. With no field to go to (a switch, a removed row), the part of
-// the page that changed flashes instead.
-function showChange(focus: FieldFocus | null, area: string) {
+// into view. With no field to go to (a switch, a removed row), or when focus
+// should stay where it is (a phone's menu, where it would raise the keyboard
+// under the menu), the part of the page that changed flashes instead.
+function showChange(
+  focus: FieldFocus | null,
+  area: string,
+  movesFocus: boolean
+) {
   if (typeof document === "undefined") return;
 
   requestAnimationFrame(() => {
-    const field = focus ? findField(focus.field) : null;
+    const field = focus && movesFocus ? findField(focus.field) : null;
 
     if (focus && field) {
       field.focus({ preventScroll: true });
@@ -451,16 +456,21 @@ function showChange(focus: FieldFocus | null, area: string) {
   });
 }
 
-function apply(snapshot: Invoice, focus: FieldFocus | null, area: string) {
+function apply(
+  snapshot: Invoice,
+  focus: FieldFocus | null,
+  area: string,
+  movesFocus: boolean
+) {
   runWithOrigin("history", () => {
     useInvoiceStore.getState().setInvoice(structuredClone(snapshot));
   });
   boundary = true;
   publish();
-  showChange(focus, area);
+  showChange(focus, area, movesFocus);
 }
 
-export function undoInvoiceChange(): boolean {
+export function undoInvoiceChange({ movesFocus = true } = {}): boolean {
   if (!enabled) return false;
 
   const entry = undoStack.pop();
@@ -471,12 +481,12 @@ export function undoInvoiceChange(): boolean {
     ...entry,
     snapshot: selectInvoiceData(useInvoiceStore.getState())
   });
-  apply(entry.snapshot, entry.before, entry.area);
+  apply(entry.snapshot, entry.before, entry.area, movesFocus);
 
   return true;
 }
 
-export function redoInvoiceChange(): boolean {
+export function redoInvoiceChange({ movesFocus = true } = {}): boolean {
   if (!enabled) return false;
 
   const entry = redoStack.pop();
@@ -487,7 +497,7 @@ export function redoInvoiceChange(): boolean {
     ...entry,
     snapshot: selectInvoiceData(useInvoiceStore.getState())
   });
-  apply(entry.snapshot, entry.after, entry.area);
+  apply(entry.snapshot, entry.after, entry.area, movesFocus);
 
   return true;
 }

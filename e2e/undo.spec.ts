@@ -353,34 +353,63 @@ test.describe("on a phone", () => {
     isMobile: true
   });
 
-  test("undo and redo sit in the top bar, off with nothing to undo", async ({
+  test("undo and redo sit atop the document menu, which stays open as they're tapped", async ({
     page
   }) => {
     await gotoEditorSettled(page);
 
-    const undo = page.getByRole("button", { name: /^Undo/ });
-    const redo = page.getByRole("button", { name: /^Redo/ });
+    const menuButton = page.getByRole("button", { name: "Document menu" });
+    const undo = page.getByRole("menuitem", { name: /^Undo/ });
+    const redo = page.getByRole("menuitem", { name: /^Redo/ });
 
+    await menuButton.tap();
     await expect(undo).toBeVisible();
     await expect(undo).toBeDisabled();
     await expect(redo).toBeDisabled();
+    await page.keyboard.press("Escape");
 
     const title = page.getByRole("textbox", { name: "Invoice title" });
 
     await title.fill("Phone edit");
     await title.blur();
+    await menuButton.tap();
+    await page
+      .getByRole("menuitem", { name: "Undo change to Invoice title" })
+      .tap();
 
-    await expect(
-      page.getByRole("button", { name: "Undo change to Invoice title" })
-    ).toBeEnabled();
-
-    await undo.click();
-
+    // The menu stays open, and focus stays in it rather than raising the
+    // keyboard in the field behind it.
     await expect(title).toHaveValue("Invoice");
     await expect(redo).toBeEnabled();
+    await expect(title).not.toBeFocused();
 
-    await redo.click();
+    await redo.tap();
 
     await expect(title).toHaveValue("Phone edit");
+    await expect(redo).toBeDisabled();
+
+    await page
+      .getByRole("menuitem", { name: "Duplicate", exact: true })
+      .waitFor();
+    await page.keyboard.press("Escape");
+    await expect(undo).toBeHidden();
+  });
+
+  test("the invoice's name sits beside the back button", async ({ page }) => {
+    await gotoEditorSettled(page);
+
+    const back = await page
+      .locator("header")
+      .getByRole("button", { name: "Invoices" })
+      .boundingBox();
+    const name = await page
+      .getByRole("textbox", { name: "Invoice name" })
+      .boundingBox();
+
+    expect(back).not.toBeNull();
+    expect(name).not.toBeNull();
+    expect((name?.x ?? 0) - ((back?.x ?? 0) + (back?.width ?? 0))).toBeLessThan(
+      12
+    );
   });
 });

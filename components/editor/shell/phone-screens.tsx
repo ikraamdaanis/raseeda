@@ -16,6 +16,7 @@ import { startCase } from "lodash-es";
 import type { ReactNode } from "react";
 import { useEffect } from "react";
 import { EditorThemeRadioGroup } from "~/components/editor/editor-theme-menu";
+import { HistoryMenuRow } from "~/components/editor/shell/history-buttons";
 import { InvoicesPanel } from "~/components/editor/shell/invoices-panel";
 import { Button } from "~/components/ui/button";
 import {
@@ -183,12 +184,14 @@ function PhoneLibraryMenu() {
   );
 }
 
-// What acts on the open document, at the top right of the phone's editor.
+// What acts on the open document, at the top right of the phone's editor,
+// with undo and redo across its top while it can be edited.
 export function PhoneDocumentMenu() {
   const actions = useFileActions();
   const { isRecord, status } = useInvoiceDocument();
   const documentType = useDocumentType();
   const canDuplicate = !actions.pending && isRecord && status === "editing";
+  const canEdit = status === "editing" || status === "unavailable";
 
   return (
     <DropdownMenu>
@@ -199,6 +202,12 @@ export function PhoneDocumentMenu() {
         <IconDots aria-hidden="true" className="size-5" />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">
+        {canEdit && (
+          <>
+            <HistoryMenuRow />
+            <DropdownMenuSeparator />
+          </>
+        )}
         <DropdownMenuItem
           onClick={() => actions.duplicateCurrent()}
           disabled={!canDuplicate}

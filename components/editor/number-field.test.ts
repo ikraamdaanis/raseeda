@@ -86,11 +86,14 @@ function render({
 
   act(() => {
     root.render(
-      createElement(
-        RouterContextProvider,
-        { router },
-        createElement(EditorUiProvider, null, createElement(Harness, props))
-      )
+      createElement(RouterContextProvider, {
+        router,
+        children: createElement(
+          EditorUiProvider,
+          null,
+          createElement(Harness, props)
+        )
+      })
     );
   });
 }

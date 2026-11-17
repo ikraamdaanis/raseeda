@@ -1,5 +1,5 @@
 import { IconArrowBackUp, IconArrowForwardUp } from "@tabler/icons-react";
-import { Button } from "~/components/ui/button";
+import { DropdownMenuItem } from "~/components/ui/dropdown-menu";
 import {
   redoInvoiceChange,
   undoInvoiceChange,
@@ -14,9 +14,15 @@ export function redoLabel(label: string | null) {
   return label ? `Redo change to ${label}` : "Redo";
 }
 
-// Undo and redo for phones, which have no keyboard to press ⌘Z on. They sit
-// in the top bar beside Download while editing, as in Canva and Figma's apps.
-export function HistoryButtons({ className }: { className?: string }) {
+const HISTORY_ITEM_CLASS_NAME =
+  "min-w-0 flex-1 flex-col items-center justify-center gap-0 py-1.5 max-md:min-h-14";
+
+// Undo and redo for phones, which have no keyboard to press ⌘Z on: a row of
+// two buttons at the top of the document menu, like the Cut, Copy and Paste
+// row in an iOS menu. The menu stays open as they're tapped, so a change can
+// be stepped back through several times, and focus stays in it: the part
+// that changed flashes rather than taking focus and raising the keyboard.
+export function HistoryMenuRow() {
   const {
     canUndo,
     canRedo,
@@ -25,27 +31,40 @@ export function HistoryButtons({ className }: { className?: string }) {
   } = useInvoiceHistory();
 
   return (
-    <div className={className}>
-      <Button
-        variant="ghost"
-        size="icon-sm"
+    <div className="flex gap-1">
+      <DropdownMenuItem
         aria-label={undoLabel(undoName)}
         disabled={!canUndo}
-        onClick={() => undoInvoiceChange()}
-        className="text-muted-foreground pointer-coarse:size-11"
+        closeOnClick={false}
+        onClick={() => undoInvoiceChange({ movesFocus: false })}
+        className={HISTORY_ITEM_CLASS_NAME}
       >
         <IconArrowBackUp aria-hidden="true" />
-      </Button>
-      <Button
-        variant="ghost"
-        size="icon-sm"
+        Undo
+        <HistoryItemName name={canUndo ? undoName : null} />
+      </DropdownMenuItem>
+      <DropdownMenuItem
         aria-label={redoLabel(redoName)}
         disabled={!canRedo}
-        onClick={() => redoInvoiceChange()}
-        className="text-muted-foreground pointer-coarse:size-11"
+        closeOnClick={false}
+        onClick={() => redoInvoiceChange({ movesFocus: false })}
+        className={HISTORY_ITEM_CLASS_NAME}
       >
         <IconArrowForwardUp aria-hidden="true" />
-      </Button>
+        Redo
+        <HistoryItemName name={canRedo ? redoName : null} />
+      </DropdownMenuItem>
     </div>
+  );
+}
+
+// What the step changes, under its button, so it's clear before tapping.
+function HistoryItemName({ name }: { name: string | null }) {
+  if (!name) return null;
+
+  return (
+    <span className="text-muted-foreground w-full truncate text-center text-xs">
+      {name}
+    </span>
   );
 }
