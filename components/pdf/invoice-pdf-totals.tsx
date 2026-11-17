@@ -43,6 +43,8 @@ const styles = StyleSheet.create({
   }
 });
 
+// The closing rows, which move to the next page whole rather than split, so
+// a page never ends on a total that isn't what's owed (issue #220).
 export function InvoicePdfTotals({
   invoice,
   summaryRows,
@@ -56,7 +58,7 @@ export function InvoicePdfTotals({
   const rows = summaryRows.filter(row => row.isVisible);
 
   return (
-    <View style={styles.totalSection}>
+    <View style={styles.totalSection} wrap={false}>
       <View style={styles.columns}>
         <View style={styles.labels}>
           {rows.map(row => (

@@ -4,6 +4,7 @@ import { InvoicePDF } from "~/components/pdf/invoice-generator";
 import { InvoicePdfItemsTable } from "~/components/pdf/invoice-pdf-items-table";
 import { InvoicePdfPageNumber } from "~/components/pdf/invoice-pdf-page-number";
 import { InvoicePdfSignature } from "~/components/pdf/invoice-pdf-signature";
+import { InvoicePdfTotals } from "~/components/pdf/invoice-pdf-totals";
 import { DEFAULT_INVOICE_SECTIONS } from "~/schema/invoice";
 import { invoiceDefault } from "~/stores/invoice-store";
 
@@ -134,5 +135,15 @@ describe("InvoicePdfItemsTable", () => {
     expect(
       rows.map(row => isValidElement<{ wrap?: boolean }>(row) && row.props.wrap)
     ).toEqual([false, false]);
+  });
+
+  it("keeps the totals together on one page", () => {
+    const totals = InvoicePdfTotals({
+      invoice: invoiceDefault,
+      summaryRows: [],
+      conversion: null
+    });
+
+    expect(totals.props.wrap).toBe(false);
   });
 });
