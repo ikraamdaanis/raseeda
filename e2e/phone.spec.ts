@@ -149,13 +149,18 @@ test("phones get a tab bar instead of the canvas pill and panel toggles", async 
   );
 });
 
-test("Style opens a tray over the page, which fits whole above it", async ({
+test("Style opens a tray over the page, which keeps its zoom under it", async ({
   page
 }) => {
   await page.goto("/create");
 
   const style = tabBar(page).getByRole("button", { name: "Style" });
   const tray = page.getByRole("region", { name: "Style" });
+  const paper = page.locator("[data-paper]");
+
+  await showPage(page);
+
+  const pageWidth = (await paper.boundingBox())?.width ?? 0;
 
   await style.tap();
 
@@ -168,13 +173,22 @@ test("Style opens a tray over the page, which fits whole above it", async ({
   await expect(style).toHaveAttribute("aria-expanded", "true");
   await expect(tray.getByRole("tab", { name: "Text" })).toBeFocused();
 
+  // The page isn't zoomed out to fit above the tray; it scrolls instead, far
+  // enough to bring its foot up above the tray.
+  expect((await paper.boundingBox())?.width).toBeCloseTo(pageWidth, 0);
+
   const trayTop = (await tray.boundingBox())?.y ?? 0;
 
+  await paper.evaluate(element => {
+    const canvas = element.closest("section");
+
+    if (canvas) canvas.scrollTop = canvas.scrollHeight;
+  });
   await expect
     .poll(async () => {
-      const paper = await page.locator("[data-paper]").boundingBox();
+      const box = await paper.boundingBox();
 
-      return paper ? paper.y + paper.height : Infinity;
+      return box ? box.y + box.height : Infinity;
     })
     .toBeLessThanOrEqual(trayTop);
 

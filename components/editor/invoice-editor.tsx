@@ -112,7 +112,8 @@ function Desk({ children }: { children: ReactNode }) {
 // them is on screen (and in the document) at a time: each field's
 // `data-field` path names one control. Tapping a field on the page opens the
 // form at it, unless the Style tray is open: then the tap only closes the
-// tray, and the page fits whole in the space above it.
+// tray. The page keeps its zoom under the tray, with room to scroll its foot
+// up above it.
 function DeskContent() {
   const { isNarrow, phoneView, setPhoneView, rightPanelOpen, closePanels } =
     useEditorUi();
