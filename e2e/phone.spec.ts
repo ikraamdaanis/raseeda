@@ -192,6 +192,23 @@ test("Style opens a tray over the page, which keeps its zoom under it", async ({
     })
     .toBeLessThanOrEqual(trayTop);
 
+  // The text size shows on the page as it's picked, below 16px too.
+  const clientText = page.locator('[data-paper] [data-field="client.content"]');
+  const textSize = () =>
+    clientText.evaluate(element =>
+      parseFloat(getComputedStyle(element).fontSize)
+    );
+  const sizes = tray.getByRole("group", { name: "Text size" });
+
+  await sizes.getByRole("button", { name: "Small" }).tap();
+
+  const smallSize = await textSize();
+
+  expect(smallSize).toBeLessThan(16);
+
+  await sizes.getByRole("button", { name: "Large" }).tap();
+  await expect.poll(textSize).toBeGreaterThan(smallSize);
+
   // Each tab fits without scrolling.
   for (const name of ["Text", "Colour", "Table"]) {
     await tray.getByRole("tab", { name }).tap();
@@ -423,7 +440,17 @@ test("a pinch zooms the page sharp the whole way, not just once it ends", async 
 
   if (!box) throw new Error("The desk has no box");
 
-  const centre = { x: box.x + box.width / 2, y: box.y + box.height / 2 };
+  // Pinched over the line items, so there's text to judge the sharpness by.
+  const items = await page
+    .locator('[data-paper] [data-field-area="items"]')
+    .boundingBox();
+
+  if (!items) throw new Error("The line items have no box");
+
+  const centre = {
+    x: box.x + box.width / 2,
+    y: items.y + items.height / 2
+  };
   const fingers = (spread: number) => [
     { x: centre.x - spread, y: centre.y, id: 0 },
     { x: centre.x + spread, y: centre.y, id: 1 }

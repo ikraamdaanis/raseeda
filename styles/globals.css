@@ -789,17 +789,6 @@ html[data-header-ready]:not([data-header-pill]) .home-header-pill {
   }
 }
 
-/* On a phone (NARROW_VIEWPORT_QUERY) the page's fields are typed in at 16px
-   or more (NARROW_FIELD_TEXT_SIZE), since iOS zooms into any field set
-   smaller when it's tapped. The text beside them, like the totals, grows with
-   them so a row keeps one size. A field's own size comes inline from
-   getTextStyles, which also sets it as --text-size for this to read. */
-@media (max-width: 767px) {
-  [data-paper] :is(input, textarea, [style*="--text-size"]) {
-    font-size: max(16px, var(--text-size, 1em)) !important;
-  }
-}
-
 @media (prefers-reduced-motion: reduce) {
   [data-history-flash] {
     animation: none;

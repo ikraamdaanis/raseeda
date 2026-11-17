@@ -41,10 +41,6 @@ const ALL_CLOSED: PanelState = { left: false, right: false };
 // so they start closed there.
 export const NARROW_VIEWPORT_QUERY = "(max-width: 767px)";
 
-// The smallest text a field on the page is typed in at that width, in px:
-// iOS zooms into any field set smaller when it's tapped. globals.css sets it.
-export const NARROW_FIELD_TEXT_SIZE = 16;
-
 // Below this width the canvas can't fit the page and its toolbar between both
 // panels, so opening one side panel closes the other.
 export const COMPACT_VIEWPORT_QUERY = "(max-width: 1023px)";
