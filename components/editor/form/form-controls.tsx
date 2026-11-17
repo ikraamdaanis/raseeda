@@ -1,12 +1,11 @@
-import { IconPencil, IconPlus, IconX } from "@tabler/icons-react";
+import { IconPlus, IconX } from "@tabler/icons-react";
 import type { ComponentProps, ReactNode } from "react";
 import {
   createContext,
   useContext,
   useId,
   useLayoutEffect,
-  useRef,
-  useState
+  useRef
 } from "react";
 import { useNumberField } from "~/components/editor/number-field";
 import { Button } from "~/components/ui/button";
@@ -60,7 +59,7 @@ const AreaLabelsContext = createContext<Map<string, PrintedLabel>>(new Map());
 /**
  * One part of the page, under its heading, in the order it prints. The heading
  * and the titles in it read as they print (From, Due Date), and each of those
- * the page prints is renamed where it stands, from the pencil beside it:
+ * the page prints is a field that renames it where it stands:
  * `label` is the heading's, `labels` the titles' (only those that print right
  * now). A part that can be hidden has a Remove button beside its heading.
  */
@@ -129,138 +128,119 @@ export function FormArea({
   );
 }
 
-// A heading the page prints, with a pencil that turns it into the field that
-// renames it.
+// A heading the page prints, as the field that renames it. The part's region
+// keeps its name from the heading, hidden but read by a screen reader.
 function RenameableHeading({ id, label }: { id: string; label: PrintedLabel }) {
-  const [isRenaming, setIsRenaming] = useState(false);
-  const heading = label.value.trim() || label.name;
-
-  if (isRenaming) {
-    return (
-      <LabelInput
-        id={id}
-        label={label}
-        onDone={() => setIsRenaming(false)}
-        className="flex-1 text-lg font-semibold md:text-lg"
-      />
-    );
-  }
-
   return (
-    <div className="flex min-w-0 flex-1 items-center gap-1">
-      <h2 id={id} className="min-w-0 truncate text-lg font-semibold">
-        {heading}
+    <div className="flex min-w-0 flex-1">
+      <h2 id={id} className="sr-only">
+        {label.value.trim() || label.name}
       </h2>
-      <Button
-        variant="ghost"
-        aria-label={`Rename ${heading} heading`}
-        data-rename-field={label.field}
-        onClick={() => setIsRenaming(true)}
-        className={cn(formIconButtonClassName, "-my-2 size-8")}
-      >
-        <IconPencil aria-hidden="true" className="size-4" />
-      </Button>
+      <LabelInput label={label} className="text-lg font-semibold md:text-lg" />
     </div>
   );
 }
 
-// Renames a printed label in place, with a dashed border apart from the
-// fields that hold the invoice's content. It takes focus as it appears, and
-// leaving it (Done, Return, or a tap elsewhere) puts the title back. Named
-// "Due Date label" for a screen reader, apart from the Due Date field.
+// A label the page prints, always a field: typing in it renames what prints.
+// Its faint dotted outline sets it apart from the fields that hold the
+// invoice's content. Cleared, it shows the name the page prints instead.
+// Named "Due Date label" for a screen reader, apart from the Due Date field.
+// `unit` is what the title adds after the label, like a price's currency.
 function LabelInput({
-  id,
   label,
-  onDone,
+  unit,
   className
 }: {
-  id?: string;
   label: PrintedLabel;
-  onDone: () => void;
+  unit?: string;
   className?: string;
 }) {
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  useLayoutEffect(() => {
-    inputRef.current?.focus();
-  }, []);
-
   return (
-    <Input
-      ref={inputRef}
-      id={id}
-      aria-label={`${label.name} label`}
-      data-field={label.field}
-      value={label.value}
-      placeholder={label.name}
-      enterKeyHint="done"
-      onChange={event => label.onChange(event.target.value)}
-      onBlur={onDone}
-      onKeyDown={event => {
-        if (event.key === "Enter") event.currentTarget.blur();
-      }}
-      className={cn(
-        formFieldClassName,
-        "min-w-0 border-dashed font-medium",
-        className
+    <div className="relative min-w-0 flex-1">
+      <Input
+        aria-label={`${label.name} label`}
+        data-field={label.field}
+        value={label.value}
+        placeholder={label.name}
+        enterKeyHint="done"
+        onChange={event => label.onChange(event.target.value)}
+        onKeyDown={event => {
+          if (event.key === "Enter") event.currentTarget.blur();
+        }}
+        className={cn(
+          formFieldClassName,
+          "border-muted-foreground/35 placeholder:text-foreground focus-visible:border-ring border-dotted bg-transparent font-medium shadow-none focus-visible:border-solid dark:bg-transparent",
+          unit && "pr-12",
+          className
+        )}
+      />
+      {unit && (
+        <span
+          aria-hidden="true"
+          className="text-muted-foreground pointer-events-none absolute inset-y-0 right-3 flex items-center text-base"
+        >
+          ({unit})
+        </span>
       )}
-    />
+    </div>
   );
 }
 
 /**
  * A field's title, the label it prints under. Given that label's `field`
- * path, and while the label prints, a pencil beside it renames it in place.
- * `children` is the title as shown (a price's adds its currency).
+ * path, and while the label prints, the title is the field that renames it,
+ * and the field under it keeps the title as its name for a screen reader.
+ * `children` is the title as shown, and `unit` what it adds after the label
+ * (a price's currency).
  */
 export function FormFieldTitle({
   htmlFor,
   field,
+  unit,
   className,
   children
 }: {
   htmlFor?: string;
   field?: string;
+  unit?: string;
   className?: string;
-  children: ReactNode;
+  children: string;
 }) {
   const labels = useContext(AreaLabelsContext);
-  const [isRenaming, setIsRenaming] = useState(false);
   const label = field ? labels.get(field) : undefined;
+  const title = unit ? `${children} (${unit})` : children;
   const Title = htmlFor ? "label" : "span";
 
-  if (label && isRenaming) {
-    return <LabelInput label={label} onDone={() => setIsRenaming(false)} />;
+  if (!label) {
+    return (
+      <Title htmlFor={htmlFor} className={cn("min-w-0 truncate", className)}>
+        {title}
+      </Title>
+    );
   }
 
   return (
-    <span className="flex min-w-0 items-center gap-1">
-      <Title htmlFor={htmlFor} className={cn("truncate", className)}>
-        {children}
-      </Title>
-      {label && (
-        <Button
-          variant="ghost"
-          aria-label={`Rename ${label.value.trim() || label.name} label`}
-          data-rename-field={label.field}
-          onClick={() => setIsRenaming(true)}
-          className={cn(formIconButtonClassName, "-my-2 size-8")}
-        >
-          <IconPencil aria-hidden="true" className="size-4" />
-        </Button>
+    <span className="flex min-w-0 flex-1">
+      {htmlFor && (
+        <label htmlFor={htmlFor} className="sr-only">
+          {title}
+        </label>
       )}
+      <LabelInput label={label} unit={unit} className={className} />
     </span>
   );
 }
 
 /**
  * A field under its title: the label the field prints under, as it prints.
- * `labelField` is that label's path, for renaming it where it stands.
+ * `labelField` is that label's path, for renaming it where it stands, and
+ * `unit` what the title adds after it (a price's currency).
  */
 export function FormField({
   id,
   title,
   labelField,
+  unit,
   hint,
   className,
   children
@@ -268,6 +248,7 @@ export function FormField({
   id: string;
   title: string;
   labelField?: string;
+  unit?: string;
   hint?: ReactNode;
   className?: string;
   children: ReactNode;
@@ -277,6 +258,7 @@ export function FormField({
       <FormFieldTitle
         htmlFor={id}
         field={labelField}
+        unit={unit}
         className={formLabelClassName}
       >
         {title}

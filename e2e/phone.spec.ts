@@ -111,22 +111,17 @@ test("the Page tab shows the page, and tapping a field opens it in the form", as
   await expect(toDetails).toBeInViewport();
 });
 
-test("a heading's pencil renames what the page prints, in place", async ({
-  page
-}) => {
+test("a printed heading is the field that renames it", async ({ page }) => {
   await page.goto("/create");
-  await page.getByRole("button", { name: "Rename To heading" }).tap();
 
   const toLabel = page.getByRole("textbox", { name: "To label" });
-
-  await expect(toLabel).toBeFocused();
 
   await toLabel.fill("Bill To");
   await toLabel.press("Enter");
 
-  await expect(toLabel).toBeHidden();
+  await expect(toLabel).not.toBeFocused();
   await expect(
-    page.getByRole("heading", { name: "Bill To", exact: true })
+    page.getByRole("region", { name: "Bill To", exact: true })
   ).toBeVisible();
 
   await showPage(page);
@@ -146,24 +141,22 @@ test("a heading's pencil renames what the page prints, in place", async ({
     .toContain("Bill To");
 });
 
-test("only a label that prints has a pencil", async ({ page }) => {
+test("only a label that prints is a field", async ({ page }) => {
   await page.goto("/create");
 
   const paymentPart = page.getByRole("region", { name: "Payment details" });
-  const renameIban = paymentPart.getByRole("button", {
-    name: "Rename IBAN label"
-  });
+  const ibanLabel = paymentPart.getByRole("textbox", { name: "IBAN label" });
 
-  await expect(renameIban).toHaveCount(0);
+  await expect(ibanLabel).toHaveCount(0);
 
   await paymentPart
     .getByRole("textbox", { name: "IBAN", exact: true })
     .fill("DE89 3704 0044 0532 0130 00");
 
-  await expect(renameIban).toBeVisible();
+  await expect(ibanLabel).toBeVisible();
 });
 
-test("tapping a label on the page opens it for renaming in the form", async ({
+test("tapping a label on the page focuses its field in the form", async ({
   page
 }) => {
   await page.goto("/create");

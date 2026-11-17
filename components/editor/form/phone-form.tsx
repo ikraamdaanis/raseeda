@@ -1,6 +1,5 @@
 import type { RefObject } from "react";
 import { useEffect, useLayoutEffect, useRef } from "react";
-import { flushSync } from "react-dom";
 import { FormDetails } from "~/components/editor/form/form-details";
 import { FormDocument } from "~/components/editor/form/form-document";
 import { FormFooter } from "~/components/editor/form/form-footer";
@@ -165,7 +164,11 @@ export function focusFormTarget(target: { field?: string; area?: string }) {
 
   if (!form) return;
 
-  const field = target.field ? findFormField(form, target.field) : null;
+  const field = target.field
+    ? form.querySelector<HTMLElement>(
+        `[data-field="${CSS.escape(target.field)}"]`
+      )
+    : null;
   const area = target.area
     ? form.querySelector<HTMLElement>(
         `[data-field-area="${CSS.escape(target.area)}"]`
@@ -186,19 +189,6 @@ export function focusFormTarget(target: { field?: string; area?: string }) {
   }
 
   if (area) scrollFormTo(form, area, "start");
-}
-
-// The form's control at a path. A printed label's is shown only while it's
-// renamed, so for one of those its pencil is pressed first.
-function findFormField(form: HTMLElement, path: string) {
-  const selector = `[data-field="${CSS.escape(path)}"]`;
-  const renameButton = form.querySelector<HTMLElement>(
-    `[data-rename-field="${CSS.escape(path)}"]`
-  );
-
-  if (renameButton) flushSync(() => renameButton.click());
-
-  return form.querySelector<HTMLElement>(selector);
 }
 
 // Scrolls the form alone. `scrollIntoView` would also scroll the editor's

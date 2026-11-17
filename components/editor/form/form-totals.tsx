@@ -1,6 +1,6 @@
 import { IconX } from "@tabler/icons-react";
 import type { ReactNode } from "react";
-import { useId } from "react";
+import { createContext, useContext, useId } from "react";
 import { flushSync } from "react-dom";
 import {
   FormAddParts,
@@ -88,7 +88,8 @@ export function FormTotals() {
     useCurrencyConversionSlice();
   const addableParts = useAddableParts("totals");
   const secondCurrency = useSecondCurrency();
-  const { labels, setLabels } = usePricingSlice();
+  const { labels, setLabels, tax } = usePricingSlice();
+  const documentType = useDocumentType();
   const rowName = useRowName();
   const rows = buildEditorSummaryRows({ invoice, sections, conversion });
   const taxRows = rows.filter(row => row.id === "tax");
@@ -96,6 +97,22 @@ export function FormTotals() {
   const printedRows = rows.filter(
     row => row.isVisible && (row.id !== "tax" || row === taxRows.at(0))
   );
+  const typedRows = printedRows.filter(
+    row =>
+      row.id === "discounts" ||
+      row.id === "fees" ||
+      row.id === "amountPaid" ||
+      row.id === "tax"
+  );
+  const settledSections = getTypeSettledSections(documentType);
+  const columns = rowColumns({
+    hasHideButtons: typedRows.some(row => {
+      const section = row.id === "tax" ? "tax" : ROW_SECTIONS[row.id];
+
+      return section !== undefined && !settledSections.includes(section);
+    }),
+    hasBoxes: typedRows.some(row => row.id !== "tax" || !tax.exempt)
+  });
   const currencyParts = secondCurrency.isOn
     ? []
     : [
@@ -131,19 +148,21 @@ export function FormTotals() {
         onChange: value => setLabels(prev => ({ ...prev, [row.id]: value }))
       }))}
     >
-      <div className="flex flex-col gap-6">
-        {rows.map(row => {
-          if (!row.isVisible) return null;
+      <RowColumnsContext.Provider value={columns}>
+        <div className="flex flex-col gap-6">
+          {rows.map(row => {
+            if (!row.isVisible) return null;
 
-          if (row.id === "tax") {
-            return row === taxRows.at(0) ? (
-              <TaxRows key="tax" rows={taxRows} />
-            ) : null;
-          }
+            if (row.id === "tax") {
+              return row === taxRows.at(0) ? (
+                <TaxRows key="tax" rows={taxRows} />
+              ) : null;
+            }
 
-          return <SummaryRow key={row.id} id={row.id} row={row} />;
-        })}
-      </div>
+            return <SummaryRow key={row.id} id={row.id} row={row} />;
+          })}
+        </div>
+      </RowColumnsContext.Provider>
       {secondCurrency.isOn && (
         <div className="border-border flex flex-col gap-4 border-t pt-5">
           <CurrencyControls
@@ -200,14 +219,32 @@ const ROW_SECTIONS: Partial<Record<keyof typeof ROW_NAMES, InvoiceSectionKey>> =
     amountPaid: "amountPaid"
   };
 
-// Every row lays out on the same three columns (its label, its figure or box,
-// and room for a Hide button), so the figures line up down one right edge as
-// the printed totals do.
-const ROW_GRID_CLASS_NAME =
-  "grid grid-cols-[minmax(0,1fr)_auto_2.25rem] items-center gap-x-3";
+// Every row lays out on the same columns (its label, its figure or box, and
+// room for a Hide button while any row has one), so the figures line up down
+// one right edge as the printed totals do. While a row has a box, a
+// read-only figure's digits end where the box's do, inside its padding.
+const RowColumnsContext = createContext({
+  grid: "grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3",
+  figure: "col-start-2"
+});
 
-// A read-only figure's digits end where a box's do, inside its padding.
-const ROW_FIGURE_CLASS_NAME = "col-start-2 pr-2.5";
+function rowColumns({
+  hasHideButtons,
+  hasBoxes
+}: {
+  hasHideButtons: boolean;
+  hasBoxes: boolean;
+}) {
+  return {
+    grid: cn(
+      "grid items-center gap-x-3",
+      hasHideButtons
+        ? "grid-cols-[minmax(0,1fr)_auto_2.25rem]"
+        : "grid-cols-[minmax(0,1fr)_auto]"
+    ),
+    figure: cn("col-start-2", hasBoxes && "pr-2.5")
+  };
+}
 
 /**
  * One row: its label as it prints, its figure (or the box it's typed in), a
@@ -235,6 +272,7 @@ function RowGroup({
 }) {
   const { setSection } = useSectionsSlice();
   const documentType = useDocumentType();
+  const columns = useContext(RowColumnsContext);
   const canHide =
     section !== undefined &&
     !getTypeSettledSections(documentType).includes(section);
@@ -246,7 +284,7 @@ function RowGroup({
         isTotal && "border-border border-t pt-5"
       )}
     >
-      <div className={cn(ROW_GRID_CLASS_NAME, "min-h-11")}>
+      <div className={cn(columns.grid, "min-h-11")}>
         <div className="flex min-w-0">
           <FormFieldTitle
             field={field}
@@ -259,7 +297,7 @@ function RowGroup({
           <FormAmount
             value={value}
             isTotal={isTotal}
-            className={ROW_FIGURE_CLASS_NAME}
+            className={columns.figure}
           />
         )}
         {canHide && (
@@ -329,6 +367,7 @@ function RowNote({
   prefix?: string;
   start?: ReactNode;
 }) {
+  const columns = useContext(RowColumnsContext);
   const [amount, converted] = value.split(" / ");
   const lines = [
     ...(prefix ? [`${prefix} ${amount}`] : []),
@@ -338,9 +377,14 @@ function RowNote({
   if (lines.length === 0 && !start) return null;
 
   return (
-    <div className={cn(ROW_GRID_CLASS_NAME, "-mt-1")}>
+    <div className={cn(columns.grid, "-mt-1")}>
       {start}
-      <span className="text-muted-foreground col-start-2 flex flex-col items-end pr-2.5 text-base tabular-nums">
+      <span
+        className={cn(
+          columns.figure,
+          "text-muted-foreground flex flex-col items-end text-base tabular-nums"
+        )}
+      >
         {lines.map(line => (
           <span key={line} className="whitespace-nowrap">
             {line}
@@ -524,6 +568,7 @@ function TaxRows({ rows }: { rows: InvoiceSummaryRow[] }) {
   const { tax, setTax, labels } = usePricingSlice();
   const money = useMoneyFormat();
   const noteId = useId();
+  const columns = useContext(RowColumnsContext);
   const firstRow = rows.at(0);
   const readsAsPrinted =
     rows.length > 1 || !firstRow || !isInvoiceTaxRow(firstRow, tax);
@@ -536,7 +581,9 @@ function TaxRows({ rows }: { rows: InvoiceSummaryRow[] }) {
       value=""
       control={
         tax.exempt ? (
-          <span className="text-muted-foreground col-start-2 pr-2.5 text-base">
+          <span
+            className={cn(columns.figure, "text-muted-foreground text-base")}
+          >
             Exempt
           </span>
         ) : (
@@ -588,16 +635,21 @@ function TaxRows({ rows }: { rows: InvoiceSummaryRow[] }) {
       />
       {readsAsPrinted &&
         rows.map(row => (
-          <div key={row.label} className={cn(ROW_GRID_CLASS_NAME, "min-h-11")}>
+          <div key={row.label} className={cn(columns.grid, "min-h-11")}>
             <span className="text-muted-foreground min-w-0 truncate">
               {row.percentage === undefined
                 ? row.label
                 : `${row.label} ${formatPlainNumber(row.percentage, money.numberFormat)}%`}
             </span>
             {row.note === undefined ? (
-              <FormAmount value={row.value} className={ROW_FIGURE_CLASS_NAME} />
+              <FormAmount value={row.value} className={columns.figure} />
             ) : (
-              <span className="text-muted-foreground col-start-2 pr-2.5 text-right">
+              <span
+                className={cn(
+                  columns.figure,
+                  "text-muted-foreground text-right"
+                )}
+              >
                 {row.note.trim() || "Exempt"}
               </span>
             )}

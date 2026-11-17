@@ -273,7 +273,8 @@ function LineItemCard({
           )}
           <FormField
             id={priceId}
-            title={`${labels.unitPrice} (${money.marker})`}
+            title={labels.unitPrice}
+            unit={money.marker}
             labelField="tableSettings.columnLabels.unitPrice"
             className={hasTaxColumn ? undefined : lastFieldClassName}
           >
@@ -356,7 +357,8 @@ function LineAmount({
   return (
     <FormField
       id={id}
-      title={`${label} (${money.marker})`}
+      title={label}
+      unit={money.marker}
       labelField="tableSettings.columnLabels.amount"
       className="flex-1"
     >
@@ -414,7 +416,8 @@ function LineTax({
   return (
     <FormField
       id={id}
-      title={`${label} (%)`}
+      title={label}
+      unit="%"
       labelField="tableSettings.columnLabels.tax"
       className={className}
     >
