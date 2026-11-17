@@ -1,6 +1,6 @@
 import Dexie from "dexie";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { invoiceDefault } from "~/stores/invoice-store";
+import { createBlankInvoice, invoiceDefault } from "~/stores/invoice-store";
 import type { Invoice, InvoiceDocument } from "~/types";
 
 // Spies that outlive the module reset each page load makes.
@@ -646,6 +646,34 @@ describe("opening and leaving", () => {
     await page.newInvoice();
 
     expect(await page.getInvoice(namedId)).toMatchObject({ name: "Keep me" });
+  });
+
+  it("deletes a numbered invoice reopened and edited back to blank when it's left", async () => {
+    const earlier = await loadPage();
+
+    await earlier.saveInvoice(
+      storedInvoice({
+        name: "INV-0002",
+        nameSource: "auto",
+        invoiceData: {
+          ...createBlankInvoice(),
+          number: "INV-0002",
+          title: "Briefly edited"
+        }
+      })
+    );
+    await earlier.close();
+
+    stubBrowser({ "open-invoice": "stored" });
+
+    const page = await loadPage();
+
+    expect(page.documentState().documentId).toBe("stored");
+
+    page.edit().setTitle("Invoice");
+    await page.newInvoice();
+
+    expect(await page.getInvoice("stored")).toBeUndefined();
   });
 
   it("leaves the tab pointing at an invoice it couldn't read, to open on reload", async () => {

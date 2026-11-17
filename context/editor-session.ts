@@ -923,12 +923,10 @@ function applyStartingFont(font: InvoiceFont): void {
   session.pristine = liveContent();
 }
 
-// A blank invoice, whatever font an earlier link gave it and whatever number
-// it took after the library's.
+// A blank invoice, whatever font an earlier link gave it.
 function isBlankInAnyFont(invoice: Invoice) {
   return isBlankInvoice({
     ...invoice,
-    number: invoiceDefault.number,
     theme: { ...invoice.theme, font: invoiceDefault.theme.font }
   });
 }

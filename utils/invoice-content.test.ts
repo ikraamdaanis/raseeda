@@ -40,10 +40,18 @@ describe("isBlankInvoice", () => {
     ).toBe(true);
   });
 
+  it("treats a blank numbered after the library as blank", () => {
+    const quote = applyDocumentType(createBlankInvoice(), "quote");
+
+    expect(
+      isBlankInvoice({ ...createBlankInvoice(), number: "INV-0007" })
+    ).toBe(true);
+    expect(isBlankInvoice({ ...quote, number: "Q-0001" })).toBe(true);
+  });
+
   it("notices an edit to a document of another type", () => {
     const quote = applyDocumentType(createBlankInvoice(), "quote");
 
-    expect(isBlankInvoice({ ...quote, number: "Q-0001" })).toBe(false);
     expect(isBlankInvoice({ ...quote, title: "Estimate" })).toBe(false);
     expect(
       isBlankInvoice({

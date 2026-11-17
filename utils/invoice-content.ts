@@ -9,10 +9,12 @@ import { applyDocumentType } from "~/utils/document-type";
 import { applyLabelPreset } from "~/utils/label-preset";
 import { getBrowserLanguage, getLocaleDefaults } from "~/utils/locale-defaults";
 
-// The invoice with what's filled in for you (its dates, the line items' ids
-// and the formats a new blank took) left out, so two blanks made on different
-// days compare equal. Formats someone chose aren't left out, so changing only
-// the number format still counts as an edit.
+// The invoice with what's filled in for you (its dates, its number, the line
+// items' ids and the formats a new blank took) left out, so two blanks made on
+// different days, or numbered after different libraries (`numberNewDocument`),
+// compare equal. An invoice with nothing but a number typed in counts as
+// blank too: there's nothing else to keep. Formats someone chose aren't left
+// out, so changing only the number format still counts as an edit.
 function withoutAutoFilledValues(
   invoice: Invoice,
   blankDefaults: BlankDefaults
@@ -28,6 +30,7 @@ function withoutAutoFilledValues(
     formats: isAutoFilled ? "the blank's" : formats,
     invoiceDate: "",
     dueDate: "",
+    number: "",
     items: invoice.items.map(item => ({ ...item, id: "" }))
   };
 }
