@@ -24,6 +24,7 @@ import {
   useDocumentType,
   useMoneyFormat,
   usePricingSlice,
+  usePrintedLanguage,
   useSectionsSlice,
   useSummaryInputs,
   useTheme
@@ -38,6 +39,7 @@ import { getTypeSettledSections } from "~/utils/document-type";
 import { formatPlainNumber } from "~/utils/format-number";
 import { getRoleSettings } from "~/utils/get-role-settings";
 import { getTextStyles } from "~/utils/get-text-styles";
+import { getPrintedWord } from "~/utils/label-preset";
 
 // Small editor-only toggles shown to the left of a pricing row (e.g. switch a
 // discount between fixed and percentage, or mark tax exempt). Like the add /
@@ -487,6 +489,7 @@ function InvoiceTaxRow({
   const money = useMoneyFormat();
   const isPreview = useIsPreview();
   const theme = useTheme();
+  const exemptWord = getPrintedWord("exempt", usePrintedLanguage());
   const labelSettings = getRoleSettings(theme, "totalsLabel");
   const valueSettings = getRoleSettings(theme, "totalsValue");
 
@@ -523,7 +526,7 @@ function InvoiceTaxRow({
                 setTax(prev => ({ ...prev, exempt: !prev.exempt }))
               }
             >
-              {tax.exempt ? "Exempt" : "%"}
+              {tax.exempt ? exemptWord : "%"}
             </PricingRowToggle>
           </PricingRowToggles>
           <InvoiceInput
@@ -569,7 +572,7 @@ function InvoiceTaxRow({
         <InvoiceInput
           aria-label="Tax exempt note"
           data-field="tax.note"
-          value={isPreview ? tax.note.trim() || "Exempt" : tax.note}
+          value={isPreview ? tax.note.trim() || exemptWord : tax.note}
           onChange={value => setTax(prev => ({ ...prev, note: value }))}
           className="text-right"
           style={getTextStyles({ settings: valueSettings })}

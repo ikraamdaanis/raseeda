@@ -12,6 +12,7 @@ import type {
   InvoiceSummaryRow,
   InvoiceTaxGroup,
   InvoiceViewModel,
+  LabelLanguage,
   MoneyFormat
 } from "~/types";
 import {
@@ -33,6 +34,7 @@ import {
   formatServicePeriod
 } from "~/utils/format-invoice-date";
 import { formatPlainNumber } from "~/utils/format-number";
+import { getPrintedLanguage, getPrintedWord } from "~/utils/label-preset";
 import { getPrintedSections } from "~/utils/section-visibility";
 
 // Maps an invoice to an ordered, fully-formatted view-model so the HTML canvas
@@ -137,12 +139,14 @@ export function buildLineItemRow({
   item,
   money,
   conversion,
-  tax
+  tax,
+  language
 }: {
   item: InvoiceItem;
   money: MoneyFormat;
   conversion: CurrencyConversion | null;
   tax: Invoice["tax"];
+  language: LabelLanguage;
 }): InvoiceLineItemRow {
   const amount = calculateLineAmount(
     item.quantity,
@@ -162,7 +166,7 @@ export function buildLineItemRow({
       ? formatConvertedAmount(amount, conversion, money)
       : undefined,
     tax: lineTax.exempt
-      ? "Exempt"
+      ? getPrintedWord("exempt", language)
       : `${formatPlainNumber(lineTax.percentage, money.numberFormat)}%`
   };
 }
@@ -192,7 +196,8 @@ export function buildTaxRows({
   taxAmount,
   money,
   conversion,
-  isVisible
+  isVisible,
+  language
 }: {
   label: string;
   tax: Invoice["tax"];
@@ -201,9 +206,12 @@ export function buildTaxRows({
   money: MoneyFormat;
   conversion: CurrencyConversion | null;
   isVisible: boolean;
+  language: LabelLanguage;
 }): InvoiceSummaryRow[] {
   const note = tax.note.trim();
-  const exemptValue = note || "Exempt";
+  const exemptWord = getPrintedWord("exempt", language);
+  const on = getPrintedWord("on", language);
+  const exemptValue = note || exemptWord;
 
   if (taxGroups.length <= 1) {
     const group = taxGroups.at(0);
@@ -235,8 +243,8 @@ export function buildTaxRows({
     return {
       id: "tax",
       label: group.exempt
-        ? `Exempt on ${base}`
-        : `${label} ${formatPlainNumber(group.percentage, money.numberFormat)}% on ${base}`,
+        ? `${exemptWord} ${on} ${base}`
+        : `${label} ${formatPlainNumber(group.percentage, money.numberFormat)}% ${on} ${base}`,
       value: group.exempt
         ? exemptValue
         : withConvertedAmount({
@@ -372,6 +380,7 @@ function buildSummaryRows(input: {
 type SummaryInputs = Pick<
   Invoice,
   | "documentType"
+  | "title"
   | "items"
   | "tax"
   | "fees"
@@ -413,7 +422,8 @@ export function buildInvoiceSummaryRows({
       taxAmount: totals.taxAmount,
       money,
       conversion,
-      isVisible: sections.tax
+      isVisible: sections.tax,
+      language: getPrintedLanguage(invoice)
     }),
     fees: totals.fees,
     discountAmount: totals.discountAmount,
@@ -471,6 +481,7 @@ export function buildInvoiceViewModel(invoice: Invoice): InvoiceViewModel {
     ? getCurrencyConversion(invoice)
     : null;
   const money = getMoneyFormat(invoice);
+  const language = getPrintedLanguage(invoice);
 
   return {
     detailRows: buildDetailRows(invoice),
@@ -479,7 +490,8 @@ export function buildInvoiceViewModel(invoice: Invoice): InvoiceViewModel {
         item,
         money,
         conversion,
-        tax: invoice.tax
+        tax: invoice.tax,
+        language
       })
     ),
     summaryRows: buildInvoiceSummaryRows({ invoice, sections, conversion }),

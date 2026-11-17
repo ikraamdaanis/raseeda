@@ -13,10 +13,12 @@ import type {
   Invoice,
   InvoiceNumberFormat,
   InvoiceTotals,
+  LabelLanguage,
   MoneyFormat
 } from "~/types";
 import { formatInvoiceDate } from "~/utils/format-invoice-date";
 import { formatPlainNumber, roundToDecimals } from "~/utils/format-number";
+import { getPrintedWord } from "~/utils/label-preset";
 
 type CurrencyPair = { currency: string; currencyCode: string };
 
@@ -256,19 +258,21 @@ export function buildExchangeRateLine({
   conversion,
   currencyConversion,
   dateFormat,
-  numberFormat
+  numberFormat,
+  language
 }: {
   conversion: CurrencyConversion;
   currencyConversion: Invoice["currencyConversion"];
   dateFormat: Invoice["dateFormat"];
   numberFormat: InvoiceNumberFormat;
+  language: LabelLanguage;
 }): string {
   const source = currencyConversion.source.trim();
   const date = currencyConversion.date
     ? formatInvoiceDate(currencyConversion.date, dateFormat)
     : "";
   const details = [source, date].filter(Boolean);
-  const rate = `Exchange rate: 1 ${conversion.fromCode} = ${formatExchangeRate(conversion.rate, numberFormat)} ${conversion.toCode}`;
+  const rate = `${getPrintedWord("exchangeRate", language)}: 1 ${conversion.fromCode} = ${formatExchangeRate(conversion.rate, numberFormat)} ${conversion.toCode}`;
 
   return details.length > 0 ? `${rate} (${details.join(", ")})` : rate;
 }

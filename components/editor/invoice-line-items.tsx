@@ -21,6 +21,7 @@ import {
   useLineItemsSlice,
   useMoneyFormat,
   usePaperSize,
+  usePrintedLanguage,
   useTheme
 } from "~/stores/invoice-selectors";
 import { useInvoiceStore } from "~/stores/invoice-store";
@@ -43,6 +44,7 @@ import { calculateLineAmount } from "~/utils/calculate-invoice-totals";
 import { formatPlainNumber } from "~/utils/format-number";
 import { getRoleSettings } from "~/utils/get-role-settings";
 import { getTextStyles } from "~/utils/get-text-styles";
+import { getPrintedWord } from "~/utils/label-preset";
 import { layoutColumns } from "~/utils/layout-columns";
 import { getLineItemSuggestions } from "~/utils/line-item-suggestions";
 import {
@@ -369,13 +371,14 @@ function useColumnTemplate({
   const hasTax = useInvoiceStore(state => state.sections.tax);
   const paperSize = usePaperSize();
   const isPreview = useIsPreview();
+  const language = usePrintedLanguage();
   const shownIds = new Set(columns.map(column => column.id));
   const unitPlaceholder = isPreview
     ? ""
     : (LINE_ITEM_COLUMNS.find(column => column.id === "unit")?.cell
         .placeholder ?? "");
   const rows = items.map(item => ({
-    ...buildLineItemRow({ item, money, conversion, tax }),
+    ...buildLineItemRow({ item, money, conversion, tax, language }),
     unit: item.unit || unitPlaceholder
   }));
 
@@ -722,7 +725,8 @@ function LineItem({
   const tax = useInvoiceStore(state => state.tax);
   const taxLabel = useInvoiceStore(state => state.labels.tax);
   const hasTax = useInvoiceStore(state => state.sections.tax);
-  const viewRow = buildLineItemRow({ item, money, conversion, tax });
+  const language = usePrintedLanguage();
+  const viewRow = buildLineItemRow({ item, money, conversion, tax, language });
   const isPreview = useIsPreview();
   const { columns, canEditLineRates, canTypeAmount } = visibleColumns;
 
@@ -1117,6 +1121,7 @@ function TaxCell({
   const ownTax = item.tax;
   const isExempt = ownTax?.exempt ?? false;
   const inheritsExempt = !ownTax && invoiceTax.exempt;
+  const exemptWord = getPrintedWord("exempt", usePrintedLanguage());
   const field = useNumberField({
     value: ownTax?.percentage,
     onChange: percentage => setItemTax(item.id, { percentage, exempt: false }),
@@ -1135,7 +1140,7 @@ function TaxCell({
   }
 
   const placeholder = invoiceTax.exempt
-    ? "Exempt"
+    ? exemptWord
     : formatPlainNumber(invoiceTax.percentage, money.numberFormat);
   // The field's width in characters, where the browser has no field-sizing
   // to fit it to its text and would otherwise make it 20 characters wide.
@@ -1164,7 +1169,7 @@ function TaxCell({
           className="hover:bg-paper-muted focus-visible:ring-ring rounded px-0.5 outline-none focus-visible:ring-1"
           style={style}
         >
-          {isExempt ? "Exempt" : "%"}
+          {isExempt ? exemptWord : "%"}
         </button>
       )}
     </span>

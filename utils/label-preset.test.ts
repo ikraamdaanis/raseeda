@@ -12,6 +12,8 @@ import { buildInvoiceViewModel } from "~/utils/build-invoice-view-model";
 import {
   applyLabelPreset,
   findLabelLanguage,
+  getPrintedLanguage,
+  getPrintedWord,
   rankLabelLanguages,
   readLabelLanguage
 } from "~/utils/label-preset";
@@ -169,5 +171,48 @@ describe("readLabelLanguage", () => {
     expect(readLabelLanguage("de")).toBe("de");
     expect(readLabelLanguage("German")).toBe("en");
     expect(readLabelLanguage(undefined)).toBe("en");
+  });
+});
+
+describe("getPrintedLanguage", () => {
+  it("prints the words that aren't labels in English on an English invoice", () => {
+    expect(getPrintedLanguage(blank())).toBe("en");
+    expect(getPrintedWord("paid", getPrintedLanguage(blank()))).toBe("PAID");
+  });
+
+  it("follows a language preset", () => {
+    const german = applyLabelPreset(blank(), "de");
+
+    expect(getPrintedLanguage(german)).toBe("de");
+    expect(getPrintedWord("paid", getPrintedLanguage(german))).toBe("BEZAHLT");
+    expect(getPrintedWord("scanToPay", getPrintedLanguage(german))).toBe(
+      "Zum Bezahlen scannen"
+    );
+  });
+
+  it("keeps a mostly French invoice French after a label is renamed", () => {
+    const french = applyLabelPreset(blank("quote"), "fr");
+
+    expect(
+      getPrintedLanguage({
+        ...french,
+        labels: { ...french.labels, subtotal: "Sous-total HT" }
+      })
+    ).toBe("fr");
+  });
+
+  it("falls back to English when no label is a preset's", () => {
+    const invoice = blank();
+    const labels = Object.fromEntries(
+      Object.keys(invoice.labels).map(key => [key, `Custom ${key}`])
+    );
+
+    expect(
+      getPrintedLanguage({
+        ...invoice,
+        title: "Bill",
+        labels: { ...invoice.labels, ...labels }
+      })
+    ).toBe("en");
   });
 });

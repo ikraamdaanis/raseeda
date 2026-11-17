@@ -1,6 +1,7 @@
 import { Image as PDFImage, StyleSheet, Text, View } from "@react-pdf/renderer";
 import { PdfMultilineText } from "~/components/pdf/invoice-pdf-text";
 import type { Invoice } from "~/types";
+import { getPrintedLanguage, getPrintedWord } from "~/utils/label-preset";
 import { PDF_ROW_LINE_HEIGHT, pdfRoleStyle } from "~/utils/pdf-styles";
 import { getPrintedSections } from "~/utils/section-visibility";
 
@@ -69,7 +70,7 @@ export function InvoicePdfHeader({
                   color: theme.accent
                 })}
               >
-                PAID
+                {getPrintedWord("paid", getPrintedLanguage(invoice))}
               </Text>
             </View>
           )}

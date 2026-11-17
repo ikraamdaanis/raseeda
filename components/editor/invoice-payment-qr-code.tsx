@@ -15,12 +15,14 @@ import {
 } from "~/schema/invoice";
 import {
   usePaymentDetailsSlice,
+  usePrintedLanguage,
   useSectionsSlice,
   useTheme
 } from "~/stores/invoice-selectors";
 import { useInvoiceStore } from "~/stores/invoice-store";
 import { getRoleSettings } from "~/utils/get-role-settings";
 import { getTextStyles } from "~/utils/get-text-styles";
+import { getPrintedWord } from "~/utils/label-preset";
 import { getPaymentQrCode } from "~/utils/payment-qr-code";
 
 export const MISSING_NOTES = {
@@ -77,6 +79,7 @@ export function usePaymentQrCode() {
 export function PaymentQrCode() {
   const sections = useShownSections();
   const theme = useTheme();
+  const language = usePrintedLanguage();
   const { payload } = usePaymentQrCode();
   const qrCode = useQrCodePath(sections.paymentQrCode ? payload : "");
 
@@ -117,7 +120,7 @@ export function PaymentQrCode() {
           settings: getRoleSettings(theme, "termsContent")
         })}
       >
-        Scan to pay
+        {getPrintedWord("scanToPay", language)}
       </figcaption>
     </figure>
   );

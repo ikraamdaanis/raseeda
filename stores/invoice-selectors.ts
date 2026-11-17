@@ -4,7 +4,7 @@ import type { InvoiceStore } from "~/stores/invoice-store";
 import { useInvoiceStore } from "~/stores/invoice-store";
 import type { Invoice, MoneyFormat } from "~/types";
 import { calculateInvoiceTotals } from "~/utils/calculate-invoice-totals";
-import { findLabelLanguage } from "~/utils/label-preset";
+import { findLabelLanguage, getPrintedLanguage } from "~/utils/label-preset";
 
 // The persisted invoice fields, in one place. `satisfies` rejects typos and
 // keys that aren't on Invoice; the MissingKey assertion below rejects forgetting
@@ -279,6 +279,7 @@ export function useSummaryInputs() {
   return useInvoiceStore(
     useShallow(state => ({
       documentType: state.documentType,
+      title: state.title,
       items: state.items,
       tax: state.tax,
       fees: state.fees,
@@ -388,6 +389,12 @@ export function useLabelLanguageSlice() {
       setLabelLanguage: state.setLabelLanguage
     }))
   );
+}
+
+// The language the page's words that aren't labels (PAID, Exempt, Scan to
+// pay) print in: the one the title and labels are most in.
+export function usePrintedLanguage() {
+  return useInvoiceStore(state => getPrintedLanguage(state));
 }
 
 export function useDocumentType() {

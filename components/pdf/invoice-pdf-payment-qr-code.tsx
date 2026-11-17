@@ -19,15 +19,18 @@ const styles = StyleSheet.create({
   }
 });
 
-// A payment QR code, drawn on the device, with "Scan to pay" under it. The
+// A payment QR code, drawn on the device, with "Scan to pay" (the caption, in
+// the invoice's language) under it. The
 // code is 2.5cm across, its quiet zone white around it, and it never splits
 // across pages.
 export function InvoicePdfPaymentQrCode({
   theme,
-  payload
+  payload,
+  caption
 }: {
   theme: InvoiceTheme;
   payload: string;
+  caption: string;
 }) {
   const { size, path } = getQrCodePath(payload);
   const quietZone = PAYMENT_QR_CODE_QUIET_ZONE;
@@ -51,7 +54,7 @@ export function InvoicePdfPaymentQrCode({
         <Path d={path} fill="#000000" />
       </Svg>
       <Text style={pdfRoleStyle(theme, "termsContent", styles.caption)}>
-        Scan to pay
+        {caption}
       </Text>
     </View>
   );

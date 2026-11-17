@@ -1,6 +1,7 @@
 import { Link, StyleSheet, Text, View } from "@react-pdf/renderer";
 import { InvoicePdfPaymentQrCode } from "~/components/pdf/invoice-pdf-payment-qr-code";
 import type { Invoice } from "~/types";
+import { getPrintedLanguage, getPrintedWord } from "~/utils/label-preset";
 import { getPaymentRows } from "~/utils/payment-details";
 import { getPaymentQrCode } from "~/utils/payment-qr-code";
 import { pdfRoleStyle } from "~/utils/pdf-styles";
@@ -82,7 +83,11 @@ export function InvoicePdfPaymentDetails({ invoice }: { invoice: Invoice }) {
             ))}
           </View>
           {qrPayload !== "" && (
-            <InvoicePdfPaymentQrCode theme={theme} payload={qrPayload} />
+            <InvoicePdfPaymentQrCode
+              theme={theme}
+              payload={qrPayload}
+              caption={getPrintedWord("scanToPay", getPrintedLanguage(invoice))}
+            />
           )}
         </View>
       )}

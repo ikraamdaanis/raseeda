@@ -2,6 +2,7 @@ import { InvoiceInput } from "~/components/editor/invoice-input";
 import { DOCUMENT_TYPE_DEFAULTS } from "~/consts/document-types";
 import {
   useDocumentType,
+  usePrintedLanguage,
   useTheme,
   useTitleSlice
 } from "~/stores/invoice-selectors";
@@ -10,11 +11,13 @@ import { getTypeSections } from "~/utils/document-type";
 import { getRoleSettings } from "~/utils/get-role-settings";
 import { getTextStyles } from "~/utils/get-text-styles";
 import { isPaidInFull } from "~/utils/is-paid-in-full";
+import { getPrintedWord } from "~/utils/label-preset";
 
 export function InvoiceTitle() {
   const { title, setTitle } = useTitleSlice();
   const theme = useTheme();
   const documentType = useDocumentType();
+  const language = usePrintedLanguage();
   // As the PDF reads the switch: a quote or a proforma invoice never shows it.
   const showsPaidStamp = useInvoiceStore(
     state =>
@@ -39,7 +42,7 @@ export function InvoiceTitle() {
           className="shrink-0 -rotate-6 rounded-md border-2 px-2.5 py-0.5 text-lg font-bold tracking-[0.2em]"
           style={{ borderColor: theme.accent, color: theme.accent }}
         >
-          PAID
+          {getPrintedWord("paid", language)}
         </span>
       )}
     </div>

@@ -7,6 +7,7 @@ import { useIsPreview } from "~/hooks/use-shown-sections";
 import {
   useCurrencyConversionSlice,
   useMoneyFormat,
+  usePrintedLanguage,
   useTheme
 } from "~/stores/invoice-selectors";
 import { useInvoiceStore } from "~/stores/invoice-store";
@@ -17,6 +18,7 @@ import {
 import { formatPlainNumber } from "~/utils/format-number";
 import { getRoleSettings } from "~/utils/get-role-settings";
 import { getTextStyles } from "~/utils/get-text-styles";
+import { getPrintedWord } from "~/utils/label-preset";
 import { readInvoiceDate } from "~/utils/read-invoice-date";
 
 // The exchange rate's field: up to six decimal places, as central banks quote
@@ -74,6 +76,7 @@ export function InvoiceExchangeRate() {
   } = useCurrencyConversionSlice();
   const isPreview = useIsPreview();
   const theme = useTheme();
+  const language = usePrintedLanguage();
   const style = getTextStyles({
     settings: getRoleSettings(theme, "totalsLabel"),
     remove: ["align"]
@@ -93,7 +96,8 @@ export function InvoiceExchangeRate() {
           conversion,
           currencyConversion,
           dateFormat,
-          numberFormat
+          numberFormat,
+          language
         })}
       </p>
     );
@@ -123,7 +127,7 @@ export function InvoiceExchangeRate() {
             setCurrencyConversion(prev => ({ ...prev, showRate: false }))
           }
         />
-        <span>{`Exchange rate: 1 ${conversion.fromCode} =`}</span>
+        <span>{`${getPrintedWord("exchangeRate", language)}: 1 ${conversion.fromCode} =`}</span>
         <InvoiceInput
           aria-label={`Exchange rate, ${conversion.toCode} per ${conversion.fromCode}`}
           data-field="currencyConversion.rate"

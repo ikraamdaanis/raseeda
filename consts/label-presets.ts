@@ -626,3 +626,60 @@ export const DOCUMENT_TYPE_LABEL_PRESETS = {
     Record<LabelLanguage, string>
   >
 >;
+
+// The words that print on the page but aren't labels, so they can't be
+// renamed: the PAID stamp, an exempt rate, "on" in "VAT 20% on €100.00", the
+// second currency's exchange rate and the QR code's caption. They print in
+// the language the labels are most in (issue #219).
+export const PRINTED_WORDS = {
+  paid: {
+    en: "PAID",
+    de: "BEZAHLT",
+    fr: "PAYÉ",
+    es: "PAGADO",
+    it: "PAGATO",
+    nl: "BETAALD",
+    pt: "PAGO",
+    pl: "ZAPŁACONO"
+  },
+  exempt: {
+    en: "Exempt",
+    de: "Steuerfrei",
+    fr: "Exonéré",
+    es: "Exento",
+    it: "Esente",
+    nl: "Vrijgesteld",
+    pt: "Isento",
+    pl: "zw."
+  },
+  on: {
+    en: "on",
+    de: "auf",
+    fr: "sur",
+    es: "sobre",
+    it: "su",
+    nl: "over",
+    pt: "sobre",
+    pl: "od"
+  },
+  exchangeRate: {
+    en: "Exchange rate",
+    de: "Wechselkurs",
+    fr: "Taux de change",
+    es: "Tipo de cambio",
+    it: "Tasso di cambio",
+    nl: "Wisselkoers",
+    pt: "Taxa de câmbio",
+    pl: "Kurs wymiany"
+  },
+  scanToPay: {
+    en: "Scan to pay",
+    de: "Zum Bezahlen scannen",
+    fr: "Scannez pour payer",
+    es: "Escanea para pagar",
+    it: "Scansiona per pagare",
+    nl: "Scan om te betalen",
+    pt: "Digitalize para pagar",
+    pl: "Zeskanuj, aby zapłacić"
+  }
+} as const satisfies Record<string, Record<LabelLanguage, string>>;

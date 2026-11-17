@@ -15,6 +15,7 @@ import {
   getCurrencyConversion
 } from "~/utils/currency-conversion";
 import { getTypeSections } from "~/utils/document-type";
+import { applyLabelPreset } from "~/utils/label-preset";
 
 function makeInvoice(overrides: Partial<Invoice> = {}): Invoice {
   return {
@@ -648,10 +649,23 @@ describe("buildInvoiceViewModel with a second currency", () => {
           conversion,
           currencyConversion: invoice.currencyConversion,
           dateFormat: invoice.dateFormat,
-          numberFormat: invoice.numberFormat
+          numberFormat: invoice.numberFormat,
+          language: "en"
         })
     ).toBe(
       "Exchange rate: 1 GBP = 1.2875 USD (Bank of England rate, 30 Oct 2026)"
+    );
+    expect(
+      conversion &&
+        buildExchangeRateLine({
+          conversion,
+          currencyConversion: invoice.currencyConversion,
+          dateFormat: invoice.dateFormat,
+          numberFormat: invoice.numberFormat,
+          language: "de"
+        })
+    ).toBe(
+      "Wechselkurs: 1 GBP = 1.2875 USD (Bank of England rate, 30 Oct 2026)"
     );
   });
 
@@ -771,6 +785,24 @@ describe("buildInvoiceViewModel with a tax rate per line", () => {
 
     expect(rows[1].label).toBe("Exempt on £300.00");
     expect(rows[1].value).toBe("Exempt");
+  });
+
+  it("writes Exempt and on in the language the labels are in", () => {
+    const invoice = applyLabelPreset(
+      makeVatInvoice({
+        items: [
+          makeItem({ unitPrice: 1000 }),
+          makeItem({ unitPrice: 300, tax: { percentage: 0, exempt: true } })
+        ]
+      }),
+      "de"
+    );
+    const rows = taxRows(invoice);
+
+    expect(rows[0].label).toBe(`${invoice.labels.tax} 20% auf £1,000.00`);
+    expect(rows[1].label).toBe("Steuerfrei auf £300.00");
+    expect(rows[1].value).toBe("Steuerfrei");
+    expect(buildInvoiceViewModel(invoice).lineItems[1].tax).toBe("Steuerfrei");
   });
 
   it("names each line's rate in the Tax column", () => {

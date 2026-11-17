@@ -21,7 +21,11 @@ import { formatCurrency } from "~/consts/currencies";
 import { useCurrencyConversion } from "~/hooks/use-currency-conversion";
 import { useShownSections } from "~/hooks/use-shown-sections";
 import { cn } from "~/lib/utils";
-import { useLineItemsSlice, useMoneyFormat } from "~/stores/invoice-selectors";
+import {
+  useLineItemsSlice,
+  useMoneyFormat,
+  usePrintedLanguage
+} from "~/stores/invoice-selectors";
 import { useInvoiceStore } from "~/stores/invoice-store";
 import type { InvoiceItem, TableSettings } from "~/types";
 import {
@@ -168,7 +172,8 @@ function LineItemCard({
   const money = useMoneyFormat();
   const conversion = useCurrencyConversion();
   const tax = useInvoiceStore(state => state.tax);
-  const viewRow = buildLineItemRow({ item, money, conversion, tax });
+  const language = usePrintedLanguage();
+  const viewRow = buildLineItemRow({ item, money, conversion, tax, language });
   const descriptionId = useId();
   const quantityId = useId();
   const unitId = useId();

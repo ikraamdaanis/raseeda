@@ -2,7 +2,8 @@ import { isEqual } from "lodash-es";
 import {
   DOCUMENT_TYPE_LABEL_PRESETS,
   LABEL_LANGUAGES,
-  LABEL_PRESETS
+  LABEL_PRESETS,
+  PRINTED_WORDS
 } from "~/consts/label-presets";
 import type {
   DocumentType,
@@ -141,6 +142,22 @@ export function rankLabelLanguages(
   return [...LABEL_LANGUAGES].sort(
     (a, b) => (scores.get(b) ?? 0) - (scores.get(a) ?? 0)
   );
+}
+
+// The language the words that aren't labels print in (PRINTED_WORDS): the
+// one the title and labels are most in, so English unless they say otherwise.
+export function getPrintedLanguage(
+  invoice: Pick<Invoice, "documentType" | "title" | "labels">
+): LabelLanguage {
+  return rankLabelLanguages(invoice).at(0) ?? "en";
+}
+
+// One of PRINTED_WORDS in a language.
+export function getPrintedWord(
+  word: keyof typeof PRINTED_WORDS,
+  language: LabelLanguage
+): string {
+  return PRINTED_WORDS[word][language];
 }
 
 // A preset language read from untrusted input, such as a script's data;
