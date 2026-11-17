@@ -14,14 +14,18 @@ export function redoLabel(label: string | null) {
   return label ? `Redo change to ${label}` : "Redo";
 }
 
+// Both buttons are an icon over a word at one height, whatever there is to
+// undo, so nothing in the menu moves as they're tapped. A button that turns
+// disabled under the finger drops its highlight.
 const HISTORY_ITEM_CLASS_NAME =
-  "min-w-0 flex-1 flex-col items-center justify-center gap-0 py-1.5 max-md:min-h-14";
+  "h-16 min-w-0 flex-1 flex-col justify-center gap-1 data-disabled:focus:bg-transparent";
 
 // Undo and redo for phones, which have no keyboard to press ⌘Z on: a row of
 // two buttons at the top of the document menu, like the Cut, Copy and Paste
 // row in an iOS menu. The menu stays open as they're tapped, so a change can
 // be stepped back through several times, and focus stays in it: the part
 // that changed flashes rather than taking focus and raising the keyboard.
+// What each would change is in its accessible name, not on the button.
 export function HistoryMenuRow() {
   const {
     canUndo,
@@ -41,7 +45,6 @@ export function HistoryMenuRow() {
       >
         <IconArrowBackUp aria-hidden="true" />
         Undo
-        <HistoryItemName name={canUndo ? undoName : null} />
       </DropdownMenuItem>
       <DropdownMenuItem
         aria-label={redoLabel(redoName)}
@@ -52,19 +55,7 @@ export function HistoryMenuRow() {
       >
         <IconArrowForwardUp aria-hidden="true" />
         Redo
-        <HistoryItemName name={canRedo ? redoName : null} />
       </DropdownMenuItem>
     </div>
-  );
-}
-
-// What the step changes, under its button, so it's clear before tapping.
-function HistoryItemName({ name }: { name: string | null }) {
-  if (!name) return null;
-
-  return (
-    <span className="text-muted-foreground w-full truncate text-center text-xs">
-      {name}
-    </span>
   );
 }
