@@ -103,6 +103,43 @@ test("a proforma made from the panel's menu wears a pill, an invoice none", asyn
   await expect(libraryRow(page, "Alpha")).not.toContainText("Proforma");
 });
 
+test("deleting one quote names it a quote", async ({ page }) => {
+  await gotoEditorReady(page, "Alpha title");
+  await nameInvoice(page, "Alpha");
+  await openFileMenu(page);
+  await page.getByRole("menuitem", { name: "New Document" }).hover();
+  await page.getByRole("menuitem", { name: "Quote", exact: true }).click();
+  await expect(page.getByLabel("Invoice title")).toHaveValue("Quote");
+  await nameInvoice(page, "Beta");
+
+  const panel = await openLibrary(page);
+
+  await panel.getByRole("button", { name: "Actions for Beta" }).click();
+  await page.getByRole("menuitem", { name: "Delete…" }).click();
+
+  const confirm = page.getByRole("dialog", { name: "Delete this quote?" });
+
+  await expect(
+    confirm.getByRole("button", { name: "Delete quote" })
+  ).toBeVisible();
+});
+
+test("a tab remembered as Invoices opens on Documents", async ({ page }) => {
+  await page.addInitScript(() =>
+    localStorage.setItem("editor-library-tab", JSON.stringify("invoices"))
+  );
+  await gotoEditorSettled(page);
+
+  await expect(
+    documentsPanel(page)
+      .getByRole("group", { name: "Library" })
+      .getByRole("button", { name: "Documents" })
+  ).toHaveAttribute("aria-pressed", "true");
+  await expect(
+    documentsPanel(page).getByRole("searchbox", { name: "Search documents" })
+  ).toBeVisible();
+});
+
 test("the command palette finds a saved document by its type", async ({
   page
 }) => {
@@ -116,7 +153,7 @@ test("the command palette finds a saved document by its type", async ({
   await openLibrary(page);
   await libraryRow(page, "Alpha").click();
   await expect(invoiceNameField(page)).toHaveValue("Alpha");
-  await pressShortcut(page, "Mod+k");
+  await page.getByRole("button", { name: "Quick actions" }).click();
 
   const palette = page.getByRole("dialog", { name: "Quick actions" });
 

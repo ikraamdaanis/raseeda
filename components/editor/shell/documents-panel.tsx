@@ -180,7 +180,7 @@ export function DocumentsPanel({ headerEnd }: { headerEnd?: ReactNode }) {
         <Button
           variant="secondary"
           onClick={newInvoice}
-          className="min-w-0 flex-1 max-md:h-11 max-md:text-base"
+          className="min-w-0 flex-1 max-md:h-11 max-md:text-base pointer-coarse:h-11"
         >
           <IconPlus aria-hidden="true" />
           New invoice
@@ -191,7 +191,7 @@ export function DocumentsPanel({ headerEnd }: { headerEnd?: ReactNode }) {
               <Button
                 variant="secondary"
                 aria-label="New document"
-                className="size-8 max-md:size-11"
+                className="size-8 max-md:size-11 pointer-coarse:size-11"
               />
             }
           >
