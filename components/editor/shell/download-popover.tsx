@@ -84,21 +84,24 @@ export function DownloadPopover() {
       >
         {isNarrow ? <IconDownload aria-hidden="true" /> : "Download"}
       </PopoverTrigger>
-      <PopoverContent align="end" className="w-72 gap-3 p-3">
+      <PopoverContent
+        align="end"
+        className="w-72 gap-3 p-3 max-md:w-[min(20rem,calc(100vw-2rem))] max-md:gap-4 max-md:p-4"
+      >
         <div className="flex items-center gap-2.5">
           <span className="bg-muted text-muted-foreground flex size-9 shrink-0 items-center justify-center rounded-md">
             <IconFileTypePdf aria-hidden="true" className="size-5" />
           </span>
           <div className="flex min-w-0 flex-col">
-            <span className="text-foreground truncate font-medium">
+            <span className="text-foreground truncate font-medium max-md:text-base">
               {fileName}
             </span>
-            <span className="text-muted-foreground text-xs">
+            <span className="text-muted-foreground text-xs max-md:text-sm">
               PDF · {paperSize}
             </span>
           </div>
         </div>
-        <dl className="border-border flex flex-col gap-1.5 border-y py-2.5 text-[13px]">
+        <dl className="border-border flex flex-col gap-1.5 border-y py-2.5 text-[13px] max-md:gap-2 max-md:py-3 max-md:text-base">
           <div className="flex items-center justify-between gap-3">
             <dt className="text-muted-foreground">Total</dt>
             <dd className="text-foreground tabular-nums">
@@ -116,7 +119,7 @@ export function DownloadPopover() {
             </dd>
           </div>
         </dl>
-        <div className="flex flex-col gap-1.5">
+        <div className="flex flex-col gap-1.5 max-md:gap-2 max-md:*:h-11 max-md:*:text-base">
           <Button
             variant="primary"
             disabled={pending}
@@ -139,17 +142,19 @@ export function DownloadPopover() {
             <IconExternalLink aria-hidden="true" />
             Open in a new tab
           </Button>
-          <Button
-            variant="secondary"
-            disabled={pending}
-            onClick={() => {
-              printPdf();
-              setOpen(false);
-            }}
-          >
-            <IconPrinter aria-hidden="true" />
-            Print
-          </Button>
+          {!isNarrow && (
+            <Button
+              variant="secondary"
+              disabled={pending}
+              onClick={() => {
+                printPdf();
+                setOpen(false);
+              }}
+            >
+              <IconPrinter aria-hidden="true" />
+              Print
+            </Button>
+          )}
           <Button
             variant="secondary"
             onClick={() => {

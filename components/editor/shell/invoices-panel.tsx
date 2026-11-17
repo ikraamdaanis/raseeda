@@ -88,13 +88,15 @@ function useWatchedList<TRow>(
 // pages list in Framer: searchable, sortable, filterable and grouped, with a
 // menu on each row for the rest. Opening one saves the open invoice first,
 // as the project menu does. ⌘O, Open Invoice and Open Template open it on a
-// tab with focus in the search. The tab, sort, grouping and filters are
-// remembered across reloads; the search is not.
+// tab with focus in the search, except on a phone, where that would raise the
+// keyboard over the sheet before anyone asked to search. The tab, sort,
+// grouping and filters are remembered across reloads; the search is not.
 export function InvoicesPanel() {
   const {
     libraryTab: tab,
     setLibraryTab,
-    librarySearchRequest
+    librarySearchRequest,
+    isNarrow
   } = useEditorUi();
   const [view, setView] = usePersistentState<InvoiceLibraryView>(
     "editor-library-view",
@@ -108,8 +110,8 @@ export function InvoicesPanel() {
   const searchRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (librarySearchRequest > 0) searchRef.current?.focus();
-  }, [librarySearchRequest]);
+    if (librarySearchRequest > 0 && !isNarrow) searchRef.current?.focus();
+  }, [librarySearchRequest, isNarrow]);
 
   return (
     <>

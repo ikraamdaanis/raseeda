@@ -56,13 +56,16 @@ import { shortcutLabel } from "~/utils/shortcut-label";
 // The logo opens one menu with everything the old File menu had, plus undo
 // and redo and the way back to the homepage, like the project menu in Framer.
 // It also carries the theme choice, which phones have no canvas pill for.
+// A phone leaves out undo and redo, which its top bar has as buttons; Print,
+// which there only opens the PDF in a new tab, as Download's "Open in a new
+// tab" does; and Quick actions, which is for a keyboard.
 // Invoices save themselves, so there's no Save: Duplicate takes Save As's
 // place, as in Apple's autosaving apps. Duplicate copies the document as its
 // own type; Duplicate As makes it another type, as turning a quote into an
 // invoice does.
 export function ProjectMenu() {
   const actions = useFileActions();
-  const { setPaletteOpen } = useEditorUi();
+  const { setPaletteOpen, isNarrow } = useEditorUi();
   const { isRecord, status } = useInvoiceDocument();
   const documentType = useDocumentType();
   const canDuplicate = !actions.pending && isRecord && status === "editing";
@@ -150,23 +153,29 @@ export function ProjectMenu() {
           <IconHistory aria-hidden="true" />
           Version History
         </DropdownMenuItem>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem
-          onClick={() => undoInvoiceChange()}
-          disabled={!history.canUndo}
-        >
-          <IconArrowBackUp aria-hidden="true" />
-          <span className="truncate">{undoLabel(history.undoLabel)}</span>
-          <DropdownMenuShortcut>{shortcutLabel("⌘Z")}</DropdownMenuShortcut>
-        </DropdownMenuItem>
-        <DropdownMenuItem
-          onClick={() => redoInvoiceChange()}
-          disabled={!history.canRedo}
-        >
-          <IconArrowForwardUp aria-hidden="true" />
-          <span className="truncate">{redoLabel(history.redoLabel)}</span>
-          <DropdownMenuShortcut>{shortcutLabel("⇧⌘Z")}</DropdownMenuShortcut>
-        </DropdownMenuItem>
+        {!isNarrow && (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              onClick={() => undoInvoiceChange()}
+              disabled={!history.canUndo}
+            >
+              <IconArrowBackUp aria-hidden="true" />
+              <span className="truncate">{undoLabel(history.undoLabel)}</span>
+              <DropdownMenuShortcut>{shortcutLabel("⌘Z")}</DropdownMenuShortcut>
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => redoInvoiceChange()}
+              disabled={!history.canRedo}
+            >
+              <IconArrowForwardUp aria-hidden="true" />
+              <span className="truncate">{redoLabel(history.redoLabel)}</span>
+              <DropdownMenuShortcut>
+                {shortcutLabel("⇧⌘Z")}
+              </DropdownMenuShortcut>
+            </DropdownMenuItem>
+          </>
+        )}
         <DropdownMenuSeparator />
         <DropdownMenuItem
           onClick={actions.showOpenTemplate}
@@ -183,15 +192,17 @@ export function ProjectMenu() {
           Save As Template
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem
-          onClick={pdf.printPdf}
-          onPointerEnter={pdf.prefetch}
-          disabled={pdf.pending}
-        >
-          <IconPrinter aria-hidden="true" />
-          Print
-          <DropdownMenuShortcut>{shortcutLabel("⌘P")}</DropdownMenuShortcut>
-        </DropdownMenuItem>
+        {!isNarrow && (
+          <DropdownMenuItem
+            onClick={pdf.printPdf}
+            onPointerEnter={pdf.prefetch}
+            disabled={pdf.pending}
+          >
+            <IconPrinter aria-hidden="true" />
+            Print
+            <DropdownMenuShortcut>{shortcutLabel("⌘P")}</DropdownMenuShortcut>
+          </DropdownMenuItem>
+        )}
         <DropdownMenuItem
           onClick={actions.exportData}
           disabled={actions.pending}
@@ -224,11 +235,13 @@ export function ProjectMenu() {
             <EditorThemeRadioGroup />
           </DropdownMenuSubContent>
         </DropdownMenuSub>
-        <DropdownMenuItem onClick={() => setPaletteOpen(true)}>
-          <IconCommand aria-hidden="true" />
-          Quick actions
-          <DropdownMenuShortcut>{shortcutLabel("⌘K")}</DropdownMenuShortcut>
-        </DropdownMenuItem>
+        {!isNarrow && (
+          <DropdownMenuItem onClick={() => setPaletteOpen(true)}>
+            <IconCommand aria-hidden="true" />
+            Quick actions
+            <DropdownMenuShortcut>{shortcutLabel("⌘K")}</DropdownMenuShortcut>
+          </DropdownMenuItem>
+        )}
         <DropdownMenuItem onClick={() => void navigate({ to: "/" })}>
           <IconArrowLeft aria-hidden="true" />
           Back to homepage

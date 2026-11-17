@@ -35,9 +35,10 @@ export function PhoneForm({
 }: {
   scrollTopRef: RefObject<number>;
 }) {
-  const { status } = useInvoiceDocument();
+  const { status, currentDocumentId } = useInvoiceDocument();
   const [isEditingLabels, setIsEditingLabels] = useState(false);
   const scrollerRef = useRef<HTMLDivElement>(null);
+  const documentIdRef = useRef(currentDocumentId);
   const canEdit = status === "editing" || status === "unavailable";
 
   useLayoutEffect(() => {
@@ -51,6 +52,14 @@ export function PhoneForm({
       scrollTopRef.current = scroller.scrollTop;
     };
   }, [scrollTopRef]);
+
+  // Another invoice opens at its top, not where the last one was scrolled to.
+  useLayoutEffect(() => {
+    if (documentIdRef.current === currentDocumentId) return;
+
+    documentIdRef.current = currentDocumentId;
+    scrollerRef.current?.scrollTo({ top: 0 });
+  }, [currentDocumentId]);
 
   useRevealAboveKeyboard(scrollerRef);
 

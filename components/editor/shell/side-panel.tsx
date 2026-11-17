@@ -54,6 +54,8 @@ const PHONE_PANELS = [
 // other in, in the order the bar lists them, rather than closing one sheet and
 // opening another; opening it shows the panel at once. Closing keeps the last
 // panel in place as it slides down.
+// It clips rather than hides what overflows, so focus moving into the panel out
+// of view (or a menu opening) can't scroll the sheet sideways.
 export function PhoneSheet({
   invoices,
   inspector
@@ -104,7 +106,7 @@ export function PhoneSheet({
       tabIndex={isOpen ? -1 : undefined}
       inert={!isOpen}
       className={cn(
-        "bg-background border-border shadow-floating absolute inset-x-0 bottom-0 z-30 h-[min(70dvh,34rem)] overflow-hidden rounded-t-2xl border-t transition-[translate] duration-200 ease-out outline-none motion-reduce:transition-none",
+        "bg-background border-border shadow-floating absolute inset-x-0 bottom-0 z-30 h-[min(70dvh,34rem)] overflow-clip rounded-t-2xl border-t transition-[translate] duration-200 ease-out outline-none motion-reduce:transition-none",
         !isOpen && "translate-y-full shadow-none"
       )}
     >

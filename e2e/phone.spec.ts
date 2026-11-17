@@ -161,6 +161,24 @@ test("phones get a tab bar instead of the canvas pill and panel toggles", async 
   await expect(inspector).toHaveAttribute("aria-modal", "true");
 });
 
+test("New invoice closes the invoices sheet and opens the form at its top", async ({
+  page
+}) => {
+  await page.goto("/create");
+  await page.getByLabel("To details").fill("Globex Corp");
+  await showPage(page);
+  await tabBar(page).getByRole("button", { name: "Invoices" }).tap();
+  await page.getByRole("button", { name: "New invoice" }).tap();
+
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  await expect(tabBar(page).getByRole("tab", { name: "Edit" })).toHaveAttribute(
+    "aria-selected",
+    "true"
+  );
+  await expect(page.getByLabel("To details")).toHaveValue("");
+  await expect(page.getByLabel("Invoice title")).toBeInViewport();
+});
+
 test("a phone opens to the form even when Preview was left on", async ({
   page
 }) => {

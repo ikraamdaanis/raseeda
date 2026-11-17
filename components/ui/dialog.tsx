@@ -67,7 +67,7 @@ export function DialogContent({
             render={
               <Button
                 variant="ghost"
-                className="absolute top-2 right-2"
+                className="absolute top-2 right-2 after:absolute after:top-1/2 after:left-1/2 after:size-11 after:-translate-1/2 pointer-fine:after:hidden"
                 size="icon-sm"
               />
             }

@@ -116,7 +116,7 @@ export function FileActionsProvider({ children }: { children: ReactNode }) {
   } = useInvoiceDocument();
   const { open: openRequest } = useSearch({ from: "/create" });
   const navigate = useNavigate();
-  const { showLibrary } = useEditorUi();
+  const { showLibrary, isNarrow, closePanels, setPhoneView } = useEditorUi();
   const [saveTemplateDialogOpen, setSaveTemplateDialogOpen] = useState(false);
   const [importDialogOpen, setImportDialogOpen] = useState(false);
   const [versionsOpen, setVersionsOpen] = useState(false);
@@ -136,6 +136,16 @@ export function FileActionsProvider({ children }: { children: ReactNode }) {
   const renameTarget = renameDialog.target;
   const deleteTarget = deleteDialog.target;
 
+  // On a phone, starting or opening an invoice, from the invoices sheet or the
+  // project menu, lands in the form, ready to edit, rather than leaving the
+  // sheet over it or the Page tab showing.
+  function showEditor() {
+    if (!isNarrow) return;
+
+    closePanels();
+    setPhoneView("form");
+  }
+
   function run(action: () => Promise<unknown>, failure: string) {
     startTransition(async () => {
       try {
@@ -147,6 +157,8 @@ export function FileActionsProvider({ children }: { children: ReactNode }) {
   }
 
   function handleOpenInvoice(documentId: string) {
+    showEditor();
+
     if (documentId === currentDocumentId) return;
 
     run(async () => {
@@ -192,6 +204,8 @@ export function FileActionsProvider({ children }: { children: ReactNode }) {
 
   function handleDuplicateCurrent(documentType?: DocumentType) {
     if (!isRecord || status !== "editing") return;
+
+    showEditor();
 
     run(async () => {
       const copy = await duplicateCurrent(documentType);
@@ -337,20 +351,27 @@ export function FileActionsProvider({ children }: { children: ReactNode }) {
 
   const value = {
     pending,
-    newInvoice: () => run(newInvoice, "Failed to start a new invoice"),
-    newDocument: (documentType: DocumentType) =>
+    newInvoice: () => {
+      showEditor();
+      run(newInvoice, "Failed to start a new invoice");
+    },
+    newDocument: (documentType: DocumentType) => {
+      showEditor();
       run(
         () => newDocument(documentType),
         `Failed to start a new ${DOCUMENT_TYPE_NAMES[documentType].toLowerCase()}`
-      ),
+      );
+    },
     showOpenInvoice: () => showLibrary("invoices"),
     openInvoice: handleOpenInvoice,
     saveNow: () => void handleSaveNow(),
     duplicateCurrent: handleDuplicateCurrent,
     showVersionHistory: () => setVersionsOpen(true),
     showOpenTemplate: () => showLibrary("templates"),
-    applyTemplate: (template: InvoiceTemplate) =>
-      run(() => applyTemplate(template), "Failed to apply template"),
+    applyTemplate: (template: InvoiceTemplate) => {
+      showEditor();
+      run(() => applyTemplate(template), "Failed to apply template");
+    },
     saveAsTemplate: () => setSaveTemplateDialogOpen(true),
     exportData: handleExport,
     importData: () => setImportDialogOpen(true),
