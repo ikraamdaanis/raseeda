@@ -233,7 +233,7 @@ export async function exportData(page: Page) {
 export async function selectImportFile(page: Page, data: unknown) {
   await clickFileMenuItem(page, "Import Data");
 
-  const dialog = page.getByRole("dialog", { name: "Import Data" });
+  const dialog = page.getByRole("dialog", { name: /^Import (data|complete)$/ });
 
   await dialog.locator("#import-file-input").setInputFiles({
     name: "import.json",

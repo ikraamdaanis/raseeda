@@ -44,7 +44,7 @@ test("a full export/import round-trip restores the data", async ({
   const dialog = await selectImportFile(page, json);
 
   await dialog.getByRole("button", { name: "Import", exact: true }).click();
-  await expect(dialog.getByText(/Successfully imported/)).toBeVisible();
+  await expect(dialog.getByText(/to this browser\./)).toBeVisible();
   await dialog.getByRole("button", { name: "Done" }).click();
 
   await clickFileMenuItem(page, "Open Invoice");
@@ -62,9 +62,9 @@ test("importing the same file again conflict-renames duplicates", async ({
   const dialog = await selectImportFile(page, json);
 
   // The preview flags the existing invoice as a rename-on-import conflict.
-  await expect(dialog.getByText(/to rename/)).toBeVisible();
+  await expect(dialog.getByText(/renamed\)/)).toBeVisible();
   await dialog.getByRole("button", { name: "Import", exact: true }).click();
-  await expect(dialog.getByText(/Successfully imported/)).toBeVisible();
+  await expect(dialog.getByText(/to this browser\./)).toBeVisible();
   await dialog.getByRole("button", { name: "Done" }).click();
 
   await clickFileMenuItem(page, "Open Invoice");
@@ -103,7 +103,7 @@ test("importing a record with an unparseable date does not crash [R]", async ({
   const dialog = await selectImportFile(page, json);
 
   await dialog.getByRole("button", { name: "Import", exact: true }).click();
-  await expect(dialog.getByText(/Successfully imported/)).toBeVisible();
+  await expect(dialog.getByText(/to this browser\./)).toBeVisible();
   await dialog.getByRole("button", { name: "Done" }).click();
 
   // The documents panel still lists the imported record (a conflict-renamed
@@ -127,7 +127,7 @@ test("importing an invoice with a null line item drops only that item [R]", asyn
   const dialog = await selectImportFile(page, json);
 
   await dialog.getByRole("button", { name: "Import", exact: true }).click();
-  await expect(dialog.getByText(/Successfully imported/)).toBeVisible();
+  await expect(dialog.getByText(/to this browser\./)).toBeVisible();
 
   expect(await storeContains(page, "invoices", "Kept item")).toBe(true);
 });
@@ -138,7 +138,7 @@ test("a corrupt import leaves the database untouched", async ({ page }) => {
 
   await clickFileMenuItem(page, "Import Data");
 
-  const dialog = page.getByRole("dialog", { name: "Import Data" });
+  const dialog = page.getByRole("dialog", { name: /^Import (data|complete)$/ });
 
   await dialog.locator("#import-file-input").setInputFiles({
     name: "corrupt.json",
@@ -147,7 +147,7 @@ test("a corrupt import leaves the database untouched", async ({ page }) => {
   });
 
   // The existing invoice is still present and intact after the failed import.
-  await expect(dialog.getByText("Import Data")).toBeVisible();
+  await expect(dialog.getByText("Import data", { exact: true })).toBeVisible();
   expect(await storeContains(page, "invoices", "Safe doc")).toBe(true);
 });
 
@@ -168,7 +168,7 @@ test("pasting an export's JSON imports it like a chosen file", async ({
   );
   await clickFileMenuItem(page, "Import Data");
 
-  const dialog = page.getByRole("dialog", { name: "Import Data" });
+  const dialog = page.getByRole("dialog", { name: /^Import (data|complete)$/ });
   const pasteField = dialog.getByLabel("Or paste the export's JSON");
 
   // A real paste event, as Cmd+V sends it, goes straight to the preview.
@@ -181,9 +181,9 @@ test("pasting an export's JSON imports it like a chosen file", async ({
     );
   }, JSON.stringify(json));
 
-  await expect(dialog.getByText("Invoices", { exact: true })).toBeVisible();
+  await expect(dialog.getByText("Documents", { exact: true })).toBeVisible();
   await dialog.getByRole("button", { name: "Import", exact: true }).click();
-  await expect(dialog.getByText(/Successfully imported/)).toBeVisible();
+  await expect(dialog.getByText(/to this browser\./)).toBeVisible();
   await dialog.getByRole("button", { name: "Done" }).click();
 
   await clickFileMenuItem(page, "Open Invoice");
@@ -196,7 +196,7 @@ test("typed JSON that isn't an export shows the error and keeps the text", async
   await gotoEditorReady(page, "Typed title");
   await clickFileMenuItem(page, "Import Data");
 
-  const dialog = page.getByRole("dialog", { name: "Import Data" });
+  const dialog = page.getByRole("dialog", { name: /^Import (data|complete)$/ });
   const pasteField = dialog.getByLabel("Or paste the export's JSON");
 
   await pasteField.fill('{ "hello": "world" }');
@@ -214,7 +214,7 @@ test("dropping an export file on the dialog imports it", async ({ page }) => {
 
   await clickFileMenuItem(page, "Import Data");
 
-  const dialog = page.getByRole("dialog", { name: "Import Data" });
+  const dialog = page.getByRole("dialog", { name: /^Import (data|complete)$/ });
   const dropZone = dialog.getByRole("region", {
     name: "Drop an export file here"
   });
@@ -230,16 +230,16 @@ test("dropping an export file on the dialog imports it", async ({ page }) => {
   await expect(dropZone).toHaveAttribute("data-dragging", "true");
   await dropZone.dispatchEvent("drop", { dataTransfer });
 
-  await expect(dialog.getByText(/to rename/)).toBeVisible();
+  await expect(dialog.getByText(/renamed\)/)).toBeVisible();
   await dialog.getByRole("button", { name: "Import", exact: true }).click();
-  await expect(dialog.getByText(/Successfully imported/)).toBeVisible();
+  await expect(dialog.getByText(/to this browser\./)).toBeVisible();
 });
 
 test("dropping a file that isn't JSON is rejected", async ({ page }) => {
   await gotoEditorReady(page, "Wrong file title");
   await clickFileMenuItem(page, "Import Data");
 
-  const dialog = page.getByRole("dialog", { name: "Import Data" });
+  const dialog = page.getByRole("dialog", { name: /^Import (data|complete)$/ });
   const dataTransfer = await page.evaluateHandle(() => {
     const transfer = new DataTransfer();
 

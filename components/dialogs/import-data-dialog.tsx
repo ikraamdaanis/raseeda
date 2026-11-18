@@ -1,6 +1,9 @@
 import {
   IconAlertTriangle,
-  IconCircleCheck,
+  IconArrowLeft,
+  IconCheck,
+  IconFileCheck,
+  IconFileImport,
   IconLoader2,
   IconUpload
 } from "@tabler/icons-react";
@@ -13,6 +16,7 @@ import {
   DialogDescription,
   DialogFooter,
   DialogHeader,
+  DialogIcon,
   DialogTitle
 } from "~/components/ui/dialog";
 import { Label } from "~/components/ui/label";
@@ -29,6 +33,29 @@ import {
 import { track } from "~/utils/track";
 
 type ImportState = "idle" | "analyzing" | "preview" | "importing" | "done";
+
+// What the import added, leaving out what it added none of.
+function describeImport(result: ImportResult) {
+  const counts = [
+    [result.invoicesImported, "document"],
+    [result.templatesImported, "template"],
+    [result.imagesImported, "image"]
+  ] as const;
+  const parts = counts
+    .filter(([count]) => count > 0)
+    .map(([count, noun]) => `${count} ${noun}${count === 1 ? "" : "s"}`);
+
+  if (parts.length === 0) return "The file had nothing new to add.";
+
+  return `Added ${new Intl.ListFormat("en").format(parts)} to this browser.`;
+}
+
+// "48 KB", or "1.2 MB" from a megabyte up, and never "0 KB".
+function formatFileSize(bytes: number) {
+  if (bytes >= 1024 * 1024) return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+
+  return `${Math.max(1, Math.round(bytes / 1024))} KB`;
+}
 
 // Only a drag that carries files lights up the drop zone; dragging text along
 // is left to the browser, so it can still land in the paste field.
@@ -49,25 +76,37 @@ export function ImportDataDialog({
   const [parsedData, setParsedData] = useState<ExportFile | null>(null);
   const [result, setResult] = useState<ImportResult | null>(null);
   const [pastedText, setPastedText] = useState("");
+  // The file the preview was read from, kept when going back so it can be
+  // read again with Next or swapped for another. Pasted JSON stays in its field.
+  const [chosenFile, setChosenFile] = useState<{
+    name: string;
+    size: number;
+  } | null>(null);
   const [isDraggingFile, setIsDraggingFile] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   // dragenter and dragleave fire for every child the pointer crosses, so the
   // drop zone stays lit until the drag has left the dialog as a whole.
   const dragDepthRef = useRef(0);
   // Bumped on every close so an import that is still running in the background
-  // can tell it belongs to a dismissed dialog and skip flipping the (now reset)
-  // dialog to a stale done/error screen.
+  // can tell it belongs to a dismissed dialog and skip flipping the (soon
+  // reset) dialog to a stale done/error screen.
   const importGenerationRef = useRef(0);
 
   function handleClose() {
     importGenerationRef.current++;
     onOpenChange(false);
+  }
+
+  // Back to the first step once the dialog has faded, so the step it closed on
+  // stays in place on the way out.
+  function resetDialog() {
     setState("idle");
     setError(null);
     setAnalysis(null);
     setParsedData(null);
     setResult(null);
     setPastedText("");
+    setChosenFile(null);
     setIsDraggingFile(false);
     dragDepthRef.current = 0;
   }
@@ -87,11 +126,40 @@ export function ImportDataDialog({
 
       const importAnalysis = await analyzeImport(parsed);
       setAnalysis(importAnalysis);
+
+      if (typeof source === "string") {
+        setChosenFile(null);
+      } else {
+        setChosenFile({ name: source.name, size: source.size });
+        setPastedText("");
+      }
+
       setState("preview");
     } catch (err) {
+      // A file that can't be read takes the place of the one chosen before.
+      setParsedData(null);
+      setAnalysis(null);
+      setChosenFile(null);
       setError(err instanceof Error ? err.message : "Failed to analyze file.");
       setState("idle");
     }
+  }
+
+  // Editing JSON that was read drops what was read from it, so Next can't
+  // import the text as it was before the edit.
+  function handlePastedTextChange(text: string) {
+    setPastedText(text);
+
+    if (chosenFile !== null) return;
+
+    setParsedData(null);
+    setAnalysis(null);
+  }
+
+  // Back to choosing, with the file or pasted JSON still there.
+  function handleBack() {
+    setError(null);
+    setState("idle");
   }
 
   async function handleFileSelect(event: ChangeEvent<HTMLInputElement>) {
@@ -214,9 +282,39 @@ export function ImportDataDialog({
     (analysis.templates.conflicts.length > 0 ||
       analysis.invoices.conflicts.length > 0);
   const isImporting = state === "importing";
+  // Reading a file keeps the first step's layout, the drop zone showing a
+  // spinner in place of its contents, so the dialog doesn't change height.
+  const isAnalyzing = state === "analyzing";
+  // Lighting up for a drag takes over from the chosen file's name.
+  const showsChosenFile =
+    chosenFile !== null && !isAnalyzing && !isDraggingFile;
+  const canContinue = state === "idle" && analysis !== null;
+
+  const isDone = state === "done" && result !== null;
+  const analysisRows = analysis
+    ? [
+        {
+          label: "Documents",
+          total: analysis.invoices.total,
+          renamed: analysis.invoices.conflicts.length
+        },
+        {
+          label: "Templates",
+          total: analysis.templates.total,
+          renamed: analysis.templates.conflicts.length
+        },
+        { label: "Images", total: analysis.images.total, renamed: 0 }
+      ]
+    : [];
 
   return (
-    <Dialog open={open} onOpenChange={handleClose}>
+    <Dialog
+      open={open}
+      onOpenChange={handleClose}
+      onOpenChangeComplete={isOpen => {
+        if (!isOpen) resetDialog();
+      }}
+    >
       <DialogContent
         onDragEnter={handleDragEnter}
         onDragOver={handleDragOver}
@@ -224,175 +322,240 @@ export function ImportDataDialog({
         onDrop={handleDrop}
         onPaste={handlePaste}
       >
-        <DialogHeader>
-          <DialogTitle>Import Data</DialogTitle>
-          <DialogDescription>
-            Import invoices, templates, and images from a {APP_NAME} export
-            file.
+        <DialogHeader
+          icon={
+            isDone ? (
+              <DialogIcon
+                tone="success"
+                className="animate-in fade-in-0 zoom-in-90 duration-200 ease-(--ease-out-strong)"
+              >
+                <IconCheck />
+              </DialogIcon>
+            ) : (
+              <DialogIcon tone="neutral">
+                <IconFileImport />
+              </DialogIcon>
+            )
+          }
+        >
+          <DialogTitle>
+            {isDone ? "Import complete" : "Import data"}
+          </DialogTitle>
+          <DialogDescription className="text-pretty">
+            {isDone
+              ? describeImport(result)
+              : `Bring back documents, templates and images from a ${APP_NAME} export file.`}
           </DialogDescription>
         </DialogHeader>
-        <div className="px-4 py-2">
-          {state === "idle" && (
-            <div className="flex flex-col gap-4">
-              {error && (
-                <div
-                  role="alert"
-                  className="bg-destructive/10 text-destructive rounded-surface w-full p-3 text-sm"
-                >
-                  {error}
-                </div>
-              )}
-              <div
-                role="region"
-                aria-label="Drop an export file here"
-                data-dragging={isDraggingFile || undefined}
-                className={cn(
-                  "rounded-surface flex w-full flex-col items-center gap-2 border-2 border-dashed p-4 transition-colors",
-                  isDraggingFile
-                    ? "border-brand-500 bg-brand-50 dark:bg-brand-500/20"
-                    : "border-border"
+        {!isDone && (
+          <div className="px-4 py-2">
+            {(state === "idle" || isAnalyzing) && (
+              <div className="flex flex-col gap-4">
+                {error && (
+                  <div
+                    role="alert"
+                    className="bg-destructive/10 text-destructive rounded-surface w-full p-3 text-sm"
+                  >
+                    {error}
+                  </div>
                 )}
-              >
-                <IconUpload
-                  aria-hidden="true"
-                  className={cn(
-                    "h-8 w-8",
-                    isDraggingFile
-                      ? "text-brand-600 dark:text-brand-400"
-                      : "text-muted-foreground"
-                  )}
-                />
-                <span className="text-sm font-medium">
-                  {isDraggingFile
-                    ? "Drop to import"
-                    : "Drop a .json export file here"}
-                </span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => fileInputRef.current?.click()}
-                >
-                  Choose export file
-                </Button>
-              </div>
-              <input
-                ref={fileInputRef}
-                id="import-file-input"
-                type="file"
-                accept=".json,application/json"
-                aria-label="Export file"
-                tabIndex={-1}
-                onChange={handleFileSelect}
-                className="hidden"
-              />
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="import-json-input">
-                  Or paste the export&apos;s JSON
-                </Label>
-                <Textarea
-                  id="import-json-input"
-                  value={pastedText}
-                  onChange={event => setPastedText(event.target.value)}
-                  placeholder='{ "meta": { … }, "invoices": [ … ] }'
-                  spellCheck={false}
-                  autoComplete="off"
-                  rows={3}
-                  className="max-h-32 font-mono text-xs md:text-xs"
-                />
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  className="self-end"
-                  disabled={!pastedText.trim()}
-                  onClick={() => void analyzeSource(pastedText)}
-                >
-                  Use pasted JSON
-                </Button>
-              </div>
-            </div>
-          )}
-          {state === "analyzing" && (
-            <div className="flex items-center justify-center py-4">
-              <p className="text-muted-foreground">Analyzing export...</p>
-            </div>
-          )}
-          {(state === "preview" || isImporting) && analysis && (
-            <div className="flex flex-col gap-4">
-              {error && (
                 <div
-                  role="alert"
-                  className="bg-destructive/10 text-destructive rounded-surface p-3 text-sm"
+                  role="region"
+                  aria-label="Drop an export file here"
+                  data-dragging={isDraggingFile || undefined}
+                  className={cn(
+                    "rounded-surface grid w-full place-items-center border-2 border-dashed p-4 transition-colors",
+                    isDraggingFile
+                      ? "border-brand-500 bg-brand-50 dark:bg-brand-500/20"
+                      : "border-border"
+                  )}
                 >
-                  {error}
+                  <div
+                    inert={isAnalyzing}
+                    className={cn(
+                      "col-start-1 row-start-1 flex flex-col items-center gap-2",
+                      (isAnalyzing || showsChosenFile) && "invisible"
+                    )}
+                  >
+                    <IconUpload
+                      aria-hidden="true"
+                      className={cn(
+                        "size-6",
+                        isDraggingFile
+                          ? "text-brand-600 dark:text-brand-400"
+                          : "text-muted-foreground"
+                      )}
+                    />
+                    <span className="text-sm font-medium">
+                      {isDraggingFile
+                        ? "Drop to import"
+                        : "Drop a .json export file here"}
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => fileInputRef.current?.click()}
+                    >
+                      Choose export file
+                    </Button>
+                  </div>
+                  {showsChosenFile && (
+                    <div className="col-start-1 row-start-1 flex w-full min-w-0 flex-col items-center gap-2">
+                      <IconFileCheck
+                        aria-hidden="true"
+                        className="text-brand-600 dark:text-brand-400 size-6"
+                      />
+                      <span className="flex max-w-full min-w-0 items-baseline gap-1.5 text-sm">
+                        <span className="truncate font-medium">
+                          {chosenFile.name}
+                        </span>
+                        <span className="text-muted-foreground shrink-0 tabular-nums">
+                          {formatFileSize(chosenFile.size)}
+                        </span>
+                      </span>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => fileInputRef.current?.click()}
+                      >
+                        Choose a different file
+                      </Button>
+                    </div>
+                  )}
+                  {isAnalyzing && (
+                    <div
+                      role="status"
+                      className="text-muted-foreground col-start-1 row-start-1 flex items-center gap-2 text-sm"
+                    >
+                      <IconLoader2
+                        aria-hidden="true"
+                        className="size-4 animate-spin"
+                      />
+                      Reading the export…
+                    </div>
+                  )}
                 </div>
-              )}
-              <div className="flex flex-col gap-2">
-                <div className="rounded-surface flex items-center justify-between border p-3">
-                  <span className="text-sm">Templates</span>
-                  <span className="text-muted-foreground text-sm">
-                    {analysis.templates.total} total
-                    {analysis.templates.conflicts.length > 0 &&
-                      ` (${analysis.templates.conflicts.length} to rename)`}
-                  </span>
-                </div>
-                <div className="rounded-surface flex items-center justify-between border p-3">
-                  <span className="text-sm">Invoices</span>
-                  <span className="text-muted-foreground text-sm">
-                    {analysis.invoices.total} total
-                    {analysis.invoices.conflicts.length > 0 &&
-                      ` (${analysis.invoices.conflicts.length} to rename)`}
-                  </span>
-                </div>
-                <div className="rounded-surface flex items-center justify-between border p-3">
-                  <span className="text-sm">Images</span>
-                  <span className="text-muted-foreground text-sm">
-                    {analysis.images.total} total
-                  </span>
+                <input
+                  ref={fileInputRef}
+                  id="import-file-input"
+                  type="file"
+                  accept=".json,application/json"
+                  aria-label="Export file"
+                  tabIndex={-1}
+                  onChange={handleFileSelect}
+                  className="hidden"
+                />
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="import-json-input">
+                    Or paste the export&apos;s JSON
+                  </Label>
+                  <Textarea
+                    id="import-json-input"
+                    value={pastedText}
+                    onChange={event =>
+                      handlePastedTextChange(event.target.value)
+                    }
+                    placeholder='{ "meta": { … }, "invoices": [ … ] }'
+                    spellCheck={false}
+                    autoComplete="off"
+                    rows={3}
+                    readOnly={isAnalyzing}
+                    className="max-h-32 font-mono text-xs md:text-xs"
+                  />
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    className="self-end"
+                    disabled={isAnalyzing || !pastedText.trim()}
+                    onClick={() => void analyzeSource(pastedText)}
+                  >
+                    Use pasted JSON
+                  </Button>
                 </div>
               </div>
-              {hasConflicts && (
-                <div className="rounded-surface flex items-start gap-2 border border-amber-200 bg-amber-50 p-3 dark:border-amber-800 dark:bg-amber-950">
-                  <IconAlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
-                  <span className="text-sm text-amber-800 dark:text-amber-200">
-                    Some names already exist and will be renamed with an
-                    &quot;(imported)&quot; suffix.
-                  </span>
-                </div>
-              )}
-            </div>
-          )}
-          {state === "done" && result && (
-            <div className="flex flex-col items-center gap-4 py-4">
-              <IconCircleCheck className="h-10 w-10 text-green-600" />
-              <p className="text-center text-sm">
-                Successfully imported {result.invoicesImported} invoice
-                {result.invoicesImported !== 1 ? "s" : ""},{" "}
-                {result.templatesImported} template
-                {result.templatesImported !== 1 ? "s" : ""}, and{" "}
-                {result.imagesImported} image
-                {result.imagesImported !== 1 ? "s" : ""}.
-              </p>
-            </div>
-          )}
-        </div>
+            )}
+            {(state === "preview" || isImporting) && analysis && (
+              <div className="flex flex-col gap-3">
+                {error && (
+                  <div
+                    role="alert"
+                    className="bg-destructive/10 text-destructive rounded-surface p-3 text-sm"
+                  >
+                    {error}
+                  </div>
+                )}
+                <dl className="rounded-surface bg-border flex flex-col gap-px overflow-hidden border">
+                  {analysisRows.map(row => (
+                    <div
+                      key={row.label}
+                      className="bg-popover flex items-baseline justify-between gap-3 px-3 py-2.5"
+                    >
+                      <dt className="text-sm">{row.label}</dt>
+                      <dd className="text-sm tabular-nums">
+                        {row.total}
+                        {row.renamed > 0 && (
+                          <span className="text-muted-foreground">
+                            {` (${row.renamed} renamed)`}
+                          </span>
+                        )}
+                      </dd>
+                    </div>
+                  ))}
+                </dl>
+                {hasConflicts && (
+                  <div className="rounded-surface flex items-start gap-2 bg-amber-50 p-3 dark:bg-amber-950">
+                    <IconAlertTriangle
+                      aria-hidden="true"
+                      className="mt-0.5 size-4 shrink-0 text-amber-600 dark:text-amber-400"
+                    />
+                    <span className="text-sm text-pretty text-amber-800 dark:text-amber-200">
+                      Some names are already in use here, so those copies get
+                      &ldquo;(imported)&rdquo; added to their name.
+                    </span>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
         <DialogFooter>
-          <Button variant="secondary" onClick={handleClose}>
-            {state === "done" ? "Done" : "Cancel"}
-          </Button>
-          {(state === "preview" || isImporting) && (
-            <Button
-              onClick={handleImport}
-              disabled={isImporting}
-              aria-busy={isImporting || undefined}
-            >
-              {isImporting && (
-                <IconLoader2
-                  data-icon="inline-start"
-                  className="animate-spin"
-                />
+          {isDone ? (
+            <Button onClick={handleClose}>Done</Button>
+          ) : (
+            <>
+              {(state === "preview" || isImporting) && (
+                <Button
+                  variant="ghost"
+                  onClick={handleBack}
+                  disabled={isImporting}
+                  className="sm:mr-auto"
+                >
+                  <IconArrowLeft data-icon="inline-start" />
+                  Back
+                </Button>
               )}
-              Import
-            </Button>
+              <Button variant="secondary" onClick={handleClose}>
+                Cancel
+              </Button>
+              {canContinue && (
+                <Button onClick={() => setState("preview")}>Next</Button>
+              )}
+              {(state === "preview" || isImporting) && (
+                <Button
+                  onClick={handleImport}
+                  disabled={isImporting}
+                  aria-busy={isImporting || undefined}
+                >
+                  {isImporting && (
+                    <IconLoader2
+                      data-icon="inline-start"
+                      className="animate-spin"
+                    />
+                  )}
+                  Import
+                </Button>
+              )}
+            </>
           )}
         </DialogFooter>
       </DialogContent>

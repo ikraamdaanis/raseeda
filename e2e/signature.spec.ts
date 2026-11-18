@@ -189,7 +189,7 @@ test("export and import bring the signature along", async ({
   const dialog = await selectImportFile(page, json);
 
   await dialog.getByRole("button", { name: "Import", exact: true }).click();
-  await expect(dialog.getByText(/Successfully imported/)).toBeVisible();
+  await expect(dialog.getByText(/to this browser\./)).toBeVisible();
   await dialog.getByRole("button", { name: "Done" }).click();
   await clickFileMenuItem(page, "Open Invoice");
   await libraryRow(page, "Signed doc").click();
