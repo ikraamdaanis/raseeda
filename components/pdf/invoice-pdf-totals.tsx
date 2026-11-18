@@ -13,7 +13,11 @@ import { pdfRoleStyle } from "~/utils/pdf-styles";
 // The table's bottom margin spaces the totals, the same 20pt the details
 // leave above the table.
 const styles = StyleSheet.create({
+  // The gap under the items table is the totals' own: react-pdf moves a
+  // table whose rows fit a page but whose bottom margin doesn't to the next
+  // page whole (issue #244).
   totalSection: {
+    marginTop: 20,
     alignItems: "flex-end"
   },
   columns: {

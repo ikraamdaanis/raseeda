@@ -114,7 +114,6 @@ export function InvoicePdfItemsTable({
     table: {
       display: "flex",
       width: "100%",
-      marginBottom: 20,
       borderWidth: 1,
       borderColor: invoice.tableSettings.borderColor,
       borderRadius: 4,
