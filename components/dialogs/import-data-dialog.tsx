@@ -22,6 +22,7 @@ import {
 import { Label } from "~/components/ui/label";
 import { Textarea } from "~/components/ui/textarea";
 import { APP_NAME } from "~/consts/app";
+import { useMediaQuery } from "~/hooks/use-media-query";
 import { cn } from "~/lib/utils";
 import type { ExportFile, ImportAnalysis, ImportResult } from "~/types";
 import {
@@ -83,6 +84,8 @@ export function ImportDataDialog({
     size: number;
   } | null>(null);
   const [isDraggingFile, setIsDraggingFile] = useState(false);
+  // A phone has no files to drag, so its drop zone only offers the picker.
+  const canDropFile = useMediaQuery("(hover: hover)");
   const fileInputRef = useRef<HTMLInputElement>(null);
   // dragenter and dragleave fire for every child the pointer crosses, so the
   // drop zone stays lit until the drag has left the dialog as a whole.
@@ -389,7 +392,9 @@ export function ImportDataDialog({
                     <span className="text-sm font-medium">
                       {isDraggingFile
                         ? "Drop to import"
-                        : "Drop a .json export file here"}
+                        : canDropFile
+                          ? "Drop a .json export file here"
+                          : "Your .json export file"}
                     </span>
                     <Button
                       variant="outline"
@@ -458,6 +463,8 @@ export function ImportDataDialog({
                     placeholder='{ "meta": { … }, "invoices": [ … ] }'
                     spellCheck={false}
                     autoComplete="off"
+                    autoCorrect="off"
+                    autoCapitalize="off"
                     rows={3}
                     readOnly={isAnalyzing}
                     className="max-h-32 font-mono text-xs md:text-xs"
