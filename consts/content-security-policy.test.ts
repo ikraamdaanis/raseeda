@@ -2,10 +2,9 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { CONTENT_SECURITY_POLICY } from "~/consts/content-security-policy";
 import { SECURITY_HEADERS } from "~/consts/security-headers";
-import { SITE_TEMPLATES } from "~/consts/site-templates";
 
-// The pre-rendered pages are static files, so their headers come from
-// public/_headers rather than the Worker; the two copies must match.
+// Every page is a static file, so its headers come from public/_headers
+// rather than the Worker; the two copies must match.
 function readHeaderRules() {
   const rules = new Map<string, Map<string, string>>();
   let currentHeaders: Map<string, string> | undefined;
@@ -33,18 +32,17 @@ function readHeaderRules() {
 describe("Content-Security-Policy", () => {
   const rules = readHeaderRules();
 
-  it.each([
-    "/",
-    "/index.html",
-    "/invoice-template",
-    "/invoice-template.html",
-    ...SITE_TEMPLATES.flatMap(({ path }) => [path, `${path}.html`]),
-    "/privacy",
-    "/privacy.html"
-  ])("public/_headers sends the Worker's policy for %s", path => {
-    expect(rules.get(path)?.get("content-security-policy")).toBe(
+  // The build hashes the inline scripts into this one line, so no other rule
+  // may send a policy of its own: the browser would enforce both.
+  it("public/_headers sends the Worker's policy on every static file, once", () => {
+    expect(rules.get("/*")?.get("content-security-policy")).toBe(
       CONTENT_SECURITY_POLICY
     );
+    expect(
+      [...rules.values()].filter(headers =>
+        headers.has("content-security-policy")
+      )
+    ).toHaveLength(1);
   });
 
   // Other sites get no Referer; the site's own pages keep it, so a page loaded

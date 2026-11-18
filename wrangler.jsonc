@@ -4,6 +4,12 @@
   "compatibility_date": "2025-09-02",
   "compatibility_flags": ["nodejs_compat"],
   "main": "./app/server.ts",
+  // Every page is a static file, so only the usage events run the Worker;
+  // an address with no file gets the pre-rendered 404 page.
+  "assets": {
+    "not_found_handling": "404-page",
+    "run_worker_first": ["/api/*"]
+  },
   "analytics_engine_datasets": [
     { "binding": "ANALYTICS", "dataset": "usage_events" }
   ]

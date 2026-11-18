@@ -7,6 +7,7 @@ import { createHash } from "node:crypto";
 import { readdirSync, readFileSync } from "node:fs";
 import type { Plugin } from "vite";
 import { defineConfig } from "vite";
+import { PRERENDER_NOT_FOUND_HEADER } from "./consts/prerender.ts";
 import { SITE_TEMPLATES } from "./consts/site-templates.ts";
 
 // The PDF's font files (styles/pdf-fonts/), by name without the extension.
@@ -174,9 +175,23 @@ export default defineConfig({
           prerender: { enabled: true },
           sitemap: { lastmod: lastChanged(PAGE_FILES.home) }
         },
+        // The editor's page is only its loading screen (the editor itself is
+        // client-only), the same for everyone, so it's a static file too.
         {
           path: "/create",
-          prerender: { enabled: false },
+          prerender: { enabled: true, autoSubfolderIndex: false },
+          sitemap: { exclude: true }
+        },
+        // The page Cloudflare sends for every address that has no file
+        // (wrangler.jsonc). The header has app/server.ts answer 200, since
+        // the prerenderer only writes a page that does.
+        {
+          path: "/404",
+          prerender: {
+            enabled: true,
+            autoSubfolderIndex: false,
+            headers: { [PRERENDER_NOT_FOUND_HEADER]: "1" }
+          },
           sitemap: { exclude: true }
         },
         {
