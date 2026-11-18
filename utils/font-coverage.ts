@@ -1,4 +1,5 @@
 import { FONT_COVERAGE } from "~/consts/font-coverage";
+import { INVOICE_FONTS } from "~/consts/invoice-fonts";
 import type { InvoiceFont } from "~/types";
 
 const rangesByFont = new Map<InvoiceFont, [number, number][]>();
@@ -52,4 +53,66 @@ export function fontHasCharacters(font: InvoiceFont, text: string): boolean {
   }
 
   return true;
+}
+
+// Line breaks and tabs print as space, so no font needs a glyph for them.
+const LAYOUT_CHARACTERS = new Set(["\n", "\r", "\t"]);
+
+// The characters of the text the invoice font has no glyph for, each once, in
+// the order they first appear. react-pdf has no font fallback, so these print
+// as junk in the PDF, though the page shows them in a system font.
+export function getUndrawableCharacters(
+  font: InvoiceFont,
+  text: string
+): string[] {
+  const ranges = getRanges(font);
+  const missing = new Set<string>();
+
+  for (const character of text) {
+    if (LAYOUT_CHARACTERS.has(character)) continue;
+
+    const codePoint = character.codePointAt(0);
+
+    if (codePoint !== undefined && !coversCodePoint(ranges, codePoint)) {
+      missing.add(character);
+    }
+  }
+
+  return [...missing];
+}
+
+// What the invoice's font can't print of its text, split into the characters
+// another invoice font draws and those none does (emoji, scripts no invoice
+// font has), and the fonts that draw every one of the first, in the order the
+// font picker lists them. Null when the font draws it all.
+export function getFontCoverageGaps(
+  font: InvoiceFont,
+  text: string
+): {
+  characters: string[];
+  unprintable: string[];
+  fonts: InvoiceFont[];
+} | null {
+  const missing = getUndrawableCharacters(font, text);
+
+  if (missing.length === 0) return null;
+
+  const others = INVOICE_FONTS.map(definition => definition.id).filter(
+    id => id !== font
+  );
+  const unprintable = missing.filter(character =>
+    others.every(id => !fontHasCharacters(id, character))
+  );
+  const characters = missing.filter(
+    character => !unprintable.includes(character)
+  );
+
+  return {
+    characters,
+    unprintable,
+    fonts:
+      characters.length === 0
+        ? []
+        : others.filter(id => fontHasCharacters(id, characters.join("")))
+  };
 }

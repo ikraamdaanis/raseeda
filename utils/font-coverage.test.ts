@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { INVOICE_FONTS } from "~/consts/invoice-fonts";
-import { fontHasCharacters } from "~/utils/font-coverage";
+import { fontHasCharacters, getFontCoverageGaps } from "~/utils/font-coverage";
 
 // Polish, Czech, Turkish, Romanian, Hungarian, German and the Nordic letters.
 const LATIN_EXTENDED =
@@ -35,5 +35,29 @@ describe("fontHasCharacters", () => {
 
   it("covers an empty string", () => {
     expect(fontHasCharacters("inter", "")).toBe(true);
+  });
+});
+
+describe("getFontCoverageGaps", () => {
+  it("is null when the font draws everything, line breaks included", () => {
+    expect(
+      getFontCoverageGaps("schibsted-grotesk", "Café Zoë\n\tŁódź")
+    ).toBeNull();
+  });
+
+  it("names Greek and Cyrillic a default invoice can't print, and the fonts that can", () => {
+    expect(getFontCoverageGaps("schibsted-grotesk", "Αθήνα / Москва")).toEqual({
+      characters: ["Α", "θ", "ή", "ν", "α", "М", "о", "с", "к", "в", "а"],
+      unprintable: [],
+      fonts: ["inter", "ibm-plex-sans", "jetbrains-mono"]
+    });
+  });
+
+  it("sets apart what no invoice font draws", () => {
+    expect(getFontCoverageGaps("inter", "株式会社 🚀 Москва")).toEqual({
+      characters: [],
+      unprintable: ["株", "式", "会", "社", "🚀"],
+      fonts: []
+    });
   });
 });

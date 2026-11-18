@@ -5,18 +5,23 @@ import {
   IconX
 } from "@tabler/icons-react";
 import type { ReactNode } from "react";
-import { createContext, useContext, useState } from "react";
+import { createContext, Fragment, useContext, useState } from "react";
 import { toast } from "sonner";
+import { useStyleChoices } from "~/components/editor/shell/inspector/style-section";
 import { APP_NAME } from "~/consts/app";
+import { INVOICE_FONTS } from "~/consts/invoice-fonts";
 import { useFileActions } from "~/context/file-actions-context";
 import { useInvoiceDocument } from "~/context/invoice-document-context";
+import { useFontCoverageGaps } from "~/hooks/use-font-coverage-gaps";
 import { cn } from "~/lib/utils";
+import type { InvoiceFont } from "~/types";
 
 // Says where the open invoice stands, but only when something needs saying.
 // While saves work nothing shows at all (no "Saving…" flicker), as in Google
 // Docs and Figma. A failed save stays here until it's resolved, announced once
 // per run of failures rather than on every retry. In Safari, which clears a
-// site's storage after a week unused, it also suggests a backup, once.
+// site's storage after a week unused, it also suggests a backup, once. Last,
+// it says when the invoice's font can't print some of its text.
 export function DocumentStatusBanner() {
   const {
     status,
@@ -117,7 +122,63 @@ export function DocumentStatusBanner() {
     );
   }
 
-  return null;
+  return <FontCoverageNote />;
+}
+
+// How many of the characters a note names before it says how many more.
+const NAMED_CHARACTERS = 8;
+
+// How many fonts a note offers to switch to.
+const OFFERED_FONTS = 3;
+
+function nameCharacters(characters: string[]) {
+  const named = characters.slice(0, NAMED_CHARACTERS).join(" ");
+  const more = characters.length - NAMED_CHARACTERS;
+
+  return more > 0 ? `${named} and ${more} more` : named;
+}
+
+function fontName(font: InvoiceFont) {
+  return INVOICE_FONTS.find(definition => definition.id === font)?.name ?? font;
+}
+
+// The PDF has no font fallback, so a character the invoice's font has no
+// glyph for prints as junk, though the page shows it in a system font. This
+// names them once, with the fonts that print them a click away, and sets
+// apart those no invoice font has (emoji, scripts none covers).
+function FontCoverageNote() {
+  const gaps = useFontCoverageGaps();
+  const { theme, selectFont } = useStyleChoices();
+
+  if (!gaps) return null;
+
+  const fonts = gaps.fonts.slice(0, OFFERED_FONTS);
+
+  return (
+    <Banner tone="warning">
+      {gaps.characters.length > 0 && (
+        <>
+          {`${fontName(theme.font)} can’t print ${nameCharacters(gaps.characters)}, so the PDF would show them wrong.`}{" "}
+          {fonts.length > 0 && (
+            <>
+              Switch to{" "}
+              {fonts.map((font, index) => (
+                <Fragment key={font}>
+                  {index > 0 && (index === fonts.length - 1 ? " or " : ", ")}
+                  <Action onClick={() => selectFont(font)}>
+                    {fontName(font)}
+                  </Action>
+                </Fragment>
+              ))}
+              .{" "}
+            </>
+          )}
+        </>
+      )}
+      {gaps.unprintable.length > 0 &&
+        `${nameCharacters(gaps.unprintable)} won’t print in any font.`}
+    </Banner>
+  );
 }
 
 // Each tone's tint, icon and text: soft on the light editor, and on the dark
