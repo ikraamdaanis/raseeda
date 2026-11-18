@@ -54,6 +54,7 @@ import {
   useHeaderState
 } from "~/components/home/site-header";
 import { APP_NAME } from "~/consts/app";
+import { PROOF_EXCERPTS } from "~/consts/privacy-proofs";
 import { useOnScreen } from "~/hooks/use-on-screen";
 import { typeClass } from "~/lib/type-scale";
 import { cn } from "~/lib/utils";
@@ -227,7 +228,7 @@ const QUESTION_GROUPS: {
       {
         question: "Can I use it on my phone?",
         answer:
-          "Yes. The editor opens fitted to your screen. Zoom in to edit a section, then download the PDF from the top bar."
+          "Yes. On a phone you fill the invoice in as a form, one part at a time, and the Page tab shows it as it prints. Download the PDF from the top bar."
       }
     ]
   },
@@ -853,8 +854,8 @@ function ComparisonCell({
 
 // Each promise on the page, first as what it means for your invoices
 // (`outcome`, in plain words), then as the code that keeps it: the real
-// lines, with their real line numbers, from the file on GitHub. `highlight`
-// is the line that does the work.
+// lines, with their real line numbers, from the file on GitHub
+// (`PROOF_EXCERPTS`).
 const PROOFS: {
   title: string;
   description: string;
@@ -878,16 +879,7 @@ const PROOFS: {
       },
       { label: "Any other website", status: "Blocked", isRefused: true }
     ],
-    path: "consts/content-security-policy.ts",
-    firstLine: 12,
-    lines: [
-      `  "img-src 'self' data: blob:",`,
-      `  "font-src 'self' data:",`,
-      `  "connect-src 'self' data: blob:",`,
-      `  "worker-src 'self' blob:",`,
-      `  "frame-src blob:",`
-    ],
-    highlight: 14,
+    ...PROOF_EXCERPTS.contentSecurityPolicy,
     hues: [TILE_HUES.sky, TILE_HUES.sage]
   },
   {
@@ -899,16 +891,7 @@ const PROOFS: {
       { label: "Logos and images", status: "This device" },
       { label: "Copy on a server", status: "None", isRefused: true }
     ],
-    path: "db/index.ts",
-    firstLine: 177,
-    lines: [
-      "class InvoiceDatabase extends Dexie {",
-      "  templates!: Table<InvoiceTemplate, string>;",
-      "  invoices!: Table<InvoiceDocument, string>;",
-      "  images!: Table<StoredImage, string>;",
-      "  versions!: Table<InvoiceVersion, string>;"
-    ],
-    highlight: 177,
+    ...PROOF_EXCERPTS.database,
     hues: [TILE_HUES.lavender, TILE_HUES.sky]
   },
   {
@@ -920,16 +903,7 @@ const PROOFS: {
       { label: "Requests to other sites", status: "None", isRefused: true },
       { label: "Checked", status: "Every change" }
     ],
-    path: "e2e/home.spec.ts",
-    firstLine: 178,
-    lines: [
-      `    return url.protocol.startsWith("http") && url.origin !== homeOrigin;`,
-      "  });",
-      "",
-      "  expect(requested.length).toBeGreaterThan(0);",
-      "  expect(elsewhere).toEqual([]);"
-    ],
-    highlight: 182,
+    ...PROOF_EXCERPTS.homeTest,
     hues: [TILE_HUES.butter, TILE_HUES.blush]
   }
 ];
