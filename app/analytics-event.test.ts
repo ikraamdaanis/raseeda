@@ -174,6 +174,22 @@ describe("handleAnalyticsEvent", () => {
     ]);
   });
 
+  it("stores a PDF with every section printed", async () => {
+    const { dataset, writeDataPoint } = fakeDataset();
+    const mask = 2 ** SECTION_BITS.length - 1;
+
+    await handleAnalyticsEvent(
+      eventRequest({
+        body: `pdf_downloaded r=producthunt s=producthunt l=other d=standalone c=other n=unknown x=${mask}`
+      }),
+      dataset
+    );
+
+    const point = writeDataPoint.mock.calls[0]?.[0];
+
+    expect(point?.doubles).toEqual([1, ...SECTION_BITS.map(() => 1)]);
+  });
+
   it("takes the fields in any order", async () => {
     const { dataset, writeDataPoint } = fakeDataset();
 

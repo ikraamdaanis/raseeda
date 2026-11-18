@@ -14,9 +14,9 @@ import {
 import type { AnalyticsEvent } from "~/types";
 import { bucketUserAgent, isBotUserAgent } from "~/utils/user-agent";
 
-// The longest body an event can have is 89 bytes ("pdf_downloaded
+// The longest body an event can have is 90 bytes ("pdf_downloaded
 // r=producthunt s=producthunt l=other d=standalone c=other n=unknown
-// x=32767"). A longer one isn't an event, so it's dropped without being read in full.
+// x=131071"). A longer one isn't an event, so it's dropped without being read in full.
 const MAX_BODY_BYTES = 128;
 
 // The values each field may take. Anything else drops the event, so nothing
@@ -157,7 +157,9 @@ function readFields(words: string[], expected: readonly string[]) {
 
 function isAllowedValue(key: string, value: string) {
   if (key === "x") {
-    return /^\d{1,5}$/.test(value) && Number(value) <= MAX_SECTION_MASK;
+    // Any number of digits, so a new section never outgrows the check;
+    // MAX_SECTION_MASK bounds the value.
+    return /^\d+$/.test(value) && Number(value) <= MAX_SECTION_MASK;
   }
 
   return FIELD_VALUES[key]?.includes(value) ?? false;
