@@ -98,23 +98,18 @@ test("section and column labels are editable", async ({ page }) => {
   await expect(page.getByLabel("Service, item 1")).toBeVisible();
 });
 
-test("a laptop's first visit opens the page fitted, cut off nowhere", async ({
-  page
-}) => {
-  await page.setViewportSize({ width: 1280, height: 720 });
-  await page.goto("/create");
+// A first visit opens at full size on any screen wider than a phone, as a
+// document editor does, so the zoom never changes by itself.
+for (const viewport of [
+  { width: 1280, height: 720 },
+  { width: 1440, height: 900 }
+]) {
+  test(`a ${viewport.width}px screen's first visit opens the page at full size`, async ({
+    page
+  }) => {
+    await page.setViewportSize(viewport);
+    await page.goto("/create");
 
-  await expect(
-    page.getByRole("button", { name: /^Zoom \d+%, fitted to screen$/ })
-  ).toBeVisible();
-  await expect(page.locator("[data-paper]")).toBeInViewport({ ratio: 1 });
-});
-
-test("a wide screen's first visit opens the page at full size", async ({
-  page
-}) => {
-  await page.setViewportSize({ width: 1440, height: 900 });
-  await page.goto("/create");
-
-  await expect(page.getByRole("button", { name: "Zoom 100%" })).toBeVisible();
-});
+    await expect(page.getByRole("button", { name: "Zoom 100%" })).toBeVisible();
+  });
+}

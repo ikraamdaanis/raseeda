@@ -10,10 +10,6 @@ type CanvasView = "fit" | number;
 
 const VIEW_STORAGE_KEY = "editor-zoom";
 
-// From this width the page at full size (about 880px with the desk's margins)
-// fits between both side panels (256px and 288px), which a first visit opens.
-const FULL_SIZE_FITS_QUERY = "(min-width: 1424px)";
-
 // The least a double-tap on the fitted page zooms in to: full size.
 export const DOUBLE_TAP_ZOOM = 1;
 
@@ -51,15 +47,13 @@ export function CanvasViewProvider({ children }: { children: ReactNode }) {
   // The editor only renders on the client, so the viewport is known here.
   // Phones always open fitted, since the A4 page is wider than the screen and
   // only read there (they edit in a form). Wider screens reopen at the zoom
-  // they were left at, first opening at full size where the page fits beside
-  // both panels, and fitted where it would be cut off (most laptops).
+  // they were left at, first opening at full size, as a document editor
+  // does: a fixed zoom never changes by itself, where a fitted page rescales
+  // whenever the space around it does.
   const [view, setViewState] = useState<CanvasView>(() => {
     if (window.matchMedia(NARROW_VIEWPORT_QUERY).matches) return "fit";
 
-    return (
-      readStoredValue(VIEW_STORAGE_KEY, parseView) ??
-      (window.matchMedia(FULL_SIZE_FITS_QUERY).matches ? 1 : "fit")
-    );
+    return readStoredValue(VIEW_STORAGE_KEY, parseView) ?? 1;
   });
 
   function setView(next: CanvasView) {
