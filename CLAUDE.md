@@ -28,6 +28,7 @@ bun run dev:phone    # Dev server on an https address for a phone (cloudflared)
 bun run build        # Production build
 bun run serve        # Preview production build
 bun run test         # Run the test suite (Vitest)
+bun run test:e2e:production  # Build, serve, and run e2e/production (service worker, prerendered pages)
 bun run lint         # ESLint
 bun run format       # Prettier
 bun run check        # Format + lint fix

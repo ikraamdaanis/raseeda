@@ -1,8 +1,8 @@
 // The app's service worker, so every visit after the first loads from the
 // device and the editor opens offline. vite.config.ts writes it into the build
 // as /sw.js, with BUILD ({ version, pages, files }) defined above this code:
-// pages lists the site's pages, and files the build's scripts, styles and
-// latin fonts.
+// pages lists the site's pages, and files the build's scripts, styles, latin
+// fonts and the PDF's fonts.
 //
 // - The pages are served from the cache at once and refreshed in the
 //   background, so a deploy shows from the visit after it lands.

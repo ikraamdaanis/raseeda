@@ -93,6 +93,11 @@ jobs:
       - name: Run E2E tests
         run: bunx playwright test
 
+      # Builds the site and serves it as Cloudflare does, for the service
+      # worker and prerendered pages.
+      - name: Run production E2E tests
+        run: bun run test:e2e:production
+
       - name: Upload report
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v4

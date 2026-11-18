@@ -4,15 +4,24 @@ import { tanstackStart } from "@tanstack/react-start/plugin/vite";
 import viteReact from "@vitejs/plugin-react";
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import type { Plugin } from "vite";
 import { defineConfig } from "vite";
 import { SITE_TEMPLATES } from "./consts/site-templates.ts";
 
+// The PDF's font files (styles/pdf-fonts/), by name without the extension.
+// Every PDF fetches all four weights of its font first, so a PDF can only be
+// made offline once they're saved.
+const PDF_FONT_NAMES = new Set(
+  readdirSync(new URL("styles/pdf-fonts", import.meta.url))
+    .filter(fileName => fileName.endsWith(".woff"))
+    .map(fileName => fileName.replace(/\.woff$/, ""))
+);
+
 // Writes the service worker (scripts/service-worker.js) into the client build
 // as /sw.js, headed by what it saves on install: the pages, every script and
-// style, and each font's latin subset. The version names its cache, so a build
-// with any changed page list or file installs fresh.
+// style, each font's latin subset and the PDF fonts. The version names its
+// cache, so a build with any changed page list or file installs fresh.
 function serviceWorker(pages: string[]): Plugin {
   return {
     name: "service-worker",
@@ -22,7 +31,10 @@ function serviceWorker(pages: string[]): Plugin {
         .filter(
           fileName =>
             /\.(js|css)$/.test(fileName) ||
-            /-latin-(?!ext)[^/]*\.woff2$/.test(fileName)
+            /-latin-(?!ext)[^/]*\.woff2$/.test(fileName) ||
+            PDF_FONT_NAMES.has(
+              fileName.replace(/^assets\/(.+)-[\w-]{8}\.woff$/, "$1")
+            )
         )
         .sort()
         .map(fileName => `/${fileName}`);
