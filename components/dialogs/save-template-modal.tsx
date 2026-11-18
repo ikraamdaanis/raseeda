@@ -87,6 +87,10 @@ export function SaveTemplateModal({
 }) {
   const [pending, startTransition] = useTransition();
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>("new");
+  // Set once saved and kept while the dialog fades, so its buttons never show
+  // pressable again on the way out.
+  const [hasSaved, setHasSaved] = useState(false);
+  const isBusy = pending || hasSaved;
 
   const selectedTemplate = templates.find(
     template => template.id === selectedTemplateId
@@ -108,18 +112,19 @@ export function SaveTemplateModal({
     setSelectedTemplateId(templateId);
   }
 
-  // Reset on every close path (Cancel, Escape, overlay click, successful save)
-  // so a previously selected overwrite target never carries into the next open.
-  // Delayed so the reset isn't visible during the dialog's close animation.
   function handleOpenChange(nextOpen: boolean) {
     onOpenChange(nextOpen);
+  }
 
-    if (!nextOpen) {
-      setTimeout(() => {
-        setSelectedTemplateId("new");
-        form.reset();
-      }, 500);
-    }
+  // Reset after every close (Cancel, Escape, overlay click, successful save)
+  // so a previously selected overwrite target never carries into the next
+  // open, once the dialog has faded so the reset isn't seen.
+  function handleOpenChangeComplete(isOpen: boolean) {
+    if (isOpen) return;
+
+    setSelectedTemplateId("new");
+    setHasSaved(false);
+    form.reset();
   }
 
   function handleSubmit(data: SaveTemplateFormData) {
@@ -167,6 +172,7 @@ export function SaveTemplateModal({
           toast.success("Template created successfully!");
         }
 
+        setHasSaved(true);
         handleOpenChange(false);
       } catch (error) {
         toast.error(
@@ -177,7 +183,11 @@ export function SaveTemplateModal({
   }
 
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
+    <Dialog
+      open={open}
+      onOpenChange={handleOpenChange}
+      onOpenChangeComplete={handleOpenChangeComplete}
+    >
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Save as Template</DialogTitle>
@@ -252,14 +262,14 @@ export function SaveTemplateModal({
             type="button"
             variant="secondary"
             onClick={() => handleOpenChange(false)}
-            disabled={pending}
+            disabled={isBusy}
           >
             Cancel
           </Button>
           <Button
             type="button"
             onClick={form.handleSubmit(handleSubmit)}
-            disabled={pending}
+            disabled={isBusy}
           >
             {selectedTemplateId !== "new"
               ? "Update Template"

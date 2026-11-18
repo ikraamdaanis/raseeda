@@ -38,13 +38,21 @@ export function ConfirmDeleteDialog({
     try {
       await onConfirm();
       onOpenChange(false);
-    } finally {
+    } catch (error) {
       setPending(false);
+      throw error;
     }
   }
 
+  // The button stays busy while the dialog fades, and is reset once it's gone.
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog
+      open={open}
+      onOpenChange={onOpenChange}
+      onOpenChangeComplete={isOpen => {
+        if (!isOpen) setPending(false);
+      }}
+    >
       <DialogContent>
         <DialogHeader
           icon={

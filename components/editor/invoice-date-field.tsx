@@ -68,7 +68,6 @@ export function InvoiceDateField({
 
   function handleOpenChange(nextOpen: boolean) {
     setOpen(nextOpen);
-    setRangeStart(null);
   }
 
   function handleSelect(date: Date | undefined) {
@@ -108,7 +107,13 @@ export function InvoiceDateField({
   }
 
   return (
-    <Popover open={open} onOpenChange={handleOpenChange}>
+    <Popover
+      open={open}
+      onOpenChange={handleOpenChange}
+      onOpenChangeComplete={isOpen => {
+        if (!isOpen) setRangeStart(null);
+      }}
+    >
       <PopoverTrigger
         aria-label={`${label}, ${text || placeholder}`}
         data-date={value}

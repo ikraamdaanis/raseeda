@@ -151,8 +151,14 @@ function CustomCurrency({
   const { currency, currencyCode, setCurrency } = useCurrencySlice();
   const { currencyConversion, setSecondCurrency } =
     useCurrencyConversionSlice();
+  // The currency being typed stays set while the dialog fades, so its title
+  // and fields don't switch to the other currency's on the way out.
+  const [shownFor, setShownFor] = useState(customFor);
+
+  if (customFor !== null && customFor !== shownFor) setShownFor(customFor);
+
   const custom =
-    customFor === "second"
+    shownFor === "second"
       ? {
           symbol: currencyConversion.currency,
           code: currencyConversion.currencyCode,
@@ -176,7 +182,7 @@ function CustomCurrency({
       }}
       currentSymbol={isCustom ? customSymbol : ""}
       currentCode={isCustom ? custom.code : ""}
-      title={customFor === "second" ? "Custom second currency" : undefined}
+      title={shownFor === "second" ? "Custom second currency" : undefined}
       isTaken={(symbol, code) =>
         custom.exclude !== undefined &&
         isSameCurrency(custom.exclude, {

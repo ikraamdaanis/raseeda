@@ -100,16 +100,22 @@ export function VersionHistoryDialog({
         description: "Undo puts the invoice back as it was."
       });
     } catch (failure) {
+      setRestoringId(null);
       toast.error(
         failure instanceof Error ? failure.message : "Failed to restore"
       );
-    } finally {
-      setRestoringId(null);
     }
   }
 
+  // A restored version's row stays busy while the dialog fades.
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog
+      open={open}
+      onOpenChange={onOpenChange}
+      onOpenChangeComplete={isOpen => {
+        if (!isOpen) setRestoringId(null);
+      }}
+    >
       <DialogContent className="flex max-h-[85vh] w-lg flex-col">
         <DialogHeader
           icon={

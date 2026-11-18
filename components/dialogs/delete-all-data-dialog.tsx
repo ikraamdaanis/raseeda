@@ -26,11 +26,8 @@ export function DeleteAllDataDialog({
 }) {
   const [pending, setPending] = useState(false);
 
-  // The dialog stays mounted while closed, so the button comes out of its
-  // loading state once the dialog has faded.
   function handleClose() {
     onOpenChange(false);
-    setTimeout(() => setPending(false), 300);
   }
 
   async function handleConfirm() {
@@ -49,6 +46,11 @@ export function DeleteAllDataDialog({
       open={open}
       onOpenChange={next => {
         if (!next && !pending) handleClose();
+      }}
+      // The dialog stays mounted while closed, so the button comes out of its
+      // loading state once the dialog has faded.
+      onOpenChangeComplete={isOpen => {
+        if (!isOpen) setPending(false);
       }}
     >
       <DialogContent>
