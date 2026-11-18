@@ -15,9 +15,9 @@ import {
 
 // Group H: the documents panel, the editor's one library view.
 
-// Opens the documents panel from the project menu, as Open Invoice does.
+// Opens the documents panel from the project menu, as Find Document does.
 async function openLibrary(page: Page) {
-  await clickFileMenuItem(page, "Open Invoice");
+  await clickFileMenuItem(page, "Find Document…");
 
   const panel = documentsPanel(page);
 
@@ -359,26 +359,26 @@ test("Cmd/Ctrl+O opens the panel on its documents with focus in its search", asy
   ).toBeVisible();
 });
 
-test("the command palette's Open invoice focuses the panel's search", async ({
+test("the command palette's Find document focuses the panel's search", async ({
   page
 }) => {
   await gotoEditorReady(page, "Palette open");
   await pressShortcut(page, "Mod+k");
-  await page.getByRole("option", { name: /Open invoice…/ }).click();
+  await page.getByRole("option", { name: /Find document…/ }).click();
 
   await expect(
     documentsPanel(page).getByRole("searchbox", { name: "Search documents" })
   ).toBeFocused();
 });
 
-test("Open Template opens the panel on its Templates tab", async ({
+test("Find Template opens the panel on its Templates tab", async ({
   page,
   seedTemplate
 }) => {
   await gotoEditorReady(page, "Templatable");
   await seedTemplate({ name: "My template" });
 
-  await clickFileMenuItem(page, "Open Template");
+  await clickFileMenuItem(page, "Find Template…");
 
   const panel = documentsPanel(page);
 

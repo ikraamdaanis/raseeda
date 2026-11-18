@@ -116,7 +116,7 @@ export function ProjectMenu() {
           disabled={actions.pending}
         >
           <IconFolderOpen aria-hidden="true" />
-          Open Invoice
+          Find Document…
           <DropdownMenuShortcut>{shortcutLabel("⌘O")}</DropdownMenuShortcut>
         </DropdownMenuItem>
         <DropdownMenuItem
@@ -182,7 +182,7 @@ export function ProjectMenu() {
           disabled={actions.pending}
         >
           <IconBookmark aria-hidden="true" />
-          Open Template
+          Find Template…
         </DropdownMenuItem>
         <DropdownMenuItem
           onClick={actions.saveAsTemplate}

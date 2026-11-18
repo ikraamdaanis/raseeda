@@ -194,8 +194,9 @@ function PaletteCommands() {
           icon={<IconFolderOpen />}
           onSelect={run(actions.showOpenInvoice)}
           shortcut="⌘O"
+          keywords={["open", "search", "invoice"]}
         >
-          Open invoice…
+          Find document…
         </PaletteItem>
         {isRecord && status === "editing" && (
           <PaletteItem
@@ -233,8 +234,9 @@ function PaletteCommands() {
         <PaletteItem
           icon={<IconFile />}
           onSelect={run(actions.showOpenTemplate)}
+          keywords={["open", "search"]}
         >
-          Open template…
+          Find template…
         </PaletteItem>
         <PaletteItem
           icon={<IconDeviceFloppy />}

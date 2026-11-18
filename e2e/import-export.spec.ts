@@ -47,7 +47,7 @@ test("a full export/import round-trip restores the data", async ({
   await expect(dialog.getByText(/to this browser\./)).toBeVisible();
   await dialog.getByRole("button", { name: "Done" }).click();
 
-  await clickFileMenuItem(page, "Open Invoice");
+  await clickFileMenuItem(page, "Find Document…");
   await expect(libraryRow(page, "Roundtrip doc")).toBeVisible();
 });
 
@@ -67,7 +67,7 @@ test("importing the same file again conflict-renames duplicates", async ({
   await expect(dialog.getByText(/to this browser\./)).toBeVisible();
   await dialog.getByRole("button", { name: "Done" }).click();
 
-  await clickFileMenuItem(page, "Open Invoice");
+  await clickFileMenuItem(page, "Find Document…");
   await expect(documentsPanel(page).getByText(/\(imported\)/)).toBeVisible();
 });
 
@@ -108,7 +108,7 @@ test("importing a record with an unparseable date does not crash [R]", async ({
 
   // The documents panel still lists the imported record (a conflict-renamed
   // copy sits alongside the original) without throwing.
-  await clickFileMenuItem(page, "Open Invoice");
+  await clickFileMenuItem(page, "Find Document…");
   await expect(libraryRow(page, "Datey doc").first()).toBeVisible();
   expect(pageErrors).toEqual([]);
 });
@@ -186,7 +186,7 @@ test("pasting an export's JSON imports it like a chosen file", async ({
   await expect(dialog.getByText(/to this browser\./)).toBeVisible();
   await dialog.getByRole("button", { name: "Done" }).click();
 
-  await clickFileMenuItem(page, "Open Invoice");
+  await clickFileMenuItem(page, "Find Document…");
   await expect(libraryRow(page, "Pasted doc")).toBeVisible();
 });
 

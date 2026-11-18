@@ -127,8 +127,8 @@ const EditorUiContext = createContext<{
   setPaletteOpen: (open: boolean) => void;
   libraryTab: LibraryTab;
   setLibraryTab: (tab: LibraryTab) => void;
-  // Opens the documents panel on a tab with focus in its search (⌘O, Open
-  // Invoice, Open Template); the panel focuses its search each time this
+  // Opens the documents panel on a tab with focus in its search (⌘O, Find
+  // Document, Find Template); the panel focuses its search each time this
   // count goes up.
   showLibrary: (tab: LibraryTab) => void;
   librarySearchRequest: number;

@@ -93,7 +93,7 @@ function useWatchedList<TRow>(
 // pages list in Framer: searchable, sortable, filterable and grouped, with a
 // menu on each row for the rest. Each row that isn't an invoice carries its
 // type's pill (issue #215). Opening one saves the open document first,
-// as the project menu does. ⌘O, Open Invoice and Open Template open it on a
+// as the project menu does. ⌘O, Find Document and Find Template open it on a
 // tab with focus in the search, except on a phone, where that would raise the
 // keyboard over the sheet before anyone asked to search. The tab, sort,
 // grouping and filters are remembered across reloads; the search is not.

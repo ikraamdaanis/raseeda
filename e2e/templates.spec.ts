@@ -20,7 +20,7 @@ test("saves the current invoice as a template", async ({
   await nameInvoice(page, "Templatable doc");
   await seedTemplate({ name: "My template" });
 
-  await clickFileMenuItem(page, "Open Template");
+  await clickFileMenuItem(page, "Find Template…");
 
   await expect(libraryRow(page, "My template")).toBeVisible();
 });
@@ -34,7 +34,7 @@ test("opening a template starts a new invoice from it [R]", async ({
   await nameInvoice(page, "Base doc");
   await seedTemplate({ name: "Reusable" });
 
-  await clickFileMenuItem(page, "Open Template");
+  await clickFileMenuItem(page, "Find Template…");
   await libraryRow(page, "Reusable").click();
 
   // The template's content starts a new invoice with an automatic name and the
@@ -58,7 +58,7 @@ test("templates can be renamed and deleted from the panel", async ({
   await nameInvoice(page, "Templating doc");
   await seedTemplate({ name: "First template" });
 
-  await clickFileMenuItem(page, "Open Template");
+  await clickFileMenuItem(page, "Find Template…");
 
   const panel = documentsPanel(page);
   const rename = page.getByRole("dialog", { name: "Rename Template" });

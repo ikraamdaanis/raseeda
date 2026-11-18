@@ -191,7 +191,7 @@ test("export and import bring the signature along", async ({
   await dialog.getByRole("button", { name: "Import", exact: true }).click();
   await expect(dialog.getByText(/to this browser\./)).toBeVisible();
   await dialog.getByRole("button", { name: "Done" }).click();
-  await clickFileMenuItem(page, "Open Invoice");
+  await clickFileMenuItem(page, "Find Document…");
   await libraryRow(page, "Signed doc").click();
 
   await expect(page.getByRole("img", { name: "Signature" })).toBeVisible();
