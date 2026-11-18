@@ -24,6 +24,7 @@ function bankField(page: Page, name: string) {
 async function sendPastInvoice(page: Page) {
   await gotoEditorReady(page, "Past invoice");
   await page.getByLabel("From details").fill("Jane Doe\n1 High Street");
+  await page.getByRole("button", { name: "More bank fields" }).click();
   await page.getByLabel("IBAN label").fill("Konto");
   await bankField(page, "Konto").fill("GB29 NWBK 6016 1331 9268 19");
   await expect.poll(() => savedContains(page, "GB29 NWBK")).toBe(true);
@@ -76,6 +77,7 @@ test("never overwrites payment details already typed", async ({ page }) => {
 
   await expect(from).toHaveValue("Jane Doe\n1 High Street");
   await expect(bankField(page, "Bank name")).toHaveValue("Acme Bank");
+  await page.getByRole("button", { name: "More bank fields" }).click();
   await expect(bankField(page, "IBAN")).toHaveValue("");
 });
 
