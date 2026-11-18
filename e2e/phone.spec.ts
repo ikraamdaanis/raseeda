@@ -186,6 +186,55 @@ test("the bank rows are the ones the currency needs, the rest a tap away", async
   ).toHaveCount(0);
 });
 
+test.describe("in a British browser", () => {
+  test.use({ locale: "en-GB" });
+
+  test("more bank rows go under the ones the currency needs", async ({
+    page
+  }) => {
+    await page.goto("/create");
+
+    const paymentPart = page.getByRole("region", { name: "Payment details" });
+    const bankRowOrder = () =>
+      paymentPart
+        .locator("[data-field^='paymentDetails.']")
+        .evaluateAll(fields =>
+          fields
+            .map(field => field.getAttribute("data-field"))
+            .filter(path =>
+              [
+                "bankName",
+                "accountName",
+                "accountNumber",
+                "routingNumber",
+                "iban",
+                "bic",
+                "sortCode"
+              ].some(fieldKey => path === `paymentDetails.${fieldKey}`)
+            )
+        );
+    const usualRows = [
+      "paymentDetails.bankName",
+      "paymentDetails.accountName",
+      "paymentDetails.accountNumber",
+      "paymentDetails.sortCode"
+    ];
+
+    await expect.poll(bankRowOrder).toEqual(usualRows);
+
+    await paymentPart.getByRole("button", { name: "More bank fields" }).tap();
+
+    await expect
+      .poll(bankRowOrder)
+      .toEqual([
+        ...usualRows,
+        "paymentDetails.routingNumber",
+        "paymentDetails.iban",
+        "paymentDetails.bic"
+      ]);
+  });
+});
+
 test("tapping a label on the page focuses its field in the form", async ({
   page
 }) => {

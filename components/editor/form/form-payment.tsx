@@ -51,8 +51,8 @@ export function FormPaymentDetails() {
   const sections = useShownSections();
   const termsId = useId();
   const { shownFields, hasHiddenFields, showAll } = useShownBankFields();
-  const shownBankFields = PAYMENT_FIELDS.filter(field =>
-    shownFields.includes(field.key)
+  const shownBankFields = shownFields.flatMap(fieldKey =>
+    PAYMENT_FIELDS.filter(field => field.key === fieldKey)
   );
 
   if (!sections.paymentDetails) return null;
@@ -68,7 +68,7 @@ export function FormPaymentDetails() {
         onChange: value =>
           setPaymentDetails(prev => ({ ...prev, label: value }))
       }}
-      labels={[...PAYMENT_FIELDS, PAYMENT_LINK_FIELD]
+      labels={[...shownBankFields, PAYMENT_LINK_FIELD]
         .filter(field => paymentDetails[field.key].trim() !== "")
         .map(field => ({
           name: DEFAULT_PAYMENT_LABELS[field.key],

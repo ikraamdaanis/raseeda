@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { invoiceDefault } from "~/stores/invoice-store";
 import type { InvoicePaymentDetails } from "~/types";
 import {
+  getBankFieldOrder,
   getPaymentLinkHref,
   getPaymentRows,
   hasPaymentDetails
@@ -24,7 +25,8 @@ describe("getPaymentRows", () => {
           ...invoiceDefault.paymentDetails.labels,
           routingNumber: "BSB"
         }
-      })
+      }),
+      "USD"
     );
 
     expect(rows).toEqual([
@@ -39,7 +41,8 @@ describe("getPaymentRows", () => {
       paymentDetails({
         iban: "DE89 3704 0044 0532 0130 00",
         labels: { ...invoiceDefault.paymentDetails.labels, iban: "  " }
-      })
+      }),
+      "USD"
     );
 
     expect(rows).toEqual([
@@ -55,7 +58,8 @@ describe("getPaymentRows", () => {
           { id: "m1", name: "Venmo", detail: "@jane-designs" },
           { id: "m2", name: "PayPal", detail: "jane@example.com" }
         ]
-      })
+      }),
+      "USD"
     );
 
     expect(rows).toEqual([
@@ -73,7 +77,8 @@ describe("getPaymentRows", () => {
           { id: "m2", name: "Pix", detail: "   " },
           { id: "m3", name: "", detail: "jane@example.com" }
         ]
-      })
+      }),
+      "USD"
     );
 
     expect(rows).toEqual([{ id: "m3", label: "", value: "jane@example.com" }]);
@@ -85,7 +90,8 @@ describe("getPaymentRows", () => {
         iban: "GB33 BUKB 2020 1555 5555 55",
         methods: [{ id: "m1", name: "Venmo", detail: "@jane-designs" }],
         paymentLink: " paypal.me/janedesigns "
-      })
+      }),
+      "USD"
     );
 
     expect(rows.map(row => row.id)).toEqual(["iban", "m1", "paymentLink"]);
@@ -106,7 +112,8 @@ describe("getPaymentRows", () => {
         paymentDetails({
           paymentLink: link,
           labels: { ...labels, paymentLink: "Pay by card" }
-        })
+        }),
+        "USD"
       )[0]?.label
     ).toBe("Pay by card");
     expect(
@@ -114,13 +121,70 @@ describe("getPaymentRows", () => {
         paymentDetails({
           paymentLink: link,
           labels: { ...labels, paymentLink: " " }
-        })
+        }),
+        "USD"
       )[0]?.label
     ).toBe("Pay online");
   });
 
+  it("prints the bank fields in the currency's order", () => {
+    const allFields = paymentDetails({
+      bankName: "Barclays",
+      accountName: "Jane Designs",
+      accountNumber: "12345678",
+      routingNumber: "021000021",
+      iban: "GB33 BUKB 2020 1555 5555 55",
+      bic: "BUKBGB22",
+      sortCode: "20-20-15"
+    });
+
+    expect(getPaymentRows(allFields, "GBP").map(row => row.id)).toEqual([
+      "bankName",
+      "accountName",
+      "accountNumber",
+      "sortCode",
+      "routingNumber",
+      "iban",
+      "bic"
+    ]);
+    expect(getPaymentRows(allFields, "EUR").map(row => row.id)).toEqual([
+      "bankName",
+      "accountName",
+      "iban",
+      "bic",
+      "accountNumber",
+      "routingNumber",
+      "sortCode"
+    ]);
+  });
+
   it("leaves out an empty payment link", () => {
-    expect(getPaymentRows(paymentDetails({ paymentLink: "  " }))).toEqual([]);
+    expect(
+      getPaymentRows(paymentDetails({ paymentLink: "  " }), "USD")
+    ).toEqual([]);
+  });
+});
+
+describe("getBankFieldOrder", () => {
+  it("puts the fields the currency usually needs first, then the rest", () => {
+    expect(getBankFieldOrder("USD")).toEqual([
+      "bankName",
+      "accountName",
+      "accountNumber",
+      "routingNumber",
+      "iban",
+      "bic",
+      "sortCode"
+    ]);
+    expect(getBankFieldOrder("JPY")).toEqual([
+      "bankName",
+      "accountName",
+      "accountNumber",
+      "bic",
+      "routingNumber",
+      "iban",
+      "sortCode"
+    ]);
   });
 });
 

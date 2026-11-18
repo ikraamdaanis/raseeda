@@ -46,7 +46,7 @@ const styles = StyleSheet.create({
 
 export function InvoicePdfPaymentDetails({ invoice }: { invoice: Invoice }) {
   const { theme, paymentDetails } = invoice;
-  const rows = getPaymentRows(paymentDetails);
+  const rows = getPaymentRows(paymentDetails, invoice.currencyCode);
 
   if (rows.length === 0 && !paymentDetails.terms.trim()) {
     return null;

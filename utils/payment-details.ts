@@ -1,7 +1,8 @@
 import { DEFAULT_PAYMENT_LABELS } from "~/schema/invoice";
 import type { InvoicePaymentDetails } from "~/types";
 
-// The bank fields, in the order they print.
+// The bank fields. Each invoice prints and edits them in its currency's order
+// (getBankFieldOrder).
 export const PAYMENT_BANK_FIELDS = [
   "bankName",
   "accountName",
@@ -48,6 +49,18 @@ export function getUsualBankFields(
   return ["bankName", "accountName", "accountNumber", "bic"];
 }
 
+// The bank fields in the order the editor shows them and the PDF prints them:
+// the ones the currency usually needs first, then the rest, so More bank
+// fields only adds rows under the ones already there.
+export function getBankFieldOrder(currencyCode: string) {
+  const usualFields = getUsualBankFields(currencyCode);
+
+  return [
+    ...usualFields,
+    ...PAYMENT_BANK_FIELDS.filter(field => !usualFields.includes(field))
+  ];
+}
+
 // Whether anything is typed into the payment details: a bank field, another
 // way to pay, the payment link, a UPI ID or payment terms. Labels don't count.
 export function hasPaymentDetails(paymentDetails: InvoicePaymentDetails) {
@@ -65,17 +78,22 @@ export function hasPaymentDetails(paymentDetails: InvoicePaymentDetails) {
 }
 
 // The label and value rows the payment details print: each filled-in bank
-// field under its label (the default one when it was cleared), then each other
+// field under its label (the default one when it was cleared), in the
+// currency's order (getBankFieldOrder), then each other
 // way to pay that has a detail, in the order they were put in, then the
 // payment link, which carries the address the PDF links it to.
-export function getPaymentRows(paymentDetails: InvoicePaymentDetails) {
-  const bankRows = PAYMENT_BANK_FIELDS.filter(field =>
-    paymentDetails[field].trim()
-  ).map(field => ({
-    id: field,
-    label: paymentDetails.labels[field].trim() || DEFAULT_PAYMENT_LABELS[field],
-    value: paymentDetails[field]
-  }));
+export function getPaymentRows(
+  paymentDetails: InvoicePaymentDetails,
+  currencyCode: string
+) {
+  const bankRows = getBankFieldOrder(currencyCode)
+    .filter(field => paymentDetails[field].trim())
+    .map(field => ({
+      id: field,
+      label:
+        paymentDetails.labels[field].trim() || DEFAULT_PAYMENT_LABELS[field],
+      value: paymentDetails[field]
+    }));
   const methodRows = paymentDetails.methods
     .filter(method => method.detail.trim())
     .map(method => ({

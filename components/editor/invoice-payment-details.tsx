@@ -104,15 +104,17 @@ export function InvoicePaymentDetails() {
       </div>
       <div className="mt-2 flex items-start gap-4">
         <div className="flex min-w-0 flex-1 flex-col gap-1">
-          {PAYMENT_FIELDS.filter(field => shownFields.includes(field.key)).map(
-            field => (
+          {shownFields
+            .flatMap(fieldKey =>
+              PAYMENT_FIELDS.filter(field => field.key === fieldKey)
+            )
+            .map(field => (
               <PaymentDetailsField
                 key={field.key}
                 fieldKey={field.key}
                 placeholder={field.placeholder}
               />
-            )
-          )}
+            ))}
           <PaymentMethods addedIdRef={addedIdRef} />
           <PaymentDetailsField
             fieldKey={PAYMENT_LINK_FIELD.key}

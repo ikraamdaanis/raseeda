@@ -56,10 +56,10 @@ export function getPrintedText(invoice: Invoice): string {
     ...(printed.paymentDetails
       ? [
           invoice.paymentDetails.label,
-          ...getPaymentRows(invoice.paymentDetails).flatMap(row => [
-            row.label,
-            row.value
-          ]),
+          ...getPaymentRows(
+            invoice.paymentDetails,
+            invoice.currencyCode
+          ).flatMap(row => [row.label, row.value]),
           invoice.paymentDetails.terms
         ]
       : []),

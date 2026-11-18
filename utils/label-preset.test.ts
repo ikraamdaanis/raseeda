@@ -136,7 +136,9 @@ describe("applyLabelPreset", () => {
     expect(
       view.summaryRows.filter(row => row.isVisible).map(row => row.label)
     ).toEqual(["Zwischensumme", "MwSt.", "Gesamtbetrag"]);
-    expect(getPaymentRows(german.paymentDetails).at(0)?.label).toBe("IBAN");
+    expect(
+      getPaymentRows(german.paymentDetails, german.currencyCode).at(0)?.label
+    ).toBe("IBAN");
   });
 });
 

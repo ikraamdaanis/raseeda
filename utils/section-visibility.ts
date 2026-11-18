@@ -68,7 +68,8 @@ export function getPrintedSections(
     currencyConversion: conversion !== null && conversion.rate > 0,
     paymentDetails:
       sections.paymentDetails &&
-      (getPaymentRows(invoice.paymentDetails).length > 0 ||
+      (getPaymentRows(invoice.paymentDetails, invoice.currencyCode).length >
+        0 ||
         hasText(invoice.paymentDetails.terms)),
     notes: sections.notes && hasText(invoice.notes.content),
     terms: sections.terms && hasText(invoice.terms.content),

@@ -3,14 +3,16 @@ import { useInvoiceDocument } from "~/context/invoice-document-context";
 import { usePaymentDetailsSlice } from "~/stores/invoice-selectors";
 import { useInvoiceStore } from "~/stores/invoice-store";
 import {
+  getBankFieldOrder,
   getUsualBankFields,
   PAYMENT_BANK_FIELDS
 } from "~/utils/payment-details";
 
 // The bank rows the editor offers: the ones the invoice's currency usually
-// needs and any filled in, or all of them once showAll is called. A row once
-// filled stays while the document is open, so clearing it to retype doesn't
-// take it away; another document starts afresh.
+// needs and any filled in, or all of them once showAll is called, in the
+// currency's order, so the usual ones stay put when the rest are shown. A row
+// once filled stays while the document is open, so clearing it to retype
+// doesn't take it away; another document starts afresh.
 export function useShownBankFields() {
   const { paymentDetails } = usePaymentDetailsSlice();
   const currencyCode = useInvoiceStore(state => state.currencyCode);
@@ -29,7 +31,7 @@ export function useShownBankFields() {
   const filledFields = PAYMENT_BANK_FIELDS.filter(
     field => paymentDetails[field].trim() !== ""
   );
-  const shownFields = PAYMENT_BANK_FIELDS.filter(
+  const shownFields = getBankFieldOrder(currencyCode).filter(
     field =>
       showsAllHere ||
       usualFields.includes(field) ||
