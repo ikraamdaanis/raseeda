@@ -4,11 +4,13 @@ import type { Invoice } from "~/types";
 import { getPrintedLanguage, getPrintedWord } from "~/utils/label-preset";
 import { getPaymentRows } from "~/utils/payment-details";
 import { getPaymentQrCode } from "~/utils/payment-qr-code";
-import { pdfRoleStyle } from "~/utils/pdf-styles";
+import { PDF_HEADING_PRESENCE_AHEAD, pdfRoleStyle } from "~/utils/pdf-styles";
 import { getPrintedSections } from "~/utils/section-visibility";
 
 const styles = StyleSheet.create({
-  section: {
+  // The gap above the section, under its heading's top or the rows' when
+  // there's no heading.
+  sectionStart: {
     marginTop: 20
   },
   body: {
@@ -60,42 +62,50 @@ export function InvoicePdfPaymentDetails({ invoice }: { invoice: Invoice }) {
   const valueStyle = pdfRoleStyle(theme, "termsContent", styles.fieldValue);
 
   return (
-    <View style={styles.section}>
+    <>
       {paymentDetails.label && (
-        <Text style={pdfRoleStyle(theme, "sectionLabel")}>
+        <Text
+          minPresenceAhead={PDF_HEADING_PRESENCE_AHEAD}
+          style={pdfRoleStyle(theme, "sectionLabel", styles.sectionStart)}
+        >
           {paymentDetails.label}
         </Text>
       )}
-      {rows.length > 0 && (
-        <View style={styles.body}>
-          <View style={styles.fields}>
-            {rows.map(row => (
-              <View key={row.id} style={styles.field}>
-                <Text style={labelStyle}>{row.label}</Text>
-                {row.href ? (
-                  <Link src={row.href} style={[valueStyle, styles.link]}>
-                    {row.value}
-                  </Link>
-                ) : (
-                  <Text style={valueStyle}>{row.value}</Text>
+      <View style={paymentDetails.label ? undefined : styles.sectionStart}>
+        {rows.length > 0 && (
+          <View style={styles.body}>
+            <View style={styles.fields}>
+              {rows.map(row => (
+                <View key={row.id} style={styles.field}>
+                  <Text style={labelStyle}>{row.label}</Text>
+                  {row.href ? (
+                    <Link src={row.href} style={[valueStyle, styles.link]}>
+                      {row.value}
+                    </Link>
+                  ) : (
+                    <Text style={valueStyle}>{row.value}</Text>
+                  )}
+                </View>
+              ))}
+            </View>
+            {qrPayload !== "" && (
+              <InvoicePdfPaymentQrCode
+                theme={theme}
+                payload={qrPayload}
+                caption={getPrintedWord(
+                  "scanToPay",
+                  getPrintedLanguage(invoice)
                 )}
-              </View>
-            ))}
+              />
+            )}
           </View>
-          {qrPayload !== "" && (
-            <InvoicePdfPaymentQrCode
-              theme={theme}
-              payload={qrPayload}
-              caption={getPrintedWord("scanToPay", getPrintedLanguage(invoice))}
-            />
-          )}
-        </View>
-      )}
-      {paymentDetails.terms.trim() !== "" && (
-        <Text style={pdfRoleStyle(theme, "termsContent", styles.terms)}>
-          {paymentDetails.terms}
-        </Text>
-      )}
-    </View>
+        )}
+        {paymentDetails.terms.trim() !== "" && (
+          <Text style={pdfRoleStyle(theme, "termsContent", styles.terms)}>
+            {paymentDetails.terms}
+          </Text>
+        )}
+      </View>
+    </>
   );
 }

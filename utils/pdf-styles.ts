@@ -27,6 +27,10 @@ export const PX_PER_PT = 96 / 72;
 // the same lines as the address beside it.
 export const PDF_ROW_LINE_HEIGHT = 1.5;
 
+// The room a section heading needs under it on its page, about two lines of
+// body text, so a heading never prints alone at a page's foot.
+export const PDF_HEADING_PRESENCE_AHEAD = 30;
+
 /**
  * Convert TextSettings to a PDF-compatible style object.
  * Handles font size scaling and weight mapping internally.

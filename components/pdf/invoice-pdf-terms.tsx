@@ -1,12 +1,10 @@
-import { StyleSheet, Text, View } from "@react-pdf/renderer";
+import { StyleSheet, Text } from "@react-pdf/renderer";
 import type { Invoice } from "~/types";
-import { pdfRoleStyle } from "~/utils/pdf-styles";
+import { PDF_HEADING_PRESENCE_AHEAD, pdfRoleStyle } from "~/utils/pdf-styles";
 
 const styles = StyleSheet.create({
-  termsSection: {
-    marginTop: 20
-  },
   termsTitle: {
+    marginTop: 20,
     marginBottom: 4,
     fontWeight: "medium",
     fontSize: 12
@@ -14,8 +12,14 @@ const styles = StyleSheet.create({
   termsContent: {
     fontSize: 10,
     color: "#6b7280"
+  },
+  untitledContent: {
+    marginTop: 20
   }
 });
+
+// Straight on the page, like InvoicePdfTextSection, so the heading keeps to
+// its text across a page break.
 
 export function InvoicePdfTerms({ invoice }: { invoice: Invoice }) {
   const theme = invoice.theme;
@@ -25,9 +29,10 @@ export function InvoicePdfTerms({ invoice }: { invoice: Invoice }) {
   }
 
   return (
-    <View style={styles.termsSection}>
+    <>
       {invoice.terms.label && (
         <Text
+          minPresenceAhead={PDF_HEADING_PRESENCE_AHEAD}
           style={{
             ...styles.termsTitle,
             ...pdfRoleStyle(theme, "sectionLabel")
@@ -39,11 +44,12 @@ export function InvoicePdfTerms({ invoice }: { invoice: Invoice }) {
       <Text
         style={{
           ...styles.termsContent,
+          ...(invoice.terms.label ? {} : styles.untitledContent),
           ...pdfRoleStyle(theme, "termsContent")
         }}
       >
         {invoice.terms.content}
       </Text>
-    </View>
+    </>
   );
 }

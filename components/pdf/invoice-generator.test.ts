@@ -1,9 +1,12 @@
-import { isValidElement } from "react";
+import { Fragment, isValidElement } from "react";
 import { describe, expect, it } from "vitest";
 import { InvoicePDF } from "~/components/pdf/invoice-generator";
 import { InvoicePdfItemsTable } from "~/components/pdf/invoice-pdf-items-table";
 import { InvoicePdfPageNumber } from "~/components/pdf/invoice-pdf-page-number";
+import { InvoicePdfPaymentDetails } from "~/components/pdf/invoice-pdf-payment-details";
 import { InvoicePdfSignature } from "~/components/pdf/invoice-pdf-signature";
+import { InvoicePdfTerms } from "~/components/pdf/invoice-pdf-terms";
+import { InvoicePdfTextSection } from "~/components/pdf/invoice-pdf-text-section";
 import { InvoicePdfTotals } from "~/components/pdf/invoice-pdf-totals";
 import { DEFAULT_INVOICE_SECTIONS } from "~/schema/invoice";
 import { invoiceDefault } from "~/stores/invoice-store";
@@ -145,5 +148,69 @@ describe("InvoicePdfItemsTable", () => {
     });
 
     expect(totals.props.wrap).toBe(false);
+  });
+});
+
+// react-pdf moves an element to the next page for what follows it only when
+// something comes before it in its parent, so each heading sits straight on
+// the page, in a fragment, and asks for room under it.
+describe("a section heading", () => {
+  function headingOf(section: unknown) {
+    if (
+      !isValidElement<{ children: unknown[] }>(section) ||
+      section.type !== Fragment
+    ) {
+      throw new Error("The section isn't a fragment");
+    }
+
+    const heading = section.props.children.at(0);
+
+    return isValidElement<{ minPresenceAhead?: number; children: unknown }>(
+      heading
+    )
+      ? heading.props
+      : null;
+  }
+
+  it("keeps to the first lines of the notes", () => {
+    const heading = headingOf(
+      InvoicePdfTextSection({
+        theme: invoiceDefault.theme,
+        label: "Notes",
+        content: "Thank you for your business."
+      })
+    );
+
+    expect(heading?.children).toBe("Notes");
+    expect(heading?.minPresenceAhead).toBeGreaterThan(0);
+  });
+
+  it("keeps to the first lines of the terms", () => {
+    const heading = headingOf(
+      InvoicePdfTerms({
+        invoice: {
+          ...invoiceDefault,
+          terms: { ...invoiceDefault.terms, content: "Pay within 30 days." }
+        }
+      })
+    );
+
+    expect(heading?.minPresenceAhead).toBeGreaterThan(0);
+  });
+
+  it("keeps to the first payment details rows", () => {
+    const heading = headingOf(
+      InvoicePdfPaymentDetails({
+        invoice: {
+          ...invoiceDefault,
+          paymentDetails: {
+            ...invoiceDefault.paymentDetails,
+            bankName: "Monzo"
+          }
+        }
+      })
+    );
+
+    expect(heading?.minPresenceAhead).toBeGreaterThan(0);
   });
 });

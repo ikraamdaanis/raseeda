@@ -1,12 +1,10 @@
-import { StyleSheet, Text, View } from "@react-pdf/renderer";
+import { StyleSheet, Text } from "@react-pdf/renderer";
 import type { InvoiceTheme } from "~/types";
-import { pdfRoleStyle } from "~/utils/pdf-styles";
+import { PDF_HEADING_PRESENCE_AHEAD, pdfRoleStyle } from "~/utils/pdf-styles";
 
 const styles = StyleSheet.create({
-  section: {
-    marginTop: 20
-  },
   title: {
+    marginTop: 20,
     marginBottom: 4,
     fontWeight: "medium",
     fontSize: 12
@@ -14,11 +12,16 @@ const styles = StyleSheet.create({
   content: {
     fontSize: 10,
     color: "#6b7280"
+  },
+  untitledContent: {
+    marginTop: 20
   }
 });
 
 // A labelled free-text block (notes, late-payment terms) for the PDF, mirroring
-// the terms section. An empty block renders nothing.
+// the terms section. An empty block renders nothing. The heading and text sit
+// straight on the page, not in a View: react-pdf only moves a heading to the
+// next page for its text when something comes before it in its parent.
 export function InvoicePdfTextSection({
   theme,
   label,
@@ -33,19 +36,24 @@ export function InvoicePdfTextSection({
   }
 
   return (
-    <View style={styles.section}>
+    <>
       {label && (
         <Text
+          minPresenceAhead={PDF_HEADING_PRESENCE_AHEAD}
           style={{ ...styles.title, ...pdfRoleStyle(theme, "sectionLabel") }}
         >
           {label}
         </Text>
       )}
       <Text
-        style={{ ...styles.content, ...pdfRoleStyle(theme, "termsContent") }}
+        style={{
+          ...styles.content,
+          ...(label ? {} : styles.untitledContent),
+          ...pdfRoleStyle(theme, "termsContent")
+        }}
       >
         {content}
       </Text>
-    </View>
+    </>
   );
 }
