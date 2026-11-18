@@ -130,7 +130,7 @@ export function DropdownMenuSubTrigger({
       data-slot="dropdown-menu-sub-trigger"
       data-inset={inset}
       className={cn(
-        "focus:bg-accent focus:text-accent-foreground not-data-[variant=destructive]:focus:**:text-accent-foreground data-popup-open:bg-accent data-popup-open:text-accent-foreground data-open:bg-accent data-open:text-accent-foreground rounded-surface flex cursor-default items-center gap-1.5 px-1.5 py-1 text-[13px] outline-hidden select-none data-inset:pl-7 max-md:min-h-11 max-md:text-base [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-3 max-md:[&_svg:not([class*='size-'])]:size-4.5",
+        "focus:bg-accent focus:text-accent-foreground not-data-[variant=destructive]:focus:**:text-accent-foreground data-popup-open:bg-accent data-popup-open:text-accent-foreground data-open:bg-accent data-open:text-accent-foreground rounded-surface flex cursor-default items-center gap-1.5 px-1.5 py-1 text-[13px] outline-hidden select-none data-disabled:pointer-events-none data-disabled:opacity-50 data-inset:pl-7 max-md:min-h-11 max-md:text-base [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-3 max-md:[&_svg:not([class*='size-'])]:size-4.5",
         className
       )}
       {...props}
