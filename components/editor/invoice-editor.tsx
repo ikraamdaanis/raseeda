@@ -55,7 +55,7 @@ export function InvoiceEditor() {
           <EditorShortcuts />
           <HistoryShortcuts />
           <CommandPalette />
-          <div className="relative isolate flex h-dvh w-full flex-col overflow-hidden [--style-tray-height:min(21rem,52dvh)]">
+          <div className="relative isolate flex h-dvh w-full flex-col overflow-clip [--style-tray-height:min(21rem,52dvh)]">
             <PhoneLibraryScreen />
             <EditorScreen>
               <EditorTopBar
