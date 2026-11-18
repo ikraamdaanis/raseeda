@@ -80,7 +80,7 @@ export const invoiceDefault: Invoice = {
   items: [
     {
       id: crypto.randomUUID(),
-      description: "Item 1",
+      description: "",
       quantity: 1,
       unit: "",
       unitPrice: 0

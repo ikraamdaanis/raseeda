@@ -11,7 +11,6 @@ import {
 // Items billed on past invoices are offered while a line's description is
 // typed (issue #205), as clients are in the "To" block.
 
-// A blank invoice's first line reads "Item 1", so it's cleared to type in.
 async function billWebsiteDesign(page: Page) {
   const title = page.getByRole("textbox", { name: "Invoice title" });
 

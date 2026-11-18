@@ -20,6 +20,23 @@ test("blank invoice is dated today and due 30 days out", async ({ page }) => {
   ).toHaveAttribute("data-date", isoToday(30));
 });
 
+test("a blank invoice's first line starts empty, so typing fills it", async ({
+  page
+}) => {
+  await page.goto("/create");
+
+  const description = page.getByLabel("Item, item 1");
+
+  await expect(description).toHaveValue("");
+  await expect(description).toHaveAttribute(
+    "placeholder",
+    "Enter a description"
+  );
+  await description.click();
+  await page.keyboard.type("Logo design");
+  await expect(description).toHaveValue("Logo design");
+});
+
 test("editing identity fields holds their values", async ({ page }) => {
   await gotoEditorReady(page, "Website redesign");
 

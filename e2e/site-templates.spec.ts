@@ -107,7 +107,7 @@ test("an unknown template opens the editor as usual", async ({ page }) => {
   await page.goto("/create?template=nonsense");
 
   await expect(page.getByLabel("Invoice title")).toHaveValue("Invoice");
-  await expect(page.getByLabel("Item, item 1")).toHaveValue("Item 1");
+  await expect(page.getByLabel("Item, item 1")).toHaveValue("");
 });
 
 test("the gallery links to each template page", async ({ page }) => {
