@@ -27,6 +27,7 @@ import {
   usePaymentQrCode
 } from "~/components/editor/invoice-payment-qr-code";
 import { Button } from "~/components/ui/button";
+import { useShownBankFields } from "~/hooks/use-shown-bank-fields";
 import { useShownSections } from "~/hooks/use-shown-sections";
 import { cn } from "~/lib/utils";
 import {
@@ -37,76 +38,22 @@ import {
   usePaymentDetailsSlice,
   useSectionsSlice
 } from "~/stores/invoice-selectors";
-import { useInvoiceStore } from "~/stores/invoice-store";
 import type { InvoicePaymentMethod } from "~/types";
-
-type BankFieldKey = (typeof PAYMENT_FIELDS)[number]["key"];
-
-// Currencies paid to an IBAN, in Europe's single payments area and beside it.
-const IBAN_CURRENCIES = [
-  "EUR",
-  "CHF",
-  "SEK",
-  "DKK",
-  "NOK",
-  "PLN",
-  "CZK",
-  "HUF",
-  "RON",
-  "BGN",
-  "ISK"
-];
-
-// The bank rows a client paying in this currency usually needs: a routing
-// number in the US, a sort code in the UK, an IBAN and BIC across Europe,
-// else an account number and a SWIFT code for a payment from abroad.
-function getUsualBankFields(currencyCode: string): BankFieldKey[] {
-  if (currencyCode === "USD") {
-    return ["bankName", "accountName", "accountNumber", "routingNumber"];
-  }
-
-  if (currencyCode === "GBP") {
-    return ["bankName", "accountName", "accountNumber", "sortCode"];
-  }
-
-  if (IBAN_CURRENCIES.includes(currencyCode)) {
-    return ["bankName", "accountName", "iban", "bic"];
-  }
-
-  return ["bankName", "accountName", "accountNumber", "bic"];
-}
 
 // How to pay, as the page lists it: the bank rows under their labels, other
 // ways to pay in order, the payment link, the QR code and the instructions. A
 // bank row's label prints, and is renamed, once the row is filled in. Only
 // the bank rows the invoice's currency usually needs show, and any filled
-// in; More bank fields shows the rest. A row once filled stays while the
-// form is open, so clearing it to retype doesn't take it away.
+// in; More bank fields shows the rest (useShownBankFields).
 export function FormPaymentDetails() {
   const { paymentDetails, setPaymentDetails } = usePaymentDetailsSlice();
   const { setSection } = useSectionsSlice();
   const sections = useShownSections();
-  const currencyCode = useInvoiceStore(state => state.currencyCode);
   const termsId = useId();
-  const [showsAllBankFields, setShowsAllBankFields] = useState(false);
-  const [keptBankFields, setKeptBankFields] = useState<
-    ReadonlySet<BankFieldKey>
-  >(() => new Set());
-  const usualBankFields = getUsualBankFields(currencyCode);
-  const filledBankFields = PAYMENT_FIELDS.filter(
-    field => paymentDetails[field.key].trim() !== ""
-  ).map(field => field.key);
-  const shownBankFields = PAYMENT_FIELDS.filter(
-    field =>
-      showsAllBankFields ||
-      usualBankFields.includes(field.key) ||
-      filledBankFields.includes(field.key) ||
-      keptBankFields.has(field.key)
+  const { shownFields, hasHiddenFields, showAll } = useShownBankFields();
+  const shownBankFields = PAYMENT_FIELDS.filter(field =>
+    shownFields.includes(field.key)
   );
-
-  if (filledBankFields.some(key => !keptBankFields.has(key))) {
-    setKeptBankFields(new Set([...keptBankFields, ...filledBankFields]));
-  }
 
   if (!sections.paymentDetails) return null;
 
@@ -141,11 +88,9 @@ export function FormPaymentDetails() {
           <PaymentField fieldKey={field.key} placeholder={field.placeholder} />
         </div>
       ))}
-      {shownBankFields.length < PAYMENT_FIELDS.length && (
+      {hasHiddenFields && (
         <div className="-mt-3 flex">
-          <FormAddButton onClick={() => setShowsAllBankFields(true)}>
-            More bank fields
-          </FormAddButton>
+          <FormAddButton onClick={showAll}>More bank fields</FormAddButton>
         </div>
       )}
       <PaymentMethods />

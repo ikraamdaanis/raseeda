@@ -12,6 +12,42 @@ export const PAYMENT_BANK_FIELDS = [
   "sortCode"
 ] as const;
 
+// Currencies paid to an IBAN, in Europe's single payments area and beside it.
+const IBAN_CURRENCIES = [
+  "EUR",
+  "CHF",
+  "SEK",
+  "DKK",
+  "NOK",
+  "PLN",
+  "CZK",
+  "HUF",
+  "RON",
+  "BGN",
+  "ISK"
+];
+
+// The bank rows a client paying in this currency usually needs: a routing
+// number in the US, a sort code in the UK, an IBAN and BIC across Europe,
+// else an account number and a SWIFT code for a payment from abroad.
+export function getUsualBankFields(
+  currencyCode: string
+): (typeof PAYMENT_BANK_FIELDS)[number][] {
+  if (currencyCode === "USD") {
+    return ["bankName", "accountName", "accountNumber", "routingNumber"];
+  }
+
+  if (currencyCode === "GBP") {
+    return ["bankName", "accountName", "accountNumber", "sortCode"];
+  }
+
+  if (IBAN_CURRENCIES.includes(currencyCode)) {
+    return ["bankName", "accountName", "iban", "bic"];
+  }
+
+  return ["bankName", "accountName", "accountNumber", "bic"];
+}
+
 // Whether anything is typed into the payment details: a bank field, another
 // way to pay, the payment link, a UPI ID or payment terms. Labels don't count.
 export function hasPaymentDetails(paymentDetails: InvoicePaymentDetails) {

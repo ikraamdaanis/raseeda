@@ -4,7 +4,7 @@ import {
   IconMinus,
   IconPlus
 } from "@tabler/icons-react";
-import type { CSSProperties } from "react";
+import type { CSSProperties, ReactNode, RefObject } from "react";
 import { useRef, useState } from "react";
 import { InvoiceInput } from "~/components/editor/invoice-input";
 import {
@@ -18,6 +18,7 @@ import {
 import { InvoiceTextArea } from "~/components/editor/invoice-textarea";
 import { Button } from "~/components/ui/button";
 import { NativeSelect } from "~/components/ui/select";
+import { useShownBankFields } from "~/hooks/use-shown-bank-fields";
 import { useIsPreview, useShownSections } from "~/hooks/use-shown-sections";
 import { cn } from "~/lib/utils";
 import { DEFAULT_PAYMENT_LABELS } from "~/schema/invoice";
@@ -68,11 +69,29 @@ export const PAYMENT_METHOD_SUGGESTIONS = [
 
 export const OTHER_PAYMENT_METHOD = "__other";
 
+// Only the bank rows the invoice's currency usually needs show, and any filled
+// in (useShownBankFields). The ways to add a row sit together under the last
+// one, so they never split the rows they add to.
 export function InvoicePaymentDetails() {
   const { setSection } = useSectionsSlice();
+  const { setPaymentDetails } = usePaymentDetailsSlice();
   const sections = useShownSections();
+  const isPreview = useIsPreview();
+  const { shownFields, hasHiddenFields, showAll } = useShownBankFields();
+  // The way to pay just added, whose name takes focus once its row mounts.
+  const addedIdRef = useRef<string | null>(null);
 
   if (!sections.paymentDetails) return null;
+
+  function addMethod() {
+    const id = crypto.randomUUID();
+
+    addedIdRef.current = id;
+    setPaymentDetails(prev => ({
+      ...prev,
+      methods: [...prev.methods, { id, name: "", detail: "" }]
+    }));
+  }
 
   return (
     <OptionalSection data-field-area="paymentDetails" className="mt-6">
@@ -85,18 +104,28 @@ export function InvoicePaymentDetails() {
       </div>
       <div className="mt-2 flex items-start gap-4">
         <div className="flex min-w-0 flex-1 flex-col gap-1">
-          {PAYMENT_FIELDS.map(field => (
-            <PaymentDetailsField
-              key={field.key}
-              fieldKey={field.key}
-              placeholder={field.placeholder}
-            />
-          ))}
-          <PaymentMethods />
+          {PAYMENT_FIELDS.filter(field => shownFields.includes(field.key)).map(
+            field => (
+              <PaymentDetailsField
+                key={field.key}
+                fieldKey={field.key}
+                placeholder={field.placeholder}
+              />
+            )
+          )}
+          <PaymentMethods addedIdRef={addedIdRef} />
           <PaymentDetailsField
             fieldKey={PAYMENT_LINK_FIELD.key}
             placeholder={PAYMENT_LINK_FIELD.placeholder}
           />
+          {!isPreview && (
+            <div className="my-0.5 flex flex-wrap items-center gap-4">
+              <AddRowButton onClick={addMethod}>Add a way to pay</AddRowButton>
+              {hasHiddenFields && (
+                <AddRowButton onClick={showAll}>More bank fields</AddRowButton>
+              )}
+            </div>
+          )}
         </div>
         <PaymentQrCode />
       </div>
@@ -185,12 +214,13 @@ function PaymentDetailsField({
 
 // Other ways to be paid besides the bank, each a name and the detail to pay
 // to, printed below the bank fields in the order they're put in.
-function PaymentMethods() {
+function PaymentMethods({
+  addedIdRef
+}: {
+  addedIdRef: RefObject<string | null>;
+}) {
   const { paymentDetails, setPaymentDetails } = usePaymentDetailsSlice();
-  const isPreview = useIsPreview();
   const { methods } = paymentDetails;
-  // The way to pay just added, whose name takes focus once its row mounts.
-  const addedIdRef = useRef<string | null>(null);
 
   function updateMethod(id: string, changes: Partial<InvoicePaymentMethod>) {
     setPaymentDetails(prev => ({
@@ -226,16 +256,6 @@ function PaymentMethods() {
     }));
   }
 
-  function addMethod() {
-    const id = crypto.randomUUID();
-
-    addedIdRef.current = id;
-    setPaymentDetails(prev => ({
-      ...prev,
-      methods: [...prev.methods, { id, name: "", detail: "" }]
-    }));
-  }
-
   return (
     <>
       {methods.map((method, index) => (
@@ -255,17 +275,26 @@ function PaymentMethods() {
           onRemove={() => removeMethod(method.id)}
         />
       ))}
-      {!isPreview && (
-        <button
-          type="button"
-          onClick={addMethod}
-          className="text-paper-muted-foreground hover:bg-paper-muted hover:text-paper-foreground focus-visible:ring-ring rounded-control -mx-2 my-0.5 flex h-7 w-fit items-center gap-1.5 px-2 text-sm transition-colors outline-none focus-visible:ring-1 pointer-coarse:h-11"
-        >
-          <IconPlus aria-hidden="true" className="size-3.5" />
-          Add a way to pay
-        </button>
-      )}
     </>
+  );
+}
+
+function AddRowButton({
+  onClick,
+  children
+}: {
+  onClick: () => void;
+  children: ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="text-paper-muted-foreground hover:bg-paper-muted hover:text-paper-foreground focus-visible:ring-ring rounded-control -mx-2 flex h-7 w-fit items-center gap-1.5 px-2 text-sm transition-colors outline-none focus-visible:ring-1 pointer-coarse:h-11"
+    >
+      <IconPlus aria-hidden="true" className="size-3.5" />
+      {children}
+    </button>
   );
 }
 
