@@ -31,7 +31,7 @@ export const Route = createFileRoute("/privacy")({
 // The date the policy last changed in substance (YYYY-MM-DD); update it with
 // the copy. The page shows it written out, and the structured data carries it
 // as is.
-const LAST_UPDATED = "2026-11-02";
+const LAST_UPDATED = "2026-11-18";
 
 const HEADING = "font-medium tracking-[-0.035em] text-balance";
 
@@ -66,9 +66,21 @@ function PrivacyPage() {
           </div>
           <PolicySection title="What stays on your device">
             <p className={PROSE}>
-              Everything you type into an invoice, your logo, the invoices and
-              templates you save, and the draft the editor keeps as you work are
-              stored in this browser’s storage (IndexedDB), on this device.
+              Everything you type into an invoice, your logo and signature, the
+              invoices and templates you save, the earlier versions kept of each
+              invoice, and which one you had open last are stored in this
+              browser’s storage (IndexedDB), on this device.
+            </p>
+            <p className={PROSE}>
+              The editor also remembers your settings in this browser’s local
+              storage, such as light or dark, the zoom, which panels are open,
+              how the documents list is sorted and filtered, and whether you’ve
+              dismissed the backup reminder. Within a tab, session storage
+              remembers which document is open and how far down each page you
+              were, so a reload or the Back button returns you to the same
+              place; it’s cleared when the tab closes. Your browser also keeps a
+              copy of the site’s own files, so it opens without a connection.
+              None of this is sent anywhere.
             </p>
             <p className={PROSE}>
               The PDF is made in your browser too. Your invoices aren’t
@@ -83,8 +95,9 @@ function PrivacyPage() {
           <PolicySection title="What leaves your device">
             <p className={PROSE}>
               The files you choose to save: the PDF you download, and the backup
-              file from Export Data in the editor’s File menu. The backup
-              includes your bank details, so keep it somewhere safe.
+              file from Export Data in the editor’s menu (or Download a backup,
+              when the editor suggests one). The backup includes your bank
+              details, so keep it somewhere safe.
             </p>
             <p className={PROSE}>
               And the anonymous usage counts below, which never include your
@@ -174,11 +187,6 @@ function PrivacyPage() {
                 <span className="sr-only"> (opens in a new tab)</span>
               </a>
               .
-            </p>
-            <p className={PROSE}>
-              Within a tab, the site remembers how far down each page you were
-              (in session storage), so the Back button returns you to the same
-              place. It is cleared when the tab closes.
             </p>
           </PolicySection>
           <PolicySection title="Checking for yourself">
