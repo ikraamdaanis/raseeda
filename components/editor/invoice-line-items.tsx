@@ -1183,13 +1183,21 @@ function AddItemButton({
 }: {
   addItem: ReturnType<typeof useLineItemsSlice>["addItem"];
 }) {
+  // The new line takes focus once it's drawn, so typing fills it in.
   function handleAddItem() {
+    const id = crypto.randomUUID();
+
     addItem({
-      id: crypto.randomUUID(),
+      id,
       description: "",
       quantity: 1,
       unit: "",
       unitPrice: 0
+    });
+    requestAnimationFrame(() => {
+      document
+        .querySelector<HTMLElement>(`[data-field="items.${id}.description"]`)
+        ?.focus();
     });
   }
 

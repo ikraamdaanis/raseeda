@@ -1,5 +1,10 @@
 import { expect, test } from "./fixtures";
-import { addLineItem, gotoEditorReady, setNumber } from "./helpers";
+import {
+  addLineItem,
+  gotoEditorReady,
+  pressShortcut,
+  setNumber
+} from "./helpers";
 
 // Group C: line items. The numeric fields coerce input (strip non-digits and
 // signs, tolerate fractions) and the amount recomputes live, so these are the
@@ -26,6 +31,28 @@ test("adds and removes line items", async ({ page }) => {
   // The last remaining item cannot be removed, so its remove button is gone.
   await expect(page.getByRole("button", { name: "Remove item 1" })).toHaveCount(
     0
+  );
+});
+
+test("Add item puts the caret in the new line, and undo takes it away", async ({
+  page
+}) => {
+  await gotoEditorReady(page);
+  await addLineItem(page);
+
+  const description = page.getByLabel("Item, item 2");
+
+  await expect(description).toBeFocused();
+  await page.keyboard.type("Second row");
+  await expect(description).toHaveValue("Second row");
+
+  await pressShortcut(page, "Mod+z");
+  await expect(description).toHaveValue("");
+  await pressShortcut(page, "Mod+z");
+  await expect(description).toHaveCount(0);
+  await expect(page.locator('[data-field-area="items"]')).toHaveAttribute(
+    "data-history-flash",
+    ""
   );
 });
 
