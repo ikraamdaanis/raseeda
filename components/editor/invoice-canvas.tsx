@@ -65,9 +65,16 @@ export function InvoiceCanvas({
       const paddingY =
         parseFloat(styles.paddingTop) + parseFloat(styles.paddingBottom);
 
+      // Fitted to the desk's whole height, banner and all, so a banner
+      // appearing over the page (a failed save, a font that can't print the
+      // text) never rescales it: the page scrolls by the banner's height
+      // instead.
+      const height =
+        section.parentElement?.clientHeight ?? section.clientHeight;
+
       setContainerSize({
         width: section.clientWidth - paddingX,
-        height: section.clientHeight - paddingY
+        height: height - paddingY
       });
     }
 

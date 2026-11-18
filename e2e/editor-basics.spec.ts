@@ -113,3 +113,24 @@ for (const viewport of [
     await expect(page.getByRole("button", { name: "Zoom 100%" })).toBeVisible();
   });
 }
+
+test("a banner over a fitted page leaves its zoom alone", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 720 });
+  await gotoEditorReady(page);
+  await page.getByRole("button", { name: "Zoom 100%" }).click();
+  await page.getByRole("menuitem", { name: /Zoom to fit/ }).click();
+
+  const zoomButton = page.getByRole("button", {
+    name: /^Zoom \d+%, fitted to screen$/
+  });
+
+  await expect(zoomButton).toBeVisible();
+
+  const fitted = await zoomButton.getAttribute("aria-label");
+
+  await page.getByLabel("To details").fill("Общество");
+  await expect(
+    page.getByRole("status").filter({ hasText: "can’t print" })
+  ).toBeVisible();
+  await expect(zoomButton).toHaveAttribute("aria-label", fitted ?? "");
+});
