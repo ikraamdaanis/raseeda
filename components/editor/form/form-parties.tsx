@@ -1,5 +1,4 @@
 import { IconPhotoUp, IconReplace, IconTrash } from "@tabler/icons-react";
-import { useId } from "react";
 import type { FileRejection } from "react-dropzone";
 import Dropzone from "react-dropzone";
 import {
@@ -39,8 +38,6 @@ export function FormLogo() {
   const { image: imageId, setImage } = useImageSlice();
   const { sections, setSection } = useSectionsSlice();
   const imageUrl = useImageLoader(imageId);
-  const titleId = useId();
-  const hintId = useId();
 
   async function handleDrop(
     acceptedFiles: File[],
@@ -69,7 +66,10 @@ export function FormLogo() {
       >
         {({ getRootProps, getInputProps, open, isDragActive }) => (
           <div {...getRootProps()}>
-            <input {...getInputProps()} aria-label="Upload logo" />
+            <input
+              {...getInputProps({ name: "logo" })}
+              aria-label="Upload logo"
+            />
             {imageUrl ? (
               <div className="flex items-center gap-4">
                 <div className="flex h-24 w-36 shrink-0 items-center justify-center rounded-md bg-white p-3 outline-1 -outline-offset-1 outline-black/10 dark:outline-white/10">
@@ -102,8 +102,6 @@ export function FormLogo() {
             ) : (
               <button
                 type="button"
-                aria-labelledby={titleId}
-                aria-describedby={hintId}
                 onClick={open}
                 className={cn(
                   "border-input text-muted-foreground focus-visible:border-ring focus-visible:ring-ring/50 active:bg-accent flex w-full items-center gap-3 rounded-md border border-dashed p-2.5 text-left transition-colors outline-none focus-visible:ring-3",
@@ -114,13 +112,10 @@ export function FormLogo() {
                   <IconPhotoUp aria-hidden="true" className="size-5" />
                 </span>
                 <span className="flex min-w-0 flex-col">
-                  <span
-                    id={titleId}
-                    className="text-foreground text-base/6 font-medium"
-                  >
+                  <span className="text-foreground text-base/6 font-medium">
                     Upload logo
                   </span>
-                  <span id={hintId} className="text-[0.9375rem]/5.5">
+                  <span className="text-[0.9375rem]/5.5">
                     PNG, JPG or WebP, up to 5 MB
                   </span>
                 </span>

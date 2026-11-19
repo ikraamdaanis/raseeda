@@ -308,6 +308,7 @@ function SearchField({
         <input
           ref={ref}
           type="search"
+          name="search"
           value={value}
           onChange={event => onChange(event.target.value)}
           placeholder={label}
@@ -411,10 +412,10 @@ function DocumentList({
         {groups.map(group => (
           <section key={group.key} className="flex flex-col gap-px">
             {group.label && (
-              <h3 className="text-muted-foreground flex items-center justify-between gap-2 px-2 pt-1 pb-0.5 text-[11px] font-medium max-md:pt-2 max-md:pb-1 max-md:text-sm">
+              <h2 className="text-muted-foreground flex items-center justify-between gap-2 px-2 pt-1 pb-0.5 text-[11px] font-medium max-md:pt-2 max-md:pb-1 max-md:text-sm">
                 <span className="truncate">{group.label}</span>
                 <span className="tabular-nums">{group.documents.length}</span>
-              </h3>
+              </h2>
             )}
             {group.documents.map(document => (
               <LibraryItem
@@ -591,9 +592,9 @@ function TemplateList({
       )}
       <ListScroller>
         <section className="flex flex-col gap-px">
-          <h3 className="text-muted-foreground px-2 pt-1 pb-0.5 text-[11px] font-medium max-md:pt-2 max-md:pb-1 max-md:text-sm">
+          <h2 className="text-muted-foreground px-2 pt-1 pb-0.5 text-[11px] font-medium max-md:pt-2 max-md:pb-1 max-md:text-sm">
             Start a new invoice from
-          </h3>
+          </h2>
           {matches.length === 0 && (
             <ListMessage>No templates match “{query.trim()}”.</ListMessage>
           )}

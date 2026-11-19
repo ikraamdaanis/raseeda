@@ -85,7 +85,7 @@ function RouteComponent() {
   }, []);
 
   return (
-    <section className="mx-auto flex w-full flex-col overflow-hidden">
+    <div className="mx-auto flex w-full flex-col overflow-hidden">
       <ClientOnly fallback={<EditorLoading />}>
         <EditorThemeSync />
         <InvoiceDocumentProvider fallback={<EditorLoading />}>
@@ -94,7 +94,7 @@ function RouteComponent() {
           <InvoiceEditor />
         </InvoiceDocumentProvider>
       </ClientOnly>
-    </section>
+    </div>
   );
 }
 
@@ -170,7 +170,7 @@ function StartingTemplate() {
 // mounts, its own heading (the document name) takes over.
 function EditorLoading() {
   return (
-    <div className="bg-desk flex h-dvh w-full flex-col items-center justify-center gap-4 px-6 text-center">
+    <main className="bg-desk flex h-dvh w-full flex-col items-center justify-center gap-4 px-6 text-center">
       <h1 className="sr-only">{APP_NAME} invoice editor</h1>
       <p className="sr-only">
         Create a free invoice in your browser: add your details, your client and
@@ -187,6 +187,6 @@ function EditorLoading() {
           JavaScript. Turn JavaScript on for this site, then reload.
         </p>
       </noscript>
-    </div>
+    </main>
   );
 }

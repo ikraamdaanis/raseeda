@@ -1,3 +1,4 @@
+import type { CSSProperties } from "react";
 import { useEffect, useSyncExternalStore } from "react";
 import { Toaster } from "sonner";
 import type { EditorTheme } from "~/types";
@@ -31,6 +32,16 @@ const EDITOR_MOBILE_OFFSET = {
   bottom: "calc(4.5rem + env(safe-area-inset-bottom))"
 };
 
+// Sonner's light rich colours set their text under 4.5:1 against their own
+// backgrounds, short of WCAG AA, so each is a shade darker here. The dark ones
+// pass as they are.
+const LIGHT_TOAST_TEXT = {
+  "--success-text": "hsl(140, 100%, 25%)",
+  "--error-text": "hsl(360, 100%, 43%)",
+  "--info-text": "hsl(210, 92%, 43%)",
+  "--warning-text": "hsl(31, 92%, 35%)"
+} as CSSProperties;
+
 export function AppToaster() {
   const editorTheme = useSyncExternalStore(
     subscribe,
@@ -41,10 +52,13 @@ export function AppToaster() {
   // Mounted once on every page, so any open tab hears of a new version.
   useEffect(() => watchForNewVersion(), []);
 
+  const theme = editorTheme ?? "light";
+
   return (
     <Toaster
       richColors
-      theme={editorTheme ?? "light"}
+      theme={theme}
+      style={theme === "light" ? LIGHT_TOAST_TEXT : undefined}
       mobileOffset={editorTheme ? EDITOR_MOBILE_OFFSET : undefined}
     />
   );

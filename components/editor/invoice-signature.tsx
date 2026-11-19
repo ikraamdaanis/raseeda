@@ -117,7 +117,10 @@ export function InvoiceSignature({ onRemove }: { onRemove: () => void }) {
                     : "border-paper-border border border-dashed"
                 )}
               >
-                <input {...getInputProps()} aria-label="Upload a signature" />
+                <input
+                  {...getInputProps({ name: "signature" })}
+                  aria-label="Upload a signature"
+                />
                 <Button
                   variant="ghost"
                   size="xs"

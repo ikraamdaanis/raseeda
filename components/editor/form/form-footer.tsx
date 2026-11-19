@@ -191,7 +191,10 @@ function FormSignature() {
         >
           {({ getRootProps, getInputProps, open }) => (
             <div {...getRootProps()}>
-              <input {...getInputProps()} aria-label="Upload a signature" />
+              <input
+                {...getInputProps({ name: "signature" })}
+                aria-label="Upload a signature"
+              />
               <div className="flex flex-wrap gap-2">
                 <Button
                   variant="outline"

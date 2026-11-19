@@ -30,7 +30,7 @@ export function EditorElsewhereNotice() {
   }
 
   return (
-    <div className="bg-desk flex h-dvh w-full flex-col items-center justify-center gap-6 px-6 text-center">
+    <main className="bg-desk flex h-dvh w-full flex-col items-center justify-center gap-6 px-6 text-center">
       <IconAppWindow
         aria-hidden="true"
         className="text-muted-foreground size-8"
@@ -62,6 +62,6 @@ export function EditorElsewhereNotice() {
       <Button size="lg" onClick={askForEditor}>
         Use here
       </Button>
-    </div>
+    </main>
   );
 }

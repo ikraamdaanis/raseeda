@@ -409,6 +409,9 @@ export function FormTextArea({
   onChange?: (value: string) => void;
 }) {
   const ref = useRef<HTMLTextAreaElement>(null);
+  // Every form field gets an id, as Base UI's inputs do, so the browser can
+  // tell the fields apart when it fills in a form.
+  const fallbackId = useId();
   const minRows = Math.max(rows, placeholder?.split("\n").length ?? 0);
 
   useLayoutEffect(() => {
@@ -427,6 +430,7 @@ export function FormTextArea({
   return (
     <Textarea
       {...props}
+      id={props.id ?? fallbackId}
       ref={ref}
       value={value}
       rows={rows}

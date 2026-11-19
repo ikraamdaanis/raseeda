@@ -114,6 +114,7 @@ function InvoiceName() {
   return (
     <h1 className="flex min-w-0 max-md:-ml-1 max-md:flex-1">
       <input
+        name="invoiceName"
         aria-label="Invoice name"
         title="Rename"
         value={draft ?? savingName ?? displayName}

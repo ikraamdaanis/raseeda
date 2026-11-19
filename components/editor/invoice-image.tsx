@@ -110,7 +110,7 @@ export function InvoiceImage() {
               </div>
             )}
           </div>
-          <input {...getInputProps()} />
+          <input {...getInputProps({ name: "logo" })} />
           <span id={hintId} hidden>
             Drop an image, or press to browse.
           </span>
