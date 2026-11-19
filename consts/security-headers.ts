@@ -4,7 +4,7 @@
 // but one between the site's own pages, so the usage counts can tell a move
 // within the site from a new visit (utils/track.ts); no framing at all, as
 // the CSP's frame-ancestors 'none' says, for browsers that predate it; and
-// no camera, microphone, location, payment or interest tracking, which the
+// no camera, microphone, location, payment or USB access, which the
 // app never needs. public/_headers sends the same for static files.
 export const SECURITY_HEADERS: Record<string, string> = {
   "Strict-Transport-Security": "max-age=31536000",
@@ -12,5 +12,5 @@ export const SECURITY_HEADERS: Record<string, string> = {
   "X-Frame-Options": "DENY",
   "Referrer-Policy": "same-origin",
   "Permissions-Policy":
-    "camera=(), microphone=(), geolocation=(), payment=(), usb=(), browsing-topics=()"
+    "camera=(), microphone=(), geolocation=(), payment=(), usb=()"
 };
