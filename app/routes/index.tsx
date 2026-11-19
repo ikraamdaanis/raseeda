@@ -869,11 +869,11 @@ const PROOFS: {
   {
     title: "Other websites are blocked",
     description:
-      "Every page carries this policy. Your browser enforces it, so third-party trackers, analytics and every other site are refused.",
+      "Every page carries this policy. Your browser enforces it, so the page only sends data to this site. Trackers, ads and every other site are refused, apart from the page-view counter of Cloudflare, the site's host.",
     outcome: [
       { label: "This site", status: "Allowed" },
       {
-        label: "Third-party analytics",
+        label: "Trackers and ads",
         status: "Blocked",
         isRefused: true
       },
@@ -896,8 +896,7 @@ const PROOFS: {
   },
   {
     title: "Tested on every change",
-    description:
-      "Every change runs a browser test that loads this page and fails if it asks another website for anything.",
+    description: `Every change runs a browser test that loads this page and fails if ${APP_NAME}'s own code asks another website for anything.`,
     outcome: [
       { label: "This page", status: "Loaded" },
       { label: "Requests to other sites", status: "None", isRefused: true },

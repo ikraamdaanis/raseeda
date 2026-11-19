@@ -31,7 +31,7 @@ export const Route = createFileRoute("/privacy")({
 // The date the policy last changed in substance (YYYY-MM-DD); update it with
 // the copy. The page shows it written out, and the structured data carries it
 // as is.
-const LAST_UPDATED = "2026-11-18";
+const LAST_UPDATED = "2026-11-19";
 
 const HEADING = "font-medium tracking-[-0.035em] text-balance";
 
@@ -146,15 +146,16 @@ function PrivacyPage() {
           </PolicySection>
           <PolicySection title={`What ${APP_NAME} doesn’t do`}>
             <p className={PROSE}>
-              {APP_NAME} has no accounts, no ads, no third-party analytics and
-              no tracking of individuals, and sets no cookies.
+              {APP_NAME} has no accounts, no ads and no tracking of individuals,
+              and sets no cookies.
             </p>
             <p className={PROSE}>
               Every page is sent with a Content Security Policy that only lets
-              it connect to {SITE_HOST} itself, so your browser blocks any
+              it send data to {SITE_HOST} itself, so your browser blocks any
               attempt to send data anywhere else, including from {APP_NAME}’s
-              own code. You can read the policy in your browser’s developer
-              tools, or in the{" "}
+              own code. The one script it loads from elsewhere is Cloudflare’s
+              page-view counter, described under Hosting. You can read the
+              policy in your browser’s developer tools, or in the{" "}
               <a
                 href={`${SOURCE_URL}/blob/main/consts/content-security-policy.ts`}
                 target="_blank"
@@ -187,6 +188,15 @@ function PrivacyPage() {
                 <span className="sr-only"> (opens in a new tab)</span>
               </a>
               .
+            </p>
+            <p className={PROSE}>
+              {SITE_HOST} also counts page views with Cloudflare Web Analytics.
+              Cloudflare adds a small script to each page, loaded from
+              static.cloudflareinsights.com, that reports to {SITE_HOST} which
+              page was viewed and how quickly it loaded, along with the details
+              any page view carries, such as your browser and the site you came
+              from. It sets no cookies, and Cloudflare says it doesn’t collect
+              or use visitors’ personal data. It never sees your invoices.
             </p>
           </PolicySection>
           <PolicySection title="Checking for yourself">

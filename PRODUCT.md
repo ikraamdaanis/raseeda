@@ -18,7 +18,7 @@ raseeda is a free, quick invoice generator that runs entirely in the browser. It
 
 ## Positioning
 
-Truly local-first. There are no accounts and no server-side data; all invoice data lives in the browser's IndexedDB. The only analytics are anonymous first-party counts (event name, country, browser family, OS, device type, language, the kind of site a visit came from, and bucketed invoice details such as the currency code, never names or amounts), with no identifiers or cookies. A hosted invoicing tool cannot truthfully make that claim.
+Truly local-first. There are no accounts and no server-side data; all invoice data lives in the browser's IndexedDB. The only analytics are anonymous first-party counts (event name, country, browser family, OS, device type, language, the kind of site a visit came from, and bucketed invoice details such as the currency code, never names or amounts), with no identifiers or cookies, plus Cloudflare Web Analytics' cookieless page-view counts. A hosted invoicing tool cannot truthfully make that claim.
 
 ## Scope
 
@@ -78,7 +78,7 @@ Anything past the basics is off by default and added from the page, so it never 
 - Save/load documents and templates in IndexedDB; full data import/export.
 - PDF export via @react-pdf/renderer; print is a first-class target (A4 or Letter).
 - No backend for data; deployed as static assets on Cloudflare Workers. The only request the app makes is the anonymous usage beacon to its own origin.
-- Every page sends a Content-Security-Policy that refuses requests to any other origin. The homepage names it as a check visitors can make, so it must stay.
+- Every page sends a Content-Security-Policy that only lets it send data to its own origin, and loads no script from elsewhere except Cloudflare Web Analytics' beacon. The homepage names it as a check visitors can make, so it must stay.
 - A service worker saves the whole app once the editor has been opened, so later visits work offline.
 - Must work for international users: any currency, the scripts the invoice fonts cover, varied name and address formats.
 - Mobile editing is a real scenario, not a desktop-only afterthought.
@@ -89,7 +89,7 @@ Anything past the basics is off by default and added from the page, so it never 
 - Voice: plain and direct, with no sign-up or marketing pressure ("There is nothing to sign up for", "Files are written to your machine, not someone else's").
 - Open source: the code stays MIT-licensed and anyone can run their own copy with no raseeda server behind it, so the privacy promise never rests on trusting raseeda.com.
 - Free: every feature is free and stays free, with no premium tier, watermark or invoice limit. If raseeda is ever funded, it is by donations or sponsorship, never by gating features or using data.
-- Privacy claims on the site (no third-party analytics, no third-party requests, no cookies, anonymous usage counts only) are binding and must stay true.
+- Privacy claims on the site (no ads or trackers, no data sent to any other site, no cookies, anonymous usage counts and Cloudflare Web Analytics only) are binding and must stay true.
 
 ## Evidence on Hand
 
@@ -99,7 +99,7 @@ Anything past the basics is off by default and added from the page, so it never 
 ## Product Principles
 
 1. The invoice is the product. App chrome stays out of its way, and PDF/print output must be faithful to what is on screen.
-2. Local-first is a promise, not a feature. Never add accounts, servers holding user data, tracking of individuals or third-party requests, and keep privacy copy honest.
+2. Local-first is a promise, not a feature. Never add accounts, servers holding user data, tracking of individuals or third-party requests beyond Cloudflare Web Analytics, and keep privacy copy honest.
 3. Quick before complete. Defaults should be good enough that a first-time user can finish without configuration, and a new feature is judged by whether someone starting out needs it, not by how many cases it covers.
 4. Customisation serves the freelancer's identity, not complexity. Power is available but never required, and stays off until it's added.
 5. Works for the people it's for: any currency, their own language and number format on the printed page, any device.

@@ -37,7 +37,7 @@ describe("hashInlineScripts", () => {
     );
 
     expect(policy).toContain(
-      `script-src 'self' 'wasm-unsafe-eval' ${hashOf("run();")}`
+      `script-src 'self' 'wasm-unsafe-eval' https://static.cloudflareinsights.com ${hashOf("run();")}`
     );
     expect(policy).toContain("style-src 'self' 'unsafe-inline'");
     expect(policy).not.toMatch(/script-src[^;]*'unsafe-inline'/);
@@ -51,7 +51,7 @@ describe("hashInlineScripts", () => {
     );
 
     expect(policy).toContain(
-      `script-src 'self' 'wasm-unsafe-eval' ${hashOf("run();")} ${hashOf("theme();")};`
+      `script-src 'self' 'wasm-unsafe-eval' https://static.cloudflareinsights.com ${hashOf("run();")} ${hashOf("theme();")};`
     );
   });
 });
