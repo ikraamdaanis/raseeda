@@ -49,18 +49,23 @@ export const HERO_ACTIONS_ID = "hero-actions";
 // How far the page scrolls before the header turns solid.
 const HEADER_SOLID_SCROLL = 24;
 
+// The bar's height once solid (`h-16`, lifted flush from `lg`).
+const HEADER_HEIGHT = 64;
+
 // The header's two states live on <html>, so CSS draws them
 // (`.home-header` in globals.css) without waiting for React:
 // `data-header-solid` once the page has scrolled 24px, and
-// `data-header-pill` once the hero's buttons have gone under the bar (64px). HEADER_STATE_SCRIPT sets them as the
-// page parses, right after the hero, and on every scroll, including the
-// reload's restore, so a reload mid-page paints the solid header at once.
+// `data-header-pill` as soon as the hero's buttons start going under the bar,
+// so the pill is there whenever they're covered and leaves only once they're
+// clear of it again. HEADER_STATE_SCRIPT sets them as the page parses, right
+// after the hero, and on every scroll, including the reload's restore, so a
+// reload mid-page paints the solid header at once.
 function updateHeaderState() {
   const actions = document.getElementById(HERO_ACTIONS_ID);
 
   if (!actions) return;
 
-  const isPastHero = actions.getBoundingClientRect().bottom < 64;
+  const isPastHero = actions.getBoundingClientRect().top < HEADER_HEIGHT;
   const root = document.documentElement;
 
   root.toggleAttribute(
@@ -77,7 +82,7 @@ const HEADER_HANDOVER_EVENT = "home-header-handover";
 // two frames after the page has finished parsing: by then a reload's scroll
 // is restored, so the header paints in its final state with no transition or
 // pill entrance playing.
-export const HEADER_STATE_SCRIPT = `(function(){var root=document.documentElement;function update(){var actions=document.getElementById(${JSON.stringify(HERO_ACTIONS_ID)});if(!actions)return;var past=actions.getBoundingClientRect().bottom<64;root.toggleAttribute("data-header-solid",past||scrollY>${HEADER_SOLID_SCROLL});root.toggleAttribute("data-header-pill",past)}function ready(){update();requestAnimationFrame(function(){requestAnimationFrame(function(){update();root.setAttribute("data-header-ready","")})})}update();addEventListener("scroll",update,{passive:true});addEventListener("resize",update);document.addEventListener(${JSON.stringify(HEADER_HANDOVER_EVENT)},function(){removeEventListener("scroll",update);removeEventListener("resize",update)},{once:true});if(document.readyState==="loading")addEventListener("DOMContentLoaded",ready);else ready()})()`;
+export const HEADER_STATE_SCRIPT = `(function(){var root=document.documentElement;function update(){var actions=document.getElementById(${JSON.stringify(HERO_ACTIONS_ID)});if(!actions)return;var past=actions.getBoundingClientRect().top<${HEADER_HEIGHT};root.toggleAttribute("data-header-solid",past||scrollY>${HEADER_SOLID_SCROLL});root.toggleAttribute("data-header-pill",past)}function ready(){update();requestAnimationFrame(function(){requestAnimationFrame(function(){update();root.setAttribute("data-header-ready","")})})}update();addEventListener("scroll",update,{passive:true});addEventListener("resize",update);document.addEventListener(${JSON.stringify(HEADER_HANDOVER_EVENT)},function(){removeEventListener("scroll",update);removeEventListener("resize",update)},{once:true});if(document.readyState==="loading")addEventListener("DOMContentLoaded",ready);else ready()})()`;
 
 // The same tracking once the page has hydrated, and on a client-side visit,
 // where the inline script doesn't run; the states are cleared on the way out

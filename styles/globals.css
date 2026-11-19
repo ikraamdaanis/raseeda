@@ -682,7 +682,8 @@ html[data-editor-theme="dark"] [data-phone-form] {
 /* The homepage header's states, set on <html> by HEADER_STATE_SCRIPT
    (app/routes/index.tsx) before first paint and on every scroll: solid once
    the hero's headline reaches it (lifted flush from `lg`), and the Create
-   invoice pill in place of the editor link once the hero's buttons are gone. */
+   invoice pill in place of the editor link once the hero's buttons start
+   going under it. */
 html[data-header-solid] .home-header {
   background-color: color-mix(in oklab, var(--color-canvas) 90%, transparent);
   box-shadow: 0 1px 0 rgb(9 9 11 / 0.08);
