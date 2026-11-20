@@ -40,7 +40,9 @@ const DATE_MENTION = new RegExp(
 
 // The number after the highest one in the copy's series: the numbers in
 // `takenNumbers` sharing its prefix and suffix (ignoring case), plus one,
-// keeping its zero padding. A number with no digits is left as it is.
+// keeping its zero padding. A number with no digits is left as it is. The
+// digits are counted as a BigInt, so a run too long for a Number still moves
+// on by one.
 export function nextInvoiceNumber(
   number: string,
   takenNumbers: string[]
@@ -64,10 +66,17 @@ export function nextInvoiceNumber(
       return max;
     }
 
-    return Math.max(max, Number(takenDigits));
-  }, 0);
+    const takenValue = BigInt(takenDigits);
 
-  return `${prefix}${String(highest + 1).padStart(digits.length, "0")}${suffix}`;
+    return takenValue > max ? takenValue : max;
+  }, 0n);
+
+  return `${prefix}${String(highest + 1n).padStart(digits.length, "0")}${suffix}`;
+}
+
+// Whether two numbers are the same, ignoring case and the spaces around.
+function isSameNumber(number: string, other: string) {
+  return number.trim().toLowerCase() === other.trim().toLowerCase();
 }
 
 // Whether two numbers are in the same series: the same text around their
@@ -90,8 +99,8 @@ function isSameSeries(number: string, other: string) {
 // document of that type still numbered in the original's series or another
 // type's sample series (a quote switched to an invoice in the inspector keeps
 // QUO-0007) is passed over for one in a series of its own, when there is
-// one. With none of that type yet, or a newest one whose number has no digits
-// to count on, the type's sample number, moved on past any taken.
+// one. With none of that type yet whose number has digits to count on, the
+// type's sample number, moved on past any taken.
 export function nextNumberOfType({
   original,
   documentType,
@@ -102,8 +111,12 @@ export function nextNumberOfType({
   library: { number: string; documentType: DocumentType; createdAt: Date }[];
 }) {
   const takenNumbers = library.map(document => document.number);
+  // Only numbers with digits to count on, so "ACME" is passed over for the
+  // newest one that has them.
   const ofType = library.filter(
-    document => document.documentType === documentType && document.number.trim()
+    document =>
+      document.documentType === documentType &&
+      NUMBER_PARTS.test(document.number.trim())
   );
   // The original's series, and every other type's sample series.
   const otherSeries = [
@@ -121,13 +134,7 @@ export function nextNumberOfType({
   );
   const next = newest && nextInvoiceNumber(newest.number, takenNumbers);
 
-  if (
-    newest &&
-    next &&
-    next.trim().toLowerCase() !== newest.number.trim().toLowerCase()
-  ) {
-    return next;
-  }
+  if (newest && next && !isSameNumber(next, newest.number)) return next;
 
   const sample = DOCUMENT_TYPE_DEFAULTS[documentType].number;
   const taken = new Set(
@@ -144,7 +151,8 @@ export function nextNumberOfType({
  * already has. A blank (or a site template page's invoice) takes the next one
  * in the series of the newest document of its type, as a copy of another type
  * does, or its type's sample number in an empty library. A saved template
- * keeps its own series, moved on past the highest number taken in it.
+ * keeps its own series, moved on past the highest number taken in it, or
+ * takes its type's when its number has no digits to move on.
  */
 export function numberNewDocument({
   invoice,
@@ -156,15 +164,20 @@ export function numberNewDocument({
   library: { number: string; documentType: DocumentType; createdAt: Date }[];
 }): Invoice {
   const takenNumbers = library.map(document => document.number);
-  const isTaken = takenNumbers.some(
-    number =>
-      number.trim().toLowerCase() === invoice.number.trim().toLowerCase()
+  const isTaken = takenNumbers.some(number =>
+    isSameNumber(number, invoice.number)
   );
 
-  if (isFromTemplate) {
-    return isTaken
-      ? { ...invoice, number: nextInvoiceNumber(invoice.number, takenNumbers) }
-      : invoice;
+  if (isFromTemplate && !isTaken) return invoice;
+
+  // A taken template number moves on in its series; one with no digits to
+  // move on takes the type's series, as a blank does.
+  const next = isFromTemplate
+    ? nextInvoiceNumber(invoice.number, takenNumbers)
+    : null;
+
+  if (next !== null && !isSameNumber(next, invoice.number)) {
+    return { ...invoice, number: next };
   }
 
   return {
@@ -261,18 +274,23 @@ export function prepareInvoiceCopy({
         : "";
   const paidBy = before.paidBy || !after.paidBy ? invoice.paidBy : "";
 
+  // A same-type copy moves on in the original's series, unless its number
+  // has no digits to move on ("ACME"), when it takes the type's series as a
+  // copy of another type does.
+  const sameSeriesNumber = isSameType
+    ? nextInvoiceNumber(
+        invoice.number,
+        library.map(document => document.number)
+      )
+    : null;
+  const number =
+    sameSeriesNumber !== null && !isSameNumber(sameSeriesNumber, invoice.number)
+      ? sameSeriesNumber
+      : nextNumberOfType({ original: invoice.number, documentType, library });
+
   return {
     ...typed,
-    number: isSameType
-      ? nextInvoiceNumber(
-          invoice.number,
-          library.map(document => document.number)
-        )
-      : nextNumberOfType({
-          original: invoice.number,
-          documentType,
-          library
-        }),
+    number,
     invoiceDate,
     dueDate: copyDueDate({ invoice, documentType, invoiceDate }),
     refersTo,

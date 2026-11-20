@@ -59,6 +59,14 @@ describe("nextInvoiceNumber", () => {
     );
   });
 
+  it("moves on a run of digits too long for a Number", () => {
+    expect(
+      nextInvoiceNumber("ORD-12345678901234567890", [
+        "ORD-12345678901234567891"
+      ])
+    ).toBe("ORD-12345678901234567892");
+  });
+
   it("leaves a number with no digits alone", () => {
     expect(nextInvoiceNumber("Draft", ["Draft"])).toBe("Draft");
   });
@@ -116,6 +124,16 @@ describe("numberNewDocument", () => {
         library: [stored("ACME-010", "invoice"), stored("ACME-012", "invoice")]
       }).number
     ).toBe("ACME-013");
+  });
+
+  it("numbers a taken template number with no digits in its type's series", () => {
+    expect(
+      numberNewDocument({
+        invoice: invoiceWith({ number: "ACME" }),
+        isFromTemplate: true,
+        library: [stored("ACME", "invoice")]
+      }).number
+    ).toBe("INV-0001");
   });
 });
 
@@ -471,6 +489,17 @@ describe("prepareInvoiceCopy", () => {
     });
 
     expect(copy.number).toBe("INV-0001");
+  });
+
+  it("starts the type's series for a same-type copy of a number with no digits", () => {
+    const copy = prepareInvoiceCopy({
+      invoice: invoiceWith({ number: "ACME" }),
+      documentType: "invoice",
+      library: [stored("ACME", "invoice"), stored("INV-0004", "invoice")],
+      today: new Date(2026, 10, 2)
+    });
+
+    expect(copy.number).toBe("INV-0005");
   });
 
   it("doesn't change the document it copies", () => {
