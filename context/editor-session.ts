@@ -533,8 +533,11 @@ function openInvoice(documentId: string): Promise<void> {
     if (!document) throw new DocumentNotFoundError();
     if (!(await leaveCurrent())) return;
 
-    // Read again: the invoice may have changed while this one was saved.
-    const latest = (await getInvoice(documentId)) ?? document;
+    // Read again: the invoice may have changed while this one was saved. The
+    // open one is already left, so a read that fails here falls back to the
+    // first rather than leaving the editor on an invoice that saves nothing.
+    const latest =
+      (await getInvoice(documentId).catch(() => undefined)) ?? document;
 
     switchTo(sessionFromDocument(latest), latest.invoiceData);
   });

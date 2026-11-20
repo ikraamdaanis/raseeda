@@ -42,8 +42,12 @@ async function closePages() {
 }
 
 // Fails writes to (and, with `reads`, reads from) the invoices table while
-// `current` is set, as a full disk or a broken database would.
-type FailWrites = { current: Error | null; reads?: boolean };
+// `current` is set, as a full disk or a broken database would. `reads` can
+// instead pick which reads of the invoices table fail, by key.
+type FailWrites = {
+  current: Error | null;
+  reads?: boolean | ((key: unknown) => boolean);
+};
 
 // The session is module state, so every page loads a fresh copy of it, as a
 // page load would, over the one database.
@@ -85,7 +89,15 @@ async function loadPage({
               return error ? Promise.reject(error) : table.mutate(request);
             },
             get: request => {
-              const error = failWrites.reads ? failure() : null;
+              const { reads } = failWrites;
+              const error =
+                typeof reads === "function"
+                  ? name === "invoices" && reads(request.key)
+                    ? new Error("Read failed")
+                    : null
+                  : reads
+                    ? failure()
+                    : null;
 
               return error ? Promise.reject(error) : table.get(request);
             }
@@ -674,6 +686,34 @@ describe("opening and leaving", () => {
     await page.newInvoice();
 
     expect(await page.getInvoice("stored")).toBeUndefined();
+  });
+
+  it("opens and saves an invoice whose second read fails", async () => {
+    const failWrites: FailWrites = { current: null };
+    const page = await loadPage({ failWrites });
+
+    page.edit().setTitle("Left behind");
+    await settle();
+    await page.saveInvoice(storedInvoice({ id: "other" }));
+
+    let otherReads = 0;
+
+    failWrites.reads = key => key === "other" && ++otherReads === 2;
+    await page.openInvoice("other");
+    failWrites.reads = false;
+
+    expect(otherReads).toBe(2);
+    expect(page.documentState()).toMatchObject({
+      documentId: "other",
+      status: "editing"
+    });
+
+    page.edit().setTitle("Typed after opening");
+    await settle();
+
+    expect((await page.getInvoice("other"))?.invoiceData.title).toBe(
+      "Typed after opening"
+    );
   });
 
   it("leaves the tab pointing at an invoice it couldn't read, to open on reload", async () => {
