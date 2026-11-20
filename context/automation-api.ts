@@ -1,5 +1,6 @@
 import { isNil, isPlainObject, mergeWith, omitBy, pick } from "lodash-es";
 import { APP_NAME } from "~/consts/app";
+import { resolveCurrencyCode } from "~/consts/currencies";
 import { DOCUMENT_TYPE_DEFAULTS } from "~/consts/document-types";
 import { documentActions } from "~/context/editor-session";
 import { createInvoice, getAllInvoices, getInvoice } from "~/db";
@@ -169,6 +170,12 @@ const api = {
             DOCUMENT_TYPE_DEFAULTS[documentType].dueDays
           ) ?? blank.dueDate)
         : blank.dueDate;
+    // A currency given with no code takes the code of its symbol, rather
+    // than the blank's USD ("€" alone is EUR, and prints no "USD" after it).
+    const currencyCode =
+      typeof known.currency === "string" && known.currencyCode === undefined
+        ? resolveCurrencyCode({ currency: known.currency, currencyCode: "" })
+        : blank.currencyCode;
     // Labels given are laid over the type's, so `labels: { total }` on a
     // receipt keeps its "Date paid".
     const givenLabels: unknown = Reflect.get(data, "labels");
@@ -192,7 +199,14 @@ const api = {
     );
     const invoiceData = ensureRowIds(
       migrateInvoiceData(
-        { ...blank, dueDate, ...known, ...labelledParts, labels },
+        {
+          ...blank,
+          dueDate,
+          currencyCode,
+          ...known,
+          ...labelledParts,
+          labels
+        },
         CURRENT_INVOICE_SCHEMA_VERSION
       )
     );

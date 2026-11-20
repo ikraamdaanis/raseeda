@@ -24,6 +24,7 @@ const { raseeda } = globalThis as unknown as {
       labels: Record<string, string>;
       seller: { label: string; content: string };
       paymentDetails: { labels: Record<string, string>; iban: string };
+      currencyCode: string;
     }>;
     listInvoices: () => Promise<{ id: string; documentType: string }[]>;
   };
@@ -151,5 +152,32 @@ describe("automation API language presets", () => {
     const id = await raseeda.createInvoice({ language: "sv" });
 
     expect((await raseeda.getInvoice(id)).title).toBe("Invoice");
+  });
+});
+
+describe("automation API currency", () => {
+  beforeEach(async () => {
+    await deleteAllData();
+  });
+
+  it("reads the code from a currency given without one", async () => {
+    const id = await raseeda.createInvoice({ currency: "€" });
+
+    expect((await raseeda.getInvoice(id)).currencyCode).toBe("EUR");
+  });
+
+  it("keeps a code given with the currency", async () => {
+    const id = await raseeda.createInvoice({
+      currency: "$",
+      currencyCode: "CAD"
+    });
+
+    expect((await raseeda.getInvoice(id)).currencyCode).toBe("CAD");
+  });
+
+  it("keeps USD when no currency is given", async () => {
+    const id = await raseeda.createInvoice({});
+
+    expect((await raseeda.getInvoice(id)).currencyCode).toBe("USD");
   });
 });
