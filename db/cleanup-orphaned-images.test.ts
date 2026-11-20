@@ -9,12 +9,13 @@ import {
 } from "~/db";
 import { createBlankInvoice } from "~/stores/invoice-store";
 
-async function storeBlob(imageId: string) {
+// An image stored `hoursAgo` hours ago, by default old enough to sweep.
+async function storeBlob(imageId: string, hoursAgo = 48) {
   await db.images.put({
     id: imageId,
     data: new Uint8Array([1, 2, 3]).buffer,
     type: "image/png",
-    createdAt: new Date()
+    createdAt: new Date(Date.now() - hoursAgo * 60 * 60 * 1000)
   });
 }
 
@@ -51,6 +52,15 @@ describe("cleanupOrphanedImages", () => {
       db.templates.clear(),
       db.versions.clear()
     ]);
+  });
+
+  it("keeps an image stored in the past day that nothing saved references", async () => {
+    await storeBlob("unsaved-logo", 1);
+    await storeBlob("orphan-logo");
+
+    await cleanupOrphanedImages();
+
+    expect(await storedImageIds()).toEqual(["unsaved-logo"]);
   });
 
   it("keeps a blob two saved invoices share and collects an unreferenced one", async () => {

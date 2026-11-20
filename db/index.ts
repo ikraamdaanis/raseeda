@@ -911,6 +911,10 @@ export async function getAllImages(): Promise<StoredImage[]> {
   }
 }
 
+// How long an image nothing saved references is kept before the sweep
+// deletes it.
+const IMAGE_SWEEP_GRACE_MS = 24 * 60 * 60 * 1000;
+
 // The signature a stored invoice or template names. Records are read as
 // stored, so one saved before signatures existed has none.
 function readSignatureImage(data: Partial<Pick<Invoice, "signature">>) {
@@ -920,8 +924,10 @@ function readSignatureImage(data: Partial<Pick<Invoice, "signature">>) {
 /**
  * Delete image blobs that no saved invoice, template or version references.
  * The editor runs it once as it opens, after taking the editor lock and
- * before loading anything, when nothing in memory can point at a logo or a
- * signature.
+ * before loading anything. An image stored in the past day is kept even so:
+ * another tab that handed the editor over while its writes were failing still
+ * holds edits pointing at its new logo or signature, and writes them once it
+ * has the editor back.
  *
  * Best-effort: failures are logged but never thrown, since this is background
  * garbage collection that must not keep the editor from opening.
@@ -950,8 +956,11 @@ export async function cleanupOrphanedImages(): Promise<void> {
       ...versionImageIds.map(String),
       ...versionSignatureIds.map(String)
     ];
+    const sweepBefore = Date.now() - IMAGE_SWEEP_GRACE_MS;
     const orphanedImageIds = selectOrphanedImageIds(
-      images.map(image => image.id),
+      images
+        .filter(image => image.createdAt.getTime() <= sweepBefore)
+        .map(image => image.id),
       referencedImageIds
     );
 

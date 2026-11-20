@@ -798,6 +798,8 @@ describe("logo cleanup", () => {
       reason: "opened"
     });
     await earlier.close();
+    // Past the day an image nothing references is kept for.
+    vi.setSystemTime(Date.now() + 25 * 60 * 60 * 1000);
 
     const page = await loadPage();
 
@@ -821,6 +823,7 @@ describe("logo cleanup", () => {
     expect(await storedLogoIds(page)).toEqual(["removed-logo"]);
 
     await page.close();
+    vi.setSystemTime(Date.now() + 25 * 60 * 60 * 1000);
 
     const reloaded = await loadPage();
 
