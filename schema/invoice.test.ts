@@ -167,3 +167,12 @@ describe("invoiceSchema payment methods and labels", () => {
     expect(parsed.paymentDetails.methods).toEqual([]);
   });
 });
+
+describe("invoiceSchema fees", () => {
+  it("reads a negative fee as none", () => {
+    expect(invoiceSchema.parse({ ...invoiceDefault, fees: -20 }).fees).toBe(0);
+    expect(invoiceSchema.parse({ ...invoiceDefault, fees: "15" }).fees).toBe(
+      15
+    );
+  });
+});

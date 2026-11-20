@@ -464,7 +464,12 @@ export const invoiceSchema = z.object({
       perLine: z.boolean().catch(false)
     })
     .catch({ percentage: 0, exempt: false, note: "", perLine: false }),
-  fees: z.coerce.number().catch(0),
+  // Never negative, as the editor's field allows: a fee below zero would cut
+  // the total with no row printed to show it.
+  fees: z.coerce
+    .number()
+    .catch(0)
+    .transform(fees => Math.max(0, fees)),
   discounts: z.coerce.number().catch(0),
   // A fixed discount is a currency amount; a percentage discount is applied to
   // the subtotal. The numeric value lives in `discounts` either way.
