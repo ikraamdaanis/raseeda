@@ -22,6 +22,7 @@ import {
   DOCUMENT_TYPE_NAMES
 } from "~/consts/document-types";
 import { LABEL_LANGUAGE_NAMES, LABEL_LANGUAGES } from "~/consts/label-presets";
+import { documentActions } from "~/context/editor-session";
 import { cn } from "~/lib/utils";
 import {
   CURRENCY_POSITIONS,
@@ -116,7 +117,7 @@ export function FormDocument() {
 
 function FormDocumentType() {
   const id = useId();
-  const { documentType, setDocumentType } = useDocumentTypeSlice();
+  const { documentType } = useDocumentTypeSlice();
 
   return (
     <FormField id={id} title="Type">
@@ -128,7 +129,7 @@ function FormDocumentType() {
             option => option === event.target.value
           );
 
-          if (next) setDocumentType(next);
+          if (next) void documentActions.changeDocumentType(next);
         }}
       >
         {DOCUMENT_TYPES.map(option => (

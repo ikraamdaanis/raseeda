@@ -1,6 +1,7 @@
 import { isEqual } from "lodash-es";
 import { toast } from "sonner";
 import { APP_NAME } from "~/consts/app";
+import { DOCUMENT_TYPE_DEFAULTS } from "~/consts/document-types";
 import { claimEditor, holdsEditor, releaseEditor } from "~/context/editor-lock";
 import { createSaveController } from "~/context/save-controller";
 import {
@@ -54,6 +55,7 @@ import { downloadBackupFile } from "~/utils/export-data";
 import { isBlankInvoice, isLargeRemoval } from "~/utils/invoice-content";
 import {
   describeCopy,
+  nextNumberOfType,
   numberNewDocument,
   prepareInvoiceCopy
 } from "~/utils/invoice-copy";
@@ -538,6 +540,36 @@ function openInvoice(documentId: string): Promise<void> {
   });
 }
 
+// The numbers a new number must follow: every library document's, and the
+// open document's while it's new and not in the library yet, since it joins
+// on its first edit with the number it has.
+function numberedLibrary(
+  library: InvoiceDocument[],
+  { withOpen = true }: { withOpen?: boolean } = {}
+) {
+  const numbered = library.map(document => ({
+    number: document.invoiceData.number,
+    documentType: document.invoiceData.documentType,
+    createdAt: document.createdAt
+  }));
+  const session = current;
+
+  if (!withOpen || !session || session.disposed || session.isRecord) {
+    return numbered;
+  }
+
+  const open = liveContent();
+
+  return [
+    ...numbered,
+    {
+      number: open.number,
+      documentType: open.documentType,
+      createdAt: new Date()
+    }
+  ];
+}
+
 // A new document's number, after the ones the library has
 // (`numberNewDocument`). Read once the open invoice has been left, so its
 // number counts and a blank deleted on the way out doesn't. Where the library
@@ -554,17 +586,42 @@ async function withNewNumber(
     return numberNewDocument({
       invoice: content,
       isFromTemplate,
-      library: library.map(document => ({
-        number: document.invoiceData.number,
-        documentType: document.invoiceData.documentType,
-        createdAt: document.createdAt
-      }))
+      library: numberedLibrary(library)
     });
   } catch (error) {
     console.error("[EditorSession] Failed to number a new invoice", error);
 
     return content;
   }
+}
+
+// Changes the open document's type. A number still on the old type's sample
+// would become the new type's sample, which the library may already have, so
+// it takes the next number of that type instead, as a new one would.
+async function changeDocumentType(documentType: DocumentType): Promise<void> {
+  const before = useInvoiceStore.getState();
+  const isSampleNumber =
+    before.number === DOCUMENT_TYPE_DEFAULTS[before.documentType].number;
+  const library =
+    isSampleNumber && !storageUnavailable
+      ? await getAllInvoices().catch(() => null)
+      : null;
+  const state = useInvoiceStore.getState();
+  const isUnchanged =
+    state.number === before.number &&
+    state.documentType === before.documentType;
+  const number =
+    library && isUnchanged
+      ? nextNumberOfType({
+          documentType,
+          library: numberedLibrary(
+            library.filter(document => document.id !== current?.id),
+            { withOpen: false }
+          )
+        })
+      : undefined;
+
+  state.setDocumentType(documentType, number);
 }
 
 // Starts something new in place of the open invoice, once it's been left.
@@ -634,11 +691,7 @@ async function copyInvoice(
   const invoiceData = prepareInvoiceCopy({
     invoice: ensureRowIds(structuredClone(document.invoiceData)),
     documentType,
-    library: library.map(invoice => ({
-      number: invoice.invoiceData.number,
-      documentType: invoice.invoiceData.documentType,
-      createdAt: invoice.createdAt
-    })),
+    library: numberedLibrary(library),
     today: now
   });
   const copy: InvoiceDocument = {
@@ -1227,6 +1280,7 @@ export const documentActions = {
   duplicateInvoice,
   duplicateCurrent,
   renameCurrent,
+  changeDocumentType,
   deleteFromLibrary,
   deleteEverything,
   keepDeletedCopy,

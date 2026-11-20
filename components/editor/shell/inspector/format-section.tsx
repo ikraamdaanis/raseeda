@@ -8,6 +8,7 @@ import { NativeSelect } from "~/components/ui/select";
 import { formatCurrency } from "~/consts/currencies";
 import { DOCUMENT_TYPE_NAMES } from "~/consts/document-types";
 import { LABEL_LANGUAGE_NAMES, LABEL_LANGUAGES } from "~/consts/label-presets";
+import { documentActions } from "~/context/editor-session";
 import { cn } from "~/lib/utils";
 import {
   CURRENCY_POSITIONS,
@@ -155,7 +156,7 @@ function CurrencyPositionRow() {
 // What kind of document it is. Changing it swaps the title and the labels
 // still on the old type's defaults; renamed ones stay as typed.
 function DocumentTypeRow() {
-  const { documentType, setDocumentType } = useDocumentTypeSlice();
+  const { documentType } = useDocumentTypeSlice();
 
   return (
     <InspectorRow label="Type" htmlFor="inspector-document-type">
@@ -167,7 +168,7 @@ function DocumentTypeRow() {
             option => option === event.target.value
           );
 
-          if (next) setDocumentType(next);
+          if (next) void documentActions.changeDocumentType(next);
         }}
         className={cn(inspectorFieldClassName, "pr-7")}
       >

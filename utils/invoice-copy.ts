@@ -92,7 +92,7 @@ function isSameSeries(number: string, other: string) {
 // QUO-0007) is passed over for one in a series of its own, when there is
 // one. With none of that type yet, or a newest one whose number has no digits
 // to count on, the type's sample number, moved on past any taken.
-function nextNumberOfType({
+export function nextNumberOfType({
   original,
   documentType,
   library

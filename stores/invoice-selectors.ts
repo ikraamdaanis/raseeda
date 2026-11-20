@@ -370,13 +370,11 @@ export function useCurrencySlice() {
   );
 }
 
-// The document's type, for the inspector's Type row.
+// The document's type, for the Type rows, which change it through the
+// session (`changeDocumentType`) so a swapped number follows the library.
 export function useDocumentTypeSlice() {
   return useInvoiceStore(
-    useShallow(state => ({
-      documentType: state.documentType,
-      setDocumentType: state.setDocumentType
-    }))
+    useShallow(state => ({ documentType: state.documentType }))
   );
 }
 

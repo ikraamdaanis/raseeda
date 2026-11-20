@@ -233,8 +233,9 @@ interface InvoiceActions {
   setPaperSize: (paperSize: Invoice["paperSize"]) => void;
 
   // Document type: swaps the title, sample number and labels still on the
-  // old type's defaults for the new type's.
-  setDocumentType: (documentType: DocumentType) => void;
+  // old type's defaults for the new type's. A sample number swapped takes
+  // `number` instead when given (the session numbers it after the library).
+  setDocumentType: (documentType: DocumentType, number?: string) => void;
 
   // Language preset: every printed label in a language, overwriting what was
   // typed.
@@ -411,7 +412,7 @@ export const useInvoiceStore = create<InvoiceStore>()(
           state.paperSize = paperSize;
         }),
 
-      setDocumentType: documentType =>
+      setDocumentType: (documentType, number) =>
         set(state => {
           const next = applyDocumentType(
             {
@@ -422,10 +423,11 @@ export const useInvoiceStore = create<InvoiceStore>()(
             },
             documentType
           );
+          const isNumberSwapped = next.number !== state.number;
 
           state.documentType = next.documentType;
           state.title = next.title;
-          state.number = next.number;
+          state.number = isNumberSwapped && number ? number : next.number;
           state.labels = next.labels;
         }),
 

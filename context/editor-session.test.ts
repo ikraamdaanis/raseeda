@@ -976,6 +976,55 @@ describe("library actions", () => {
     expect(page.documentState().documentId).not.toBe(copy.id);
   });
 
+  it("numbers a copy after the new document still open", async () => {
+    const page = await loadPage();
+
+    await page.createInvoice(
+      storedInvoice({
+        id: "listed",
+        nameSource: "auto",
+        invoiceData: { ...structuredClone(invoiceDefault), number: "INV-0005" }
+      })
+    );
+    await page.newInvoice();
+
+    expect(page.invoice().number).toBe("INV-0006");
+
+    const listed = await page.getInvoice("listed");
+
+    if (!listed) throw new Error("The invoice wasn't stored");
+
+    const copy = await page.duplicateInvoice(listed);
+
+    expect(copy.invoiceData.number).toBe("INV-0007");
+  });
+
+  it("numbers a type change after the library rather than reuse a sample number", async () => {
+    const page = await loadPage();
+
+    await page.newDocument("quote");
+    page.edit().setClient(client => ({ ...client, content: "Acme Ltd" }));
+    await page.flushNow();
+    await page.newInvoice();
+
+    expect(page.invoice().number).toBe("INV-0001");
+
+    await page.changeDocumentType("quote");
+
+    expect(page.invoice()).toMatchObject({
+      documentType: "quote",
+      title: "Quote",
+      number: "QUO-0002"
+    });
+
+    page.history.undoInvoiceChange();
+
+    expect(page.invoice()).toMatchObject({
+      documentType: "invoice",
+      number: "INV-0001"
+    });
+  });
+
   it("starts a new blank when the open invoice is deleted from the library", async () => {
     const page = await loadPage();
 
