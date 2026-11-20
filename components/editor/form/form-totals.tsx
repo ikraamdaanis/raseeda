@@ -31,6 +31,7 @@ import { Input } from "~/components/ui/input";
 import { ToggleGroup, ToggleGroupItem } from "~/components/ui/toggle-group";
 import { formatCurrency } from "~/consts/currencies";
 import { DOCUMENT_TYPE_DEFAULTS } from "~/consts/document-types";
+import { TAX_RATE_DECIMALS } from "~/consts/tax";
 import { useCurrencyConversion } from "~/hooks/use-currency-conversion";
 import { useSecondCurrency } from "~/hooks/use-second-currency";
 import { useShownSections } from "~/hooks/use-shown-sections";
@@ -564,7 +565,7 @@ function TaxRows({ rows }: { rows: InvoiceSummaryRow[] }) {
             value={tax.percentage}
             onChange={percentage => setTax(prev => ({ ...prev, percentage }))}
             money={money}
-            decimals={2}
+            decimals={TAX_RATE_DECIMALS}
             min={0}
             max={100}
             suffix="%"

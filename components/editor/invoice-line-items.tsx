@@ -10,6 +10,7 @@ import { InvoiceTextArea } from "~/components/editor/invoice-textarea";
 import { NumberField, useNumberField } from "~/components/editor/number-field";
 import { Button } from "~/components/ui/button";
 import { formatCurrency } from "~/consts/currencies";
+import { TAX_RATE_DECIMALS } from "~/consts/tax";
 import { useInvoiceDocument } from "~/context/invoice-document-context";
 import { useCurrencyConversion } from "~/hooks/use-currency-conversion";
 import { useFontLoads } from "~/hooks/use-font-loads";
@@ -1105,7 +1106,7 @@ function TaxCell({
     onChange: percentage => setItemTax(item.id, { percentage, exempt: false }),
     onClear: () => setItemTax(item.id, undefined),
     money,
-    decimals: 2,
+    decimals: TAX_RATE_DECIMALS,
     min: 0,
     max: 100
   });

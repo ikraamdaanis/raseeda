@@ -18,6 +18,7 @@ import {
 import { useLineItemSuggestions } from "~/components/editor/invoice-line-items";
 import { Button } from "~/components/ui/button";
 import { formatCurrency } from "~/consts/currencies";
+import { TAX_RATE_DECIMALS } from "~/consts/tax";
 import { useCurrencyConversion } from "~/hooks/use-currency-conversion";
 import { useShownSections } from "~/hooks/use-shown-sections";
 import { cn } from "~/lib/utils";
@@ -441,7 +442,7 @@ function LineTax({
             }
             onClear={() => setItemTax(item.id, undefined)}
             money={money}
-            decimals={2}
+            decimals={TAX_RATE_DECIMALS}
             min={0}
             max={100}
             placeholder={placeholder}

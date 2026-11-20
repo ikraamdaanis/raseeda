@@ -16,6 +16,7 @@ import {
 } from "~/components/ui/tooltip";
 import { formatCurrency } from "~/consts/currencies";
 import { DOCUMENT_TYPE_DEFAULTS } from "~/consts/document-types";
+import { TAX_RATE_DECIMALS } from "~/consts/tax";
 import { useCurrencyConversion } from "~/hooks/use-currency-conversion";
 import { useIsPreview, useShownSections } from "~/hooks/use-shown-sections";
 import { cn } from "~/lib/utils";
@@ -551,7 +552,7 @@ function InvoiceTaxRow({
               value={tax.percentage}
               onChange={percentage => setTax(prev => ({ ...prev, percentage }))}
               money={money}
-              decimals={2}
+              decimals={TAX_RATE_DECIMALS}
               min={0}
               max={100}
               className="field-sizing-content w-auto min-w-[1ch] text-right"
