@@ -11,14 +11,16 @@ import { hasOpenModal } from "~/utils/open-overlay";
 import { isApplePlatform } from "~/utils/shortcut-label";
 
 // Whether undo here belongs to the browser: a text field that isn't part of
-// the invoice (a search box, a dialog's name field) keeps its own undo.
+// the invoice (a search box, a dialog's name field) keeps its own undo. A
+// select has no undo of its own, so ⌘Z right after picking from one (the
+// phone form's Type) undoes the pick.
 function isOwnEditable(target: EventTarget | null) {
   if (!(target instanceof Element)) return false;
   if (target.closest("[data-field]")) return false;
 
   return (
     target.closest(
-      "input:not([readonly]), textarea:not([readonly]), select, [contenteditable='true']"
+      "input:not([readonly]), textarea:not([readonly]), [contenteditable='true']"
     ) !== null
   );
 }
