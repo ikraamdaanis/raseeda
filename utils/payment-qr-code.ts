@@ -1,3 +1,4 @@
+import { resolveCurrencyCode } from "~/consts/currencies";
 import { calculateInvoiceTotals } from "~/utils/calculate-invoice-totals";
 import { getPaymentLinkHref } from "~/utils/payment-details";
 import { getSepaQrCode } from "~/utils/sepa-qr-code";
@@ -59,7 +60,7 @@ function getUpiQrCode(
   | { missing: "upiCurrency" | "upiId" | "upiName" | "nothingDue" } {
   const { paymentDetails } = invoice;
 
-  if (invoice.currencyCode !== "INR") return { missing: "upiCurrency" };
+  if (resolveCurrencyCode(invoice) !== "INR") return { missing: "upiCurrency" };
   if (!readUpiId(paymentDetails.upiId)) return { missing: "upiId" };
   if (!toUpiText(paymentDetails.accountName)) return { missing: "upiName" };
 

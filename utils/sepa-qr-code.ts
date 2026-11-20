@@ -1,3 +1,4 @@
+import { resolveCurrencyCode } from "~/consts/currencies";
 import type { Invoice } from "~/types";
 import { calculateInvoiceTotals } from "~/utils/calculate-invoice-totals";
 
@@ -124,7 +125,7 @@ export function getSepaQrCode(
   | { missing: "currency" | "iban" | "name" | "nothingDue" | "amount" } {
   const { paymentDetails } = invoice;
 
-  if (invoice.currencyCode !== "EUR") return { missing: "currency" };
+  if (resolveCurrencyCode(invoice) !== "EUR") return { missing: "currency" };
   if (!readIban(paymentDetails.iban)) return { missing: "iban" };
   if (!toEpcText(paymentDetails.accountName, 1)) return { missing: "name" };
 

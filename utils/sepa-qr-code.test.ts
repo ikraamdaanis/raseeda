@@ -209,6 +209,17 @@ describe("getSepaQrCode", () => {
     });
   });
 
+  it("reads euros stored without a code, or in lower case", () => {
+    const invoice = makeInvoice();
+
+    expect(
+      getSepaQrCode({ ...invoice, currency: "€", currencyCode: "" })
+    ).toHaveProperty("payload");
+    expect(
+      getSepaQrCode({ ...invoice, currency: "€", currencyCode: "eur" })
+    ).toHaveProperty("payload");
+  });
+
   it("says why it's left out", () => {
     const invoice = makeInvoice();
 

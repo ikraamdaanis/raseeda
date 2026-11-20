@@ -1,5 +1,6 @@
 import { Link, StyleSheet, Text, View } from "@react-pdf/renderer";
 import { InvoicePdfPaymentQrCode } from "~/components/pdf/invoice-pdf-payment-qr-code";
+import { resolveCurrencyCode } from "~/consts/currencies";
 import type { Invoice } from "~/types";
 import { getPrintedLanguage, getPrintedWord } from "~/utils/label-preset";
 import { getPaymentRows } from "~/utils/payment-details";
@@ -46,7 +47,7 @@ const styles = StyleSheet.create({
 
 export function InvoicePdfPaymentDetails({ invoice }: { invoice: Invoice }) {
   const { theme, paymentDetails } = invoice;
-  const rows = getPaymentRows(paymentDetails, invoice.currencyCode);
+  const rows = getPaymentRows(paymentDetails, resolveCurrencyCode(invoice));
 
   if (rows.length === 0 && !paymentDetails.terms.trim()) {
     return null;

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { resolveCurrencyCode } from "~/consts/currencies";
 import { useInvoiceDocument } from "~/context/invoice-document-context";
 import { usePaymentDetailsSlice } from "~/stores/invoice-selectors";
 import { useInvoiceStore } from "~/stores/invoice-store";
@@ -15,7 +16,7 @@ import {
 // doesn't take it away; another document starts afresh.
 export function useShownBankFields() {
   const { paymentDetails } = usePaymentDetailsSlice();
-  const currencyCode = useInvoiceStore(state => state.currencyCode);
+  const currencyCode = useInvoiceStore(state => resolveCurrencyCode(state));
   const { currentDocumentId } = useInvoiceDocument();
   const [shownFor, setShownFor] = useState(currentDocumentId);
   const [showsAll, setShowsAll] = useState(false);

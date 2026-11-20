@@ -1,3 +1,4 @@
+import { resolveCurrencyCode } from "~/consts/currencies";
 import { PRINTED_WORDS } from "~/consts/label-presets";
 import type { Invoice } from "~/types";
 import { buildInvoiceViewModel } from "~/utils/build-invoice-view-model";
@@ -58,7 +59,7 @@ export function getPrintedText(invoice: Invoice): string {
           invoice.paymentDetails.label,
           ...getPaymentRows(
             invoice.paymentDetails,
-            invoice.currencyCode
+            resolveCurrencyCode(invoice)
           ).flatMap(row => [row.label, row.value]),
           invoice.paymentDetails.terms
         ]
