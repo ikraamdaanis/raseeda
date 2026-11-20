@@ -18,6 +18,7 @@ import {
 import { useLineItemSuggestions } from "~/components/editor/invoice-line-items";
 import { Button } from "~/components/ui/button";
 import { formatCurrency } from "~/consts/currencies";
+import { QUANTITY_DECIMALS } from "~/consts/quantity";
 import { TAX_RATE_DECIMALS } from "~/consts/tax";
 import { useCurrencyConversion } from "~/hooks/use-currency-conversion";
 import { useShownSections } from "~/hooks/use-shown-sections";
@@ -257,7 +258,7 @@ function LineItemCard({
               value={item.quantity}
               onChange={value => updateItem(index, "quantity", value)}
               money={money}
-              decimals={2}
+              decimals={QUANTITY_DECIMALS}
             />
           </FormField>
           {shown.unit && (

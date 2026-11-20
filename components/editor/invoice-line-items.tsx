@@ -10,6 +10,7 @@ import { InvoiceTextArea } from "~/components/editor/invoice-textarea";
 import { NumberField, useNumberField } from "~/components/editor/number-field";
 import { Button } from "~/components/ui/button";
 import { formatCurrency } from "~/consts/currencies";
+import { QUANTITY_DECIMALS } from "~/consts/quantity";
 import { TAX_RATE_DECIMALS } from "~/consts/tax";
 import { useInvoiceDocument } from "~/context/invoice-document-context";
 import { useCurrencyConversion } from "~/hooks/use-currency-conversion";
@@ -856,7 +857,7 @@ function TableCell({
   const fieldLabel = `${cellLabel}, item ${index + 1}`;
   const dataField = `items.${item.id}.${column.cell.itemField}`;
 
-  // A quantity reads the invoice's decimal separator, with up to two places
+  // A quantity reads the invoice's decimal separator, with up to three places
   // whatever the currency; a unit price takes the currency's. Either can be
   // negative, so a line can be a credit.
   if (column.cell.kind === "integer" || column.cell.kind === "currency") {
@@ -872,7 +873,7 @@ function TableCell({
             updateItem(index, isPrice ? "unitPrice" : "quantity", value)
           }
           money={money}
-          decimals={isPrice ? money.decimals : 2}
+          decimals={isPrice ? money.decimals : QUANTITY_DECIMALS}
           display={isPrice ? viewRow.unitPrice : undefined}
           showMarker={isPrice}
           placeholder={column.cell.placeholder}
