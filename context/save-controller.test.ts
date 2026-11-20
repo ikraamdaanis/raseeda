@@ -149,6 +149,30 @@ describe("the save controller", () => {
     expect(write).toHaveBeenLastCalledWith("second");
   });
 
+  it("writes an edit made while a retry is writing", async () => {
+    const retryWrite = deferred();
+    const write = vi
+      .fn<(content: string) => Promise<void>>()
+      .mockRejectedValueOnce(new Error("Blocked"))
+      .mockReturnValueOnce(retryWrite.promise)
+      .mockResolvedValue(undefined);
+    const controller = createSaveController({ write });
+
+    controller.schedule("first");
+    await vi.advanceTimersByTimeAsync(500);
+    await vi.advanceTimersByTimeAsync(1000);
+
+    expect(write).toHaveBeenCalledTimes(2);
+
+    controller.schedule("second");
+    retryWrite.resolve();
+    await vi.advanceTimersByTimeAsync(500);
+
+    expect(write).toHaveBeenCalledTimes(3);
+    expect(write).toHaveBeenLastCalledWith("second");
+    expect(controller.isPending()).toBe(false);
+  });
+
   it("waits longer before each retry", async () => {
     const write = vi
       .fn<(content: string) => Promise<void>>()

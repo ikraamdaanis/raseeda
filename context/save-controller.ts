@@ -152,8 +152,10 @@ export function createSaveController<TContent>({
 
       unsaved = { content };
 
-      // While failing, the retry timer decides when to try again.
-      if (failure === null) {
+      // While a retry waits, its timer decides when to try again. Once the
+      // retry is writing, an edit waits for a pause like any other, so it
+      // still lands if the retry succeeds.
+      if (retryTimer === null) {
         if (debounceTimer) clearTimeout(debounceTimer);
 
         debounceTimer = setTimeout(onTimer, debounceMs);
