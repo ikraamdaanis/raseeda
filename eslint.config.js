@@ -44,6 +44,13 @@ export default defineConfig([
       "react-hooks/set-state-in-effect": "off",
       "react-hooks/exhaustive-deps": "off",
       "jsx-a11y/no-autofocus": "off",
+      // Safari's VoiceOver stops announcing a list once its markers are
+      // gone (Tailwind's preflight removes them), so styled lists keep
+      // role="list".
+      "jsx-a11y/no-redundant-roles": [
+        "error",
+        { nav: ["navigation"], ol: ["list"], ul: ["list"] }
+      ],
       "import/order": "off",
       "sort-imports": "off",
       "@typescript-eslint/consistent-type-imports": "error",

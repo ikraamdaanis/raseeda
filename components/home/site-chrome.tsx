@@ -152,6 +152,7 @@ export function SiteFooter() {
                 {column.title}
               </p>
               <ul
+                role="list"
                 aria-labelledby={footerColumnId(column.title)}
                 className={cn(
                   typeClass("body"),

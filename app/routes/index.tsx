@@ -74,9 +74,14 @@ export const Route = createFileRoute("/")({
   // of its <picture>, widths and sizes too, so it fetches the same file, and a
   // browser without AVIF skips it. It is the page's largest paint, so it asks
   // for high priority: an image preload otherwise starts low and waits behind
-  // the fonts.
+  // the fonts. The page's type and spacing are in rem, so it opts into the
+  // phone's own text size (Dynamic Type, Android's Font size) with
+  // `text-scale`; the editor's px-sized UI doesn't.
   head: () => ({
-    meta: siteMeta(PAGE_META.home),
+    meta: [
+      ...siteMeta(PAGE_META.home),
+      { name: "text-scale", content: "scale" }
+    ],
     links: [
       canonicalLink(PAGE_META.home.path),
       {
@@ -598,7 +603,10 @@ function HowItWorks() {
           title="How it works."
           description={`${APP_NAME} is a private invoice generator: no sign-up and nothing to install. Open the editor and start typing.`}
         />
-        <ol className="mt-12 grid gap-x-6 gap-y-12 sm:mt-16 lg:grid-cols-3">
+        <ol
+          role="list"
+          className="mt-12 grid gap-x-6 gap-y-12 sm:mt-16 lg:grid-cols-3"
+        >
           {STEPS.map((step, index) => (
             <li
               key={step.title}
@@ -648,7 +656,10 @@ function Features() {
           title="What goes on the invoice."
           description="Your logo, your client’s currency, the right tax, and the bank details they need to pay you."
         />
-        <ul className="mt-12 grid gap-x-6 gap-y-12 sm:mt-16 lg:grid-cols-2">
+        <ul
+          role="list"
+          className="mt-12 grid gap-x-6 gap-y-12 sm:mt-16 lg:grid-cols-2"
+        >
           {FEATURES.map(feature => (
             <li key={feature.title} className="flex flex-col gap-6">
               <DemoTile
@@ -674,7 +685,10 @@ function Features() {
           <h3 className={cn(typeClass("subtitle"), "font-medium")}>
             Also in the editor
           </h3>
-          <ul className="grid gap-x-6 gap-y-4 sm:grid-cols-2 xl:grid-cols-4">
+          <ul
+            role="list"
+            className="grid gap-x-6 gap-y-4 sm:grid-cols-2 xl:grid-cols-4"
+          >
             {MORE_FEATURES.map(feature => (
               <li
                 key={feature}
@@ -918,7 +932,10 @@ function Privacy() {
           title="Your invoices never leave your device."
           description="Not to us and not to anyone else. The page is blocked from sending data to any other site, and the code is public, so you don’t have to take our word for it."
         />
-        <ul className="mt-12 grid gap-x-6 gap-y-12 sm:mt-16 lg:grid-cols-3">
+        <ul
+          role="list"
+          className="mt-12 grid gap-x-6 gap-y-12 sm:mt-16 lg:grid-cols-3"
+        >
           {PROOFS.map(proof => (
             <li key={proof.path} className="flex min-w-0 flex-col gap-6">
               <CodeTile proof={proof} />
@@ -1002,7 +1019,10 @@ function CodeTile({ proof }: { proof: (typeof PROOFS)[number] }) {
         aria-hidden="true"
         className="absolute -right-1/4 -bottom-1/3 -z-10 aspect-square w-[80%] rounded-full bg-[radial-gradient(closest-side,oklch(0.95_0.03_var(--tile-hue-b)),transparent)]"
       />
-      <ul className="mr-6 flex flex-col rounded-xl bg-white px-4 py-1 shadow-[0_8px_24px_-8px_rgb(16_40_60/0.18)] ring-1 ring-zinc-950/5">
+      <ul
+        role="list"
+        className="mr-6 flex flex-col rounded-xl bg-white px-4 py-1 shadow-[0_8px_24px_-8px_rgb(16_40_60/0.18)] ring-1 ring-zinc-950/5"
+      >
         {proof.outcome.map(row => {
           const Icon = row.isRefused ? IconBan : IconCircleCheckFilled;
 
