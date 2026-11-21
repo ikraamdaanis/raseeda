@@ -100,19 +100,18 @@ self.addEventListener("fetch", event => {
 async function servePage(event, url) {
   const cache = await caches.open(PRECACHE);
   const cached = await cache.match(url.pathname);
-  const refresh = fetch(url.pathname).then(response => {
-    if (response.ok) cache.put(url.pathname, response.clone());
+  const refresh = fetch(url.pathname);
 
-    return response;
-  });
+  // The worker is kept alive until the copy is written, not just fetched.
+  event.waitUntil(
+    refresh
+      .then(response => {
+        if (response.ok) return cache.put(url.pathname, response.clone());
+      })
+      .catch(() => {})
+  );
 
-  if (cached) {
-    event.waitUntil(refresh.catch(() => {}));
-
-    return asNavigationResponse(cached);
-  }
-
-  return refresh;
+  return cached ? asNavigationResponse(cached) : refresh;
 }
 
 // A page cached from a redirect can't answer a navigation, so it is copied
@@ -147,17 +146,15 @@ async function serveBuiltFile(request) {
 async function serveFile(event, request) {
   const cache = await caches.open(RUNTIME);
   const cached = await cache.match(request);
-  const refresh = fetch(request).then(response => {
-    if (response.ok) cache.put(request, response.clone());
+  const refresh = fetch(request);
 
-    return response;
-  });
+  event.waitUntil(
+    refresh
+      .then(response => {
+        if (response.ok) return cache.put(request, response.clone());
+      })
+      .catch(() => {})
+  );
 
-  if (cached) {
-    event.waitUntil(refresh.catch(() => {}));
-
-    return cached;
-  }
-
-  return refresh;
+  return cached ?? refresh;
 }
