@@ -22,7 +22,10 @@ export function calculateLineAmount(
   decimals: number
 ): number {
   const safeQuantity = Number(quantity) || 0;
-  const safeUnitPrice = Number(unitPrice) || 0;
+  // The price as it prints, so the printed price times the quantity is the
+  // printed amount: a price kept from before the currency changed to yen
+  // (10.5) prints ¥11, and three of them come to ¥33, not ¥32.
+  const safeUnitPrice = roundToDecimals(Number(unitPrice) || 0, decimals);
 
   return roundToDecimals(safeQuantity * safeUnitPrice, decimals);
 }

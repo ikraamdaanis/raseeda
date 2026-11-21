@@ -148,12 +148,24 @@ describe("calculateInvoiceTotals", () => {
       })
     );
 
-    expect(totals.items.map(item => item.amount)).toEqual([1235, 1]);
-    expect(totals.subtotal).toBe(1236);
+    expect(totals.items.map(item => item.amount)).toEqual([1235, 0]);
+    expect(totals.subtotal).toBe(1235);
     expect(totals.taxAmount).toBe(124);
     expect(totals.fees).toBe(11);
-    expect(totals.total).toBe(1236 + 124 + 11);
+    expect(totals.total).toBe(1235 + 124 + 11);
     expect(totals.amountPaid).toBe(0);
+  });
+
+  it("multiplies a zero-decimal line's price as it prints", () => {
+    const totals = calculateInvoiceTotals(
+      makeInvoice({
+        currency: "¥",
+        currencyCode: "JPY",
+        items: [makeItem({ quantity: 3, unitPrice: 10.5 })]
+      })
+    );
+
+    expect(totals.items[0].amount).toBe(33);
   });
 
   it("computes the line amount for a fractional quantity", () => {
@@ -176,11 +188,19 @@ describe("calculateInvoiceTotals", () => {
 
   it("rounds each item amount to two decimal places", () => {
     const totals = calculateInvoiceTotals(
+      makeInvoice({ items: [makeItem({ quantity: 2.5, unitPrice: 0.33 })] })
+    );
+
+    expect(totals.items[0].amount).toBe(0.83);
+    expect(totals.subtotal).toBe(0.83);
+  });
+
+  it("multiplies a price with more decimals than the currency as it prints", () => {
+    const totals = calculateInvoiceTotals(
       makeInvoice({ items: [makeItem({ quantity: 3, unitPrice: 0.335 })] })
     );
 
-    expect(totals.items[0].amount).toBe(1.01);
-    expect(totals.subtotal).toBe(1.01);
+    expect(totals.items[0].amount).toBe(1.02);
   });
 
   it("rounds the subtotal explicitly, absorbing per-item float drift", () => {

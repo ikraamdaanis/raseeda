@@ -240,15 +240,16 @@ describe("buildInvoiceViewModel", () => {
           currencyCode: "JPY",
           items: [
             makeItem({ quantity: 1, unitPrice: 1234.5 }),
-            makeItem({ quantity: 3, unitPrice: 0.4 })
+            makeItem({ quantity: 3, unitPrice: 10.5 })
           ]
         })
       );
       const value = (id: string) =>
         summaryRows.find(row => row.id === id)?.value;
 
-      expect(lineItems.map(item => item.amount)).toEqual(["¥1,235", "¥1"]);
-      expect(value("subtotal")).toBe("¥1,236");
+      expect(lineItems.map(item => item.unitPrice)).toEqual(["¥1,235", "¥11"]);
+      expect(lineItems.map(item => item.amount)).toEqual(["¥1,235", "¥33"]);
+      expect(value("subtotal")).toBe("¥1,268");
     });
   });
 
