@@ -9,12 +9,12 @@ import {
   SegmentedControl
 } from "~/components/editor/shell/inspector/inspector-controls";
 import {
+  FontMenu,
   SIZE_OPTIONS,
   useStyleChoices
 } from "~/components/editor/shell/inspector/style-section";
 import { TableColumnSwitches } from "~/components/editor/shell/inspector/table-section";
 import { Button } from "~/components/ui/button";
-import { INVOICE_FONTS } from "~/consts/invoice-fonts";
 import { useEditorUi } from "~/context/editor-ui-context";
 import { useInvoiceDocument } from "~/context/invoice-document-context";
 import { cn } from "~/lib/utils";
@@ -171,53 +171,15 @@ export function StyleTray() {
   );
 }
 
-// The font as a row of samples to swipe through, then its weight and size.
+// The font, then its weight and size.
 function TextTab() {
   const { theme, setTheme, weightOptions, selectFont } = useStyleChoices();
-  const fontsRef = useRef<HTMLDivElement>(null);
-
-  // The chosen font is scrolled into the row as the tab shows, never the tray
-  // or the page around it.
-  useEffect(() => {
-    const row = fontsRef.current;
-    const chosen = row?.querySelector<HTMLElement>('[aria-pressed="true"]');
-
-    if (!row || !chosen) return;
-
-    row.scrollLeft =
-      chosen.offsetLeft - (row.clientWidth - chosen.offsetWidth) / 2;
-  }, []);
 
   return (
     <>
-      <div
-        ref={fontsRef}
-        role="group"
-        aria-label="Font"
-        className="-mx-4 flex shrink-0 snap-x scroll-px-4 [scrollbar-width:none] gap-2 overflow-x-auto overscroll-x-contain px-4"
-      >
-        {INVOICE_FONTS.map(font => (
-          <button
-            key={font.id}
-            type="button"
-            aria-pressed={theme.font === font.id}
-            onClick={() => selectFont(font.id)}
-            className="bg-muted aria-pressed:border-foreground aria-pressed:bg-popover focus-visible:ring-ring flex w-24 shrink-0 snap-start flex-col items-start gap-0.5 rounded-lg border border-transparent px-3 py-1.5 text-left outline-none focus-visible:ring-1"
-          >
-            <span
-              aria-hidden="true"
-              className={cn(
-                "text-foreground text-2xl leading-tight",
-                font.previewClassName
-              )}
-            >
-              Aa
-            </span>
-            <span className="text-muted-foreground w-full truncate text-sm">
-              {font.name}
-            </span>
-          </button>
-        ))}
+      <div className="flex flex-col gap-1.5">
+        <InspectorGroupLabel>Font</InspectorGroupLabel>
+        <FontMenu value={theme.font} onChange={selectFont} />
       </div>
       <div className="flex flex-col gap-1.5">
         <InspectorGroupLabel>Weight</InspectorGroupLabel>

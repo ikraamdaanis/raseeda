@@ -1,25 +1,38 @@
 import { IconChevronDown } from "@tabler/icons-react";
 import {
   ColourRow,
+  inspectorFieldClassName,
   InspectorGroupLabel,
   InspectorSection,
   ResetColoursButton,
   SegmentedControl
 } from "~/components/editor/shell/inspector/inspector-controls";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuTrigger
+} from "~/components/ui/dropdown-menu";
+import type { InvoiceFontCategory } from "~/consts/invoice-fonts";
+import {
   FONT_WEIGHT_OPTIONS,
   getAvailableFontWeights,
   INVOICE_FONTS
 } from "~/consts/invoice-fonts";
-import { parseBoolean, usePersistentState } from "~/hooks/use-persistent-state";
 import { cn } from "~/lib/utils";
 import { DEFAULT_INVOICE_THEME } from "~/schema/invoice";
 import { useThemeSlice } from "~/stores/invoice-selectors";
 import type { InvoiceFont, InvoiceSize } from "~/types";
 import { getContrastWithWhite } from "~/utils/contrast";
 
-// Collapsed, the font grid is two rows.
-const COLLAPSED_FONT_COUNT = 4;
+const FONT_CATEGORIES: { value: InvoiceFontCategory; label: string }[] = [
+  { value: "sans-serif", label: "Sans serif" },
+  { value: "serif", label: "Serif" },
+  { value: "monospace", label: "Monospace" }
+];
 
 export const SIZE_OPTIONS: { value: InvoiceSize; label: string }[] = [
   { value: "small", label: "Small" },
@@ -72,20 +85,6 @@ export function useStyleChoices() {
 export function StyleSection() {
   const { theme, setTheme, weightOptions, selectFont, lightColoursWarning } =
     useStyleChoices();
-  const [showAllFonts, setShowAllFonts] = usePersistentState(
-    "editor-inspector-all-fonts",
-    false,
-    parseBoolean
-  );
-  // Collapsed, the chosen font stays in view: it takes the last place when
-  // it isn't one of the first few.
-  const firstFonts = INVOICE_FONTS.slice(0, COLLAPSED_FONT_COUNT);
-  const chosenFont = INVOICE_FONTS.find(font => font.id === theme.font);
-  const collapsedFonts =
-    !chosenFont || firstFonts.includes(chosenFont)
-      ? firstFonts
-      : [...firstFonts.slice(0, -1), chosenFont];
-  const fonts = showAllFonts ? INVOICE_FONTS : collapsedFonts;
   const hasDefaultColours =
     theme.accent === DEFAULT_INVOICE_THEME.accent &&
     theme.textColor === DEFAULT_INVOICE_THEME.textColor;
@@ -94,55 +93,7 @@ export function StyleSection() {
     <InspectorSection id="style" title="Style">
       <div className="flex flex-col gap-1.5 max-md:gap-2">
         <InspectorGroupLabel>Font</InspectorGroupLabel>
-        <div
-          role="group"
-          aria-label="Font"
-          className="grid grid-cols-2 gap-1.5 max-md:gap-2"
-        >
-          {fonts.map(font => (
-            <button
-              key={font.id}
-              type="button"
-              aria-pressed={theme.font === font.id}
-              onClick={() => selectFont(font.id)}
-              className="bg-muted hover:border-input aria-pressed:border-foreground aria-pressed:bg-popover focus-visible:ring-ring flex min-w-0 flex-col items-start gap-0.5 rounded-lg border border-transparent px-2.5 py-2 text-left outline-none focus-visible:ring-1 max-md:gap-1 max-md:px-3 max-md:py-2.5"
-            >
-              <span
-                aria-hidden="true"
-                className={cn(
-                  "text-foreground text-xl leading-tight max-md:text-2xl",
-                  font.previewClassName
-                )}
-              >
-                Aa
-              </span>
-              <span className="text-muted-foreground w-full truncate text-[11.5px] max-md:text-base">
-                {font.name}
-              </span>
-            </button>
-          ))}
-        </div>
-        <button
-          type="button"
-          aria-expanded={showAllFonts}
-          onClick={() => setShowAllFonts(!showAllFonts)}
-          className="text-muted-foreground hover:text-foreground focus-visible:ring-ring relative -mx-1 flex h-6 w-fit items-center gap-1 rounded-md px-1 text-xs outline-none focus-visible:ring-1 max-md:h-11 max-md:gap-2 max-md:text-base"
-        >
-          {showAllFonts
-            ? "Show less"
-            : `Show all ${INVOICE_FONTS.length} fonts`}
-          <IconChevronDown
-            aria-hidden="true"
-            className={cn(
-              "size-3.5 shrink-0 transition-transform motion-reduce:transition-none max-md:size-5",
-              showAllFonts && "rotate-180"
-            )}
-          />
-          <span
-            aria-hidden="true"
-            className="absolute top-1/2 left-1/2 size-[max(100%,3rem)] -translate-1/2 pointer-fine:hidden"
-          />
-        </button>
+        <FontMenu value={theme.font} onChange={selectFont} />
       </div>
       <div className="flex flex-col gap-1.5 max-md:gap-2">
         <InspectorGroupLabel>Weight</InspectorGroupLabel>
@@ -201,5 +152,72 @@ export function StyleSection() {
         )}
       </div>
     </InspectorSection>
+  );
+}
+
+// The chosen font, set in itself, opens every font grouped by kind, each
+// name set in its own face so the menu previews them. Shared by the
+// inspector and the phone's Style tray.
+export function FontMenu({
+  value,
+  onChange
+}: {
+  value: InvoiceFont;
+  onChange: (font: InvoiceFont) => void;
+}) {
+  const chosenFont =
+    INVOICE_FONTS.find(font => font.id === value) ?? INVOICE_FONTS[0];
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger
+        aria-label={`Font: ${chosenFont.name}`}
+        className={cn(
+          inspectorFieldClassName,
+          "aria-expanded:border-input flex items-center justify-between gap-2 text-left"
+        )}
+      >
+        <span className={cn("min-w-0 truncate", chosenFont.previewClassName)}>
+          {chosenFont.name}
+        </span>
+        <IconChevronDown
+          aria-hidden="true"
+          className="size-4 shrink-0 max-md:size-5"
+        />
+      </DropdownMenuTrigger>
+      <DropdownMenuContent>
+        <DropdownMenuRadioGroup
+          value={value}
+          onValueChange={(font: unknown) => {
+            const match = INVOICE_FONTS.find(option => option.id === font);
+            if (match) onChange(match.id);
+          }}
+          className="flex flex-col gap-1"
+        >
+          {FONT_CATEGORIES.map(category => (
+            <DropdownMenuGroup key={category.value} className="flex flex-col">
+              <DropdownMenuLabel className="text-[11px] max-md:text-sm">
+                {category.label}
+              </DropdownMenuLabel>
+              {INVOICE_FONTS.filter(
+                font => font.category === category.value
+              ).map(font => (
+                <DropdownMenuRadioItem
+                  key={font.id}
+                  value={font.id}
+                  closeOnClick
+                  className={cn(
+                    "py-1.5 text-sm max-md:text-base",
+                    font.previewClassName
+                  )}
+                >
+                  {font.name}
+                </DropdownMenuRadioItem>
+              ))}
+            </DropdownMenuGroup>
+          ))}
+        </DropdownMenuRadioGroup>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
