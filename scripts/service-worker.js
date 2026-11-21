@@ -19,6 +19,10 @@ const PRECACHE = PRECACHE_PREFIX + BUILD.version;
 const RUNTIME = "runtime";
 const LEGACY_PRECACHE_PREFIX = "billsend-precache-";
 const LEGACY_RUNTIME = "billsend-runtime";
+// Where each worker notes its version as it takes over, so the next one knows
+// which precache the open tabs were using.
+const STATE = "worker-state";
+const ACTIVE_VERSION = "/active-version";
 
 self.addEventListener("install", event => {
   // Where the browser supports it, pictures skip the worker altogether rather
@@ -57,15 +61,27 @@ self.addEventListener("activate", event => {
             name.startsWith(LEGACY_PRECACHE_PREFIX)) &&
           name !== PRECACHE
       );
+      const state = await caches.open(STATE);
+      const recorded = await state.match(ACTIVE_VERSION);
+      const recordedName = recorded
+        ? PRECACHE_PREFIX + (await recorded.text())
+        : null;
+      // The previous version is the one the worker being replaced served. The
+      // newest other cache isn't always it: a rollback reopens an older cache,
+      // and an install that failed leaves an empty one behind. Before any
+      // version was noted, caches.keys() lists caches oldest first, so the
+      // last is taken.
+      const previous = older.includes(recordedName)
+        ? recordedName
+        : older.at(-1);
 
-      // caches.keys() lists caches oldest first, so the last is the previous
-      // version.
       await Promise.all(
         [
-          ...older.slice(0, -1),
+          ...older.filter(name => name !== previous),
           ...names.filter(name => name === LEGACY_RUNTIME)
         ].map(name => caches.delete(name))
       );
+      await state.put(ACTIVE_VERSION, new Response(BUILD.version));
       await self.clients.claim();
     })()
   );
