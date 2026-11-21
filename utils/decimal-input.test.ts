@@ -3,7 +3,8 @@ import type { MoneyFormat } from "~/types";
 import {
   formatDecimalDraft,
   normalizeDecimalInput,
-  parseDecimalDraft
+  parseDecimalDraft,
+  readKeypadDecimal
 } from "~/utils/decimal-input";
 
 const COMMA_DOT = { numberFormat: "comma-dot", decimals: 2 } as const;
@@ -158,5 +159,25 @@ describe("formatDecimalDraft in the invoice's format", () => {
     expect(normalizeDecimalInput(shown.replace("zł", ""), SPACE_COMMA)).toBe(
       "12.5"
     );
+  });
+});
+
+describe("readKeypadDecimal", () => {
+  it("reads a keypad's dot as the decimal comma on a 1.234,56 invoice", () => {
+    expect(readKeypadDecimal("12.5", "dot-comma")).toBe("12,5");
+    expect(readKeypadDecimal("12,5", "dot-comma")).toBe("12,5");
+  });
+
+  it("reads a keypad's comma as the decimal point on a 1,234.56 invoice", () => {
+    const typed = readKeypadDecimal("12,50", "comma-dot");
+
+    expect(typed).toBe("12.50");
+    expect(normalizeDecimalInput(typed, COMMA_DOT)).toBe("12.50");
+    expect(readKeypadDecimal("12.5", "comma-dot")).toBe("12.5");
+  });
+
+  it("leaves a figure with the invoice's own separator alone", () => {
+    expect(readKeypadDecimal("12.5,", "comma-dot")).toBe("12.5,");
+    expect(readKeypadDecimal("12,5.", "dot-comma")).toBe("12,5.");
   });
 });

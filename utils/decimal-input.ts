@@ -28,6 +28,25 @@ export function toPlainDecimal(
   return decimals === 0 ? plain.split(".")[0] : plain;
 }
 
+// iOS's decimal keypad offers the separator of the phone's own region, not the
+// invoice's (WebKit bug 247242): a phone set to Germany types "12,50" on a
+// 1,234.56 invoice, one set to the US "12.50" on a 1.234,56 one. A figure with
+// only the other separator in it reads that separator as the decimal point:
+// nobody types thousands into a phone field, and a focused field shows its
+// figure ungrouped.
+export function readKeypadDecimal(
+  text: string,
+  numberFormat: InvoiceNumberFormat
+) {
+  const isDecimalComma = getDecimalSeparator(numberFormat) === ",";
+
+  if (isDecimalComma) {
+    return text.includes(",") ? text : text.replace(".", ",");
+  }
+
+  return text.includes(".") ? text : text.replace(",", ".");
+}
+
 // Coerce raw input into a decimal draft string: read it in the invoice's
 // number format, drop everything that is not a digit or a dot (this also
 // strips any currency symbol), keep only the first dot, cap at the currency's

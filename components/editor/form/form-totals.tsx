@@ -15,8 +15,7 @@ import {
   formEnterClassName,
   formFieldClassName,
   formIconButtonClassName,
-  formLabelClassName,
-  readKeypadDecimal
+  formLabelClassName
 } from "~/components/editor/form/form-controls";
 import { useAddableParts } from "~/components/editor/invoice-add-part";
 import { InvoiceDateField } from "~/components/editor/invoice-date-field";
@@ -46,6 +45,7 @@ import {
 } from "~/stores/invoice-selectors";
 import type { InvoiceSectionKey, InvoiceSummaryRow } from "~/types";
 import { buildEditorSummaryRows } from "~/utils/build-invoice-view-model";
+import { readKeypadDecimal } from "~/utils/decimal-input";
 import { getTypeSettledSections } from "~/utils/document-type";
 import { formatPlainNumber } from "~/utils/format-number";
 

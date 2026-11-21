@@ -16,8 +16,7 @@ import { Switch } from "~/components/ui/switch";
 import { Textarea } from "~/components/ui/textarea";
 import { FIELD_NOTES, PART_NOTES } from "~/consts/form-notes";
 import { cn } from "~/lib/utils";
-import type { InvoiceNumberFormat } from "~/types";
-import { getDecimalSeparator } from "~/utils/format-number";
+import { readKeypadDecimal } from "~/utils/decimal-input";
 
 // The phone's form (issue #213): ordinary labelled fields over the same store
 // the page edits. Every field is at least 16px (`text-base`), so iOS doesn't
@@ -445,23 +444,10 @@ export function FormTextArea({
   );
 }
 
-// iOS's decimal keypad offers the separator of the phone's own keyboard, not
-// the invoice's (WebKit bug 247242), so on an invoice that writes a decimal
-// comma a figure typed with a dot and no comma reads the dot as the decimal
-// point: nobody types thousands into a phone field, and a focused field shows
-// its figure ungrouped.
-export function readKeypadDecimal(
-  text: string,
-  numberFormat: InvoiceNumberFormat
-) {
-  const isDecimalComma = getDecimalSeparator(numberFormat) === ",";
-
-  return isDecimalComma && !text.includes(",") ? text.replace(".", ",") : text;
-}
-
 /**
  * A number typed in the invoice's number format, through `useNumberField` as
- * on the page, with `readKeypadDecimal` reading the keypad's separator.
+ * on the page, with `readKeypadDecimal` reading the keypad's separator. The
+ * marker comes off first, so a dot in it ("kr.") isn't read as the keypad's.
  */
 export function FormNumberInput({
   value,
@@ -502,11 +488,13 @@ export function FormNumberInput({
       value={field.value}
       onFocus={field.onFocus}
       onBlur={field.onBlur}
-      onChange={event =>
-        field.onChange(
-          readKeypadDecimal(event.target.value, money.numberFormat)
-        )
-      }
+      onChange={event => {
+        const text = showMarker
+          ? event.target.value.replace(money.marker, "")
+          : event.target.value;
+
+        field.onChange(readKeypadDecimal(text, money.numberFormat));
+      }}
       className={cn(formFieldClassName, "tabular-nums", className)}
     />
   );
