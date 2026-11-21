@@ -602,6 +602,7 @@ async function withNewNumber(
 // would become the new type's sample, which the library may already have, so
 // it takes the next number of that type instead, as a new one would.
 async function changeDocumentType(documentType: DocumentType): Promise<void> {
+  const session = current;
   const before = useInvoiceStore.getState();
   const isSampleNumber =
     before.number === DOCUMENT_TYPE_DEFAULTS[before.documentType].number;
@@ -609,6 +610,10 @@ async function changeDocumentType(documentType: DocumentType): Promise<void> {
     isSampleNumber && !storageUnavailable
       ? await getAllInvoices().catch(() => null)
       : null;
+
+  // Another document opened while the library was read keeps its own type.
+  if (current !== session) return;
+
   const state = useInvoiceStore.getState();
   const isUnchanged =
     state.number === before.number &&
@@ -618,7 +623,7 @@ async function changeDocumentType(documentType: DocumentType): Promise<void> {
       ? nextNumberOfType({
           documentType,
           library: numberedLibrary(
-            library.filter(document => document.id !== current?.id),
+            library.filter(document => document.id !== session?.id),
             { withOpen: false }
           )
         })
@@ -1145,7 +1150,11 @@ async function editorGranted() {
     return;
   }
 
-  if (!session.isRecord) return;
+  if (!session.isRecord) {
+    await renumberUntouched(session);
+
+    return;
+  }
 
   try {
     const document = await getInvoice(session.id);
@@ -1168,6 +1177,37 @@ async function editorGranted() {
     publish(session);
   } catch (error) {
     console.error("[EditorSession] Failed to read the invoice", error);
+  }
+}
+
+// A new document not in the library yet joins it with the number it was
+// given, so one left untouched while another tab had the editor takes its
+// number afresh: that tab may have given the same number to one of its own.
+async function renumberUntouched(session: Session) {
+  if (storageUnavailable) return;
+
+  try {
+    const library = await getAllInvoices();
+
+    if (!isActive(session) || !isEditing(session) || session.isRecord) return;
+
+    const content = liveContent();
+
+    if (hasEdits(session, content)) return;
+
+    const renumbered = numberNewDocument({
+      invoice: content,
+      isFromTemplate: session.templateId !== null,
+      library: numberedLibrary(library, { withOpen: false })
+    });
+
+    if (renumbered.number === content.number) return;
+
+    setContent(renumbered);
+
+    if (session.pristine) session.pristine = liveContent();
+  } catch (error) {
+    console.error("[EditorSession] Failed to renumber a new invoice", error);
   }
 }
 
@@ -1272,6 +1312,12 @@ export function detachEditor(): Promise<void> {
     }
 
     releaseEditor();
+
+    // Without the lock, a failed write's retries would write over the tab that
+    // takes the editor next, so they wait until this tab has it back.
+    if (session?.status === "editing" && !holdsEditor()) {
+      session.status = "elsewhere";
+    }
   });
 }
 

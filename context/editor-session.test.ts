@@ -327,6 +327,68 @@ describe("one editor tab", () => {
     expect(first.documentState().saveFailure).toBeNull();
   });
 
+  it("stops retrying a failed write once the editor closes", async () => {
+    const failWrites: FailWrites = { current: null };
+    const first = await loadPage({ failWrites });
+
+    first.edit().setTitle("Written");
+    await settle();
+
+    const id = first.documentState().documentId ?? "";
+
+    failWrites.current = new DOMException("Full", "QuotaExceededError");
+    first.edit().setTitle("Not written");
+    await settle();
+
+    expect(first.documentState().saveFailure).not.toBeNull();
+
+    await first.detachEditor();
+
+    const second = await loadPage();
+
+    expect(second.documentState()).toMatchObject({
+      status: "editing",
+      documentId: id
+    });
+
+    second.edit().setTitle("Written by the second tab");
+    await settle();
+
+    failWrites.current = null;
+    await settle(31000);
+
+    expect((await second.getInvoice(id))?.invoiceData.title).toBe(
+      "Written by the second tab"
+    );
+  });
+
+  it("renumbers an untouched new invoice when it gets the editor back", async () => {
+    const first = await loadPage();
+
+    expect(first.invoice().number).toBe("INV-0001");
+
+    const second = await loadPage();
+
+    second.askForEditor();
+    await vi.waitFor(() =>
+      expect(second.documentState().status).toBe("editing")
+    );
+    second.edit().setClient(prev => ({ ...prev, content: "Second client" }));
+    await settle();
+    await second.close();
+
+    await vi.waitFor(() => expect(first.invoice().number).toBe("INV-0002"));
+
+    first.edit().setClient(prev => ({ ...prev, content: "First client" }));
+    await settle();
+
+    const numbers = (await first.getAllInvoices())
+      .map(document => document.invoiceData.number)
+      .sort();
+
+    expect(numbers).toEqual(["INV-0001", "INV-0002"]);
+  });
+
   it("reads the invoice afresh when it gets the editor back with everything written", async () => {
     const first = await loadPage();
 
