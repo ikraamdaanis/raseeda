@@ -1,6 +1,7 @@
 import type { FileRejection } from "react-dropzone";
 import { toast } from "sonner";
 import { getImageBlob, saveImage } from "~/db";
+import { useDocumentStore } from "~/stores/document-store";
 
 // An image is embedded verbatim into every data export (base64), so an
 // oversized one bloats storage and later slows exports to a crawl. Cap it well
@@ -41,12 +42,15 @@ export async function storeUploadedImage(
 }
 
 // Stores an image blob under a new id and resolves the id, or null (having
-// said why) when it couldn't be saved.
+// said why) when it couldn't be saved. It's null too when another document
+// opened while it was stored, so the image isn't put on that one; the sweep
+// clears it up.
 export async function storeImageBlob(
   blob: Blob,
   type: string
 ): Promise<string | null> {
   const imageId = crypto.randomUUID();
+  const { documentId } = useDocumentStore.getState();
 
   try {
     await saveImage(imageId, blob, type);
@@ -54,6 +58,7 @@ export async function storeImageBlob(
     const verifyBlob = await getImageBlob(imageId);
 
     if (!verifyBlob) throw new Error("Image was not saved correctly");
+    if (useDocumentStore.getState().documentId !== documentId) return null;
 
     return imageId;
   } catch (error) {
