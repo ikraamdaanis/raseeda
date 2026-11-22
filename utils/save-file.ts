@@ -16,22 +16,22 @@ export function toFileName(name: string, fallback: string): string {
   return safe || fallback;
 }
 
-// How long a download's blob URL is kept after the click.
-const DOWNLOAD_URL_LIFETIME_MS = 40_000;
+// The last download's blob URL. iOS Safari opens a downloaded PDF in its
+// viewer and reads the blob again when it's shared or saved from there, however
+// long after, so the URL is kept until the next download lets it go.
+let lastDownloadUrl: string | null = null;
 
 // Saves a blob as a download under `fileName`.
 export function saveFile(blob: Blob, fileName: string) {
+  if (lastDownloadUrl) URL.revokeObjectURL(lastDownloadUrl);
+
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
 
+  lastDownloadUrl = url;
   link.href = url;
   link.download = fileName;
   link.click();
-
-  // iOS Safari reads the blob only once the download is confirmed in its
-  // sheet, and fails it if the URL is gone by then, so the URL is kept well
-  // past any tap (as FileSaver.js does) before the blob is let go.
-  setTimeout(() => URL.revokeObjectURL(url), DOWNLOAD_URL_LIFETIME_MS);
 }
 
 // The file an invoice's PDF saves as: its name, made safe.

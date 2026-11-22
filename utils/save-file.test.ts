@@ -29,28 +29,27 @@ describe("saveFile", () => {
     vi.useRealTimers();
   });
 
-  it("keeps the blob URL while a phone's download sheet is open", () => {
+  it("keeps a download's blob URL until the next download", () => {
     vi.useFakeTimers();
 
     const click = vi.fn();
     const revokeObjectURL = vi.fn();
+    const urls = ["blob:first", "blob:second"];
 
     vi.stubGlobal("document", { createElement: () => ({ click }) });
     vi.stubGlobal("URL", {
-      createObjectURL: () => "blob:invoice",
+      createObjectURL: () => urls.shift(),
       revokeObjectURL
     });
 
-    saveFile(new Blob(["%PDF"]), "invoice.pdf");
+    saveFile(new Blob(["%PDF"]), "first.pdf");
+    vi.advanceTimersByTime(10 * 60_000);
 
-    expect(click).toHaveBeenCalled();
-
-    vi.advanceTimersByTime(10_000);
-
+    expect(click).toHaveBeenCalledOnce();
     expect(revokeObjectURL).not.toHaveBeenCalled();
 
-    vi.advanceTimersByTime(30_000);
+    saveFile(new Blob(["%PDF"]), "second.pdf");
 
-    expect(revokeObjectURL).toHaveBeenCalledWith("blob:invoice");
+    expect(revokeObjectURL).toHaveBeenCalledExactlyOnceWith("blob:first");
   });
 });
