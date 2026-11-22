@@ -243,16 +243,16 @@ const QUESTION_GROUPS: {
       {
         question: "Where are my invoices saved?",
         answer:
-          "In this browser, on this device. Clearing this browser’s site data deletes them, and other browsers can’t see them. To back them up or move them, choose Export Data from the editor’s File menu; the file includes your bank details, so keep it somewhere safe."
+          "In this browser, on this device, and other browsers can’t see them. Clearing this browser’s site data deletes them, and Safari clears a site you haven’t opened for a week. To back them up or move them, choose Export Data under Download in the editor; the file includes your bank details, so keep it somewhere safe."
       },
       {
         question: "Can I use a private window?",
         answer:
-          "Yes, but private windows usually throw their storage away when you close them. Download your PDF, or export your data from the File menu, before you close the window."
+          "Yes, but private windows usually throw their storage away when you close them. Download your PDF, or choose Export Data under Download, before you close the window."
       },
       {
         question: "Why is it free, and what’s the catch?",
-        answer: `There’s very little to pay for. ${APP_NAME} keeps no accounts and stores nothing about you on a server; once a page has loaded, your browser does all the work. There’s no paid plan, no ads and nothing about you to sell: beyond anonymous counts, like how many PDFs are made, the site collects nothing. The code is public on GitHub under the MIT licence, so you can check.`
+        answer: `There’s very little to pay for. ${APP_NAME} keeps no accounts and stores nothing about you on a server; once a page has loaded, your browser does all the work. There’s no paid plan, no ads and nothing about you to sell: beyond anonymous counts, like how many pages are viewed and PDFs are made, the site collects nothing. The code is public on GitHub under the MIT licence, so you can check.`
       }
     ]
   }
@@ -383,7 +383,7 @@ function Hero() {
             </span>
           </h1>
           <p className="hero-focus text-ink/75 max-w-[48ch] text-lg/7 text-pretty [animation-delay:120ms] sm:max-w-[60ch]">
-            A free,{" "}
+            An{" "}
             <a
               href={SOURCE_URL}
               target="_blank"
@@ -404,7 +404,7 @@ function Hero() {
             </a>{" "}
             invoice maker that runs in your browser.{" "}
             <span className="sm:block">
-              No sign-up or watermark. Invoices stay right here.
+              No sign-up or watermark. Your invoices stay in this browser.
             </span>
           </p>
         </div>
@@ -589,7 +589,7 @@ const STEPS: {
   {
     title: "Keep a copy",
     description:
-      "Invoices save in this browser, so a repeat client’s next invoice starts from the last one. Clearing the browser’s site data deletes them, so back them up with Export Data in the File menu.",
+      "Invoices save in this browser, so a repeat client’s next invoice starts from the last one. Clearing the browser’s site data deletes them, so back them up with Export Data, under Download.",
     demo: SavedDemo,
     hues: [TILE_HUES.sage, TILE_HUES.sky]
   }
@@ -913,7 +913,7 @@ const PROOFS: {
     description: `Every change runs a browser test that loads this page and fails if ${APP_NAME}'s own code asks another website for anything.`,
     outcome: [
       { label: "This page", status: "Loaded" },
-      { label: "Requests to other sites", status: "None", isRefused: true },
+      { label: "Code calling other sites", status: "None", isRefused: true },
       { label: "Checked", status: "Every change" }
     ],
     ...PROOF_EXCERPTS.homeTest,

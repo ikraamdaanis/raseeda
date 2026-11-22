@@ -12,6 +12,7 @@ import { typeClass } from "~/lib/type-scale";
 import { cn } from "~/lib/utils";
 import {
   canonicalLink,
+  MAKER_PERSON_NAME,
   PAGE_META,
   SITE_HOST,
   siteMeta,
@@ -31,7 +32,7 @@ export const Route = createFileRoute("/privacy")({
 // The date the policy last changed in substance (YYYY-MM-DD); update it with
 // the copy. The page shows it written out, and the structured data carries it
 // as is.
-const LAST_UPDATED = "2026-11-19";
+const LAST_UPDATED = "2026-11-22";
 
 const HEADING = "font-medium tracking-[-0.035em] text-balance";
 
@@ -41,6 +42,14 @@ const INLINE_LINK = cn(
   "text-ink hover:text-brand-600 rounded-sm font-medium underline decoration-zinc-950/20 underline-offset-4",
   FOCUS_RING
 );
+
+// The short version, read before the detail below it.
+const SUMMARY = [
+  "Your invoices, logos and settings are stored only in this browser, on this device.",
+  `Nothing you type into an invoice is sent to ${APP_NAME} or anyone else.`,
+  `${APP_NAME} counts anonymous events, such as a PDF being made, with no names, amounts or identifiers.`,
+  `There are no accounts, ads or tracking, and ${APP_NAME} sets no cookies.`
+];
 
 // The same words as the homepage's promise, said once in full: where the
 // data lives, what leaves, what the app never does, and what the host sees.
@@ -63,6 +72,11 @@ function PrivacyPage() {
                 {format(parseISO(LAST_UPDATED), "d MMMM yyyy")}
               </time>
             </p>
+            <ul className={cn(PROSE, "flex list-disc flex-col gap-2 pl-5")}>
+              {SUMMARY.map(point => (
+                <li key={point}>{point}</li>
+              ))}
+            </ul>
           </div>
           <PolicySection title="What stays on your device">
             <p className={PROSE}>
@@ -74,13 +88,13 @@ function PrivacyPage() {
             <p className={PROSE}>
               The editor also remembers your settings in this browser’s local
               storage, such as light or dark, the zoom, which panels are open,
-              how the documents list is sorted and filtered, and whether you’ve
-              dismissed the backup reminder. Within a tab, session storage
-              remembers which document is open and how far down each page you
-              were, so a reload or the Back button returns you to the same
-              place; it’s cleared when the tab closes. Your browser also keeps a
-              copy of the site’s own files, so it opens without a connection.
-              None of this is sent anywhere.
+              how the documents list is sorted and filtered, when you last
+              downloaded a backup and when you were last reminded to. Within a
+              tab, session storage remembers which document is open and how far
+              down each page you were, so a reload or the Back button returns
+              you to the same place; it’s cleared when the tab closes. Your
+              browser also keeps a copy of the site’s own files, so it opens
+              without a connection. None of this is sent anywhere.
             </p>
             <p className={PROSE}>
               The PDF is made in your browser too. Your invoices aren’t
@@ -89,7 +103,9 @@ function PrivacyPage() {
             </p>
             <p className={PROSE}>
               Other browsers and devices can’t see your invoices. Clearing this
-              browser’s site data for {SITE_HOST} deletes them.
+              browser’s site data for {SITE_HOST} deletes them, and Safari
+              deletes a site’s storage on its own when you haven’t opened it for
+              seven days, so keep a backup.
             </p>
           </PolicySection>
           <PolicySection title="What leaves your device">
@@ -202,8 +218,13 @@ function PrivacyPage() {
           <PolicySection title="Checking for yourself">
             <p className={PROSE}>
               The code is public on GitHub under the MIT licence, so anyone can
-              check what {APP_NAME} does with your data. Questions, or found
-              something that doesn’t match this page?{" "}
+              check what {APP_NAME} does with your data.
+            </p>
+          </PolicySection>
+          <PolicySection title={`Who runs ${APP_NAME}`}>
+            <p className={PROSE}>
+              {APP_NAME} is made and run by {MAKER_PERSON_NAME}. Questions, or
+              found something that doesn’t match this page?{" "}
               <a
                 href={`${SOURCE_URL}/issues`}
                 target="_blank"
