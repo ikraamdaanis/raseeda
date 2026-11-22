@@ -19,9 +19,9 @@ import type { InvoiceFont } from "~/types";
 // Says where the open invoice stands, but only when something needs saying.
 // While saves work nothing shows at all (no "Saving…" flicker), as in Google
 // Docs and Figma. A failed save stays here until it's resolved, announced once
-// per run of failures rather than on every retry. In Safari, which clears a
-// site's storage after a week unused, it also suggests a backup, once. Last,
-// it says when the invoice's font can't print some of its text.
+// per run of failures rather than on every retry. It suggests a backup when
+// one is due (see getBackupReminder), at most once a month. Last, it says when
+// the invoice's font can't print some of its text.
 export function DocumentStatusBanner() {
   const {
     status,
@@ -106,7 +106,9 @@ export function DocumentStatusBanner() {
   if (backupReminder) {
     return (
       <Banner tone="info" busy={busy} onDismiss={dismissBackupReminder}>
-        Safari clears sites left unopened for a week.{" "}
+        {backupReminder === "safari"
+          ? "Safari clears sites left unopened for a week."
+          : "Your invoices are saved only in this browser."}{" "}
         <Action
           onClick={() =>
             void act(async () => {
@@ -117,7 +119,7 @@ export function DocumentStatusBanner() {
         >
           Download a backup
         </Action>{" "}
-        of your invoices to keep them.
+        to keep a copy somewhere safe.
       </Banner>
     );
   }

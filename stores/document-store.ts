@@ -32,10 +32,10 @@ type DocumentState = {
     storageFull: boolean;
     episode: number;
   } | null;
-  // Suggest a backup: this is Safari, which clears a site's storage after a
-  // week unused, it refused to keep the app's storage, and nobody has
-  // dismissed the suggestion yet.
-  backupReminder: boolean;
+  // Suggest a backup (see getBackupReminder): `safari` when Safari refused to
+  // keep the app's storage, which it clears after a week unused; `library`
+  // when the library has grown and hasn't been backed up for a month.
+  backupReminder: "safari" | "library" | null;
   // What to check on an invoice just duplicated, shown while it's open.
   copyReview: { documentId: string; message: string } | null;
 };
@@ -47,7 +47,7 @@ const documentDefault: DocumentState = {
   nameSource: "auto",
   status: "editing",
   saveFailure: null,
-  backupReminder: false,
+  backupReminder: null,
   copyReview: null
 };
 

@@ -7,6 +7,7 @@ import { createSaveController } from "~/context/save-controller";
 import {
   addInvoiceVersion,
   cleanupOrphanedImages,
+  countInvoices,
   createInvoice,
   deleteAllData,
   deleteInvoices,
@@ -50,6 +51,13 @@ import type {
   InvoiceVersionReason,
   SiteTemplateId
 } from "~/types";
+import {
+  BACKUP_REMINDER_KEY,
+  getBackupReminder,
+  readLastBackup,
+  readStoredDate,
+  writeStoredDate
+} from "~/utils/backup-reminder";
 import { ensureRowIds } from "~/utils/ensure-row-ids";
 import { downloadBackupFile } from "~/utils/export-data";
 import { isBlankInvoice, isLargeRemoval } from "~/utils/invoice-content";
@@ -81,8 +89,6 @@ const VERSION_MIN_INTERVAL_MS = 10 * 60_000;
 
 // Per tab: which invoice this tab has open, so a reload reopens it.
 const OPEN_INVOICE_KEY = "open-invoice";
-
-const BACKUP_REMINDER_KEY = "backup-reminder";
 
 // Thrown when an invoice that's being opened no longer exists.
 export class DocumentNotFoundError extends Error {
@@ -239,9 +245,8 @@ function keepVersionQuietly(
   );
 }
 
-// Asks the browser to keep the app's storage once an invoice exists. Safari
-// is the one that clears storage on its own, so a no there suggests a
-// backup, once.
+// Asks the browser to keep the app's storage once an invoice exists, then
+// suggests a backup when one is due (see getBackupReminder).
 async function requestPersistentStorage() {
   if (persistenceRequested) return;
 
@@ -249,27 +254,39 @@ async function requestPersistentStorage() {
 
   if (typeof navigator === "undefined" || !("storage" in navigator)) return;
 
+  const kept = await keepStorage();
+  const documentCount = await countInvoices().catch(() => 0);
+  const reminder = getBackupReminder({
+    now: new Date(),
+    lastBackup: readLastBackup(),
+    lastReminder: readStoredDate(BACKUP_REMINDER_KEY),
+    documentCount,
+    storageMayBeCleared: kept === false && navigator.vendor.startsWith("Apple")
+  });
+
+  if (reminder) useDocumentStore.setState({ backupReminder: reminder });
+}
+
+// Whether the browser agreed to keep the app's storage; null when it can't
+// say. Safari is the one that clears storage on its own.
+async function keepStorage(): Promise<boolean | null> {
   try {
-    if (await navigator.storage.persisted()) return;
-    if (await navigator.storage.persist()) return;
+    if (await navigator.storage.persisted()) return true;
+
+    return await navigator.storage.persist();
   } catch {
-    return;
+    return null;
   }
-
-  if (!navigator.vendor.startsWith("Apple")) return;
-  if (readStorage("localStorage", BACKUP_REMINDER_KEY)) return;
-
-  useDocumentStore.setState({ backupReminder: true });
 }
 
 function dismissCopyReview() {
   useDocumentStore.setState({ copyReview: null });
 }
 
-// The backup suggestion was dismissed or acted on: it doesn't come back.
+// The backup suggestion was dismissed or acted on: it stays away for a month.
 function dismissBackupReminder() {
-  writeStorage("localStorage", BACKUP_REMINDER_KEY, new Date().toISOString());
-  useDocumentStore.setState({ backupReminder: false });
+  writeStoredDate(BACKUP_REMINDER_KEY);
+  useDocumentStore.setState({ backupReminder: null });
 }
 
 // Adds a new invoice to the library, and counts it.

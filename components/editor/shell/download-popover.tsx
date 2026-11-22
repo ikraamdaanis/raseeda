@@ -27,15 +27,18 @@ import {
   useMoneyFormat,
   usePaperSize
 } from "~/stores/invoice-selectors";
+import { readLastBackup } from "~/utils/backup-reminder";
 import { toPdfFileName } from "~/utils/save-file";
 
 // Download opens a small summary first, like Framer's Publish: what file you
-// get, its total and when it was last saved, then the PDF itself. On a phone
+// get, its total, when it was last saved and when everything was last backed
+// up (Export Data is the last button), then the PDF itself. On a phone
 // it's a plain icon beside undo and redo, as Canva and Figma's apps do it.
 export function DownloadPopover() {
   const { isNarrow } = useEditorUi();
   const [open, setOpen] = useState(false);
   const [savedAt, setSavedAt] = useState<Date | null>(null);
+  const [lastBackup, setLastBackup] = useState<Date | null>(null);
   const { pending, downloadPdf, openPdf, printPdf, prefetch } = useInvoicePdf();
   const { exportData } = useFileActions();
   const { libraryDocumentId } = useInvoiceDocument();
@@ -53,6 +56,7 @@ export function DownloadPopover() {
 
     prefetch();
     setSavedAt(null);
+    setLastBackup(readLastBackup());
 
     if (libraryDocumentId) {
       void getInvoice(libraryDocumentId)
@@ -116,6 +120,14 @@ export function DownloadPopover() {
                   ? formatDistanceToNow(savedAt, { addSuffix: true })
                   : "…"
                 : "Saves once you edit it"}
+            </dd>
+          </div>
+          <div className="flex items-center justify-between gap-3">
+            <dt className="text-muted-foreground">Last backup</dt>
+            <dd className="text-foreground">
+              {lastBackup
+                ? formatDistanceToNow(lastBackup, { addSuffix: true })
+                : "Never"}
             </dd>
           </div>
         </dl>

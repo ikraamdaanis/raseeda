@@ -30,7 +30,7 @@ export function DevMenu() {
     useDocumentStore.setState({
       status: "editing",
       saveFailure: null,
-      backupReminder: false,
+      backupReminder: null,
       ...state
     });
   }
@@ -125,9 +125,14 @@ export function DevMenu() {
               Can’t be saved in this browser
             </DropdownMenuItem>
             <DropdownMenuItem
-              onClick={() => showAlert({ backupReminder: true })}
+              onClick={() => showAlert({ backupReminder: "safari" })}
             >
-              Backup suggestion
+              Backup suggestion (Safari)
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => showAlert({ backupReminder: "library" })}
+            >
+              Backup suggestion (library)
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={() => showAlert({})}>

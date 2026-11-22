@@ -4,6 +4,7 @@ import { CURRENT_EXPORT_VERSION } from "~/consts/export";
 import { getAllImages, getAllInvoices, getAllTemplates } from "~/db";
 import { CURRENT_INVOICE_SCHEMA_VERSION } from "~/schema/migrations";
 import type { ExportFile, Invoice, InvoiceNameSource } from "~/types";
+import { recordBackup } from "~/utils/backup-reminder";
 import { saveFile } from "~/utils/save-file";
 
 function arrayBufferToBase64(buffer: ArrayBuffer): string {
@@ -54,6 +55,7 @@ function saveJsonFile(data: ExportFile, fileName: string) {
   const json = JSON.stringify(data, null, 2);
 
   saveFile(new Blob([json], { type: "application/json" }), fileName);
+  recordBackup();
 }
 
 export async function exportAllData(): Promise<void> {
