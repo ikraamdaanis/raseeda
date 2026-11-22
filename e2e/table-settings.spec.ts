@@ -392,9 +392,11 @@ test("tabbing through a yen price keeps the fraction it was stored with", async 
   const price = page.getByLabel("Unit Price, item 1");
   const amount = page.getByLabel("Net amount, item 1");
 
-  await expect(amount).toHaveText("¥32");
+  // The line multiplies its price as it prints (¥11), while the price keeps
+  // its stored fraction.
+  await expect(amount).toHaveText("¥33");
   await price.focus();
   await price.press("Tab");
-  await expect(amount).toHaveText("¥32");
+  await expect(amount).toHaveText("¥33");
   await expect.poll(() => savedContains(page, '"unitPrice":10.5')).toBe(true);
 });

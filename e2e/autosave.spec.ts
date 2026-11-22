@@ -529,14 +529,14 @@ test.describe("in Safari, when the browser won't keep storage", () => {
     });
   });
 
-  test("a backup is suggested once, in the banner, until dismissed", async ({
+  test("a backup is suggested in the banner and stays away once dismissed", async ({
     page
   }) => {
     await gotoEditorReady(page, "Kept in Safari");
 
     const reminder = page
       .getByRole("status")
-      .filter({ hasText: "of your invoices to keep them" });
+      .filter({ hasText: "to keep a copy somewhere safe" });
 
     await expect(reminder).toBeVisible();
 
@@ -558,7 +558,7 @@ test.describe("in Safari, when the browser won't keep storage", () => {
 
     const reminder = page
       .getByRole("status")
-      .filter({ hasText: "of your invoices to keep them" });
+      .filter({ hasText: "to keep a copy somewhere safe" });
     const downloadPromise = page.waitForEvent("download");
 
     await reminder.getByRole("button", { name: "download a backup" }).click();

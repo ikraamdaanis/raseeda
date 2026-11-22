@@ -23,11 +23,7 @@ test("names the characters the font can't print and switches to one that can", a
   await note.getByRole("button", { name: "Inter" }).click();
 
   await expect(note).toHaveCount(0);
-  await expect(
-    page
-      .getByRole("group", { name: "Font" })
-      .getByRole("button", { name: "Inter" })
-  ).toHaveAttribute("aria-pressed", "true");
+  await expect(page.getByRole("button", { name: "Font: Inter" })).toBeVisible();
 });
 
 test("says what no font prints", async ({ page }) => {

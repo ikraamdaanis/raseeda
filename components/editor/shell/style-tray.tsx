@@ -159,7 +159,7 @@ export function StyleTray() {
         role="tabpanel"
         aria-labelledby={`style-tray-tab-${tab}`}
         inert={!canEdit}
-        className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto overscroll-contain px-[max(1rem,env(safe-area-inset-left))] pt-1 pb-[max(0.75rem,env(safe-area-inset-bottom))]"
+        className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto overscroll-contain px-[max(1rem,env(safe-area-inset-left))] pb-[max(0.75rem,env(safe-area-inset-bottom))]"
       >
         <InspectorInlineRows value={true}>
           {tab === "text" && <TextTab />}
