@@ -122,14 +122,16 @@ const PAGE_FILES = {
   ],
   privacy: [
     "app/routes/privacy.tsx",
-    "components/home/policy-page.tsx",
+    "components/policy/policy-page.tsx",
     "components/home/site-chrome.tsx",
+    "utils/site-meta.ts",
     "utils/structured-data.ts"
   ],
   terms: [
     "app/routes/terms.tsx",
-    "components/home/policy-page.tsx",
+    "components/policy/policy-page.tsx",
     "components/home/site-chrome.tsx",
+    "utils/site-meta.ts",
     "utils/structured-data.ts"
   ]
 };

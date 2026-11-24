@@ -5,7 +5,7 @@ import {
   PolicyExternalLink,
   PolicyPage,
   PolicySection
-} from "~/components/home/policy-page";
+} from "~/components/policy/policy-page";
 import { APP_NAME } from "~/consts/app";
 import {
   canonicalLink,
@@ -185,8 +185,9 @@ function PrivacyPage() {
           {APP_NAME} never collects your invoices, so it needs no permission for
           them. For the anonymous usage counts and for the details any web host
           receives, it relies on its legitimate interest in running the site
-          safely and in knowing roughly how it’s used. They never identify you,
-          and Global Privacy Control turns the counts off.
+          safely and in knowing roughly how it’s used. {APP_NAME} doesn’t use
+          them to identify anyone, the counts keep no identifier, and Global
+          Privacy Control turns the counts off.
         </p>
       </PolicySection>
       <PolicySection title="Your rights">

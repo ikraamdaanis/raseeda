@@ -5,7 +5,7 @@ import {
   PolicyExternalLink,
   PolicyPage,
   PolicySection
-} from "~/components/home/policy-page";
+} from "~/components/policy/policy-page";
 import { APP_NAME } from "~/consts/app";
 import {
   canonicalLink,
