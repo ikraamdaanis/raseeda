@@ -122,6 +122,13 @@ const PAGE_FILES = {
   ],
   privacy: [
     "app/routes/privacy.tsx",
+    "components/home/policy-page.tsx",
+    "components/home/site-chrome.tsx",
+    "utils/structured-data.ts"
+  ],
+  terms: [
+    "app/routes/terms.tsx",
+    "components/home/policy-page.tsx",
     "components/home/site-chrome.tsx",
     "utils/structured-data.ts"
   ]
@@ -133,6 +140,7 @@ const CACHED_PAGES = [
   "/invoice-template",
   ...SITE_TEMPLATES.map(template => template.path),
   "/privacy",
+  "/terms",
   "/create"
 ];
 
@@ -146,7 +154,7 @@ export default defineConfig({
   plugins: [
     cloudflare({ viteEnvironment: { name: "ssr" } }),
     tailwindcss(),
-    // The homepage, the template pages and the privacy page are the same
+    // The homepage, the template pages and the policy pages are the same
     // for every visitor, so they are rendered once at build time and served as
     // static files instead of by the Worker on each request. Their security
     // headers then come from public/_headers. The other pages are written as
@@ -208,6 +216,11 @@ export default defineConfig({
           path: "/privacy",
           prerender: { enabled: true, autoSubfolderIndex: false },
           sitemap: { lastmod: lastChanged(PAGE_FILES.privacy) }
+        },
+        {
+          path: "/terms",
+          prerender: { enabled: true, autoSubfolderIndex: false },
+          sitemap: { lastmod: lastChanged(PAGE_FILES.terms) }
         }
       ]
     }),
