@@ -9,10 +9,10 @@ import {
 import { APP_NAME } from "~/consts/app";
 import {
   canonicalLink,
-  CONTACT_EMAIL,
   MAKER_COUNTRY,
   MAKER_PERSON_NAME,
   PAGE_META,
+  PRIVACY_EMAIL,
   SITE_HOST,
   siteMeta,
   SOURCE_URL
@@ -200,8 +200,8 @@ function PrivacyPage() {
         <p className={POLICY_PROSE}>
           You can still ask what {APP_NAME} holds, object to the counts or ask
           for anything to be deleted, by emailing{" "}
-          <a href={`mailto:${CONTACT_EMAIL}`} className={POLICY_LINK}>
-            {CONTACT_EMAIL}
+          <a href={`mailto:${PRIVACY_EMAIL}`} className={POLICY_LINK}>
+            {PRIVACY_EMAIL}
           </a>
           . If you’re unhappy with the answer, you can complain to the data
           protection authority where you live, such as the ICO in the UK or your
@@ -218,8 +218,8 @@ function PrivacyPage() {
         <p className={POLICY_PROSE}>
           {APP_NAME} is made and run by {MAKER_PERSON_NAME}, in {MAKER_COUNTRY}.
           For anything about your privacy, email{" "}
-          <a href={`mailto:${CONTACT_EMAIL}`} className={POLICY_LINK}>
-            {CONTACT_EMAIL}
+          <a href={`mailto:${PRIVACY_EMAIL}`} className={POLICY_LINK}>
+            {PRIVACY_EMAIL}
           </a>
           . Found something that doesn’t match this page?{" "}
           <PolicyExternalLink href={`${SOURCE_URL}/issues`}>

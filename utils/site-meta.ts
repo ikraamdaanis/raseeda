@@ -26,8 +26,12 @@ export const MAKER_PERSON_NAME = "Ikraam";
 
 export const MAKER_URL = "https://github.com/ikraamdaanis";
 
-// Where privacy requests and questions about the terms go, privately.
+// The general address, for questions about the terms and anything else.
 export const CONTACT_EMAIL = `hello@${SITE_HOST}`;
+
+// Where privacy requests go, kept apart so they're easy to find and answer in
+// time.
+export const PRIVACY_EMAIL = `privacy@${SITE_HOST}`;
 
 // Where the maker runs the site from, which sets the law the terms follow.
 export const MAKER_COUNTRY = "the United Arab Emirates";
