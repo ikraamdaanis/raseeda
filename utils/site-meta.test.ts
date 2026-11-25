@@ -14,7 +14,7 @@ import {
   HOME_STRUCTURED_DATA,
   TEMPLATES_STRUCTURED_DATA,
   jsonLdScript,
-  privacyStructuredData
+  policyStructuredData
 } from "~/utils/structured-data";
 
 function findMeta(meta: ReturnType<typeof siteMeta>, key: string) {
@@ -153,7 +153,8 @@ describe("PAGE_META", () => {
     for (const page of [
       PAGE_META.home,
       PAGE_META.templates,
-      PAGE_META.privacy
+      PAGE_META.privacy,
+      PAGE_META.terms
     ]) {
       expect(findMeta(siteMeta(page), "robots")?.content).toBe(
         "max-image-preview:large"
@@ -247,13 +248,16 @@ describe("structured data", () => {
     });
   });
 
-  it("dates the privacy page and ties it to the site", () => {
-    const privacy = privacyStructuredData("2026-11-01");
+  it("dates the policy pages and ties them to the site", () => {
+    const privacy = policyStructuredData(PAGE_META.privacy, "2026-11-01");
+    const terms = policyStructuredData(PAGE_META.terms, "2026-11-24");
 
     expect(privacy["@type"]).toBe("WebPage");
     expect(privacy.url).toBe("https://raseeda.com/privacy");
     expect(privacy.dateModified).toBe("2026-11-01");
     expect(homeIds.has(privacy.isPartOf["@id"])).toBe(true);
+    expect(terms.url).toBe("https://raseeda.com/terms");
+    expect(terms["@id"]).toBe("https://raseeda.com/terms#webpage");
   });
 
   it("escapes < so no text can close the script tag", () => {

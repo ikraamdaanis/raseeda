@@ -10,6 +10,7 @@
 - [Quote template](https://raseeda.com/quote-template), [proforma invoice template](https://raseeda.com/proforma-invoice-template), [receipt template](https://raseeda.com/receipt-template) and [credit note template](https://raseeda.com/credit-note-template): each opens the editor with that document type ready
 - [Freelance](https://raseeda.com/freelance-invoice-template), [contractor](https://raseeda.com/contractor-invoice-template) and [retail](https://raseeda.com/retail-invoice-template) invoice templates: each opens the editor laid out for that trade (hours and a rate; labour, materials and a job site; a tax rate on each line)
 - [Privacy](https://raseeda.com/privacy): what raseeda stores, where, and what never leaves the device
+- [Terms of use](https://raseeda.com/terms): free and provided as is; what goes on an invoice is the user's responsibility
 
 ## Facts
 

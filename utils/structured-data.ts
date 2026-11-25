@@ -257,18 +257,21 @@ export function siteTemplateStructuredData(id: SiteTemplateId) {
   };
 }
 
-const PRIVACY_URL = absoluteUrl(PAGE_META.privacy.path);
+// A policy page (privacy, terms), as a page of the site, dated by its last
+// change in substance (an ISO date, `YYYY-MM-DD`).
+export function policyStructuredData(
+  page: { path: string; title: string; description: string },
+  dateModified: string
+) {
+  const url = absoluteUrl(page.path);
 
-// The privacy policy, as a page of the site, dated by its last change in
-// substance (an ISO date, `YYYY-MM-DD`).
-export function privacyStructuredData(dateModified: string) {
   return {
     "@context": "https://schema.org",
     "@type": "WebPage",
-    "@id": `${PRIVACY_URL}#webpage`,
-    url: PRIVACY_URL,
-    name: PAGE_META.privacy.title,
-    description: PAGE_META.privacy.description,
+    "@id": `${url}#webpage`,
+    url,
+    name: page.title,
+    description: page.description,
     inLanguage: "en",
     dateModified,
     isPartOf: { "@id": WEBSITE_ID },

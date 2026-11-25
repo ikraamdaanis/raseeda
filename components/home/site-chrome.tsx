@@ -111,7 +111,8 @@ const FOOTER_COLUMNS: {
     links: [
       { label: "Compare", href: "/#compare" },
       { label: "Questions", href: "/#questions" },
-      { label: "Privacy policy", href: "/privacy" }
+      { label: "Privacy policy", href: "/privacy" },
+      { label: "Terms of use", href: "/terms" }
     ]
   },
   {

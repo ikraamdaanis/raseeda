@@ -22,7 +22,8 @@ export const PAGE_VIEW_PATHS = [
   "/create",
   "/invoice-template",
   ...SITE_TEMPLATES.map(template => template.path),
-  "/privacy"
+  "/privacy",
+  "/terms"
 ] as const;
 
 // The kinds of site a visit can come from. The browser reduces the referrer
