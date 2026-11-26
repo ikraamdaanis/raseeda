@@ -35,6 +35,7 @@ While the editor (`/create`) is open, `window.raseeda` lets a script or an AI as
 | Call | What it does |
 | --- | --- |
 | `version` | The API version, currently `1` |
+| `guide`, `schema` | The addresses of the agent guide and the data's JSON Schema |
 | `listInvoices()` | Every invoice: `id`, `name`, `documentType`, `number`, `client`, `total`, `currency`, `currencyCode`, `invoiceDate`, `dueDate`, `updatedAt` |
 | `getInvoice(id)` | An invoice's data, in the shape an export's `invoiceData` has |
 | `createInvoice(data)` | Adds an invoice and opens it, returning its id. Takes the same shape; anything left out takes a new invoice's value |
@@ -54,56 +55,7 @@ const id = await raseeda.createInvoice({
 await raseeda.downloadPdf(id);
 ```
 
-Tax is the invoice's `tax`: `{ percentage, exempt, note, perLine }`. With `perLine: true`, an item can carry a rate of its own, `tax: { percentage, exempt }`, and an item without one is taxed at the invoice's rate. The totals then show a row per rate. With `perLine: false`, every item is taxed at the invoice's rate and any item rates are kept but ignored.
-
-```js
-await raseeda.createInvoice({
-  tax: { percentage: 20, exempt: false, note: "Exempt supply", perLine: true },
-  items: [
-    { description: "Design work", quantity: 10, unitPrice: 80 },
-    { description: "Printed books", quantity: 2, unitPrice: 15, tax: { percentage: 0, exempt: false } },
-    { description: "Training", quantity: 1, unitPrice: 300, tax: { percentage: 0, exempt: true } }
-  ]
-});
-```
-
-`documentType` is what the document is: `"invoice"` (the default), `"quote"`, `"proforma-invoice"`, `"receipt"` or `"credit-note"`. It sets the defaults for the title, the sample number and three labels: a quote is titled "Quote", numbered "QUO-0001", with "Quote No." and "Valid until" for the due date; a proforma invoice "Proforma invoice", "PRO-0001", with "Proforma No."; a receipt "Receipt", "REC-0001", with "Receipt No." and "Date paid"; and a credit note "Credit note", "CN-0001", with "Credit note No." and "Total credit". A `title`, `number` or `labels.invoiceNumber`, `labels.paymentDue` or `labels.total` given in the data is kept as given. A receipt left without a `dueDate` (its "Date paid") is dated on its `invoiceDate`; the other types are due 30 days after it. The type also settles the closing rows: a quote and a credit note print no amount paid, balance due or PAID stamp, a proforma invoice no PAID stamp, and a receipt always counts its amount paid, which is the total while `amountPaid` is `0` (so a receipt with nothing on it prints none). Nothing is owed on a receipt or a credit note, so neither prints payment details or a late payment fee. A receipt prints `paidBy` (how it was paid, as plain text, under `labels.paidBy`, "Paid by") below its date paid. A credit note prints `refersTo` (the invoice it refers to, its number and date as plain text, under `labels.refersTo`, "Refers to invoice") below its number, and no due date. Switching type keeps every value, so an invoice switched to a quote and back prints its payment again. Invoices saved or exported before document types existed read as invoices.
-
-```js
-await raseeda.createInvoice({
-  documentType: "quote",
-  number: "Q-0007",
-  items: [{ description: "Website redesign", quantity: 1, unitPrice: 4800 }]
-});
-```
-
-The line items table is `tableSettings`: `{ columnLabels, columns, backgroundColor, borderColor }`. `columns` is `{ quantityAndPrice, unit }`, both on by default. With `quantityAndPrice: false`, the Quantity, Unit and Unit price columns are hidden and each item is a description and an amount, so give each one `quantity: 1` and the amount as its `unitPrice`. `columnLabels.tax` names the Tax column; left blank, it uses the tax row's label (`labels.tax`). `columnLabels.amount` names the Amount column; left blank, it reads "Net amount" while the tax section is on and "Amount" while it's off.
-
-The invoice's colours are `theme.accent`, for the title, the section headings, the table's header and the total, and `theme.textColor`, for everything else; both are hex codes such as `"#1a1a1a"`.
-
-How amounts are written is `numberFormat` and `currencyPosition`. `numberFormat` is one of `"comma-dot"` (1,234.56), `"dot-comma"` (1.234,56), `"space-comma"` (1 234,56), `"apostrophe-dot"` (1’234.56) or `"indian"` (12,34,567.89); `currencyPosition` is `"before"` ($1,234.56) or `"after"` (1.234,56 €). `paperSize` is `"A4"` or `"Letter"`, for the PDF, the page in the editor and print. A script's invoice left without them is `"comma-dot"`, `"before"` and `"A4"`, whatever the browser's language; a blank invoice made in the editor starts on the browser's. Currencies with no minor unit (JPY, KRW, VND and the rest of ISO 4217's zero-decimal list) are reckoned and printed in whole units.
-
-`language` sets every printed label at once from a language preset: `"en"` (the default), `"de"`, `"fr"`, `"es"`, `"it"`, `"nl"`, `"pt"` or `"pl"`. The title, the details' and totals' labels, the table's headers, the From, To and Ship to headings, the payment details' labels and the notes, terms and late payment headings take that language's wording for the document's type (a German quote is titled "Angebot", with "Gültig bis" for its due date). Labels, a title or headings given in the data are laid over it. Left out, or any other value, the labels are English, whatever the browser's language; a blank invoice made in the editor starts in the browser's language when there's a preset for it.
-
-```js
-await raseeda.createInvoice({
-  language: "de",
-  seller: { content: "Muster GmbH\nBerlin" },
-  items: [{ description: "Beratung", quantity: 4, unitPrice: 120 }]
-});
-```
-
-`paymentDetails.labels` names each bank field on the page (`{ bankName, accountName, accountNumber, routingNumber, iban, bic, sortCode }`, left out it reads "Bank name", "Routing number" and so on), and `paymentDetails.methods` lists other ways to pay, printed below the bank fields in order: `[{ id, name, detail }]`, such as `{ id: "venmo", name: "Venmo", detail: "@jane-designs" }`. A method with no `detail` doesn't print. `paymentDetails.paymentLink` is a link to pay online, such as `"https://paypal.me/janedesigns"`, printed last under `paymentDetails.labels.paymentLink` ("Pay online" when left out) and clickable in the PDF.
-
-```js
-await raseeda.createInvoice({
-  currency: "€",
-  currencyCode: "EUR",
-  numberFormat: "dot-comma",
-  currencyPosition: "after",
-  items: [{ description: "Beratung", quantity: 1.5, unitPrice: 120 }]
-});
-```
+The rules of the data (document types, tax, columns, number formats, languages, payment details), more examples and a click path for agents that can't run scripts are in the agent guide, [`public/llms-full.txt`](public/llms-full.txt), served at https://raseeda.com/llms-full.txt. The data's exact shape is the JSON Schema at [`public/invoice.schema.json`](public/invoice.schema.json), written from the import schema by `bun run build:invoice-schema`.
 
 ## Tech Stack
 

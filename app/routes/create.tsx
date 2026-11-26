@@ -42,7 +42,17 @@ export const Route = createFileRoute("/create")({
       },
       ...siteMeta(PAGE_META.create)
     ],
-    links: [canonicalLink(PAGE_META.create.path)],
+    // Points an agent that reads the page's markup to the editor's API
+    // (public/llms-full.txt), which is quicker than clicking.
+    links: [
+      canonicalLink(PAGE_META.create.path),
+      {
+        rel: "help",
+        type: "text/plain",
+        href: "/llms-full.txt",
+        title: "Guide for AI agents"
+      }
+    ],
     scripts: [{ children: EDITOR_THEME_SCRIPT }]
   }),
   validateSearch: (
@@ -185,6 +195,13 @@ function EditorLoading() {
         <p className="text-muted-foreground max-w-sm text-sm text-pretty">
           The {APP_NAME} editor runs entirely in your browser, so it needs
           JavaScript. Turn JavaScript on for this site, then reload.
+        </p>
+        <p className="text-muted-foreground max-w-sm text-sm text-pretty">
+          Making an invoice as an AI agent? Read the{" "}
+          <a className="underline" href="/llms-full.txt">
+            guide for AI agents
+          </a>
+          .
         </p>
       </noscript>
     </main>

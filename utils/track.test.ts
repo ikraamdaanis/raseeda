@@ -443,6 +443,37 @@ describe("track", () => {
     expect(countInvoices).not.toHaveBeenCalled();
   });
 
+  it("sends nothing from a browser under automation", async () => {
+    const sendBeacon = stubPage({ navigator: { webdriver: true } });
+    const { track, trackInvoice, trackPageView } = await loadTrack();
+
+    track("editor_opened");
+    trackInvoice("pdf_downloaded", invoiceWith());
+    trackPageView("/create");
+    await Promise.resolve();
+
+    expect(sendBeacon).not.toHaveBeenCalled();
+    expect(countInvoices).not.toHaveBeenCalled();
+  });
+
+  it("stops counting once a script drives the page", async () => {
+    const sendBeacon = stubPage();
+    const { stopCounting, track, trackInvoice, trackPageView } =
+      await loadTrack();
+
+    trackPageView("/create");
+    stopCounting();
+    track("editor_opened");
+    trackInvoice("pdf_downloaded", invoiceWith());
+    trackPageView("/");
+    await Promise.resolve();
+
+    expect(sentBodies(sendBeacon)).toEqual([
+      "page_view /create r=direct s=- l=en d=browser"
+    ]);
+    expect(countInvoices).not.toHaveBeenCalled();
+  });
+
   it("sends when Global Privacy Control is off", async () => {
     const sendBeacon = stubPage({ navigator: { globalPrivacyControl: false } });
     const { track } = await loadTrack();

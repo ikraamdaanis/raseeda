@@ -14,6 +14,9 @@ let channel: Channel | undefined;
 // Whether this page load's first page view has been counted.
 let landingCounted = false;
 
+// Whether a script has driven this page load through window.raseeda.
+let isDrivenByScript = false;
+
 // Read as soon as the page starts, so a landing on a page that isn't counted
 // (one not found) still keeps its referrer and `?ref=` for the next page.
 if (typeof document !== "undefined") getChannel();
@@ -173,12 +176,22 @@ async function librarySize(): Promise<(typeof LIBRARY_SIZES)[number]> {
   }
 }
 
+// Stops counting for the rest of this page load, once a script or agent
+// drives the editor through window.raseeda (context/automation-api.ts).
+export function stopCounting() {
+  isDrivenByScript = true;
+}
+
 // Nothing is sent in development, when the browser asks for Global Privacy
-// Control, or when it has no beacon to send with.
+// Control, when it has no beacon to send with, or when a script is driving
+// the page: one the browser says is automated (Playwright, Puppeteer and
+// Selenium set navigator.webdriver) or one that has called window.raseeda.
 function canSend() {
   if (import.meta.env.DEV) return false;
+  if (isDrivenByScript) return false;
   if (typeof navigator === "undefined") return false;
   if (!("sendBeacon" in navigator)) return false;
+  if (navigator.webdriver) return false;
 
   return !(
     "globalPrivacyControl" in navigator &&

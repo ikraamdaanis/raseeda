@@ -1,0 +1,697 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raseeda.com/invoice.schema.json",
+  "title": "raseeda invoice data",
+  "description": "What raseeda.createInvoice(data) takes in raseeda's editor (https://raseeda.com/create). Every field is optional: one left out takes a new invoice's value (its default), and an object given is laid over the new invoice's, so its fields left out keep theirs. A value of the wrong type is replaced by the default. Amounts are numbers in the invoice's currency; totals are worked out, never given.",
+  "type": "object",
+  "properties": {
+    "documentType": {
+      "default": "invoice",
+      "type": "string",
+      "enum": [
+        "invoice",
+        "quote",
+        "proforma-invoice",
+        "receipt",
+        "credit-note"
+      ],
+      "description": "What the document is. Sets the default title, sample number, labels and closing rows"
+    },
+    "title": {
+      "default": "Invoice",
+      "type": "string",
+      "description": "The heading printed at the top. Left out, the type's, such as Quote"
+    },
+    "number": {
+      "default": "INV-0001",
+      "type": "string",
+      "description": "The document number, such as INV-0042. Left out, the type's sample number (INV-0001, QUO-0001, PRO-0001, REC-0001, CN-0001)"
+    },
+    "refersTo": {
+      "default": "",
+      "type": "string",
+      "description": "A credit note's invoice, as printed text (its number and date). Only a credit note prints it"
+    },
+    "poNumber": {
+      "default": "",
+      "type": "string",
+      "description": "The client's purchase order number"
+    },
+    "invoiceDate": {
+      "type": "string",
+      "description": "The issue date, yyyy-MM-dd. Left out, today"
+    },
+    "dueDate": {
+      "type": "string",
+      "description": "yyyy-MM-dd. Left out, the type's days after invoiceDate (a quote's Valid until, a receipt's Date paid)"
+    },
+    "paidBy": {
+      "default": "",
+      "type": "string",
+      "description": "How a receipt was paid, as printed text, such as Card. Only a receipt prints it"
+    },
+    "servicePeriod": {
+      "default": "",
+      "type": "string",
+      "description": "The period the work covers, as printed text"
+    },
+    "supplyDate": {
+      "default": "",
+      "type": "string",
+      "description": "The date of supply, yyyy-MM-dd"
+    },
+    "seller": {
+      "type": "object",
+      "properties": {
+        "label": {
+          "default": "From",
+          "type": "string"
+        },
+        "content": {
+          "default": "",
+          "type": "string",
+          "description": "Name, address and other details, one per line"
+        }
+      },
+      "description": "Who the document is from"
+    },
+    "client": {
+      "type": "object",
+      "properties": {
+        "label": {
+          "default": "To",
+          "type": "string"
+        },
+        "content": {
+          "default": "",
+          "type": "string",
+          "description": "Name, address and other details, one per line"
+        }
+      },
+      "description": "Who the document is to"
+    },
+    "shipping": {
+      "type": "object",
+      "properties": {
+        "label": {
+          "default": "Ship to",
+          "type": "string"
+        },
+        "content": {
+          "default": "",
+          "type": "string",
+          "description": "Name and address, one per line"
+        }
+      },
+      "description": "Where goods go, printed with sections.shipping on"
+    },
+    "items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "description": {
+            "default": "",
+            "type": "string"
+          },
+          "quantity": {
+            "default": 0,
+            "type": "number",
+            "description": "Left out, 0. With tableSettings.columns.quantityAndPrice off, give 1 and the amount as unitPrice"
+          },
+          "unit": {
+            "default": "",
+            "type": "string",
+            "description": "Such as hrs or kg"
+          },
+          "unitPrice": {
+            "default": 0,
+            "type": "number",
+            "description": "The price of one unit, in the invoice's currency"
+          },
+          "tax": {
+            "type": "object",
+            "properties": {
+              "percentage": {
+                "default": 0,
+                "type": "number"
+              },
+              "exempt": {
+                "default": false,
+                "type": "boolean"
+              }
+            },
+            "description": "The line's own rate, used while tax.perLine is on; a line without one takes the invoice's rate"
+          }
+        }
+      },
+      "description": "The line items, in order"
+    },
+    "tableSettings": {
+      "type": "object",
+      "properties": {
+        "columnLabels": {
+          "type": "object",
+          "properties": {
+            "description": {
+              "default": "Item",
+              "type": "string"
+            },
+            "quantity": {
+              "default": "Quantity",
+              "type": "string"
+            },
+            "unit": {
+              "default": "Unit",
+              "type": "string"
+            },
+            "unitPrice": {
+              "default": "Unit Price",
+              "type": "string"
+            },
+            "tax": {
+              "default": "",
+              "type": "string"
+            },
+            "amount": {
+              "default": "",
+              "type": "string"
+            }
+          }
+        },
+        "columns": {
+          "type": "object",
+          "properties": {
+            "quantityAndPrice": {
+              "default": true,
+              "type": "boolean"
+            },
+            "unit": {
+              "default": true,
+              "type": "boolean"
+            }
+          }
+        },
+        "backgroundColor": {
+          "default": "#f9fafb",
+          "type": "string"
+        },
+        "borderColor": {
+          "default": "#e5e7eb",
+          "type": "string"
+        }
+      }
+    },
+    "labels": {
+      "type": "object",
+      "properties": {
+        "invoiceNumber": {
+          "default": "Invoice No.",
+          "type": "string"
+        },
+        "invoiceDate": {
+          "default": "Date",
+          "type": "string"
+        },
+        "paymentDue": {
+          "default": "Due date",
+          "type": "string"
+        },
+        "poNumber": {
+          "default": "PO number",
+          "type": "string"
+        },
+        "servicePeriod": {
+          "default": "Service period",
+          "type": "string"
+        },
+        "supplyDate": {
+          "default": "Date of supply",
+          "type": "string"
+        },
+        "subtotal": {
+          "default": "Subtotal",
+          "type": "string"
+        },
+        "tax": {
+          "default": "Tax",
+          "type": "string"
+        },
+        "fees": {
+          "default": "Fees",
+          "type": "string"
+        },
+        "discounts": {
+          "default": "Discounts",
+          "type": "string"
+        },
+        "total": {
+          "default": "Total",
+          "type": "string"
+        },
+        "amountPaid": {
+          "default": "Amount paid",
+          "type": "string"
+        },
+        "balanceDue": {
+          "default": "Balance due",
+          "type": "string"
+        },
+        "refersTo": {
+          "default": "Refers to invoice",
+          "type": "string"
+        },
+        "paidBy": {
+          "default": "Paid by",
+          "type": "string"
+        }
+      },
+      "description": "The printed labels. Left out, the type's in the language given (an English invoice's are shown); labels given are laid over them"
+    },
+    "tax": {
+      "type": "object",
+      "properties": {
+        "percentage": {
+          "default": 0,
+          "type": "number",
+          "description": "Such as 20 for 20%"
+        },
+        "exempt": {
+          "default": false,
+          "type": "boolean",
+          "description": "No tax is charged; the rate is kept"
+        },
+        "note": {
+          "default": "",
+          "type": "string",
+          "description": "Printed with an exempt rate, such as Reverse charge"
+        },
+        "perLine": {
+          "default": false,
+          "type": "boolean",
+          "description": "Lets each item carry a rate of its own (items.tax)"
+        }
+      },
+      "description": "The invoice's tax rate, printed with sections.tax on"
+    },
+    "fees": {
+      "default": 0,
+      "type": "number",
+      "description": "A fee added to the total, printed with sections.fees on"
+    },
+    "discounts": {
+      "default": 0,
+      "type": "number",
+      "description": "The discount, printed with sections.discounts on: an amount or a percentage, as discountType says"
+    },
+    "discountType": {
+      "default": "fixed",
+      "type": "string",
+      "enum": ["fixed", "percentage"]
+    },
+    "amountPaid": {
+      "default": 0,
+      "type": "number",
+      "description": "What has been paid, printed with sections.amountPaid on. A receipt with 0 is paid in full"
+    },
+    "paidDate": {
+      "default": "",
+      "type": "string",
+      "description": "The day the amount paid came in, yyyy-MM-dd"
+    },
+    "currencyConversion": {
+      "type": "object",
+      "properties": {
+        "currency": {
+          "default": "$",
+          "type": "string"
+        },
+        "currencyCode": {
+          "default": "USD",
+          "type": "string"
+        },
+        "rate": {
+          "default": 0,
+          "type": "number",
+          "description": "One unit of the invoice's currency in the second"
+        },
+        "date": {
+          "default": "",
+          "type": "string"
+        },
+        "source": {
+          "default": "",
+          "type": "string"
+        },
+        "showRate": {
+          "default": true,
+          "type": "boolean"
+        }
+      },
+      "description": "Every amount also in a second currency, printed with sections.currencyConversion on and a rate"
+    },
+    "terms": {
+      "type": "object",
+      "properties": {
+        "label": {
+          "default": "Terms and conditions",
+          "type": "string"
+        },
+        "content": {
+          "default": "",
+          "type": "string"
+        }
+      }
+    },
+    "notes": {
+      "type": "object",
+      "properties": {
+        "label": {
+          "default": "Notes",
+          "type": "string"
+        },
+        "content": {
+          "default": "",
+          "type": "string"
+        }
+      }
+    },
+    "latePayment": {
+      "type": "object",
+      "properties": {
+        "label": {
+          "default": "Late payment",
+          "type": "string"
+        },
+        "content": {
+          "default": "",
+          "type": "string"
+        }
+      }
+    },
+    "paymentDetails": {
+      "type": "object",
+      "properties": {
+        "label": {
+          "default": "Payment details",
+          "type": "string"
+        },
+        "labels": {
+          "type": "object",
+          "properties": {
+            "bankName": {
+              "default": "Bank name",
+              "type": "string"
+            },
+            "accountName": {
+              "default": "Account name",
+              "type": "string"
+            },
+            "accountNumber": {
+              "default": "Account number",
+              "type": "string"
+            },
+            "routingNumber": {
+              "default": "Routing number",
+              "type": "string"
+            },
+            "iban": {
+              "default": "IBAN",
+              "type": "string"
+            },
+            "bic": {
+              "default": "BIC / SWIFT",
+              "type": "string"
+            },
+            "sortCode": {
+              "default": "Sort code",
+              "type": "string"
+            },
+            "paymentLink": {
+              "default": "Pay online",
+              "type": "string"
+            }
+          },
+          "description": "Renames the bank fields, such as BSB for routingNumber"
+        },
+        "methods": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "default": "",
+                "type": "string"
+              },
+              "name": {
+                "default": "",
+                "type": "string"
+              },
+              "detail": {
+                "default": "",
+                "type": "string"
+              }
+            }
+          },
+          "description": "Other ways to pay, printed below the bank fields. A method with no detail doesn't print"
+        },
+        "bankName": {
+          "default": "",
+          "type": "string"
+        },
+        "accountName": {
+          "default": "",
+          "type": "string"
+        },
+        "accountNumber": {
+          "default": "",
+          "type": "string"
+        },
+        "routingNumber": {
+          "default": "",
+          "type": "string"
+        },
+        "iban": {
+          "default": "",
+          "type": "string"
+        },
+        "bic": {
+          "default": "",
+          "type": "string"
+        },
+        "sortCode": {
+          "default": "",
+          "type": "string"
+        },
+        "paymentLink": {
+          "default": "",
+          "type": "string",
+          "description": "A link to pay online, printed last and clickable in the PDF"
+        },
+        "qrCodeContent": {
+          "default": "sepa",
+          "type": "string",
+          "enum": ["sepa", "upi", "paymentLink"],
+          "description": "What the QR code encodes, printed with sections.paymentQrCode on"
+        },
+        "upiId": {
+          "default": "",
+          "type": "string",
+          "description": "The payee of a UPI QR code"
+        },
+        "terms": {
+          "default": "",
+          "type": "string"
+        }
+      },
+      "description": "How to pay, printed with sections.paymentDetails on: bank fields, then methods, then paymentLink"
+    },
+    "signature": {
+      "type": "object",
+      "properties": {
+        "caption": {
+          "default": "",
+          "type": "string"
+        }
+      },
+      "description": "Printed with sections.signature on. Only the caption can be set here; the image is drawn or uploaded in the editor"
+    },
+    "pdfSettings": {
+      "type": "object",
+      "properties": {
+        "backgroundColor": {
+          "default": "#ffffff",
+          "type": "string"
+        }
+      }
+    },
+    "currency": {
+      "default": "$",
+      "type": "string",
+      "description": "The symbol printed, such as $ or €"
+    },
+    "currencyCode": {
+      "default": "USD",
+      "type": "string",
+      "description": "ISO 4217, such as USD. Left out with a currency given, the code of its symbol"
+    },
+    "theme": {
+      "type": "object",
+      "properties": {
+        "font": {
+          "default": "schibsted-grotesk",
+          "type": "string",
+          "enum": [
+            "schibsted-grotesk",
+            "geist",
+            "inter",
+            "bricolage-grotesque",
+            "dm-sans",
+            "ibm-plex-sans",
+            "lora",
+            "libre-baskerville",
+            "geist-mono",
+            "jetbrains-mono",
+            "ibm-plex-mono"
+          ]
+        },
+        "fontWeight": {
+          "default": "Normal",
+          "type": "string",
+          "enum": ["Normal", "Medium", "Semibold", "Bold"]
+        },
+        "size": {
+          "default": "medium",
+          "type": "string",
+          "enum": ["small", "medium", "large"]
+        },
+        "accent": {
+          "default": "#1a1a1a",
+          "type": "string",
+          "description": "Hex colour of the title, section headings, table header and total"
+        },
+        "textColor": {
+          "default": "#1a1a1a",
+          "type": "string",
+          "description": "Hex colour of everything else"
+        }
+      },
+      "description": "The invoice's look"
+    },
+    "sections": {
+      "type": "object",
+      "properties": {
+        "logo": {
+          "default": true,
+          "type": "boolean"
+        },
+        "poNumber": {
+          "default": true,
+          "type": "boolean"
+        },
+        "servicePeriod": {
+          "default": true,
+          "type": "boolean"
+        },
+        "supplyDate": {
+          "default": false,
+          "type": "boolean"
+        },
+        "shipping": {
+          "default": false,
+          "type": "boolean"
+        },
+        "discounts": {
+          "default": true,
+          "type": "boolean"
+        },
+        "tax": {
+          "default": true,
+          "type": "boolean"
+        },
+        "fees": {
+          "default": true,
+          "type": "boolean"
+        },
+        "amountPaid": {
+          "default": true,
+          "type": "boolean"
+        },
+        "paidStamp": {
+          "default": false,
+          "type": "boolean"
+        },
+        "currencyConversion": {
+          "default": false,
+          "type": "boolean"
+        },
+        "paymentDetails": {
+          "default": true,
+          "type": "boolean"
+        },
+        "notes": {
+          "default": false,
+          "type": "boolean"
+        },
+        "terms": {
+          "default": false,
+          "type": "boolean"
+        },
+        "latePayment": {
+          "default": false,
+          "type": "boolean"
+        },
+        "signature": {
+          "default": false,
+          "type": "boolean"
+        },
+        "paymentQrCode": {
+          "default": false,
+          "type": "boolean"
+        }
+      },
+      "description": "Which optional parts are on"
+    },
+    "dateFormat": {
+      "default": "d MMM yyyy",
+      "type": "string",
+      "enum": [
+        "d MMM yyyy",
+        "MMMM d, yyyy",
+        "dd/MM/yyyy",
+        "MM/dd/yyyy",
+        "yyyy-MM-dd"
+      ],
+      "description": "How dates print"
+    },
+    "numberFormat": {
+      "default": "comma-dot",
+      "type": "string",
+      "enum": [
+        "comma-dot",
+        "dot-comma",
+        "space-comma",
+        "apostrophe-dot",
+        "indian"
+      ],
+      "description": "How amounts are written: 1,234.56, 1.234,56, 1 234,56, 1’234.56 or 12,34,567.89"
+    },
+    "currencyPosition": {
+      "default": "before",
+      "type": "string",
+      "enum": ["before", "after"],
+      "description": "$1,234.56 or 1.234,56 €"
+    },
+    "paperSize": {
+      "default": "A4",
+      "type": "string",
+      "enum": ["A4", "Letter"],
+      "description": "The PDF's page size"
+    },
+    "language": {
+      "type": "string",
+      "enum": ["en", "de", "fr", "es", "it", "nl", "pt", "pl"],
+      "description": "Sets every printed label from this language's preset; labels given are laid over it. English when left out"
+    }
+  }
+}

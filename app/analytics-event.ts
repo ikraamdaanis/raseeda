@@ -88,8 +88,9 @@ export async function handleAnalyticsEvent(
 }
 
 // The event the request carries, or null when it isn't one to count: sent
-// from another site, by a bot, under Global Privacy Control, or with a body
-// that isn't a known event.
+// from another site, by a bot or a signed agent (the Signature-Agent header
+// Web Bot Auth agents such as ChatGPT's sign their requests with), under
+// Global Privacy Control, or with a body that isn't a known event.
 async function readEvent(request: Request): Promise<{
   name: AnalyticsEvent;
   path: string;
@@ -99,6 +100,7 @@ async function readEvent(request: Request): Promise<{
 
   if (request.headers.get("Sec-Fetch-Site") !== "same-origin") return null;
   if (request.headers.get("Sec-GPC") === "1") return null;
+  if (request.headers.has("Signature-Agent")) return null;
   if (!userAgent || isBotUserAgent(userAgent)) return null;
 
   let body: string | null;

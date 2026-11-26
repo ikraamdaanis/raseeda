@@ -1,6 +1,32 @@
 # raseeda
 
-> raseeda is a free, private invoice generator that runs entirely in the browser. There is no account and nothing is uploaded: invoices are saved in the browser on the user's device (IndexedDB), the PDF is made on the device, and invoice content leaves it only in files the user saves. The site counts anonymous usage (event names, country, browser family, OS, device type, language, the kind of site a visit came from, and a few bucketed invoice details such as the currency code, never names or amounts) with no cookies or identifiers. It is open source under the MIT licence.
+> raseeda is a free, private invoice generator that runs entirely in the browser. There is no account and nothing is uploaded: invoices are saved in the browser on the user's device (IndexedDB), the PDF is made on the device, and invoice content leaves it only in files the user saves. The site counts anonymous usage (event names, country, browser family, OS, device type, language, the kind of site a visit came from, and a few bucketed invoice details such as the currency code, never names or amounts) with no cookies or identifiers. Automated browsers, and pages a script drives through the editor's API, aren't counted. It is open source under the MIT licence.
+
+## For AI agents
+
+The fastest way to make a document is the editor's on-device API, not clicking:
+
+1. Open https://raseeda.com/create and wait for `window.raseeda` to exist.
+2. `const id = await raseeda.createInvoice(data)`, where `data` follows the [invoice JSON Schema](https://raseeda.com/invoice.schema.json). Every field is optional.
+3. `await raseeda.downloadPdf(id)` saves the PDF, or `await raseeda.getPdf(id)` returns it as a Blob.
+
+```js
+const id = await raseeda.createInvoice({
+  number: "INV-0042",
+  invoiceDate: "2026-11-26",
+  seller: { content: "Jane Designs\n1 Market St\nLondon" },
+  client: { content: "Acme Ltd\n1 High Street\nLeeds" },
+  currency: "£",
+  items: [{ description: "Design work", quantity: 10, unit: "hrs", unitPrice: 80 }],
+  tax: { percentage: 20 }
+});
+await raseeda.downloadPdf(id);
+```
+
+- [Agent guide](https://raseeda.com/llms-full.txt): every call, the data's rules (document types, tax, languages, number formats, payment details), more examples, and the controls to use when an agent can only click
+- [Invoice JSON Schema](https://raseeda.com/invoice.schema.json): the exact shape `createInvoice` takes, with each field's allowed values and default
+
+Invoices are kept in the browser that made them. An automated browser that starts with empty storage keeps nothing between sessions, so download the PDF before it closes.
 
 ## Pages
 
@@ -10,6 +36,7 @@
 - [Quote template](https://raseeda.com/quote-template), [proforma invoice template](https://raseeda.com/proforma-invoice-template), [receipt template](https://raseeda.com/receipt-template) and [credit note template](https://raseeda.com/credit-note-template): each opens the editor with that document type ready
 - [Freelance](https://raseeda.com/freelance-invoice-template), [contractor](https://raseeda.com/contractor-invoice-template) and [retail](https://raseeda.com/retail-invoice-template) invoice templates: each opens the editor laid out for that trade (hours and a rate; labour, materials and a job site; a tax rate on each line)
 - [Privacy](https://raseeda.com/privacy): what raseeda stores, where, and what never leaves the device
+- [Terms of use](https://raseeda.com/terms): free and provided as is; what goes on an invoice is the user's responsibility
 
 ## Facts
 
@@ -18,7 +45,7 @@
 - Invoices, quotes, proforma invoices, receipts and credit notes, each with its own title, labels and closing rows (a quote ends on its total, a receipt shows its total as paid, a credit note names the invoice it refers to). Any of them can be duplicated as another type, such as a quote as an invoice, and the library shows and filters each document's type.
 - Any currency, VAT or sales tax, fees, discounts, payment details (bank, account and routing numbers, IBAN, BIC / SWIFT, sort code, each under a label you can rename, and other ways to pay such as PayPal, Venmo, Pix or UPI), templates for repeat clients, and import / export backups.
 - raseeda makes the PDF; it does not email invoices or track payments.
-- No server API and no server-side storage. In the editor, `window.raseeda` offers an on-device API for scripts and assistants driving the browser: `listInvoices()`, `getInvoice(id)`, `createInvoice(data)`, `openInvoice(id)`, `getPdf(id?)`, `downloadPdf(id?)` and `importData(json)`. Invoice data takes the shape of an export's `invoiceData`; `documentType` (`"invoice"`, `"quote"`, `"proforma-invoice"`, `"receipt"` or `"credit-note"`, `"invoice"` when left out) sets the default title, sample number (`"QUO-0001"`, `"CN-0001"` and so on) and the number, due date and total labels (a quote's due date reads "Valid until", a receipt's "Date paid", a credit note's total "Total credit"). A quote or credit note prints no amount paid, balance due or PAID stamp; a receipt's amount paid is its total while `amountPaid` is `0`; receipts and credit notes print no payment details or late payment fee; a receipt prints `paidBy`, how it was paid, as plain text; a credit note prints `refersTo`, the invoice it refers to, as plain text, and no due date. With `tax.perLine` on, an item's own `tax: { percentage, exempt }` overrides the invoice's rate. `tableSettings.columns` (`{ quantityAndPrice, unit }`) switches the Quantity, Unit and Unit price columns off, and `tableSettings.columnLabels.tax` names the Tax column (blank uses the tax row's label) and `columnLabels.amount` the Amount column (blank reads "Net amount" with tax on, "Amount" without). `numberFormat` (`"comma-dot"`, `"dot-comma"`, `"space-comma"`, `"apostrophe-dot"` or `"indian"`) and `currencyPosition` (`"before"` or `"after"`) say how amounts are written; `paperSize` (`"A4"` or `"Letter"`) is the page size. Left out, a script's invoice is `"comma-dot"`, `"before"` and `"A4"`. `language` (`"en"`, `"de"`, `"fr"`, `"es"`, `"it"`, `"nl"`, `"pt"` or `"pl"`, English when left out) sets every printed label from that language's preset; labels given are laid over it. Zero-decimal currencies such as JPY are reckoned in whole units. `paymentDetails.labels` renames the bank fields (`routingNumber: "BSB"`) and `paymentDetails.methods` (`[{ id, name, detail }]`) lists other ways to pay, printed below them; `paymentDetails.paymentLink` is a link to pay online, printed last and clickable in the PDF. Documented in the README.
+- No server API and no server-side storage: the editor's API runs on the device and sends nothing anywhere.
 
 ## Source
 
