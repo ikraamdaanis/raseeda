@@ -24,6 +24,7 @@
     "encode:home": "bun scripts/encode-homepage-avif.ts",
     "subset:preview-fonts": "bun scripts/subset-preview-fonts.ts",
     "build:pdf-fonts": "bun scripts/build-pdf-fonts.ts",
+    "build:invoice-schema": "bun scripts/write-invoice-schema.ts",
     "deploy": "bun run build && wrangler deploy",
     "cf-typegen": "wrangler types --include-runtime=false",
     "sandcastle:build-image": "sandcastle docker build-image --dockerfile .sandcastle/Dockerfile",

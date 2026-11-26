@@ -25,6 +25,8 @@ const { raseeda } = globalThis as unknown as {
       seller: { label: string; content: string };
       paymentDetails: { labels: Record<string, string>; iban: string };
       currencyCode: string;
+      theme: { font: string; accent: string };
+      sections: Record<string, boolean>;
     }>;
     listInvoices: () => Promise<{ id: string; documentType: string }[]>;
   };
@@ -179,5 +181,24 @@ describe("automation API currency", () => {
     const id = await raseeda.createInvoice({});
 
     expect((await raseeda.getInvoice(id)).currencyCode).toBe("USD");
+  });
+});
+
+describe("automation API parts given in part", () => {
+  beforeEach(async () => {
+    await deleteAllData();
+  });
+
+  it("keeps the rest of a new invoice's part beside what's given", async () => {
+    const blankId = await raseeda.createInvoice({});
+    const blank = await raseeda.getInvoice(blankId);
+    const id = await raseeda.createInvoice({
+      theme: { accent: "#0f766e" },
+      sections: { notes: true }
+    });
+    const invoice = await raseeda.getInvoice(id);
+
+    expect(invoice.theme).toEqual({ ...blank.theme, accent: "#0f766e" });
+    expect(invoice.sections).toEqual({ ...blank.sections, notes: true });
   });
 });

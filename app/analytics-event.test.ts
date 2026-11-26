@@ -290,6 +290,10 @@ describe("handleAnalyticsEvent", () => {
       "a headless browser",
       { headers: { "User-Agent": "HeadlessChrome/141.0.0.0" } }
     ],
+    [
+      "a signed agent",
+      { headers: { "Signature-Agent": '"https://chatgpt.com"' } }
+    ],
     ["no User-Agent", { headers: { "User-Agent": "" } }],
     [
       "an unknown referrer",

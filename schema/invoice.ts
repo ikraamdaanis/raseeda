@@ -248,7 +248,7 @@ function textSectionSchema(defaultLabel: string) {
 // "Venmo", "Pix", or anything typed) and the detail to pay to, as typed (a
 // handle, an email, a phone number, a Pix key). Printed below the bank
 // fields; a method with no detail isn't.
-const paymentMethodSchema = z.object({
+export const paymentMethodSchema = z.object({
   id: z.string().catch(""),
   name: z.string().catch(""),
   detail: z.string().catch("")
@@ -329,7 +329,7 @@ const invoiceSectionsSchema = z
   })
   .catch(DEFAULT_INVOICE_SECTIONS);
 
-const invoiceItemSchema = z.object({
+export const invoiceItemSchema = z.object({
   id: z.string().catch(""),
   description: z.string().catch(""),
   quantity: z.coerce.number().catch(0),

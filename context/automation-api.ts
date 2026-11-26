@@ -29,7 +29,8 @@ import { deriveInvoiceName } from "~/utils/invoice-name";
 import { readLabelLanguage } from "~/utils/label-preset";
 import { addDaysToIsoDate } from "~/utils/payment-terms";
 import { saveFile, toPdfFileName } from "~/utils/save-file";
-import { track, trackInvoice } from "~/utils/track";
+import { SITE_URL } from "~/utils/site-meta";
+import { stopCounting } from "~/utils/track";
 
 // Bumped when a call changes in a way existing scripts would notice.
 const API_VERSION = 1;
@@ -64,16 +65,25 @@ async function requireInvoice(id: string): Promise<InvoiceDocument> {
   return document;
 }
 
-// The parts of an invoice that hold a printed label besides `labels`.
-const LABELLED_PARTS = [
+// The parts of an invoice that are objects, besides `labels`. One given is
+// laid over the blank's, so a part given in part keeps the rest of a new
+// invoice's: `seller: { content }` its label in the language asked for,
+// `theme: { accent }` the new invoice's font.
+const OBJECT_PARTS = [
   "seller",
   "client",
   "shipping",
   "tableSettings",
-  "paymentDetails",
+  "tax",
+  "currencyConversion",
   "terms",
   "notes",
-  "latePayment"
+  "latePayment",
+  "paymentDetails",
+  "signature",
+  "pdfSettings",
+  "theme",
+  "sections"
 ] as const;
 
 // A list given (payment methods) replaces the blank's rather than merging
@@ -107,11 +117,17 @@ async function invoiceForPdf(id?: string) {
 
 // A small API for scripts and assistants driving the editor in a browser, so
 // they can make and export invoices without clicking. It only reads and writes
-// this browser's storage, as the editor does; nothing is sent anywhere.
+// this browser's storage, as the editor does; nothing is sent anywhere. Any
+// call stops this page load's usage counts (utils/track.ts): a script driving
+// the page isn't a person using it.
 const api = {
   version: API_VERSION,
+  // Where an agent that finds the API reads how to use it.
+  guide: `${SITE_URL}/llms-full.txt`,
+  schema: `${SITE_URL}/invoice.schema.json`,
   // Every invoice in the library, most recently edited first.
   async listInvoices() {
+    stopCounting();
     const documents = await getAllInvoices();
 
     return documents
@@ -120,6 +136,7 @@ const api = {
   },
   // An invoice's data, as it appears in an export's `invoiceData`.
   async getInvoice(id: string) {
+    stopCounting();
     return structuredClone((await requireInvoice(id)).invoiceData);
   },
   // Adds an invoice to the library and opens it. Takes invoice data as an
@@ -147,6 +164,8 @@ const api = {
   // every printed label from that language's preset; labels, a title or
   // headings given are laid over it. Left out, the labels are English.
   async createInvoice(data: unknown) {
+    stopCounting();
+
     if (typeof data !== "object" || data === null || Array.isArray(data)) {
       throw new TypeError("Invoice data must be an object");
     }
@@ -185,11 +204,8 @@ const api = {
       !Array.isArray(givenLabels)
         ? { ...blank.labels, ...omitBy(givenLabels, isNil) }
         : blank.labels;
-    // The parts holding a label are laid over the blank's too, so
-    // `seller: { content }` keeps the seller's label in the language asked
-    // for.
-    const labelledParts = Object.fromEntries(
-      LABELLED_PARTS.flatMap(key => {
+    const objectParts = Object.fromEntries(
+      OBJECT_PARTS.flatMap(key => {
         const given: unknown = known[key];
 
         return isPlainObject(given)
@@ -204,7 +220,7 @@ const api = {
           dueDate,
           currencyCode,
           ...known,
-          ...labelledParts,
+          ...objectParts,
           labels
         },
         CURRENT_INVOICE_SCHEMA_VERSION
@@ -223,37 +239,37 @@ const api = {
     };
 
     await createInvoice(document);
-    trackInvoice("invoice_saved", invoiceData);
     await documentActions.openInvoice(document.id);
 
     return document.id;
   },
   async openInvoice(id: string) {
+    stopCounting();
     await requireInvoice(id);
     await documentActions.openInvoice(id);
   },
   // The PDF of the invoice named, or of the open one, as a Blob.
   async getPdf(id?: string) {
+    stopCounting();
     const { invoice } = await invoiceForPdf(id);
 
     return buildPdf(invoice);
   },
   // Saves the PDF of the invoice named, or of the open one, as a download.
   async downloadPdf(id?: string) {
+    stopCounting();
     const { invoice, name } = await invoiceForPdf(id);
 
     saveFile(await buildPdf(invoice), toPdfFileName(name));
-    trackInvoice("pdf_downloaded", invoice);
   },
   // Imports a whole export file (its JSON text, or the parsed object), as the
   // Import dialog does.
   async importData(json: unknown) {
+    stopCounting();
     const parsed = parseExportText(
       typeof json === "string" ? json : JSON.stringify(json)
     );
     const result = await executeImport(parsed);
-
-    track("data_imported");
 
     return result;
   }
